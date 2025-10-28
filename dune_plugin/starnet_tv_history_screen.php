@@ -60,8 +60,10 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
 
         if ($this->plugin->get_tv_history_count() !== 0) {
+            $add_to_favorite = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
+            $actions[GUI_EVENT_KEY_D_BLUE] = $add_to_favorite;
+            $actions[GUI_EVENT_KEY_DUNE] = $add_to_favorite;
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
-            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
             $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
         }
 

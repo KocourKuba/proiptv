@@ -40,9 +40,11 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements U
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         $actions[GUI_EVENT_KEY_ENTER] = Action_Factory::open_folder();
-        $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SHOW_SEARCH_DLG, TR::t('search'));
-        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
         $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
+        $add_to_favorite = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
+        $actions[GUI_EVENT_KEY_D_BLUE] = $add_to_favorite;
+        $actions[GUI_EVENT_KEY_DUNE] = $add_to_favorite;
+        $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SHOW_SEARCH_DLG, TR::t('search'));
 
         if ($this->plugin->is_m3u_vod()) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_TO_LIST, TR::t('add_to_list'));
