@@ -160,7 +160,7 @@ class vod_edem extends vod_standard
 
         $curl_opt[CURLOPT_POST] = 1;
         $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
-        $curl_opt[CURLOPT_POSTFIELDS] = json_encode($pairs);
+        $curl_opt[CURLOPT_POSTFIELDS] = $pairs;
 
         return $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
     }

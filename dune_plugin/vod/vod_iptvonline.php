@@ -386,7 +386,7 @@ class vod_iptvonline extends vod_standard
 
         if (isset($params[CURLOPT_POSTFIELDS])) {
             $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
-            $curl_opt[CURLOPT_POSTFIELDS] = json_encode($params[CURLOPT_POSTFIELDS]);
+            $curl_opt[CURLOPT_POSTFIELDS] = $params[CURLOPT_POSTFIELDS];
         }
 
         $data = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);

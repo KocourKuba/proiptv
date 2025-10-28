@@ -28,9 +28,6 @@ require_once 'hd.php';
 
 class Curl_Wrapper
 {
-    const HTTP_HEADERS_LOG = "%s_headers%s.log";
-    const HTTP_LOG = "%s_response%s.log";
-    const CURL_CONFIG = "%s_curl_config%s.txt";
     const CACHE_TAG_FILE = "etag_cache.dat";
 
     /**
@@ -59,7 +56,7 @@ class Curl_Wrapper
     private $options;
 
     /**
-     * @var string
+     * @var array
      */
     private $post_data;
 
@@ -445,14 +442,6 @@ class Curl_Wrapper
             $opts[CURLOPT_FILE] = $fp;
         }
 
-        if ($this->is_post) {
-            $opts[CURLOPT_POST] = $this->is_post;
-        }
-
-        if (!empty($this->post_data)) {
-            $opts[CURLOPT_POSTFIELDS] = $this->post_data;
-        }
-
         if ($use_cache) {
             $etag = self::get_cached_etag($url);
             if (!empty($etag)) {
@@ -464,6 +453,25 @@ class Curl_Wrapper
 
         if (!empty($this->send_headers)) {
             $opts[CURLOPT_HTTPHEADER] = $this->send_headers;
+        }
+
+        if ($this->is_post) {
+            $opts[CURLOPT_POST] = $this->is_post;
+        }
+
+        if (!empty($this->post_data)) {
+            if (in_array(CONTENT_TYPE_JSON, $opts[CURLOPT_HTTPHEADER])) {
+                $opts[CURLOPT_POSTFIELDS] = is_r22_or_higher() ? json_encode($this->post_data) : escaped_raw_json_encode($this->post_data);
+            } else {
+                $data = '';
+                foreach($this->post_data as $key => $value) {
+                    if (!empty($data)) {
+                        $data .= "&";
+                    }
+                    $data .= $key . "=" . urlencode($value);
+                }
+                $opts[CURLOPT_POSTFIELDS] = $data;
+            }
         }
 
         $ch = curl_init();

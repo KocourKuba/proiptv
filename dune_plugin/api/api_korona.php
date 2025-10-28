@@ -64,17 +64,9 @@ class api_korona extends api_default
             $pairs['password'] = $this->GetProviderParameter(MACRO_PASSWORD);
         }
 
-        $data = '';
-        foreach($pairs as $key => $value) {
-            if (!empty($data)) {
-                $data .= "&";
-            }
-            $data .= $key . "=" . urlencode($value);
-        }
-
         $curl_opt[CURLOPT_POST] = true;
         $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_WWW_FORM_URLENCODED;
-        $curl_opt[CURLOPT_POSTFIELDS] = $data;
+        $curl_opt[CURLOPT_POSTFIELDS] = $pairs;
 
         $data = $this->execApiCommand($cmd, null, true, $curl_opt);
         if (isset($data->access_token)) {
