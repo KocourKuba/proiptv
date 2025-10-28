@@ -211,6 +211,11 @@ class Epg_Manager_Xmltv
                                     $items[$program_start][PluginTvExtEpgProgram::editor] = self::get_node_value($sub_tag, 'editor');
                                     $items[$program_start][PluginTvExtEpgProgram::composer] = self::get_node_value($sub_tag, 'composer');
                                 }
+                                foreach ($tag->getElementsByTagName('image') as $sub_tag) {
+                                    if (!empty($sub_tag->nodeValue)) {
+                                        $items[$program_start][PluginTvExtEpgProgram::icon_urls][] = $sub_tag->nodeValue;
+                                    }
+                                }
                             }
                         }
 
