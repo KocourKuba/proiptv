@@ -161,20 +161,20 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                if (!isset($parent_media_url->{PARAM_END_ACTION})) {
-                    return Action_Factory::close_and_run();
-                }
-
-                hd_debug_print("Call parent: " .
-                $parent_media_url->{PARAM_SOURCE_WINDOW_ID} . " action: ". $parent_media_url->{PARAM_END_ACTION}, true);
-                return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(
-                        $parent_media_url->{PARAM_SOURCE_WINDOW_ID},
-                        $parent_media_url->{PARAM_END_ACTION},
+                $target_action = null;
+                if (isset($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_END_ACTION})) {
+                    $source_window = safe_get_member($parent_media_url, PARAM_SOURCE_WINDOW_ID);
+                    $end_action = safe_get_member($parent_media_url, PARAM_END_ACTION);
+                    hd_debug_print("Call parent: $source_window action: $end_action", true);
+                    $target_action = User_Input_Handler_Registry::create_screen_action(
+                        $source_window,
+                        $end_action,
                         null,
                         array(PARAM_ACTION_ID => $parent_media_url->{PARAM_ACTION_ID})
-                    )
-                );
+                    );
+                }
+
+                return Action_Factory::close_and_run($target_action);
 
             case self::ACTION_FS:
                 return $this->do_action_fs($user_input);

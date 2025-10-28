@@ -2274,7 +2274,7 @@ function safe_get_value($ar, $param, $default = null)
 }
 
 /**
- * Safe get value from member
+ * Safe get value from member (object->member)
  *
  * @param object $obj
  * @param string $param

@@ -33,11 +33,6 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 {
     const ID = 'setup_provider_screen';
 
-    const CONTROL_DEVICE = 'device';
-    const CONTROL_SERVER = 'server';
-    const CONTROL_DOMAIN = 'domain';
-    const CONTROL_QUALITY = 'quality';
-    const CONTROL_STREAM = 'stream';
     const CONTROL_CUSTOM_URL = 'custom_url';
     const CONTROL_SELECTED_PLAYLIST = 'selected_playlist';
     const ACTION_COPY_FAVORITE = 'copy_favorite';
@@ -106,14 +101,14 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 
         $streams = $provider->GetStreams();
         if (!empty($streams) && count($streams) > 1) {
-            $mirror_idx = $provider->GetProviderParameter(MACRO_STREAM_ID);
-            if (empty($mirror_idx) || !isset($streams[$mirror_idx])) {
-                $mirror_idx = key($streams);
+            $idx = $provider->GetProviderParameter(MACRO_STREAM_ID);
+            if (empty($idx) || !isset($streams[$idx])) {
+                $idx = key($streams);
             }
-            hd_debug_print("streams ($mirror_idx): " . json_encode($streams), true);
+            hd_debug_print("streams ($idx): " . json_encode($streams), true);
 
-            Control_Factory::add_combobox($defs, $this, null, self::CONTROL_STREAM,
-                TR::t('stream'), $mirror_idx, $streams, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_STREAM,
+                TR::t('stream'), $idx, $streams, static::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -121,14 +116,14 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 
         $domains = $provider->GetDomains();
         if (!empty($domains) && count($domains) > 1) {
-            $mirror_idx = $provider->GetProviderParameter(MACRO_DOMAIN_ID);
-            if (empty($mirror_idx)) {
-                $mirror_idx = key($domains);
+            $idx = $provider->GetProviderParameter(MACRO_DOMAIN_ID);
+            if (empty($idx)) {
+                $idx = key($domains);
             }
-            hd_debug_print("domains ($mirror_idx): " . json_encode($domains), true);
+            hd_debug_print("domains ($idx): " . json_encode($domains), true);
 
-            Control_Factory::add_combobox($defs, $this, null, self::CONTROL_DOMAIN,
-                TR::t('domain'), $mirror_idx, $domains, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_DOMAIN,
+                TR::t('domain'), $idx, $domains, static::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -136,14 +131,14 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 
         $servers = $provider->GetServers();
         if (!empty($servers) && count($servers) > 1) {
-            $mirror_idx = $provider->GetProviderParameter(MACRO_SERVER_ID);
-            if (empty($mirror_idx)) {
-                $mirror_idx = key($servers);
+            $idx = $provider->GetProviderParameter(MACRO_SERVER_ID);
+            if (empty($idx)) {
+                $idx = key($servers);
             }
-            hd_debug_print("servers ($mirror_idx): " . json_encode($servers), true);
+            hd_debug_print("servers ($idx): " . json_encode($servers), true);
 
-            Control_Factory::add_combobox($defs, $this, null, self::CONTROL_SERVER,
-                TR::t('server'), $mirror_idx, $servers, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_SERVER,
+                TR::t('server'), $idx, $servers, static::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -151,14 +146,14 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 
         $devices = $provider->GetDevices();
         if (!empty($devices) && count($devices) > 1) {
-            $mirror_idx = $provider->GetProviderParameter(MACRO_DEVICE_ID);
-            if (empty($mirror_idx)) {
-                $mirror_idx = key($devices);
+            $idx = $provider->GetProviderParameter(MACRO_DEVICE_ID);
+            if (empty($idx)) {
+                $idx = key($devices);
             }
-            hd_debug_print("devices ($mirror_idx): " . json_encode($devices), true);
+            hd_debug_print("devices ($idx): " . json_encode($devices), true);
 
-            Control_Factory::add_combobox($defs, $this, null, self::CONTROL_DEVICE,
-                TR::t('device'), $mirror_idx, $devices, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_DEVICE,
+                TR::t('device'), $idx, $devices, static::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -166,14 +161,14 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 
         $qualities = $provider->GetQualities();
         if (!empty($qualities) && count($qualities) > 1) {
-            $mirror_idx = $provider->GetProviderParameter(MACRO_QUALITY_ID);
-            if (empty($mirror_idx)) {
-                $mirror_idx = key($qualities);
+            $idx = $provider->GetProviderParameter(MACRO_QUALITY_ID);
+            if (empty($idx)) {
+                $idx = key($qualities);
             }
-            hd_debug_print("qualities ($mirror_idx): " . json_encode($qualities), true);
+            hd_debug_print("qualities ($idx): " . json_encode($qualities), true);
 
-            Control_Factory::add_combobox($defs, $this, null, self::CONTROL_QUALITY,
-                TR::t('quality'), $mirror_idx, $qualities, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_QUALITY,
+                TR::t('quality'), $idx, $qualities, static::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -219,17 +214,17 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 
             $playlist_mirrors = $provider->getConfigValue(CONFIG_PLAYLIST_MIRRORS);
             if (!empty($playlist_mirrors)) {
-                $mirror_idx = $provider->GetProviderParameter(PARAM_SELECTED_MIRROR);
-                if (empty($mirror_idx) || !isset($playlist_mirrors[$mirror_idx])) {
-                    $mirror_idx = key($playlist_mirrors);
-                    $provider->SetProviderParameter(PARAM_SELECTED_MIRROR, $mirror_idx);
+                $idx = $provider->GetProviderParameter(PARAM_SELECTED_MIRROR);
+                if (empty($idx) || !isset($playlist_mirrors[$idx])) {
+                    $idx = key($playlist_mirrors);
+                    $provider->SetProviderParameter(PARAM_SELECTED_MIRROR, $idx);
                 }
                 $pairs = array();
                 foreach ($playlist_mirrors as $key => $value) {
                     $pairs[$key] = $key;
                 }
                 Control_Factory::add_combobox($defs, $this, null, PARAM_SELECTED_MIRROR,
-                    TR::t('setup_channels_using_mirror'), $mirror_idx, $pairs,
+                    TR::t('setup_channels_using_mirror'), $idx, $pairs,
                     static::CONTROLS_WIDTH, true);
             }
         }
@@ -323,17 +318,17 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                 $this->plugin->set_setting($control_id, (int)$user_input->{$control_id});
                 break;
 
-            case self::CONTROL_STREAM:
+            case api_default::CONTROL_STREAM:
                 $provider->SetStream($user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
 
-            case self::CONTROL_DOMAIN:
+            case api_default::CONTROL_DOMAIN:
                 $provider->SetDomain($user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
 
-            case self::CONTROL_SERVER:
+            case api_default::CONTROL_SERVER:
                 $provider->SetServer($user_input->{$control_id}, $msg);
                 if (!empty($msg)) {
                     return Action_Factory::show_error(false, TR::t('err_error'), explode(PHP_EOL, $msg));
@@ -342,12 +337,12 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                 $this->force_parent_reload = true;
                 break;
 
-            case self::CONTROL_DEVICE:
+            case api_default::CONTROL_DEVICE:
                 $provider->SetDevice($user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
 
-            case self::CONTROL_QUALITY:
+            case api_default::CONTROL_QUALITY:
                 $provider->SetQuality($user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;

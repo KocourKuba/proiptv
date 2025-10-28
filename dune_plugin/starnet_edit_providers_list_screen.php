@@ -64,28 +64,31 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
-                hd_debug_print("Call parent: " .
-                    $parent_media_url->{PARAM_SOURCE_WINDOW_ID} . " action: ". $parent_media_url->{PARAM_END_ACTION}, true);
+                $target_action = null;
+                if (isset($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_CANCEL_ACTION})) {
+                    $source_window = safe_get_member($parent_media_url, PARAM_SOURCE_WINDOW_ID);
+                    $cancel_action = safe_get_member($parent_media_url, PARAM_CANCEL_ACTION);
+                    hd_debug_print("Call parent: $source_window action: $cancel_action", true);
+                    $target_action = User_Input_Handler_Registry::create_screen_action($source_window, $cancel_action);
+                }
 
-                return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(
-                        $parent_media_url->{PARAM_SOURCE_WINDOW_ID},
-                        $parent_media_url->{PARAM_CANCEL_ACTION}
-                    )
-                );
+                return Action_Factory::close_and_run($target_action);
 
             case GUI_EVENT_KEY_ENTER:
-                hd_debug_print("Call parent: " .
-                    $parent_media_url->{PARAM_SOURCE_WINDOW_ID} . " action: ". $parent_media_url->{PARAM_END_ACTION}, true);
-
-                return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(
-                        $parent_media_url->{PARAM_SOURCE_WINDOW_ID},
-                        $parent_media_url->{PARAM_END_ACTION},
+                $target_action = null;
+                if (isset($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_END_ACTION})) {
+                    $source_window = safe_get_member($parent_media_url, PARAM_SOURCE_WINDOW_ID);
+                    $end_action = safe_get_member($parent_media_url, PARAM_END_ACTION);
+                    hd_debug_print("Call parent: $source_window action: $end_action", true);
+                    $target_action = User_Input_Handler_Registry::create_screen_action(
+                        $source_window,
+                        $end_action,
                         null,
                         array(PARAM_PROVIDER => $selected_id)
-                    )
-                );
+                    );
+                }
+
+                return Action_Factory::close_and_run($target_action);
 
             case self::ACTION_SHOW_QR:
                 /** @var api_default $provider */

@@ -54,6 +54,11 @@ class api_default
 {
     const CONTROL_LOGIN = 'login';
     const CONTROL_PASSWORD = 'password';
+    const CONTROL_SERVER = 'server';
+    const CONTROL_DOMAIN = 'domain';
+    const CONTROL_QUALITY = 'quality';
+    const CONTROL_STREAM = 'stream';
+    const CONTROL_DEVICE = 'device';
 
     /**
      * @var string
@@ -1023,6 +1028,8 @@ class api_default
     public function GetSetupUI($name, $playlist_id, $handler)
     {
         hd_debug_print(null, true);
+
+        $is_new = empty($playlist_id);
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
@@ -1050,6 +1057,33 @@ class api_default
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
+        if ($is_new) {
+            $command_url = $this->getRawApiCommand(API_COMMAND_GET_PLAYLIST);
+            $command_url = $this->replace_by_func($command_url);
+            hd_debug_print("command_url: $command_url", true);
+
+            $config_domains = $this->getConfigValue(CONFIG_DOMAINS);
+            if (!empty($config_domains) && count($config_domains) > 1 && strpos($command_url, MACRO_DOMAIN_ID) !== false) {
+                $idx = key($config_domains);
+                Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_DOMAIN,
+                    TR::t('domain'), $idx, $config_domains, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+            }
+
+            $config_servers = $this->getConfigValue(CONFIG_SERVERS);
+            if (!empty($config_servers) && count($config_servers) > 1 && strpos($command_url, MACRO_SERVER_ID) !== false) {
+                $idx = key($config_servers);
+                Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_SERVER,
+                    TR::t('server'), $idx, $config_servers, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+            }
+
+            $config_qialities = $this->getConfigValue(CONFIG_QUALITIES);
+            if (!empty($config_qialities) && count($config_qialities) > 1 && strpos($command_url, MACRO_QUALITY_ID) !== false) {
+                $idx = key($config_qialities);
+                Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_QUALITY,
+                    TR::t('quality'), $idx, $config_qialities, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+            }
+        }
+
         Control_Factory::add_vgap($defs, 50);
 
         Control_Factory::add_close_dialog_and_apply_button($defs, $handler,
@@ -1073,13 +1107,12 @@ class api_default
     {
         hd_debug_print(null, true);
 
-        if (empty($this->playlist_id)) {
-            $is_new = true;
+        $is_new = empty($user_input->{CONTROL_EDIT_ITEM});
+        if ($is_new) {
             hd_debug_print("Create new provider info", true);
             $params[PARAM_TYPE] = PARAM_PROVIDER;
             $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
         } else {
-            $is_new = false;
             hd_debug_print("load info for existing playlist id: $this->playlist_id", true);
             $params = $this->plugin->get_playlist_parameters($this->playlist_id);
             hd_debug_print("provider info: " . pretty_json_format($params), true);
@@ -1143,12 +1176,11 @@ class api_default
             }
         }
 
-        // set provider parameters if they not set in the playlist parameters
-        // parameters obtain from user account
-        $this->set_provider_defaults();
-
         if ($is_new) {
             $this->apply_config_defaults();
+            $this->apply_user_input_parameter($user_input, self::CONTROL_SERVER, MACRO_SERVER_ID);
+            $this->apply_user_input_parameter($user_input, self::CONTROL_DOMAIN, MACRO_DOMAIN_ID);
+            $this->apply_user_input_parameter($user_input, self::CONTROL_QUALITY, MACRO_QUALITY_ID);
         }
 
         $this->plugin->clear_playlist_cache($this->playlist_id);
@@ -1161,6 +1193,22 @@ class api_default
         }
 
         return $this->playlist_id;
+    }
+
+    /**
+     * Set default values if it present in user account but not set in user credentials
+     *
+     * @param object $user_input
+     * @param string $param
+     * @param string $macro
+     * @return void
+     */
+    protected function apply_user_input_parameter($user_input, $param, $macro)
+    {
+        $value = safe_get_member($user_input,  $param);
+        if (!empty($value)) {
+            $this->SetProviderParameter($macro, (string)$value);
+        }
     }
 
     /**

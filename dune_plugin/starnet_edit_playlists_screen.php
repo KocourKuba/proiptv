@@ -91,14 +91,15 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
-                if (!$this->force_parent_reload) {
-                    return Action_Factory::close_and_run();
+                $target_action = null;
+                if ($this->force_parent_reload && isset($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_END_ACTION})) {
+                    $this->force_parent_reload = false;
+                    $source_window = safe_get_member($parent_media_url, PARAM_SOURCE_WINDOW_ID);
+                    $end_action = safe_get_member($parent_media_url, PARAM_END_ACTION);
+                    hd_debug_print("Force parent reload: $source_window action: $end_action", true);
+                    $target_action = User_Input_Handler_Registry::create_screen_action($source_window, $end_action);
                 }
 
-                $this->force_parent_reload = false;
-                hd_debug_print("Force parent reload: " .
-                    $parent_media_url->{PARAM_SOURCE_WINDOW_ID} . " action: ". $parent_media_url->{PARAM_END_ACTION}, true);
-                $target_action = User_Input_Handler_Registry::create_screen_action($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_END_ACTION});
                 return Action_Factory::close_and_run($target_action);
 
             case GUI_EVENT_KEY_ENTER:
@@ -258,7 +259,6 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                     PARAM_SOURCE_WINDOW_ID => static::ID,
                     PARAM_WINDOW_COUNTER => 1,
                     PARAM_END_ACTION => ACTION_EDIT_PROVIDER_DLG,
-                    PARAM_CANCEL_ACTION => RESET_CONTROLS_ACTION_ID
                 );
                 return Action_Factory::open_folder(MediaURL::encode($params), TR::t('edit_list_add_provider'));
 
