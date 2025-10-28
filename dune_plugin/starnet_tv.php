@@ -248,6 +248,9 @@ class Starnet_Tv implements User_Input_Handler
                 ? PLUGIN_FONT_SMALL
                 : PLUGIN_FONT_NORMAL,
 
+            PluginTvInfo::epg_day_use_local_tz => USE_TZ_LOCAL,
+            PluginTvInfo::epg_day_shift_sec => 0,
+
             PluginTvInfo::actions => $this->get_action_map(),
             PluginTvInfo::timer => Action_Factory::timer(1000),
         );
