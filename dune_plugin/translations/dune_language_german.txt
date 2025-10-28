@@ -116,6 +116,7 @@ balance = Balanz:
 start_date__1 = Startdatum: %s
 end_date = Enddatum:
 end_date__1 = Enddatum: %s
+money_need = Mindestzahlung:
 money_need__1 = Mindestzahlung: %s
 package = Paket:
 package__1 = Paket: %s

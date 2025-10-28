@@ -116,6 +116,7 @@ balance = Баланс:
 start_date__1 = Время начала: %s
 end_date = Время окончания:
 end_date__1 = Время окончания: %s
+money_need = Мин. платеж:
 money_need__1 = Мин. платеж: %s
 package = Пакет:
 package__1 = Пакет: %s

@@ -113,6 +113,7 @@ subscription = Subscription
 add_money = Add money
 archive_support = Archive support:
 balance = Balance:
+money_need = Minimum payment:
 money_need__1 = Minimum payment: %s
 start_date__1 = Start date: %s
 end_date = End date:

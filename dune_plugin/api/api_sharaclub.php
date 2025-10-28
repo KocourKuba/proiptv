@@ -98,7 +98,7 @@ class api_sharaclub extends api_default
                 Control_Factory::add_label($defs, TR::t('balance'), $data->money . " " . $data->currency, -15);
             }
             if (isset($data->money_need, $data->currency)) {
-                Control_Factory::add_label($defs, TR::t('money_need__1', "$data->money_need $data->currency"), -15);
+                Control_Factory::add_label($defs, TR::t('money_need'), "$data->money_need $data->currency", -15);
             }
 
             if (isset($data->abon)) {
