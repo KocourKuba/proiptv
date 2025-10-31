@@ -755,7 +755,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_iptvonline.png",
       "provider_url": "https://iptv.online/",
-      "api_url": "https://see24.eu/api/v4",
+      "api_url": "https://see-tv.eu/api/v4",
       "api_commands": {
         "request_token": "{API}/auth",
         "refresh_token": "{API}/oauth2",
@@ -1729,7 +1729,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_tvizi.png",
       "provider_url": "https://tvizi.net/",
-      "api_url": "https://see24.eu/api/v4",
+      "api_url": "https://see-tv.eu/api/v4",
       "api_commands": {
         "request_token": "{API}/auth",
         "refresh_token": "{API}/oauth2",
