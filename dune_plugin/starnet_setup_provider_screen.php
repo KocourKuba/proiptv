@@ -96,15 +96,14 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             $has_vod_cache = true;
         }
 
+        $provider->check_config_values();
+
         //////////////////////////////////////
         // Streams settings
 
         $streams = $provider->GetStreams();
         if (!empty($streams) && count($streams) > 1) {
             $idx = $provider->GetProviderParameter(MACRO_STREAM_ID);
-            if (empty($idx) || !isset($streams[$idx])) {
-                $idx = key($streams);
-            }
             hd_debug_print("streams ($idx): " . json_encode($streams), true);
 
             Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_STREAM,
@@ -117,9 +116,6 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $domains = $provider->GetDomains();
         if (!empty($domains) && count($domains) > 1) {
             $idx = $provider->GetProviderParameter(MACRO_DOMAIN_ID);
-            if (empty($idx)) {
-                $idx = key($domains);
-            }
             hd_debug_print("domains ($idx): " . json_encode($domains), true);
 
             Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_DOMAIN,
@@ -132,9 +128,6 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $servers = $provider->GetServers();
         if (!empty($servers) && count($servers) > 1) {
             $idx = $provider->GetProviderParameter(MACRO_SERVER_ID);
-            if (empty($idx)) {
-                $idx = key($servers);
-            }
             hd_debug_print("servers ($idx): " . json_encode($servers), true);
 
             Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_SERVER,
@@ -147,9 +140,6 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $devices = $provider->GetDevices();
         if (!empty($devices) && count($devices) > 1) {
             $idx = $provider->GetProviderParameter(MACRO_DEVICE_ID);
-            if (empty($idx)) {
-                $idx = key($devices);
-            }
             hd_debug_print("devices ($idx): " . json_encode($devices), true);
 
             Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_DEVICE,
@@ -162,9 +152,6 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $qualities = $provider->GetQualities();
         if (!empty($qualities) && count($qualities) > 1) {
             $idx = $provider->GetProviderParameter(MACRO_QUALITY_ID);
-            if (empty($idx)) {
-                $idx = key($qualities);
-            }
             hd_debug_print("qualities ($idx): " . json_encode($qualities), true);
 
             Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_QUALITY,

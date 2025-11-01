@@ -1020,14 +1020,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $provider = $this->get_provider($playlist_id);
             if ($provider !== null) {
                 // update xmltv playlist sources from config
-                $config_sources = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
-                if (!empty($config_sources)) {
+                $config_xmltv = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
+                if (!empty($config_xmltv)) {
                     $playlist_xmltv = self::PLAYLIST_XMLTV_TABLE;
                     $query = '';
                     $q_type = Sql_Wrapper::sql_quote(PARAM_CONF);
                     $q_cache = Sql_Wrapper::sql_quote(XMLTV_CACHE_AUTO);
                     $known_sources = array();
-                    foreach ($config_sources as $source) {
+                    foreach ($config_xmltv as $source) {
                         $hash = Hashed_Array::hash($source);
                         $q_source = Sql_Wrapper::sql_quote($source);
                         $q_name = Sql_Wrapper::sql_quote(basename($source));
@@ -1044,6 +1044,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $this->sql_params->exec_transaction($query);
                 }
 
+                $provider->check_config_values();
                 $provider_playlist_id = $provider->GetPlaylistIptvId();
                 hd_debug_print("Provider playlist: $provider_playlist_id", true);
             }

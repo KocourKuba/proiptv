@@ -217,10 +217,6 @@ class api_edem extends api_default
         $provider_playlist_id = $this->GetPlaylistIptvId();
         hd_debug_print("Set default provider playlist id: $provider_playlist_id", true);
 
-        // set provider parameters if they not set in the playlist parameters
-        // parameters obtain from user account (edem does not have it but maybe in future it will be changed)
-        $this->set_provider_defaults();
-
         if ($is_new) {
             $this->apply_config_defaults();
         }

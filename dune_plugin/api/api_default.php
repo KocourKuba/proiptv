@@ -392,17 +392,29 @@ class api_default
     }
 
     /**
-     * Set default values if it present in user account but not set in user credentials
+     * Check if values from config is present and set to valid value
      *
      * @return void
      */
-    public function set_provider_defaults()
+    public function check_config_values()
     {
-        $servers = $this->GetServers();
-        if (!empty($servers)) {
-            $idx = $this->GetProviderParameter(MACRO_SERVER_ID);
-            if (empty($idx) || !isset($servers[$idx])) {
-                $this->SetProviderParameter(MACRO_SERVER_ID, key($servers));
+        static $config_items = array(
+            CONFIG_STREAMS => MACRO_STREAM_ID,
+            CONFIG_DOMAINS => MACRO_DOMAIN_ID,
+            CONFIG_SERVERS => MACRO_SERVER_ID,
+            CONFIG_DEVICES => MACRO_DEVICE_ID,
+            CONFIG_QUALITIES => MACRO_QUALITY_ID,
+            CONFIG_PLAYLISTS_IPTV => PARAM_PLAYLIST_IPTV_ID,
+            CONFIG_PLAYLISTS_VOD => PARAM_PLAYLIST_VOD_ID,
+        );
+
+        foreach ($config_items as $name => $param) {
+            $values = $this->getConfigValue($name);
+            if (!empty($values)) {
+                $idx = $this->GetProviderParameter($param);
+                if (empty($idx) || !isset($values[$idx])) {
+                    $this->SetProviderParameter($param, (string)key($values));
+                }
             }
         }
     }
@@ -432,7 +444,6 @@ class api_default
                 $this->account_info = $account_info;
             }
         }
-        $this->set_provider_defaults();
 
         return $this->account_info;
     }
@@ -1156,32 +1167,14 @@ class api_default
 
         // set config parameters if they not set in the playlist parameters
         hd_debug_print("Set default values for id: '$this->playlist_id'", true);
-        static $config_items = array(
-            CONFIG_STREAMS => MACRO_STREAM_ID,
-            CONFIG_DOMAINS => MACRO_DOMAIN_ID,
-            CONFIG_SERVERS => MACRO_SERVER_ID,
-            CONFIG_DEVICES => MACRO_DEVICE_ID,
-            CONFIG_QUALITIES => MACRO_QUALITY_ID,
-            CONFIG_PLAYLISTS_IPTV => PARAM_PLAYLIST_IPTV_ID,
-            CONFIG_PLAYLISTS_VOD => PARAM_PLAYLIST_VOD_ID,
-        );
-
-        foreach ($config_items as $name => $param) {
-            $values = $this->getConfigValue($name);
-            if (!empty($values)) {
-                $idx = $this->GetProviderParameter($param);
-                if (empty($idx)) {
-                    $this->SetProviderParameter($param, (string)key($values));
-                }
-            }
-        }
-
         if ($is_new) {
             $this->apply_config_defaults();
             $this->apply_user_input_parameter($user_input, self::CONTROL_SERVER, MACRO_SERVER_ID);
             $this->apply_user_input_parameter($user_input, self::CONTROL_DOMAIN, MACRO_DOMAIN_ID);
             $this->apply_user_input_parameter($user_input, self::CONTROL_QUALITY, MACRO_QUALITY_ID);
         }
+
+        $this->check_config_values();
 
         $this->plugin->clear_playlist_cache($this->playlist_id);
         $this->plugin->remove_cookie(PARAM_TOKEN);
