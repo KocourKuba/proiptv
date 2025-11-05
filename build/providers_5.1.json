@@ -997,8 +997,8 @@
       "name": "Peak TV",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_peaktv.png",
-      "provider_url": "https://peaktv.info/",
-      "api_url": "https://peaktv.info",
+      "provider_url": "https://peaktv.su/",
+      "api_url": "http://peaktv.su",
       "api_commands": {
         "get_playlist": "{API}/{PASSWORD}/hls/peaktvinfo.m3u8"
       },
