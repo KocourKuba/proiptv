@@ -92,7 +92,7 @@ class vod_edem extends vod_standard
                         $qualities_str .= ($key === 'auto' ? '' : $key);
                     }
 
-                    $movie_serie->description = TR::load('vod_screen_quality') . "|" . rtrim($qualities_str, ' ,\0');
+                    $movie_serie->description = TR::load('vod_screen_quality') . "|" . rtrim($qualities_str, " ,\r\n\0");
                 }
                 $movie->add_series_data($movie_serie);
             }
@@ -110,7 +110,7 @@ class vod_edem extends vod_standard
                     $qualities_str .= ($key === 'auto' ? '' : $key);
                 }
 
-                $qualities_str = rtrim($qualities_str, ' ,\0');
+                $qualities_str = rtrim($qualities_str, " ,\r\n\0");
                 $movie_serie->description = TR::load('vod_screen_quality') . "|$qualities_str";
             }
             $movie->add_series_data($movie_serie);

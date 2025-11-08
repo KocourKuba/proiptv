@@ -98,6 +98,8 @@ const ACTION_ORDER_SUPPORT = 'order_support';
 const ACTION_EXPORT = 'export';
 const ACTION_EXPORT_APPLY_DLG = 'apply_export';
 const ACTION_FILE_PLAYLIST = 'play_list_file';
+const ACTION_SLEEP_TIMER = 'sleep_timer';
+const ACTION_SLEEP_TIMER_ADD = 'sleep_timer_add';
 
 const CONTROL_ACTION_EDIT = 'action_edit';
 const CONTROL_EDIT_NAME = 'set_item_name';
@@ -260,6 +262,8 @@ const PARAM_EPG_SHIFT_HOURS = 'epg_shift_hours';
 const PARAM_EPG_SHIFT_MINS = 'epg_shift_mins';
 const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_EPG_SOURCE = 'epg_source';
+const PARAM_SLEEP_TIMER_POS = 'sleep_timer_pos';
+const PARAM_SLEEP_TIMER_COUNTDOWN = 'sleep_timer_countdown';
 const PARAM_PICONS_DELAY_LOAD = 'epg_delayed_index';
 const PARAM_NEWUI_CHANNEL_POSITION = 'channel_position';
 const PARAM_INTERNAL_EPG_IDX = 'epg_idx';

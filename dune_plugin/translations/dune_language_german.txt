@@ -144,6 +144,8 @@ channels__1 = Kanäle: %s
 duplicates__1 = %s nicht gefunden
 duplicates__2 = Duplikate: %s - %s
 selected__1 = Ausgewählt: %s
+sleep_timer = Sleep-Timer
+sleep_after = Schlafen:
 
 plugin_all_channels = Alle Kanäle
 plugin_all_channels__1 = Alle Kanäle (%s)
@@ -249,6 +251,10 @@ setup_download_timeout = Download-Zeitüberschreitung (sec)
 setup_native_url = URL vom Konto
 setup_native_file = Playlist-Datei
 setup_use_common_fav = Gemeinsame "Favoriten" verwenden
+setup_sleep_time_show = Schlaf-Countdown in Sekunden
+setup_sleep_time_pos = Position des Sleep-Timers
+setup_top_left = Obere linke Ecke
+setup_top_right = Obere rechte Ecke
 
 setup_channels_src_reset_playlist = Playlist-Einstellungen zurücksetzen
 setup_channels_src_edit_playlists = Playlist auswählen oder hinzufügen

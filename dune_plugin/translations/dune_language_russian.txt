@@ -144,6 +144,8 @@ channels__1 = Каналов: %s
 duplicates__1 = %s: не найден
 duplicates__2 = Дубликатов: %s - %s
 selected__1 = Выбран: %s
+sleep_timer = Время отключения
+sleep_after = Отключение:
 
 plugin_all_channels = Все каналы
 plugin_all_channels__1 = Все каналы (%s)
@@ -249,6 +251,10 @@ setup_download_timeout = Таймаут скачивания (сек)
 setup_native_url = Ссылка из кабинета
 setup_native_file = Файл плейлиста
 setup_use_common_fav = Использовать общее "Избранное"
+setup_sleep_time_show = Показ обратного отсчета в сек.
+setup_sleep_time_pos = Позиция таймера выключения
+setup_top_left = Верхний левый угол
+setup_top_right = Верхний правый угол
 
 setup_channels_src_reset_playlist = Сбросить настройки плейлиста
 setup_channels_src_edit_playlists = Выбрать/Добавить плейлист

@@ -925,7 +925,7 @@ function format_duration_seconds($secs)
         return "--:--";
     }
 
-    $hours = $n / 3600;
+    $hours = (int)($n / 3600);
     $remainder = $n % 3600;
     $minutes = $remainder / 60;
     $seconds = $remainder % 60;

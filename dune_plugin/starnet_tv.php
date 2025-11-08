@@ -25,6 +25,8 @@
 
 require_once 'lib/hashed_array.php';
 require_once 'lib/ordered_array.php';
+require_once 'lib/osd_component_factory.php';
+require_once 'lib/sleep_timer.php';
 require_once 'lib/epg/default_epg_item.php';
 require_once 'lib/m3u/KnownCatchupSourceTags.php';
 require_once 'vod/vod_standard.php';
@@ -70,6 +72,10 @@ class Starnet_Tv implements User_Input_Handler
 
         $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+        if ($this->plugin->is_full_size_remote()) {
+            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER_ADD);
+            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER);
+        }
 
         return $actions;
     }
@@ -84,57 +90,91 @@ class Starnet_Tv implements User_Input_Handler
             return null;
         }
 
+        // handler_id => tv_handler
+        // control_id => playback_stop
+        // osd_active => 1
+        // plugin_tv_channel_id => 204
+        // plugin_tv_group_id => group1
+        // plugin_tv_gmt => -1
+        // playback_end_of_stream => 0
+        // play_mode => plugin_tv
+        // playback_browser_activated => 0
+        // playback_stop_pressed => 1
+
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
                 clearstatcache();
+                $comps = array();
                 $res = Epg_Manager_Xmltv::import_indexing_log($this->plugin->get_selected_xmltv_ids());
+                $post_action = Sleep_Timer::get_sleep_timer() ? Action_Factory::change_behaviour($this->get_action_map(), 1000) : null;
 
                 if ($res === 0) {
-                    hd_debug_print("No imports. Timer stopped");
-                    return null;
-                }
-
-                if ($res === -1) {
-                    return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_source'), Dune_Last_Error::get_last_error(LAST_ERROR_XMLTV));
-                }
-
-                $post_action = null;
-                if ($res === 1 || $res === -2) {
+                    hd_debug_print("No imports", true);
+                } else if ($res === -1) {
+                    $attrs['timer'] = Action_Factory::timer(10000);
+                    $attrs['actions'] = array(GUI_EVENT_TIMER => Action_Factory::close_dialog());
+                    $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
+                    return Action_Factory::show_title_dialog(
+                        TR::t('err_load_xmltv_source'),
+                        Dune_Last_Error::get_last_error(LAST_ERROR_XMLTV),
+                        $post_action,
+                        $attrs
+                    );
+                } else if ($res === 1 || $res === -2) {
                     if ($this->plugin->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)) {
+                        if ($post_action === null) {
+                            $post_action = Action_Factory::change_behaviour($this->get_action_map(), 1000);
+                        }
                         $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
                     }
 
                     $epg_manager = $this->plugin->get_epg_manager();
-                    if ($epg_manager === null) {
-                        return null;
+                    if ($epg_manager !== null) {
+                        $delayed_queue = $epg_manager->get_delayed_epg();
+                        if (!empty($delayed_queue)) {
+                            $epg_manager->clear_delayed_epg();
+                            if ($post_action === null) {
+                                $post_action = Action_Factory::change_behaviour($this->get_action_map(), 1000);
+                            }
+                            foreach ($delayed_queue as $channel_id) {
+                                hd_debug_print("Refresh EPG for channel ID: $channel_id");
+                                $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
+                                $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
+                                $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg,
+                                    $post_action, $this->plugin->is_ext_epg_enabled() && !empty($day_epg));
+                            }
+                        }
                     }
-
-                    $delayed_queue = $epg_manager->get_delayed_epg();
-                    $epg_manager->clear_delayed_epg();
-                    foreach ($delayed_queue as $channel_id) {
-                        hd_debug_print("Refresh EPG for channel ID: $channel_id");
-                        $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
-                        $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
-                        $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg,
-                            $post_action, $this->plugin->is_ext_epg_enabled() && !empty($day_epg));
-                    }
-
-                    return $post_action;
                 }
 
-                if ($res === 2) {
-                    return Action_Factory::change_behaviour($this->get_action_map(), 1000);
-                }
-
-                break;
+                Sleep_Timer::create_estimated_timer_box($comps, $user_input);
+                return Action_Factory::update_osd($comps, $post_action);
 
             case GUI_EVENT_PLAYBACK_STOP:
                 $this->plugin->update_tv_history($user_input->plugin_tv_channel_id);
+                if (isset($user_input->playback_stop_pressed)) {
+                    Sleep_Timer::set_sleep_timer(0);
+                }
 
                 if (isset($user_input->playback_stop_pressed) || isset($user_input->playback_power_off_needed)) {
                     return Action_Factory::invalidate_all_folders($plugin_cookies);
                 }
                 break;
+
+            case ACTION_SLEEP_TIMER:
+                return Sleep_Timer::show_sleep_timer_dialog($this);
+
+            case Sleep_Timer::CONTROL_SLEEP_TIME_SET:
+                $min = (int)$user_input->{Sleep_Timer::CONTROL_SLEEP_TIME_MIN};
+                Sleep_Timer::set_timer_op($min);
+                Sleep_Timer::set_sleep_timer($min * 60);
+                return Action_Factory::change_behaviour($this->get_action_map(), 1000);
+
+            case ACTION_SLEEP_TIMER_ADD:
+                $comps = array();
+                Sleep_Timer::set_sleep_timer(Sleep_Timer::get_sleep_timer() + 60);
+                Sleep_Timer::create_estimated_timer_box($comps, $user_input, true);
+                return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
         }
 
         return null;
@@ -156,6 +196,9 @@ class Starnet_Tv implements User_Input_Handler
         $archive_delay = $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60);
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD);
         $show_all = $this->plugin->get_bool_setting(PARAM_SHOW_ALL);
+
+        Sleep_Timer::set_show_pos($this->plugin->get_parameter(PARAM_SLEEP_TIMER_POS, 'top_right'));
+        Sleep_Timer::set_show_time($this->plugin->get_parameter(PARAM_SLEEP_TIMER_COUNTDOWN, 120));
 
         $groups = array();
 

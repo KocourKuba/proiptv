@@ -75,6 +75,21 @@ class Movie implements User_Input_Handler
         return array_keys($vars);
     }
 
+    public function get_action_map()
+    {
+        User_Input_Handler_Registry::get_instance()->register_handler($this);
+
+        $actions = array();
+        $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
+        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+        if ($this->plugin->is_full_size_remote()) {
+            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER_ADD);
+            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER);
+        }
+
+        return $actions;
+    }
+
     /**
      * @inheritDoc
      */
@@ -95,43 +110,75 @@ class Movie implements User_Input_Handler
         // playback_browser_activated => 0
         // playback_stop_pressed => 1
 
-        if (!isset($user_input->control_id) || $user_input->control_id !== GUI_EVENT_PLAYBACK_STOP) {
+        if (!isset($user_input->control_id)) {
+            hd_debug_print("user input control id not set", true);
             return null;
         }
 
-        $series_list = array_values($this->series_list);
-        hd_debug_print("Series list: " . json_encode($series_list), true);
-        $episode = $series_list[$user_input->plugin_vod_series_ndx];
+        switch ($user_input->control_id) {
+            case GUI_EVENT_PLAYBACK_STOP:
+                if (isset($user_input->playback_stop_pressed)) {
+                    Sleep_Timer::set_sleep_timer(0);
+                }
 
-        $watched = (isset($user_input->playback_end_of_stream) && (int)$user_input->playback_end_of_stream !== 0)
-            || ($user_input->plugin_vod_duration - $user_input->plugin_vod_stop_position) < 60;
+                $series_list = array_values($this->series_list);
+                hd_debug_print("Series list: " . json_encode($series_list), true);
+                $episode = $series_list[$user_input->plugin_vod_series_ndx];
 
-        $series_idx = empty($episode->id) ? $user_input->plugin_vod_series_ndx : $episode->id;
-        hd_debug_print("add movie to history: id: $user_input->plugin_vod_id, series: $series_idx", true);
+                $watched = (isset($user_input->playback_end_of_stream) && (int)$user_input->playback_end_of_stream !== 0)
+                    || ($user_input->plugin_vod_duration - $user_input->plugin_vod_stop_position) < 60;
 
-        $invalidate[] = Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID);
-        $invalidate[] = Default_Dune_Plugin::get_group_media_url_str(VOD_HISTORY_GROUP_ID);
+                $series_idx = empty($episode->id) ? $user_input->plugin_vod_series_ndx : $episode->id;
+                hd_debug_print("add movie to history: id: $user_input->plugin_vod_id, series: $series_idx", true);
 
-        if ($user_input->plugin_vod_id === VOD_LIST_GROUP_ID) {
-            $movie_id = $episode->id;
-            $invalidate[] = Default_Dune_Plugin::get_group_media_url_str(VOD_LIST_GROUP_ID);
-        } else {
-            $movie_id = $user_input->plugin_vod_id;
-            $invalidate[] = Starnet_Vod_Series_List_Screen::make_vod_media_url_str($user_input->plugin_vod_id, $episode->season_id);
+                $invalidate[] = Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID);
+                $invalidate[] = Default_Dune_Plugin::get_group_media_url_str(VOD_HISTORY_GROUP_ID);
+
+                if ($user_input->plugin_vod_id === VOD_LIST_GROUP_ID) {
+                    $movie_id = $episode->id;
+                    $invalidate[] = Default_Dune_Plugin::get_group_media_url_str(VOD_LIST_GROUP_ID);
+                } else {
+                    $movie_id = $user_input->plugin_vod_id;
+                    $invalidate[] = Starnet_Vod_Series_List_Screen::make_vod_media_url_str($user_input->plugin_vod_id, $episode->season_id);
+                }
+
+                $this->plugin->set_vod_history(
+                    $movie_id,
+                    $series_idx,
+                    array(
+                        COLUMN_WATCHED => (int)$watched,
+                        COLUMN_POSITION => $user_input->plugin_vod_stop_position,
+                        COLUMN_DURATION => $user_input->plugin_vod_duration,
+                        COLUMN_TIMESTAMP => $user_input->plugin_vod_stop_tm
+                    )
+                );
+
+                return Action_Factory::invalidate_folders($invalidate);
+
+            case GUI_EVENT_TIMER:
+                clearstatcache();
+                $post_action = Sleep_Timer::get_sleep_timer() ? Action_Factory::change_behaviour($this->get_action_map(), 1000) : null;
+                $comps = array();
+                Sleep_Timer::create_estimated_timer_box($comps, $user_input);
+                return Action_Factory::update_osd($comps, $post_action);
+
+            case ACTION_SLEEP_TIMER:
+                return Sleep_Timer::show_sleep_timer_dialog($this);
+
+            case Sleep_Timer::CONTROL_SLEEP_TIME_SET:
+                $min = (int)$user_input->{Sleep_Timer::CONTROL_SLEEP_TIME_MIN};
+                Sleep_Timer::set_timer_op($min);
+                Sleep_Timer::set_sleep_timer($min * 60);
+                return Action_Factory::change_behaviour($this->get_action_map(), 1000);
+
+            case ACTION_SLEEP_TIMER_ADD:
+                $comps = array();
+                Sleep_Timer::set_sleep_timer(Sleep_Timer::get_sleep_timer() + 60);
+                Sleep_Timer::create_estimated_timer_box($comps, $user_input, true);
+                return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
         }
 
-        $this->plugin->set_vod_history(
-            $movie_id,
-            $series_idx,
-            array(
-                COLUMN_WATCHED => (int)$watched,
-                COLUMN_POSITION => $user_input->plugin_vod_stop_position,
-                COLUMN_DURATION => $user_input->plugin_vod_duration,
-                COLUMN_TIMESTAMP => $user_input->plugin_vod_stop_tm
-            )
-        );
-
-        return Action_Factory::invalidate_folders($invalidate);
+        return null;
     }
 
     /**
@@ -429,15 +476,5 @@ class Movie implements User_Input_Handler
 
         hd_debug_print("info: " . json_encode($info), true);
         return $info;
-    }
-
-    public function get_action_map()
-    {
-        User_Input_Handler_Registry::get_instance()->register_handler($this);
-
-        $actions = array();
-        $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
-
-        return $actions;
     }
 }

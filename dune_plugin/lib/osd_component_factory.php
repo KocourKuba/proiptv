@@ -17,7 +17,7 @@ require_once 'action_factory.php';
 
 class OSD_Component_Factory
 {
-    const    DUNE_BASE_SKIN_PATH = '/firmware/skin';
+    const DUNE_BASE_SKIN_PATH = '/firmware/skin';
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -85,12 +85,12 @@ class OSD_Component_Factory
     }
 
     /**
-     * @throws Exception
      */
     public static function init()
     {
-        if (is_null(self::$instance))
+        if (is_null(self::$instance)) {
             self::$instance = new self();
+        }
 
         clearstatcache();
 
@@ -111,8 +111,10 @@ class OSD_Component_Factory
             if (!file_exists(self::$instance->osd_glass_center)) {
                 $argb = str_split($center_color, 2);
 
-                if (false === file_put_contents(self::$instance->osd_glass_center, pack("V2C4", 1, 1, hexdec($argb[4]), hexdec($argb[3]), hexdec($argb[2]), hexdec($argb[1]))))
-                    throw new Exception(get_class(self::$instance) . ': Attempt to write to the system drive failed!');
+                if (false === file_put_contents(self::$instance->osd_glass_center, pack("V2C4", 1, 1, hexdec($argb[4]), hexdec($argb[3]), hexdec($argb[2]), hexdec($argb[1])))) {
+                    hd_debug_print(get_class(self::$instance) . ': Attempt to write to the system drive failed!');
+                    return;
+                }
             }
         }
 
@@ -130,11 +132,10 @@ class OSD_Component_Factory
                 $argb = str_split($center_color, 2);
 
                 if (false === file_put_contents(self::$instance->weather_glass_center, pack("V2C4", 1, 1, hexdec($argb[4]), hexdec($argb[3]), hexdec($argb[2]), hexdec($argb[1])))) {
-                    throw new Exception(get_class(self::$instance) . ': Attempt to write to the system drive failed!');
+                    hd_debug_print(get_class(self::$instance) . ': Attempt to write to the system drive failed!');
                 }
             }
         }
-
     }
 
     /**
@@ -143,7 +144,6 @@ class OSD_Component_Factory
      * @param int $dy
      * @param int $width
      * @param int $height
-     * @throws Exception
      */
     public static function add_widget_box(&$comps, $dx, $dy, $width, $height)
     {
@@ -232,12 +232,12 @@ class OSD_Component_Factory
      * @param int $width
      * @param int $height
      * @return void
-     * @throws Exception
      */
     public static function add_content_box(&$comps, $dx, $dy, $width, $height)
     {
-        if (is_null(self::$instance))
+        if (is_null(self::$instance)) {
             self::init();
+        }
 
         $dx -= self::$instance->osd_glass_manifest['left_extent'];
         $dy -= self::$instance->osd_glass_manifest['top_extent'];

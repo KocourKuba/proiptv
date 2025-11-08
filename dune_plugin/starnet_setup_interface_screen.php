@@ -107,6 +107,22 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
             PARAM_EPG_FONT_SIZE, TR::t('setup_epg_font'), SwitchOnOff::translate_from($font_ops_translated, $font_size),
             SwitchOnOff::to_image($font_size), static::CONTROLS_WIDTH);
 
+        //////////////////////////////////////
+        // sleep timer position
+        $sleep_pos = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_POS, 'top_right');
+        hd_debug_print(PARAM_SLEEP_TIMER_POS . ": $sleep_pos", true);
+        $pos_ops_translated = array('top_left' => TR::t('setup_top_left'), 'top_right' => TR::t('setup_top_right'));
+        Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_POS,
+            TR::t('setup_sleep_time_pos'), $sleep_pos, $pos_ops_translated, static::CONTROLS_WIDTH, true);
+
+        //////////////////////////////////////
+        // sleep timer countdown
+        $sleep_countdown = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_COUNTDOWN, 120);
+        hd_debug_print(PARAM_SLEEP_TIMER_COUNTDOWN . ": $sleep_countdown", true);
+        $countdown_ops_translated = array(60 => '60', 120 => '120', 180 => '180', 240 => '240', 300 => '300');
+        Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_COUNTDOWN,
+            TR::t('setup_sleep_time_show'), $sleep_countdown, $countdown_ops_translated, static::CONTROLS_WIDTH, true);
+
         return $defs;
     }
 
@@ -130,8 +146,8 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
 
             case PARAM_SHOW_VOD_ICON:
                 $this->plugin->toggle_parameter($control_id);
-                $enable_vod_icon = SwitchOnOff::to_def($this->plugin->is_vod_enabled() && $this->plugin->get_bool_parameter(PARAM_SHOW_VOD_ICON));
-                $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
+                $enable_vod_icon = SwitchOnOff::to_def($this->plugin->is_vod_enabled() && $this->plugin->get_bool_parameter($control_id));
+                $plugin_cookies->{$control_id} = $enable_vod_icon;
                 hd_debug_print("Update cookie values: $enable_vod_icon", true);
 
                 return Action_Factory::invalidate_all_folders(
@@ -143,6 +159,11 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
             case PARAM_ASK_EXIT:
             case PARAM_EPG_FONT_SIZE:
                 $this->plugin->toggle_parameter($control_id, false);
+                break;
+
+            case PARAM_SLEEP_TIMER_POS:
+            case PARAM_SLEEP_TIMER_COUNTDOWN:
+                $this->plugin->set_parameter($control_id, $user_input->{$control_id});
                 break;
         }
 
