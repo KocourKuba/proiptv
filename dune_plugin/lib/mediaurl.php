@@ -27,6 +27,7 @@
 require_once 'json_serializer.php';
 
 /**
+ * @property string|null $screen_id // Screen ID
  * @property string|null $channel_id // Channel ID
  * @property string|null $group_id // Group ID
  * @property string|null $row_id // row id (used in NewUI)
