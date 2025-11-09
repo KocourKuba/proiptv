@@ -74,6 +74,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $actions[GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
 
+        if (!is_limited_apk()) {
+            // this key used to fire event from background xmltv indexing script
+            $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
+        }
+
         if ($this->plugin->is_plugin_inited()) {
             $this->plugin->init_plugin();
             $this->plugin->add_shortcuts_handlers($this, $actions);
@@ -137,21 +142,18 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     return User_Input_Handler_Registry::create_screen_action(Starnet_Entry_Handler::ID, ACTION_RELOAD);
                 }
 
-                // rising after playback end + 100 ms
-                // $this->plugin->update_tv_history(null);
-
                 $error_msg = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
                 if (!empty($error_msg)) {
                     hd_debug_print("Playlist loading error: $error_msg");
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $error_msg);
                 }
 
-                clearstatcache();
+                if (!is_limited_apk()) break;
+                return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies,
+                    Action_Factory::change_behaviour($this->get_action_map($media_url, &$plugin_cookies), 1000));
 
-                return $this->plugin->get_import_xmltv_logs_actions(
-                    $this->plugin->get_selected_xmltv_ids(),
-                    $this->get_action_map($media_url, $plugin_cookies),
-                    $plugin_cookies);
+            case EVENT_INDEXING_DONE:
+                return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
 
             case GUI_EVENT_KEY_PLAY:
             case GUI_EVENT_KEY_ENTER:
@@ -163,11 +165,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     );
                 }
 
-                $new_actions = safe_merge_array(
-                    $this->get_action_map($media_url, $plugin_cookies),
-                    array(GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER)));
-
-                return Action_Factory::change_behaviour($new_actions, 100, $tv_play_action);
+                return $tv_play_action;
 
             case GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE:
                 if (!isset($user_input->item_id, $user_input->folder_key)) {

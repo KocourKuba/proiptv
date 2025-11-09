@@ -80,6 +80,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             }
         }
 
+        if (!is_limited_apk()) {
+            // this key used to fire event from background xmltv indexing script
+            $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
+        }
+
         $this->plugin->add_shortcuts_handlers($this, $actions);
 
         return $actions;
@@ -115,11 +120,20 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
 
             case GUI_EVENT_TIMER:
-                clearstatcache();
-                return $this->plugin->get_import_xmltv_logs_actions(
-                    $this->plugin->get_selected_xmltv_ids(),
-                    $this->get_action_map($parent_media_url, $plugin_cookies),
-                    $plugin_cookies);
+                $error_msg = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
+                if (!empty($error_msg)) {
+                    hd_debug_print("Playlist loading error: $error_msg");
+                    return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $error_msg);
+                }
+
+                if (is_limited_apk()) {
+                    return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies,
+                        Action_Factory::change_behaviour($this->get_action_map($parent_media_url, &$plugin_cookies), 1000));
+                }
+                break;
+
+            case EVENT_INDEXING_DONE:
+                return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
 
             case GUI_EVENT_KEY_INFO:
                 return $this->plugin->do_show_channel_info($channel_id, true);

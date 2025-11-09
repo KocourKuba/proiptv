@@ -72,7 +72,9 @@ class Starnet_Tv implements User_Input_Handler
 
         $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
-        if ($this->plugin->is_full_size_remote()) {
+        if (!is_limited_apk()) {
+            // this key used to fire event from background xmltv indexing script
+            $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER_ADD);
             $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER);
         }
@@ -103,52 +105,18 @@ class Starnet_Tv implements User_Input_Handler
 
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
-                clearstatcache();
-                $comps = array();
-                $res = Epg_Manager_Xmltv::import_indexing_log($this->plugin->get_selected_xmltv_ids());
-                $post_action = Sleep_Timer::get_sleep_timer() ? Action_Factory::change_behaviour($this->get_action_map(), 1000) : null;
-
-                if ($res === 0) {
-                    hd_debug_print("No imports", true);
-                } else if ($res === -1) {
-                    $attrs['timer'] = Action_Factory::timer(10000);
-                    $attrs['actions'] = array(GUI_EVENT_TIMER => Action_Factory::close_dialog());
-                    $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
-                    return Action_Factory::show_title_dialog(
-                        TR::t('err_load_xmltv_source'),
-                        Dune_Last_Error::get_last_error(LAST_ERROR_XMLTV),
-                        $post_action,
-                        $attrs
-                    );
-                } else if ($res === 1 || $res === -2) {
-                    if ($this->plugin->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)) {
-                        if ($post_action === null) {
-                            $post_action = Action_Factory::change_behaviour($this->get_action_map(), 1000);
-                        }
-                        $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
-                    }
-
-                    $epg_manager = $this->plugin->get_epg_manager();
-                    if ($epg_manager !== null) {
-                        $delayed_queue = $epg_manager->get_delayed_epg();
-                        if (!empty($delayed_queue)) {
-                            $epg_manager->clear_delayed_epg();
-                            if ($post_action === null) {
-                                $post_action = Action_Factory::change_behaviour($this->get_action_map(), 1000);
-                            }
-                            foreach ($delayed_queue as $channel_id) {
-                                hd_debug_print("Refresh EPG for channel ID: $channel_id");
-                                $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
-                                $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
-                                $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg,
-                                    $post_action, $this->plugin->is_ext_epg_enabled() && !empty($day_epg));
-                            }
-                        }
-                    }
+                if (is_limited_apk()) {
+                    return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies, Action_Factory::change_behaviour($this->get_action_map(), 1000));
                 }
 
+                $comps = array();
                 Sleep_Timer::create_estimated_timer_box($comps, $user_input);
+
+                $post_action = Sleep_Timer::get_sleep_timer() ? Action_Factory::change_behaviour($this->get_action_map(), 1000) : null;
                 return Action_Factory::update_osd($comps, $post_action);
+
+            case EVENT_INDEXING_DONE:
+                return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
 
             case GUI_EVENT_PLAYBACK_STOP:
                 $this->plugin->update_tv_history($user_input->plugin_tv_channel_id);
@@ -172,7 +140,7 @@ class Starnet_Tv implements User_Input_Handler
 
             case ACTION_SLEEP_TIMER_ADD:
                 $comps = array();
-                Sleep_Timer::set_sleep_timer(Sleep_Timer::get_sleep_timer() + 60);
+                Sleep_Timer::set_sleep_timer(Sleep_Timer::get_sleep_timer() + 10);
                 Sleep_Timer::create_estimated_timer_box($comps, $user_input, true);
                 return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
         }

@@ -111,9 +111,18 @@ if (!defined('GUI_EVENT_KEY_TV')) define('GUI_EVENT_KEY_TV', 'key_tv');
 if (!defined('GUI_EVENT_KEY_MOVIES')) define('GUI_EVENT_KEY_MOVIES', 'key_movies');
 if (!defined('GUI_EVENT_KEY_MUSIC')) define('GUI_EVENT_KEY_MUSIC', 'key_music');
 if (!defined('GUI_EVENT_KEY_ANGLE')) define('GUI_EVENT_KEY_ANGLE', 'key_angle');
+if (!defined('GUI_EVENT_KEY_FAVORITES')) define('GUI_EVENT_KEY_FAVORITES', 'key_favorites');
 # Discrete Power Control
 if (!defined('GUI_EVENT_DISCRETE_POWER_ON')) define('GUI_EVENT_DISCRETE_POWER_ON', 'key_discrete_power_on');
 if (!defined('GUI_EVENT_DISCRETE_POWER_OFF')) define('GUI_EVENT_DISCRETE_POWER_OFF', 'key_discrete_power_off');
+
+# Google IR special controls
+if (!defined('GUI_EVENT_KEY_ACCOUNT')) define('GUI_EVENT_KEY_ACCOUNT', 'key_account');
+if (!defined('GUI_EVENT_KEY_BOOKMARK')) define('GUI_EVENT_KEY_BOOKMARK', 'key_bookmark');
+if (!defined('GUI_EVENT_KEY_YOUTUBE')) define('GUI_EVENT_KEY_YOUTUBE', 'key_youtube');
+if (!defined('GUI_EVENT_KEY_NETFLIX')) define('GUI_EVENT_KEY_NETFLIX', 'key_netflix');
+if (!defined('GUI_EVENT_KEY_PRIME')) define('GUI_EVENT_KEY_PRIME', 'key_prime');
+if (!defined('GUI_EVENT_KEY_APP_CUSTOM')) define('GUI_EVENT_KEY_APP_CUSTOM', 'key_app_custom');
 
 if (!defined('PHP_INT_MIN')) define('PHP_INT_MIN', ~PHP_INT_MAX);
 
@@ -339,11 +348,9 @@ class DuneIrControl
         GUI_EVENT_KEY_SEARCH            => 'F906BF00',
         GUI_EVENT_KEY_ZOOM              => 'FD02BF00',
         GUI_EVENT_KEY_SUBTITLE          => 'AB54BF00',
-        GUI_EVENT_KEY_REPEAT            => 'B24DBF00',
         GUI_EVENT_KEY_AUDIO             => 'BB44BF00',
         GUI_EVENT_KEY_REC               => '9F60BF00',
-        GUI_EVENT_KEY_DUNE              => '9E61BF00',
-        GUI_EVENT_KEY_URL               => '9D62BF00',
+        GUI_EVENT_KEY_URL               => '9D62BF00', // not works when sent to /proc/ir/button
         GUI_EVENT_KEY_0                 => 'F50ABF00',
         GUI_EVENT_KEY_1                 => 'F40BBF00',
         GUI_EVENT_KEY_2                 => 'F30CBF00',
@@ -354,16 +361,61 @@ class DuneIrControl
         GUI_EVENT_KEY_7                 => 'EE11BF00',
         GUI_EVENT_KEY_8                 => 'ED12BF00',
         GUI_EVENT_KEY_9                 => 'EC13BF00',
-        GUI_EVENT_KEY_SHUFFLE           => 'B847BF00',
-        GUI_EVENT_KEY_KEYBRD            => 'FC03BF00',
         GUI_EVENT_KEY_MOUSE             => 'B04FBF00',
-        GUI_EVENT_KEY_RECENT            => '9E61BF00',
+        GUI_EVENT_KEY_KEYBRD            => 'FC03BF00', // not works when sent to /proc/ir/button
+        GUI_EVENT_KEY_DUNE              => '9E61BF00',
+        GUI_EVENT_KEY_RECENT            => '9E61BF00', //FAV1
+        GUI_EVENT_KEY_FAVORITES         => '8B74BF00', //FAV2 not implemented yet in firmware
         GUI_EVENT_KEY_TV                => '9C63BF00',
-        GUI_EVENT_KEY_MOVIES            => 'B847BF00',
         GUI_EVENT_KEY_MUSIC             => 'A758BF00',
-        GUI_EVENT_KEY_ANGLE             => 'B24DBF00',
+        GUI_EVENT_KEY_MOVIES            => 'B847BF00', // not works when sent to /proc/ir/button
+        GUI_EVENT_KEY_SHUFFLE           => 'B847BF00', // opens Movies if come in main screen
+        GUI_EVENT_KEY_REPEAT            => 'B24DBF00', // crash if come in main screen
+        GUI_EVENT_KEY_ANGLE             => 'B24DBF00', // not works when sent to /proc/ir/button
         GUI_EVENT_DISCRETE_POWER_ON     => 'A05FBF00',
-        GUI_EVENT_DISCRETE_POWER_OFF    => 'A15EBF00');
+        GUI_EVENT_DISCRETE_POWER_OFF    => 'A15EBF00'
+    );
+
+    public static $google_key_codes = array(
+        GUI_EVENT_KEY_POWER             => 'DE217788',
+        GUI_EVENT_KEY_SETUP             => 'F00F7788',
+        GUI_EVENT_KEY_UP                => 'EA157788',
+        GUI_EVENT_KEY_LEFT              => 'E8177788',
+        GUI_EVENT_KEY_RIGHT             => 'E7187788',
+        GUI_EVENT_KEY_DOWN              => 'E9167788',
+        GUI_EVENT_KEY_ENTER             => 'E6197788',
+        GUI_EVENT_KEY_RETURN            => 'B7487788',
+        GUI_EVENT_KEY_TOP_MENU          => 'B8477788',
+        GUI_EVENT_KEY_TV                => 'CD327788',
+        GUI_EVENT_KEY_MUTE              => 'DA257788',
+        GUI_EVENT_KEY_V_PLUS            => 'DC237788',
+        GUI_EVENT_KEY_V_MINUS           => 'DB247788',
+        GUI_EVENT_KEY_P_PLUS            => 'CC337788',
+        GUI_EVENT_KEY_P_MINUS           => 'CB347788',
+        GUI_EVENT_KEY_0                 => 'F50A7788',
+        GUI_EVENT_KEY_1                 => 'FE017788',
+        GUI_EVENT_KEY_2                 => 'FD027788',
+        GUI_EVENT_KEY_3                 => 'FC037788',
+        GUI_EVENT_KEY_4                 => 'FB047788',
+        GUI_EVENT_KEY_5                 => 'FA057788',
+        GUI_EVENT_KEY_6                 => 'F9067788',
+        GUI_EVENT_KEY_7                 => 'F8077788',
+        GUI_EVENT_KEY_8                 => 'F7087788',
+        GUI_EVENT_KEY_9                 => 'F6097788',
+        GUI_EVENT_KEY_SUBTITLE          => 'A7587788',
+        GUI_EVENT_KEY_INFO              => 'D6297788',
+        GUI_EVENT_KEY_A_RED             => 'B44B7788',
+        GUI_EVENT_KEY_B_GREEN           => 'B54A7788',
+        GUI_EVENT_KEY_C_YELLOW          => 'B6497788',
+        GUI_EVENT_KEY_D_BLUE            => 'B34C7788',
+
+        GUI_EVENT_KEY_ACCOUNT           => 'A6597788',
+        GUI_EVENT_KEY_BOOKMARK          => '8B747788',
+        GUI_EVENT_KEY_YOUTUBE           => '9B647788',
+        GUI_EVENT_KEY_NETFLIX           => '9C637788',
+        GUI_EVENT_KEY_PRIME             => '98677788',
+        GUI_EVENT_KEY_APP_CUSTOM        => '97687788',
+    );
 }
 
 

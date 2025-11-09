@@ -1294,7 +1294,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             if ($all_sources->size() === 0) {
                 hd_debug_print("No active XMLTV sources found to collect playlist icons...");
             } else if ($delay_load) {
-                $bg_indexing_runs = $this->check_and_run_bg_indexing($all_sources, INDEXING_CHANNELS | INDEXING_ENTRIES);
+                $bg_indexing_runs |= $this->check_and_run_bg_indexing($all_sources, INDEXING_CHANNELS | INDEXING_ENTRIES, $plugin_cookies);
             } else {
                 foreach ($all_sources as $params) {
                     $flag = Epg_Manager_Xmltv::check_xmltv_source($this, $params, INDEXING_CHANNELS);
@@ -1308,7 +1308,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         if ($this->channels_loaded && !$delay_load && $this->use_xmltv) {
-            $this->check_and_run_bg_indexing($this->get_active_sources(), INDEXING_ENTRIES);
+            $this->check_and_run_bg_indexing($this->get_active_sources(), INDEXING_ENTRIES, $plugin_cookies);
             return true;
         }
 
@@ -1545,7 +1545,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print_separator();
 
         if (!$bg_indexing_runs && $this->use_xmltv) {
-            $this->check_and_run_bg_indexing($this->get_active_sources(), INDEXING_ENTRIES);
+            $this->check_and_run_bg_indexing($this->get_active_sources(), INDEXING_ENTRIES, $plugin_cookies);
         }
 
         $this->channels_loaded = true;
@@ -1585,11 +1585,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @param Hashed_Array $sources
      * @param int $indexing_flag
+     * @param $plugin_cookies
      * @return bool
      */
-    public function check_and_run_bg_indexing($sources, $indexing_flag)
+    public function check_and_run_bg_indexing($sources, $indexing_flag, $plugin_cookies)
     {
-        $indexing_run = false;
         $to_index = array();
         foreach ($sources as $source_id => $params) {
             $indexing_flag = Epg_Manager_Xmltv::check_xmltv_source($this, $params, $indexing_flag);
@@ -1598,9 +1598,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
+        $indexing_run = false;
         foreach ($to_index as $source_id => $value) {
-            $this->run_bg_epg_indexing($source_id, $value['flag']);
-            $indexing_run = true;
+            $indexing_run |= $this->run_bg_epg_indexing($source_id, $value['flag']);
+        }
+
+        if ($indexing_run) {
+            $plugin_cookies->ticker = 1;
+        } else {
+            unset($plugin_cookies->ticker);
         }
 
         return $indexing_run;
@@ -1610,7 +1616,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param string $source_id
      * @param int $indexing_flag
      * @param bool $allow_index
-     * @return void
+     * @return bool
      */
     public function run_bg_epg_indexing($source_id, $indexing_flag, $allow_index = false)
     {
@@ -1619,13 +1625,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $allow_index |= $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false);
         $allow_index |= $this->use_xmltv;
         if (!$allow_index) {
-            return;
+            return false;
         }
 
         $item = $this->get_xmltv_sources(XMLTV_SOURCE_ALL, $this->get_active_playlist_id())->get($source_id);
         if ($item === null) {
             hd_debug_print("XMLTV source '$source_id' not found");
-            return;
+            return false;
         }
 
         if (!isset($item[PARAM_HASH])) {
@@ -1656,6 +1662,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $cmd = "$ext_php -f $script_path $config_file >$log_path 2>&1 &";
         hd_debug_print("exec: $cmd", true);
         shell_exec($cmd);
+        return true;
     }
 
     /**
@@ -3411,26 +3418,65 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             || $group_id === VOD_GROUP_ID);
     }
 
-    public function get_import_xmltv_logs_actions($xmltv_ids, $actions, $plugin_cookies, $post_action = null)
+    /**
+     * @param object $plugin_cookies
+     * @param array|null $post_action
+     * @param array|null $xmltv_ids
+     * @return array|null
+     */
+    public function get_import_xmltv_logs_actions($plugin_cookies, $post_action = null, $xmltv_ids = null)
     {
+        clearstatcache();
+
+        if ($xmltv_ids === null) {
+            $xmltv_ids = $this->get_selected_xmltv_ids();
+        }
+
         $res = Epg_Manager_Xmltv::import_indexing_log($xmltv_ids);
+        switch ($res) {
+            case -1: // if no locks and no imports but has error
+            case -2: // if import successful and no other active locks but some error occurred
+                $attrs['timer'] = Action_Factory::timer(10000);
+                $attrs['actions'] = array(GUI_EVENT_TIMER => Action_Factory::close_dialog());
+                $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
+                return Action_Factory::show_title_dialog(
+                    TR::t('err_load_xmltv_source'),
+                    Dune_Last_Error::get_last_error(LAST_ERROR_XMLTV),
+                    $post_action,
+                    0,
+                    $attrs
+                );
 
-        if ($res === -1 || $res === -2) {
-            return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_source'), Dune_Last_Error::get_last_error(LAST_ERROR_XMLTV));
-        }
+            case 0:
+                hd_debug_print("No imports", true);
+                break;
 
-        if ($res === 0) {
-            hd_debug_print("No imports. Timer stopped");
-            return null;
-        }
+            case 1:
+            case 2:
+                if ($res === 1) {
+                    hd_debug_print("Logs imported. All indexing done", true);
+                } else {
+                    hd_debug_print("Logs imported. Some indexing in process", true);
+                }
 
-        if ($res === 1) {
-            hd_debug_print("Logs imported. Timer stopped");
-            return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
-        }
+                $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
 
-        if ($res === 2) {
-            return Action_Factory::change_behaviour($actions, 1000, $post_action);
+                $delayed_queue = $this->epg_manager->get_delayed_epg();
+                if (!empty($delayed_queue)) {
+                    $this->epg_manager->clear_delayed_epg();
+                    foreach ($delayed_queue as $channel_id) {
+                        hd_debug_print("Refresh EPG for channel ID: $channel_id");
+                        $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
+                        $day_epg = $this->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
+                        $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg,
+                            $post_action, $this->is_ext_epg_enabled() && !empty($day_epg));
+                    }
+                }
+
+                return $post_action;
+
+            default:
+                break;
         }
 
         return null;

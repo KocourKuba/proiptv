@@ -69,6 +69,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, ACTION_INFO_DLG);
 
+        if (!is_limited_apk()) {
+            // this key used to fire event from background xmltv indexing script
+            $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
+        }
+
         if (!$this->plugin->is_plugin_inited()) {
             $this->plugin->init_plugin();
         }
@@ -110,12 +115,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $error_msg);
                 }
 
-                clearstatcache();
+                if (is_limited_apk()) {
+                    return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies,
+                        Action_Factory::change_behaviour($this->get_action_map($parent_media_url, &$plugin_cookies), 1000));
+                }
+                break;
 
-                return $this->plugin->get_import_xmltv_logs_actions(
-                    $this->plugin->get_selected_xmltv_ids(),
-                    $this->get_action_map($parent_media_url, $plugin_cookies),
-                    $plugin_cookies);
+            case EVENT_INDEXING_DONE:
+                return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
 
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:

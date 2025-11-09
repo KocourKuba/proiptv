@@ -30,6 +30,7 @@ class Sleep_Timer
 
     const CONTROL_SLEEP_TIME_MIN = 'sleep_time_min';
     const CONTROL_SLEEP_TIME_SET = 'sleep_time_set';
+    const CMD_STATUS = '" $FS_PREFIX/firmware/ext_command/cgi-bin/do"';
 
     /**
      * @var string[]
@@ -160,10 +161,14 @@ class Sleep_Timer
             return;
         }
 
+        //$port = getenv('HD_HTTP_LOCAL_PORT');
+        //if (empty($port)) {
+        //    $port = 80;
+        //}
         $doc = "#!/bin/sh" . PHP_EOL;
         $doc .= "sleep $sleep_timer_sec" . PHP_EOL;
-        $doc .= 'if [ -z "$HD_HTTP_LOCAL_PORT" ]; then HD_HTTP_LOCAL_PORT="80"; fi' . PHP_EOL;
-        $doc .= 'wget --quiet -O - "http://127.0.0.1:$HD_HTTP_LOCAL_PORT/cgi-bin/do?cmd=standby"' . PHP_EOL;
+        //$doc .= "wget --quiet -O - \"http://127.0.0.1:$port/cgi-bin/do?cmd=standby\"" . PHP_EOL;
+        $doc .= 'echo ' . DuneIrControl::$key_codes[GUI_EVENT_KEY_DISCRETE_POWER_OFF] . ' > /proc/ir/button' . PHP_EOL;
         $doc .= "rm -- $pid_file" . PHP_EOL;
         $doc .= "rm -- $script_file" . PHP_EOL;
         file_put_contents($script_file, $doc);

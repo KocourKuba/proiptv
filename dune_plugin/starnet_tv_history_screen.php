@@ -58,6 +58,12 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
+        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+
+        if (!is_limited_apk()) {
+            // this key used to fire event from background xmltv indexing script
+            $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
+        }
 
         if ($this->plugin->get_tv_history_count() !== 0) {
             $add_to_favorite = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
@@ -98,6 +104,15 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_screen_action(
                         Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
+
+            case GUI_EVENT_TIMER:
+                if (!is_limited_apk()) break;
+
+                return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies,
+                    Action_Factory::change_behaviour($this->get_action_map($parent_media_url, &$plugin_cookies), 1000));
+
+            case EVENT_INDEXING_DONE:
+                return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
 
             case ACTION_PLAY_ITEM:
                 try {

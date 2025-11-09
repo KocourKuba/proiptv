@@ -41,6 +41,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
     const CONTROL_ACTION_SOURCE = 'source';
     const CONTROL_CACHE_TIME = 'cache_time';
 
+    const REFRESH_TIMER = 1000;
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -66,7 +68,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
-
+        if (!is_limited_apk()) {
+            // this key used to fire event from background xmltv indexing script
+            $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
+        }
         return $actions;
     }
 
@@ -108,20 +113,25 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $this->force_parent_reload = true;
                 break;
 
-            case GUI_EVENT_TIMER:
-                clearstatcache();
+            case EVENT_INDEXING_DONE:
+                $post_action = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
+                return $this->plugin->get_import_xmltv_logs_actions(
+                    $plugin_cookies,
+                    $post_action,
+                    $this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL, $this->plugin->get_active_playlist_id())
+                );
 
-                if (!isset($plugin_cookies->ticker)) {
-                    $plugin_cookies->ticker = 0;
+            case GUI_EVENT_TIMER:
+                $post_action = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
+                if (isset($plugin_cookies->ticker)) {
+                    $post_action = Action_Factory::change_behaviour(
+                        $this->get_action_map($parent_media_url, $plugin_cookies),
+                        self::REFRESH_TIMER,
+                        $post_action
+                    );
                 }
 
-                $post_action = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
-
-                return $this->plugin->get_import_xmltv_logs_actions(
-                    $this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL, $this->plugin->get_active_playlist_id()),
-                    $this->get_action_map($parent_media_url, $plugin_cookies),
-                    $plugin_cookies,
-                    $post_action);
+                return is_limited_apk() ? $this->plugin->get_import_xmltv_logs_actions($plugin_cookies, $post_action) : $post_action;
 
             case GUI_EVENT_KEY_INFO:
                 return $this->do_show_xmltv_info($selected_id);
@@ -145,12 +155,18 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_INDEX_EPG:
                 Epg_Manager_Xmltv::clear_epg_files($selected_id);
-                $this->plugin->run_bg_epg_indexing($selected_id, INDEXING_ALL, true);
                 $selected_sources = $this->plugin->get_selected_xmltv_ids();
                 if (in_array($selected_id, $selected_sources)) {
                     $this->force_parent_reload = true;
                 }
-                return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 1000);
+
+                $bg_indexing_runs = $this->plugin->run_bg_epg_indexing($selected_id, INDEXING_ALL, true);
+                if ($bg_indexing_runs || isset($plugin_cookies->ticker)) {
+                    hd_debug_print("Run timer", true);
+                    $plugin_cookies->ticker = 1;
+                    return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), self::REFRESH_TIMER);
+                }
+                break;
 
             case ACTION_CLEAR_CACHE:
                 Epg_Manager_Xmltv::clear_epg_files($selected_id);
@@ -502,10 +518,6 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
     {
         hd_debug_print(null, true);
 
-        if (++$plugin_cookies->ticker > 3) {
-            $plugin_cookies->ticker = 1;
-        }
-
         $items = array();
         $epg_manager = $this->plugin->get_epg_manager();
         if ($epg_manager === null) {
@@ -522,6 +534,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
         $selected_sources = $this->plugin->get_selected_xmltv_ids();
         hd_debug_print("Selected sources: " . json_encode($selected_sources), true);
+        $has_locks = false;
         foreach ($all_sources as $key => $item) {
             $detailed_info = '';
             $order_key = false;
@@ -536,6 +549,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $cached_xmltv_file = $this->plugin->get_cache_dir() . '/' . "$key.xmltv";
             $locked = Epg_Manager_Xmltv::is_index_locked($key, INDEXING_ALL);
             if ($locked) {
+                $has_locks = true;
                 $title = file_exists($cached_xmltv_file) ? TR::t('edit_list_title_info__1', $title) : TR::t('edit_list_title_info_download__1', $title);
             } else if (file_exists($cached_xmltv_file)) {
                 $check_time_file = filemtime($cached_xmltv_file);
@@ -568,10 +582,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
             }
 
-            if ($locked) {
-                $icon_file = get_image_path("refresh$plugin_cookies->ticker.png");
-                hd_debug_print("icon: $icon_file");
-            } else if ($pl_sources->has($key)) {
+            if ($pl_sources->has($key)) {
                 if (safe_get_value($item, PARAM_TYPE) === PARAM_CONF) {
                     $icon_file = get_image_path("config.png");
                 } else {
@@ -581,6 +592,12 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $icon_file = get_image_path("link.png");
             }
 
+            $icon_detailed = $icon_file;
+
+            if ($locked) {
+                $icon_file = get_image_path("refresh$plugin_cookies->ticker.png");
+            }
+
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'id' => $key)),
                 PluginRegularFolderItem::caption => $title,
@@ -588,9 +605,17 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     ViewItemParams::item_sticker => ($order_key === false ? null : $sticker),
                     ViewItemParams::icon_path => $icon_file,
                     ViewItemParams::item_detailed_info => $detailed_info,
-                    ViewItemParams::item_detailed_icon_path => $icon_file,
+                    ViewItemParams::item_detailed_icon_path => $icon_detailed,
                 ),
             );
+        }
+
+        if ($has_locks) {
+            if (++$plugin_cookies->ticker > 3) {
+                $plugin_cookies->ticker = 1;
+            }
+        } else {
+            unset($plugin_cookies->ticker);
         }
 
         return $items;

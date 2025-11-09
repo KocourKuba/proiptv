@@ -324,50 +324,65 @@ class Epg_Manager_Xmltv
      * Plugin not available at this time!
      *
      * @param $config_file
-     * @return bool
+     * @return void
      */
     public static function index_by_config($config_file)
     {
         global $LOG_FILE;
 
-        if (!file_exists($config_file)) {
-            Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, "Config file for indexing not exist");
-            return false;
+        try {
+            if (!file_exists($config_file)) {
+                Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, "Config file for indexing not exist");
+                throw new Exception("Config file for indexing not exist");
+            }
+
+            $config = json_decode(file_get_contents($config_file), true);
+            if (!LogSeverity::$is_debug) {
+                unlink($config_file);
+            }
+            if ($config === false) {
+                Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, "Invalid config file for indexing");
+                throw new Exception("Invalid config file for indexing");
+            }
+
+            if (empty($config[PARAMS_XMLTV])) {
+                throw new Exception("Empty XMLTV config for indexing");
+            }
+
+            $LOG_FILE = get_temp_path("{$config[PARAMS_XMLTV][PARAM_HASH]}_indexing.log");
+            if (file_exists($LOG_FILE) && !LogSeverity::$is_debug) {
+                unlink($LOG_FILE);
+            }
+
+            date_default_timezone_set('UTC');
+
+            set_debug_log($config[PARAM_COOKIE_ENABLE_DEBUG]);
+
+            self::set_cache_dir($config[PARAM_CACHE_DIR]);
+
+            hd_print("Script config");
+            hd_print("Log:         " . $LOG_FILE);
+            hd_print("Cache dir:   " . self::$cache_dir);
+            hd_print("Index flag:  " . $config[PARAM_INDEXING_FLAG]);
+            hd_print("XMLTV param: " . json_encode($config[PARAMS_XMLTV]));
+
+            self::reindex_xmltv($config[PARAMS_XMLTV], $config[PARAM_INDEXING_FLAG]);
+        } catch (Exception $exception) {
+            hd_debug_print($exception);
         }
 
-        $config = json_decode(file_get_contents($config_file), true);
-        if (!LogSeverity::$is_debug) {
-            unlink($config_file);
+        $port = getenv('HD_HTTP_LOCAL_PORT');
+        if (empty($port)) {
+            $port = 80;
         }
-        if ($config === false) {
-            Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, "Invalid config file for indexing");
-            return false;
+        $res = shell_exec("wget -q -O - \"http://127.0.0.1:$port/cgi-bin/do?cmd=ui_state&result_syntax=json\"");
+        $status = json_decode($res);
+        if (isset($status->ui_state->screen->folder_type) && strpos($status->ui_state->screen->folder_type, ".proiptv") !== false) {
+            hd_print("Rise finishing event: " . DuneIrControl::$key_codes[EVENT_INDEXING_DONE]);
+            shell_exec('echo ' . DuneIrControl::$key_codes[EVENT_INDEXING_DONE] . ' > /proc/ir/button');
+        } else {
+            hd_print("Plugin not active. Do not notify them");
         }
-
-        if (empty($config[PARAMS_XMLTV])) {
-            return false;
-        }
-
-        $LOG_FILE = get_temp_path("{$config[PARAMS_XMLTV][PARAM_HASH]}_indexing.log");
-        if (file_exists($LOG_FILE) && !LogSeverity::$is_debug) {
-            unlink($LOG_FILE);
-        }
-
-        date_default_timezone_set('UTC');
-
-        set_debug_log($config[PARAM_COOKIE_ENABLE_DEBUG]);
-
-        self::set_cache_dir($config[PARAM_CACHE_DIR]);
-
-        hd_print("Script config");
-        hd_print("Log:         " . $LOG_FILE);
-        hd_print("Cache dir:   " . self::$cache_dir);
-        hd_print("Index flag:  " . $config[PARAM_INDEXING_FLAG]);
-        hd_print("XMLTV param: " . json_encode($config[PARAMS_XMLTV]));
-
-        self::reindex_xmltv($config[PARAMS_XMLTV], $config[PARAM_INDEXING_FLAG]);
-
-        return true;
     }
 
     /**
@@ -845,7 +860,7 @@ class Epg_Manager_Xmltv
             if (file_exists($index_log)) {
                 hd_debug_print("Read epg indexing log $index_log...");
                 hd_debug_print_separator();
-                $logfile = @file_get_contents($index_log);
+                $logfile = file_get_contents($index_log);
                 foreach (explode(PHP_EOL, $logfile) as $l) {
                     hd_print(preg_replace("|^\[[\d:-]+\s(.*)$|", "[$1", rtrim($l)));
                 }
@@ -853,6 +868,23 @@ class Epg_Manager_Xmltv
                 hd_debug_print("Read finished");
                 unlink($index_log);
                 $has_imports = true;
+            }
+
+            $error_log = get_temp_path("{$hash}_bg_error.log");
+            if (file_exists($error_log)) {
+                $error_file = file_get_contents($error_log);
+                if (!empty($error_file)) {
+                    hd_debug_print("Read indexing error log $error_log...");
+                    hd_debug_print_separator();
+                    foreach (explode(PHP_EOL, $error_file) as $l) {
+                        if (!empty($l)) {
+                            hd_print($l);
+                        }
+                    }
+                    hd_debug_print_separator();
+                    $has_imports = true;
+                }
+                unlink($error_log);
             }
         }
 
@@ -1266,12 +1298,19 @@ class Epg_Manager_Xmltv
         $curl_wrapper->set_connection_timeout($params[PARAM_CURL_CONNECT_TIMEOUT]);
         $curl_wrapper->set_download_timeout($params[PARAM_CURL_DOWNLOAD_TIMEOUT]);
         if (!$curl_wrapper->download_file($url, $tmp_filename, true)) {
-            throw new Exception("Can't exec curl");
+            $http_code = $curl_wrapper->get_http_code();
+            if ($curl_wrapper->get_error_no() !== 0) {
+                $msg = "CURL errno: {$curl_wrapper->get_error_no()}\n{$curl_wrapper->get_error_desc()}\nHTTP code: $http_code";
+            } else {
+                $msg = "HTTP request failed ($http_code)\n\n" . $curl_wrapper->get_raw_response_headers();
+            }
+
+            throw new Exception("Can't download file\n$msg");
         }
 
         $http_code = $curl_wrapper->get_http_code();
         if ($http_code !== 200) {
-            throw new Exception("Download error ($http_code) $url" . PHP_EOL . PHP_EOL . $curl_wrapper->get_raw_response_headers());
+            throw new Exception("Download error ($http_code) $url\n\n" . $curl_wrapper->get_raw_response_headers());
         }
 
         $perf->setLabel('end_download');

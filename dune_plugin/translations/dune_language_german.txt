@@ -281,7 +281,7 @@ entry_epg_cache_cleared = EPG-Cache geleert
 entry_epg_cache_time = EPG-Cache-Zeit (Tage):
 entry_reboot = Starten Sie Dune neu
 entry_setup = Plugin-Einstellung
-entry_index_epg = Verarbeitungs-EPG ausführen
+entry_index_epg = Verarbeitungs-EPG ausführen (PLAY)
 entry_force_open = Kategorien anzeigen
 entry_backup = BackupRestore-Einstellungen
 

@@ -459,3 +459,5 @@ const API_ACTION_SERIAL = 'serial';
 const API_ACTION_FILTERS = 'filters';
 const API_ACTION_SEARCH = 'search';
 const API_ACTION_FILTER = 'filter';
+
+const EVENT_INDEXING_DONE = GUI_EVENT_KEY_REPEAT;

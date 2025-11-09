@@ -75,11 +75,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         if (!isset($user_input->control_id)) {
-            hd_debug_print("user input control id not set", true);
+            hd_debug_print("user input control id not set");
             return null;
         }
 
-        hd_debug_print("user input control: $user_input->control_id", true);
+        hd_debug_print("user input control: $user_input->control_id");
 
         if (!is_r22_or_higher()) {
             hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
