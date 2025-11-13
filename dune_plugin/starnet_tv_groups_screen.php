@@ -342,7 +342,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     hd_debug_print("Selected engine: $user_input->control_id", true);
                     $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
                     $this->plugin->init_epg_manager();
-                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                    $active_sources = $this->plugin->get_selected_xmltv_ids();
+                    $post_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                    if (empty($active_sources) && $user_input->control_id === ENGINE_XMLTV) {
+                        $post_action = Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_no_xmltv_sources'), $post_action);
+                    }
+                    return $post_action;
                 }
                 break;
 

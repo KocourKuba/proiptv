@@ -146,7 +146,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 $post_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
                 $val = $user_input->{$control_id};
                 $active_sources = $this->plugin->get_selected_xmltv_ids();
-                if (empty($active_sources) && $val !== ENGINE_XMLTV) {
+                if (empty($active_sources) && $val === ENGINE_XMLTV) {
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_no_xmltv_sources'), $post_action);
                 }
                 $this->plugin->set_setting($control_id, $val);
