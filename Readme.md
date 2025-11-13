@@ -62,6 +62,7 @@ For old devices (Sigma chipset based, non-Android), the latest version is [5.1.1
 49. [Shurik TV](https://schuriktv.nethouse.ru/)
 50. [2TV](https://2tv.biz/)
 51. [Skaz TV](https://skaz.tv/)
+52. [VivaMax](https://t.me/vivamax_portal/)
 </details>
 
 ## Donate

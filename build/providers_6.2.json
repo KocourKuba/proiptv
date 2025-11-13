@@ -1648,6 +1648,25 @@
     },
     {
       "enable": true,
+      "id": "vivamax",
+      "name": "VivaMax",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_vivamax.png",
+      "provider_url": "https://t.me/vivamax_portal",
+      "api_url": "https://pl.vivamax.pro",
+      "config": {
+        "playlists": {
+          "default": {
+            "name": "Default",
+            "url": "{API}/{PASSWORD}/playlist.m3u8"
+          }
+        },
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>[^\\/]+)\\/(?<id>.+)\\/(?<var1>.+)\\.m3u8\\?token=(?<token>.+)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "yosso",
       "name": "Yosso TV",
       "type": "login",
