@@ -371,6 +371,10 @@ class Epg_Manager_Xmltv
             hd_debug_print($exception);
         }
 
+        if (is_limited_apk()) {
+            return;
+        }
+
         $port = getenv('HD_HTTP_LOCAL_PORT');
         if (empty($port)) {
             $port = 80;

@@ -162,7 +162,7 @@ class Sleep_Timer
 
         $doc = "#!/bin/sh" . PHP_EOL;
         $doc .= "sleep $sleep_timer_sec" . PHP_EOL;
-        $doc .= 'echo ' . DuneIrControl::$key_codes[GUI_EVENT_KEY_DISCRETE_POWER_OFF] . ' > /proc/ir/button' . PHP_EOL;
+        $doc .= 'echo ' . DuneIrControl::$key_codes[GUI_EVENT_DISCRETE_POWER_OFF] . ' > /proc/ir/button' . PHP_EOL;
         $doc .= "rm -- $pid_file" . PHP_EOL;
         $doc .= "rm -- $script_file" . PHP_EOL;
         file_put_contents($script_file, $doc);
