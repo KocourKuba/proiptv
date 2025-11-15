@@ -241,55 +241,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                 switch ($user_input->action_id) {
                     case self::ACTION_LAUNCH:
-                        $action = $this->check_upgrade($user_input);
-                        if ($action !== null) {
-                            return $action;
-                        }
-
-                        hd_debug_print_separator();
-                        hd_debug_print("LANUCH PLUGIN");
-
-                        $this->plugin->init_plugin();
-                        if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) {
-                            return $this->open_playlist_screen();
-                        }
-
-                        $mandatory_playback = (int)safe_get_member($user_input,'mandatory_playback');
-                        $auto_play = safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_PLAY);
-                        hd_debug_print("Play button used: $mandatory_playback");
-                        hd_debug_print("Auto play:        $auto_play");
-                        if ($mandatory_playback === 1 || SwitchOnOff::to_bool($auto_play)) {
-                            hd_debug_print("launch auto play", true);
-
-                            if (!$this->plugin->load_channels($plugin_cookies)) {
-                                return Action_Factory::open_folder(
-                                    Starnet_Tv_Groups_Screen::ID,
-                                    $this->plugin->get_plugin_title(),
-                                    null,
-                                    null,
-                                    Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
-                                );
-                            }
-
-                            $media_url = null;
-                            if (file_exists('/config/resume_state.properties')) {
-                                $resume_state = parse_ini_file('/config/resume_state.properties', 0, INI_SCANNER_RAW);
-
-                                if (strpos($resume_state['plugin_name'], get_plugin_name()) !== false) {
-                                    $media_url = MediaURL::decode();
-                                    $media_url->is_favorite = $resume_state['plugin_tv_is_favorite'];
-                                    $media_url->group_id = $resume_state['plugin_tv_is_favorite'] ? Starnet_Tv_Favorites_Screen::ID : $resume_state['plugin_tv_group'];
-                                    $media_url->channel_id = $resume_state['plugin_tv_channel'];
-                                    $media_url->archive_tm = ((time() - $resume_state['plugin_tv_archive_tm']) < 259200) ? $resume_state['plugin_tv_archive_tm'] : -1;
-                                    hd_debug_print("Auto play: " . $media_url);
-                                }
-                            }
-
-                            return Action_Factory::tv_play($media_url);
-                        }
-
-                        hd_debug_print("action: launch open", true);
-                        return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
+                    case self::ACTION_AUTO_RESUME:
+                        return $this->run_resume_state($user_input, $plugin_cookies);
 
                     case self::ACTION_LAUNCH_VOD:
                         $action = $this->check_upgrade($user_input);
@@ -313,53 +266,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         return Action_Factory::show_error(false, TR::t('err_vod_not_available'));
-
-                    case self::ACTION_AUTO_RESUME:
-                        $action = $this->check_upgrade($user_input);
-                        if ($action !== null) {
-                            return $action;
-                        }
-
-                        hd_debug_print_separator();
-                        hd_debug_print("LANUCH PLUGIN AUTO RESUME MODE");
-                        hd_debug_print_separator();
-
-                        $this->plugin->init_plugin();
-                        if (!$this->plugin->init_playlist_db()) {
-                            return $this->open_playlist_screen();
-                        }
-
-                        $auto_resume = safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_RESUME);
-                        hd_debug_print("Auto resume:      $auto_resume");
-                        if (!SwitchOnOff::to_bool($auto_resume)) break;
-
-                        if (!$this->plugin->load_channels($plugin_cookies)) {
-                            $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
-                            return Action_Factory::open_folder(
-                                Starnet_Tv_Groups_Screen::ID,
-                                $this->plugin->get_plugin_title(),
-                                null,
-                                null,
-                                $post_action
-                            );
-                        }
-
-                        if (file_exists('/config/resume_state.properties')) {
-                            $resume_state = parse_ini_file('/config/resume_state.properties', 0, INI_SCANNER_RAW);
-
-                            if (strpos($resume_state['plugin_name'], get_plugin_name()) !== false && $resume_state['plugin_media_url'] === "tv_groups") {
-                                $media_url = MediaURL::decode();
-                                $media_url->is_favorite = $resume_state['plugin_tv_is_favorite'];
-                                $media_url->group_id = $resume_state['plugin_tv_is_favorite'] ? Starnet_Tv_Favorites_Screen::ID : $resume_state['plugin_tv_group'];
-                                $media_url->channel_id = $resume_state['plugin_tv_channel'];
-                                $media_url->archive_tm = ((time() - $resume_state['plugin_tv_archive_tm']) < 259200) ? $resume_state['plugin_tv_archive_tm'] : -1;
-                                hd_debug_print("Auto resume channel: " . $media_url);
-                                return Action_Factory::tv_play($media_url);
-                            }
-                        }
-
-                        hd_debug_print("auto resume channel not exist. action: launch open", true);
-                        return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
 
                     case self::ACTION_UPDATE_EPFS:
                         $this->plugin->init_plugin();
@@ -437,5 +343,107 @@ class Starnet_Entry_Handler implements User_Input_Handler
         );
 
         return Action_Factory::open_folder($media_url, TR::t('setup_channels_src_edit_playlists'));
+    }
+
+    /**
+     * @return array
+     */
+    public function run_resume_state($user_input, &$plugin_cookies)
+    {
+        $action = $this->check_upgrade($user_input);
+        if ($action !== null) {
+            return $action;
+        }
+
+        hd_debug_print_separator();
+        hd_debug_print("LANUCH PLUGIN");
+
+        $this->plugin->init_plugin();
+        if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) {
+            return $this->open_playlist_screen();
+        }
+
+        if (!$this->plugin->load_channels($plugin_cookies)) {
+            return Action_Factory::open_folder(
+                Starnet_Tv_Groups_Screen::ID,
+                $this->plugin->get_plugin_title(),
+                null,
+                null,
+                Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
+            );
+        }
+
+        $open_action = Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
+        $auto_play = false;
+        $auto_resume = false;
+        $post_action = null;
+        if ($user_input->action_id === self::ACTION_LAUNCH) {
+            $mandatory_playback = (int)safe_get_member($user_input,'mandatory_playback');
+            $auto_play = safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_PLAY);
+            hd_debug_print_separator();
+            hd_debug_print("Play button used: $mandatory_playback");
+            hd_debug_print("Auto play:        $auto_play");
+
+            if ($mandatory_playback !== 1 && !SwitchOnOff::to_bool($auto_play)) {
+                $post_action = $open_action;
+            }
+        } else if ($user_input->action_id === self::ACTION_AUTO_RESUME) {
+            hd_debug_print_separator();
+            hd_debug_print("LANUCH PLUGIN AUTO RESUME MODE");
+            $auto_resume = safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_RESUME);
+            hd_debug_print("Auto resume:      $auto_resume");
+            if (!SwitchOnOff::to_bool($auto_resume)) {
+                hd_debug_print("auto resume disabled", true);
+                $post_action = $open_action;
+            }
+        }
+
+        if ($post_action !== null) {
+            hd_debug_print("action: launch open", true);
+            return $post_action;
+        }
+
+        hd_debug_print("launch resume state", true);
+        // mode = PLUGIN_TV_PLAYBACK
+        // plugin_name = proiptv
+        // plugin_entry_media_url = tv_groups
+        // plugin_media_url = {"channel_id":"204","group_id":"\u041e\u0431\u0449\u0438\u0435"}
+        // plugin_media_url = {"screen_id":"vod_series","movie_id":"121681","episode_id":"121681"}
+        // plugin_tv_group = Общие
+        // plugin_tv_channel = 204
+        // plugin_tv_is_favorite = 0
+        // plugin_tv_archive_tm = -1
+        // plugin_tv_trick_play = 0
+        // plugin_tv_trick_play_duration = -1
+        // plugin_vod_id = 121681
+        // plugin_vod_series_ndx = 0
+        // plugin_vod_position_seconds = 426
+
+        if (file_exists('/config/resume_state.properties')) {
+            $resume_state = parse_ini_file('/config/resume_state.properties', 0, INI_SCANNER_RAW);
+            if (strpos($resume_state['plugin_name'], get_plugin_name()) !== false) {
+                $media_url = null;
+                // Check if previous state is TV playback
+                if ($resume_state['mode'] === "PLUGIN_TV_PLAYBACK") {
+                    $media_url = MediaURL::decode($resume_state['plugin_media_url']);
+                    if (isset($media_url->channel_id)) {
+                        $media_url->is_favorite = $resume_state['plugin_tv_is_favorite'];
+                        $media_url->archive_tm = ((time() - $resume_state['plugin_tv_archive_tm']) < 259200) ? $resume_state['plugin_tv_archive_tm'] : -1;
+                        hd_debug_print("Resumed channel: " . $media_url);
+                    }
+                }
+
+                if ($auto_resume && $media_url !== null) {
+                    return Action_Factory::tv_play($media_url);
+                }
+
+                if ($auto_play) {
+                    return Action_Factory::tv_play($media_url);
+                }
+            }
+        }
+
+        hd_debug_print("action: launch open", true);
+        return $open_action;
     }
 }
