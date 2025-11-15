@@ -363,15 +363,15 @@ class DuneIrControl
         GUI_EVENT_KEY_9                 => 'EC13BF00',
         GUI_EVENT_KEY_MOUSE             => 'B04FBF00',
         GUI_EVENT_KEY_KEYBRD            => 'FC03BF00', // not works when sent to /proc/ir/button
-        GUI_EVENT_KEY_DUNE              => '9E61BF00',
+        GUI_EVENT_KEY_DUNE              => '9E61BF00', //FAV1
         GUI_EVENT_KEY_RECENT            => '9E61BF00', //FAV1
         GUI_EVENT_KEY_FAVORITES         => '8B74BF00', //FAV2 not implemented yet in firmware
         GUI_EVENT_KEY_TV                => '9C63BF00',
         GUI_EVENT_KEY_MUSIC             => 'A758BF00',
-        GUI_EVENT_KEY_MOVIES            => 'B847BF00', // not works when sent to /proc/ir/button
-        GUI_EVENT_KEY_SHUFFLE           => 'B847BF00', // opens Movies if come in main screen
-        GUI_EVENT_KEY_REPEAT            => 'B24DBF00', // crash if come in main screen
-        GUI_EVENT_KEY_ANGLE             => 'B24DBF00', // not works when sent to /proc/ir/button
+        GUI_EVENT_KEY_MOVIES            => 'B847BF00',
+        GUI_EVENT_KEY_SHUFFLE           => 'B847BF00',
+        GUI_EVENT_KEY_REPEAT            => 'B24DBF00', // Reload plugin when called from main screen
+        GUI_EVENT_KEY_ANGLE             => 'B24DBF00',
         GUI_EVENT_DISCRETE_POWER_ON     => 'A05FBF00',
         GUI_EVENT_DISCRETE_POWER_OFF    => 'A15EBF00'
     );
@@ -2029,8 +2029,9 @@ function get_dune_model()
 {
     static $models = array(
         // android models
-        'boxy_apk' => 'Boxy',
-        'dune_apk' => 'Homatics Box',
+        'boxy_apk' => 'Homatics Boxy',
+        'dune_apk' => 'Homatics Models',
+        'dune_whale_apk' => 'Dune HD TV',
         // android models
         'tv173b' => 'Neo 4K (revision tv173b)',
         'tv174a' => 'Neo 4K T2',
