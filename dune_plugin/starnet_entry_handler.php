@@ -380,7 +380,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
         if ($user_input->action_id === self::ACTION_LAUNCH) {
             $mandatory_playback = (int)safe_get_member($user_input,'mandatory_playback');
             $auto_play = safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_PLAY);
-            hd_debug_print_separator();
             hd_debug_print("Play button used: $mandatory_playback");
             hd_debug_print("Auto play:        $auto_play");
 
@@ -388,7 +387,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 $post_action = $open_action;
             }
         } else if ($user_input->action_id === self::ACTION_AUTO_RESUME) {
-            hd_debug_print_separator();
             hd_debug_print("LANUCH PLUGIN AUTO RESUME MODE");
             $auto_resume = safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_RESUME);
             hd_debug_print("Auto resume:      $auto_resume");
@@ -430,6 +428,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         $media_url->is_favorite = $resume_state['plugin_tv_is_favorite'];
                         $media_url->archive_tm = ((time() - $resume_state['plugin_tv_archive_tm']) < 259200) ? $resume_state['plugin_tv_archive_tm'] : -1;
                         hd_debug_print("Resumed channel: " . $media_url);
+                    }
+                } else if ($auto_resume && $resume_state['mode'] === "PLUGIN_VOD_PLAYBACK") {
+                    $vod_info = $this->plugin->vod->get_vod_info(MediaURL::decode($resume_state['plugin_media_url']));
+                    if ($vod_info !== null) {
+                        return Action_Factory::vod_play($vod_info);
                     }
                 }
 
