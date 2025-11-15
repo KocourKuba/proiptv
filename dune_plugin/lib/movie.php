@@ -173,7 +173,8 @@ class Movie implements User_Input_Handler
 
             case ACTION_SLEEP_TIMER_ADD:
                 $comps = array();
-                Sleep_Timer::set_sleep_timer(Sleep_Timer::get_sleep_timer() + 30);
+                $step = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_STEP, 30);
+                Sleep_Timer::set_sleep_timer(Sleep_Timer::get_sleep_timer() + $step);
                 Sleep_Timer::create_estimated_timer_box($comps, $user_input, true);
                 return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
         }

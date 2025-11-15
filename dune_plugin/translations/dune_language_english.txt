@@ -253,6 +253,7 @@ setup_native_file = Playlist file
 setup_use_common_fav = Use common "Favorites"
 setup_sleep_time_show = Start sleep countdown at seconds
 setup_sleep_time_pos = Sleep timer position
+setup_sleep_time_step = Manual sleep timer step (min)
 setup_top_left = Top left corner
 setup_top_right = Top right corner
 
