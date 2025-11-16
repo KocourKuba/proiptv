@@ -83,6 +83,7 @@ class Movie implements User_Input_Handler
         $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
         if (!is_limited_apk()) {
+            $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER_CLEAR);
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER_ADD);
             $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER);
         }
@@ -172,9 +173,15 @@ class Movie implements User_Input_Handler
                 return Action_Factory::change_behaviour($this->get_action_map(), 1000);
 
             case ACTION_SLEEP_TIMER_ADD:
-                $comps = array();
-                $step = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_STEP, 30);
+                $step = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_STEP, 60);
                 Sleep_Timer::set_sleep_timer(Sleep_Timer::get_sleep_timer() + $step);
+                $comps = array();
+                Sleep_Timer::create_estimated_timer_box($comps, $user_input, true);
+                return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
+
+            case ACTION_SLEEP_TIMER_CLEAR:
+                Sleep_Timer::set_sleep_timer(0);
+                $comps = array();
                 Sleep_Timer::create_estimated_timer_box($comps, $user_input, true);
                 return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
         }

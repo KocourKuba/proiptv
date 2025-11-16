@@ -126,7 +126,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
 
             //////////////////////////////////////
             // sleep timer step
-            $sleep_step = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_STEP, 30);
+            $sleep_step = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_STEP, 60);
             hd_debug_print(PARAM_SLEEP_TIMER_STEP . ": $sleep_step", true);
             $step_ops_translated = array(30 => '0.5', 60 => '1', 120 => '2', 300 => '5', 600 => '10');
             Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_STEP,

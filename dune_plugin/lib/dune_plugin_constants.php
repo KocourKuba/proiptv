@@ -100,6 +100,7 @@ const ACTION_EXPORT_APPLY_DLG = 'apply_export';
 const ACTION_FILE_PLAYLIST = 'play_list_file';
 const ACTION_SLEEP_TIMER = 'sleep_timer';
 const ACTION_SLEEP_TIMER_ADD = 'sleep_timer_add';
+const ACTION_SLEEP_TIMER_CLEAR = 'sleep_timer_clear';
 
 const CONTROL_ACTION_EDIT = 'action_edit';
 const CONTROL_EDIT_NAME = 'set_item_name';
