@@ -417,32 +417,33 @@ class Starnet_Entry_Handler implements User_Input_Handler
         // plugin_vod_series_ndx = 0
         // plugin_vod_position_seconds = 426
 
-        if (file_exists('/config/resume_state.properties')) {
-            $resume_state = parse_ini_file('/config/resume_state.properties', 0, INI_SCANNER_RAW);
-            if (strpos($resume_state['plugin_name'], get_plugin_name()) !== false) {
-                $media_url = null;
-                // Check if previous state is TV playback
-                if ($resume_state['mode'] === "PLUGIN_TV_PLAYBACK") {
-                    $media_url = MediaURL::decode($resume_state['plugin_media_url']);
-                    if (isset($media_url->channel_id)) {
-                        $media_url->is_favorite = $resume_state['plugin_tv_is_favorite'];
-                        $media_url->archive_tm = ((time() - $resume_state['plugin_tv_archive_tm']) < 259200) ? $resume_state['plugin_tv_archive_tm'] : -1;
-                        hd_debug_print("Resumed channel: " . $media_url);
-                    }
-                } else if ($auto_resume && $resume_state['mode'] === "PLUGIN_VOD_PLAYBACK") {
-                    $vod_info = $this->plugin->vod->get_vod_info(MediaURL::decode($resume_state['plugin_media_url']));
-                    if ($vod_info !== null) {
-                        return Action_Factory::vod_play($vod_info);
-                    }
+        $resume_state = get_resume_state_assoc();
+        $plugin_name = safe_get_value($resume_state, 'plugin_name');
+        if (strpos($plugin_name, get_plugin_name()) !== false) {
+            $media_url = null;
+            $mode = safe_get_value($resume_state, 'mode');
+            // Check if previous state is TV playback
+            if ($mode === "PLUGIN_TV_PLAYBACK") {
+                $media_url = MediaURL::decode(safe_get_value($resume_state, 'plugin_media_url'));
+                if (isset($media_url->channel_id)) {
+                    $media_url->is_favorite = safe_get_value($resume_state, 'plugin_tv_is_favorite');
+                    $archive_tm = safe_get_value($resume_state, 'plugin_tv_archive_tm');
+                    $media_url->archive_tm = ((time() - $archive_tm) < 259200) ? $archive_tm : -1;
+                    hd_debug_print("Resumed channel: " . $media_url);
                 }
+            } else if ($auto_resume && $mode === "PLUGIN_VOD_PLAYBACK") {
+                $vod_info = $this->plugin->vod->get_vod_info(MediaURL::decode(safe_get_value($resume_state, 'plugin_media_url')));
+                if ($vod_info !== null) {
+                    return Action_Factory::vod_play($vod_info);
+                }
+            }
 
-                if ($auto_resume && $media_url !== null) {
-                    return Action_Factory::tv_play($media_url);
-                }
+            if ($auto_resume && $media_url !== null) {
+                return Action_Factory::tv_play($media_url);
+            }
 
-                if ($auto_play) {
-                    return Action_Factory::tv_play($media_url);
-                }
+            if ($auto_play) {
+                return Action_Factory::tv_play($media_url);
             }
         }
 

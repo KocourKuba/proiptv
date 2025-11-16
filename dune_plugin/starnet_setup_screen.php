@@ -34,6 +34,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen
     const ID = 'setup';
 
     const CONTROL_INTERFACE_SCREEN = 'interface_screen';
+    const CONTROL_SLEEP_TIMER_SCREEN = 'sleep_timer_screen';
     const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
     const CONTROL_FOLDERS_SCREEN = 'folders_screen';
     const CONTROL_EXT_SETUP_SCREEN = 'extended_setup_screen';
@@ -79,6 +80,14 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen
             TR::t('setup_interface_title'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
         $ret_index += 2;
 
+        if (!is_limited_apk()) {
+            //////////////////////////////////////
+            // Sleep timer settings
+            Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_SLEEP_TIMER_SCREEN,
+                TR::t('setup_sleep_timer_title'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
+            $ret_index += 2;
+        }
+
         //////////////////////////////////////
         // Folders settings
         Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_FOLDERS_SCREEN,
@@ -114,6 +123,11 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen
                 return Action_Factory::open_folder(
                     Starnet_Setup_Interface_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
                     TR::t('setup_interface_title'));
+
+            case self::CONTROL_SLEEP_TIMER_SCREEN: // show sleep timer settings dialog
+                return Action_Factory::open_folder(
+                    Starnet_Setup_Sleep_Timer_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
+                    TR::t('setup_sleep_timer_title'));
 
             case self::CONTROL_FOLDERS_SCREEN: // show folders settings dialog
                 return Action_Factory::open_folder(

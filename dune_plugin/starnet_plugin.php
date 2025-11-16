@@ -34,6 +34,7 @@ require_once 'starnet_tv_groups_screen.php';
 require_once 'starnet_setup_playlist_screen.php';
 require_once 'starnet_setup_interface_screen.php';
 require_once 'starnet_setup_interface_newui_screen.php';
+require_once 'starnet_setup_sleep_timer_screen.php';
 require_once 'starnet_setup_category_screen.php';
 require_once 'starnet_setup_epg_screen.php';
 require_once 'starnet_setup_folders_screen.php';
@@ -78,6 +79,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Setup_Screen($this));
         $this->create_screen(new Starnet_Setup_Interface_Screen($this));
         $this->create_screen(new Starnet_Setup_Interface_NewUI_Screen($this));
+        $this->create_screen(new Starnet_Setup_Sleep_Timer_Screen($this));
         $this->create_screen(new Starnet_Setup_Category_Screen($this));
         $this->create_screen(new Starnet_Setup_Playlist_Screen($this));
         $this->create_screen(new Starnet_Setup_Epg_Screen($this));

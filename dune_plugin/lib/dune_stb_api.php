@@ -1070,9 +1070,15 @@ function get_player_state()
  */
 function get_player_state_assoc()
 {
-    # return array
-
     return parse_ini_file(getenv('FS_PREFIX') . '/tmp/run/ext_command.state', 0, INI_SCANNER_RAW);
+}
+
+/**
+ * @return array|false
+ */
+function get_resume_state_assoc()
+{
+    return parse_ini_file('/config/resume_state.properties', 0, INI_SCANNER_RAW);
 }
 
 /**

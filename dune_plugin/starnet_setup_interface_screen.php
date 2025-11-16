@@ -100,38 +100,21 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // epg font size
-        $font_size = $this->plugin->get_parameter(PARAM_EPG_FONT_SIZE, SwitchOnOff::off);
-        hd_debug_print(PARAM_EPG_FONT_SIZE . ": $font_size", true);
+        $epg_font_size = $this->plugin->get_parameter(PARAM_EPG_FONT_SIZE, SwitchOnOff::off);
+        hd_debug_print(PARAM_EPG_FONT_SIZE . ": $epg_font_size", true);
         $font_ops_translated = array(SwitchOnOff::on => TR::t('setup_small'), SwitchOnOff::off => TR::t('setup_normal'));
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_EPG_FONT_SIZE, TR::t('setup_epg_font'), SwitchOnOff::translate_from($font_ops_translated, $font_size),
-            SwitchOnOff::to_image($font_size), static::CONTROLS_WIDTH);
+            PARAM_EPG_FONT_SIZE, TR::t('setup_epg_font'), SwitchOnOff::translate_from($font_ops_translated, $epg_font_size),
+            SwitchOnOff::to_image($epg_font_size), static::CONTROLS_WIDTH);
 
-        if (!is_limited_apk()) {
-            //////////////////////////////////////
-            // sleep timer position
-            $sleep_pos = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_POS, 'top_right');
-            hd_debug_print(PARAM_SLEEP_TIMER_POS . ": $sleep_pos", true);
-            $pos_ops_translated = array('top_left' => TR::t('setup_top_left'), 'top_right' => TR::t('setup_top_right'));
-            Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_POS,
-                TR::t('setup_sleep_time_pos'), $sleep_pos, $pos_ops_translated, static::CONTROLS_WIDTH, true);
-
-            //////////////////////////////////////
-            // sleep timer countdown
-            $sleep_countdown = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_COUNTDOWN, 120);
-            hd_debug_print(PARAM_SLEEP_TIMER_COUNTDOWN . ": $sleep_countdown", true);
-            $countdown_ops_translated = array(60 => '60', 120 => '120', 180 => '180', 240 => '240', 300 => '300');
-            Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_COUNTDOWN,
-                TR::t('setup_sleep_time_show'), $sleep_countdown, $countdown_ops_translated, static::CONTROLS_WIDTH, true);
-
-            //////////////////////////////////////
-            // sleep timer step
-            $sleep_step = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_STEP, 60);
-            hd_debug_print(PARAM_SLEEP_TIMER_STEP . ": $sleep_step", true);
-            $step_ops_translated = array(30 => '0.5', 60 => '1', 120 => '2', 300 => '5', 600 => '10');
-            Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_STEP,
-                TR::t('setup_sleep_time_step'), $sleep_step, $step_ops_translated, static::CONTROLS_WIDTH, true);
-        }
+        //////////////////////////////////////
+        // group/channel font size
+        $group_font_size = $this->plugin->get_parameter(PARAM_GROUP_FONT_SIZE, SwitchOnOff::off);
+        hd_debug_print(PARAM_GROUP_FONT_SIZE . ": $group_font_size", true);
+        $font_ops_translated = array(SwitchOnOff::on => TR::t('setup_small'), SwitchOnOff::off => TR::t('setup_normal'));
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_GROUP_FONT_SIZE, TR::t('setup_group_font'), SwitchOnOff::translate_from($font_ops_translated, $group_font_size),
+            SwitchOnOff::to_image($group_font_size), static::CONTROLS_WIDTH);
 
         return $defs;
     }
@@ -168,13 +151,8 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
 
             case PARAM_ASK_EXIT:
             case PARAM_EPG_FONT_SIZE:
+            case PARAM_GROUP_FONT_SIZE:
                 $this->plugin->toggle_parameter($control_id, false);
-                break;
-
-            case PARAM_SLEEP_TIMER_POS:
-            case PARAM_SLEEP_TIMER_COUNTDOWN:
-            case PARAM_SLEEP_TIMER_STEP:
-                $this->plugin->set_parameter($control_id, $user_input->{$control_id});
                 break;
         }
 

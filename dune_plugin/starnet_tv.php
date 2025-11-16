@@ -246,6 +246,8 @@ class Starnet_Tv implements User_Input_Handler
 
         $show_fav = $this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES);
         $fav_icon = $this->plugin->get_group_icon(TV_FAV_GROUP_ID);
+        $epg_font_size = $this->plugin->get_bool_parameter(PARAM_EPG_FONT_SIZE, false);
+        $group_font_size = $this->plugin->get_bool_parameter(PARAM_GROUP_FONT_SIZE, false);
         $tv_info = array(
             PluginTvInfo::show_group_channels_only => true,
 
@@ -263,9 +265,7 @@ class Starnet_Tv implements User_Input_Handler
 
             PluginTvInfo::initial_archive_tm => isset($media_url->archive_tm) ? (int)$media_url->archive_tm : -1,
 
-            PluginTvInfo::epg_font_size => $this->plugin->get_bool_parameter(PARAM_EPG_FONT_SIZE, false)
-                ? PLUGIN_FONT_SMALL
-                : PLUGIN_FONT_NORMAL,
+            PluginTvInfo::epg_font_size => $epg_font_size ? PLUGIN_FONT_SMALL : PLUGIN_FONT_NORMAL,
 
             PluginTvInfo::epg_day_use_local_tz => USE_TZ_LOCAL,
             PluginTvInfo::epg_day_shift_sec => 0,
@@ -273,6 +273,17 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::actions => $this->get_action_map(),
             PluginTvInfo::timer => Action_Factory::timer(1000),
         );
+
+        if ($epg_font_size) {
+            $tv_info[PluginTvInfo::epg_page_size] = 16;
+        }
+
+        if ($group_font_size) {
+            $tv_info[PluginTvInfo::groups_text_size] = 28;
+            $tv_info[PluginTvInfo::groups_page_size] = 16;
+            $tv_info[PluginTvInfo::channels_text_size] = 28;
+            $tv_info[PluginTvInfo::channels_page_size] = 16;
+        }
 
         if ($this->plugin->is_ext_epg_enabled()) {
             $playlist_id = $this->plugin->get_active_playlist_id();
