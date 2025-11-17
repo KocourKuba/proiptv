@@ -1,4 +1,23 @@
-﻿### Version 7.0.1422
+﻿### Version 7.0.1448
+- Added the ability to use multiple images of the TV show from xmltv (if exists) in the Ext EPG
+- Adjust the start of the day depending on the time zone (DuneHD recommendations)
+- Added font size change setting for groups/channels in the window in the Play mode
+- Added a warning when selecting the XMLTV engine about the absence of selected sources
+- Resume play is now available for VOD as well. That is, instead of the TV channel, the movie will resume if it was turned off while watching
+- Added a Sleep timer when watching a show or movie. NOT available for ATV devices (based on Homatics)!
+- A yellow button in the Play mode calls a window with a fixed selection of the sleep time.
+- Green button in the Play mode - manual sleep timer mode. The step can be changed in the plugin settings, the default is 1 minute.
+- Red button in the Play mode - disabling the timer. You can also disable it by selecting "No" as the sleep timer dialog called by yellow button.
+- 2 minutes before sleep, OSD with a countdown is shown, the countdown start time can also be set in the plugin settings
+- When you exit from Play mode of TV/movie, the sleep timer turns off!
+- A new mechanism for notifying the plugin when XMLTV indexing is complete, now the plugin does not check the state of the process every second and does not waste resources on it. NOT available for ATV devices (based on Homatics)!
+- Fixed a spelling error in the Sharaclub subscription window
+- Fixed an incorrect plugin error message on the EPG setup page
+- Configuration: added the ability to change the domain for the API for providers IPTVOnline/Tvizi (for previous versions of 7.x, you may need to go to the provider settings and select the desired domain)
+- Configuration: VivaMax provider added
+- Configuration: Updated configuration for Peak TV
+
+### Version 7.0.1422
 - Fixed a bug that caused the plugin to crash if an error message was displayed
 - Fixed a bug that caused the plugin to crash when calling the settings password dialog
 - Removed support for caching playlists at the web server level. Link shorteners have problems with it
