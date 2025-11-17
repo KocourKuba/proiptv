@@ -755,7 +755,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_iptvonline.png",
       "provider_url": "https://iptv.online/",
-      "api_url": "https://see-tv.eu/api/v4",
+      "api_url": "https://{DOMAIN_ID}/api/v4",
       "api_commands": {
         "request_token": "{API}/auth",
         "refresh_token": "{API}/oauth2",
@@ -788,6 +788,10 @@
         "streams": {
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
+        },
+        "domains": {
+          "see-tv.eu": "see-tv.eu",
+          "iptv.online": "iptv.online"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
