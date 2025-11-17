@@ -148,7 +148,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $error_msg);
                 }
 
-                if (!is_limited_apk()) break;
+                if (!is_limited_apk()) return null;
+
                 return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies,
                     Action_Factory::change_behaviour($this->get_action_map($media_url, &$plugin_cookies), 1000));
 
