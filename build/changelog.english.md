@@ -13,6 +13,7 @@
 - A new mechanism for notifying the plugin when XMLTV indexing is complete, now the plugin does not check the state of the process every second and does not waste resources on it. NOT available for ATV devices (based on Homatics)!
 - Fixed a spelling error in the Sharaclub subscription window
 - Fixed an incorrect plugin error message on the EPG setup page
+- Fixed a bug with calling the internal timer in NewUI
 - Configuration: added the ability to change the domain for the API for providers IPTVOnline/Tvizi (for previous versions of 7.x, you may need to go to the provider settings and select the desired domain)
 - Configuration: VivaMax provider added
 - Configuration: Updated configuration for Peak TV
