@@ -1,4 +1,4 @@
-﻿### Version 7.0.1448
+﻿### Version 7.0.1452
 - Added the ability to use multiple images of the TV show from xmltv (if exists) in the Ext EPG
 - Adjust the start of the day depending on the time zone (DuneHD recommendations)
 - Added font size change setting for groups/channels in the window in the Play mode
@@ -14,6 +14,7 @@
 - Fixed a spelling error in the Sharaclub subscription window
 - Fixed an incorrect plugin error message on the EPG setup page
 - Fixed a bug with calling the internal timer in NewUI
+- Fixed a bug that did not allow you to select a link or a provider playlist file
 - Configuration: added the ability to change the domain for the API for providers IPTVOnline/Tvizi (for previous versions of 7.x, you may need to go to the provider settings and select the desired domain)
 - Configuration: VivaMax provider added
 - Configuration: Updated configuration for Peak TV
