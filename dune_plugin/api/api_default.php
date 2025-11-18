@@ -404,8 +404,6 @@ class api_default
             CONFIG_SERVERS => MACRO_SERVER_ID,
             CONFIG_DEVICES => MACRO_DEVICE_ID,
             CONFIG_QUALITIES => MACRO_QUALITY_ID,
-            CONFIG_PLAYLISTS_IPTV => PARAM_PLAYLIST_IPTV_ID,
-            CONFIG_PLAYLISTS_VOD => PARAM_PLAYLIST_VOD_ID,
         );
 
         foreach ($config_items as $name => $param) {
