@@ -4,7 +4,7 @@
       "editor": {
         "name": "IPTV Channel Editor",
         "package": "icon_pack_editor.zip",
-        "url": "https://dl.dropboxusercontent.com/scl/fi/4ro320e1mbdby78awqpyk/icon_pack_editor.zip?rlkey=whzmvdw418zms746qj2tkgl8j"
+        "url": "https://dl.dropboxusercontent.com/scl/fi/4ro320e1mbdby78awqpyk/icon_pack_editor.zip?rlkey=whzmvdw418zms746qj2tkgl8j&dl=1"
       },
       "xemu": {
         "name": "Xemu",
@@ -14,12 +14,12 @@
       "viktor": {
         "name": "igores",
         "package": "icon_pack_viktor.zip",
-        "url": "https://dl.dropboxusercontent.com/scl/fi/kh6nvfodicsx62s5f4vjy/icon_pack_viktor.zip?rlkey=oj3eec3i9oew813cay5cqj718"
+        "url": "https://dl.dropboxusercontent.com/scl/fi/kh6nvfodicsx62s5f4vjy/icon_pack_viktor.zip?rlkey=oj3eec3i9oew813cay5cqj718&dl=1"
       },
       "zedoar": {
         "name": "zedoar",
         "package": "icon_pack_zedoar.zip",
-        "url": "https://dl.dropboxusercontent.com/scl/fi/g4z1tbnr915eukb4bwj7u/icon_pack_zedoar.zip?rlkey=agq5ql9tlwwuym7ysj8n20mji"
+        "url": "https://dl.dropboxusercontent.com/scl/fi/g4z1tbnr915eukb4bwj7u/icon_pack_zedoar.zip?rlkey=agq5ql9tlwwuym7ysj8n20mji&dl=1"
       }
     }
   },
@@ -98,6 +98,15 @@
         "epg_start": "time"
       }
     },
+    "shurik": {
+      "json_source": "http://json.is-a-player.com/epg-server/epg_enigma?id={EPG_ID}",
+      "parser": {
+        "epg_root": "data",
+        "epg_name": "title",
+        "epg_desc": "description",
+        "epg_start": "begin"
+      }
+    },
     "tvclub": {
       "json_source": "http://api.iptv.so/0.9/json/epg?token={SESSION_ID}&channels={EPG_ID}&time={TIMESTAMP}&period=24",
       "parser": {
@@ -108,7 +117,7 @@
       }
     },
     "tvteam": {
-      "json_source": "http://tv.team/{EPG_ID}.json",
+      "json_source": "http://tvteam.eu/{EPG_ID}.json",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
@@ -219,13 +228,14 @@
         "id_map": "tvg-name",
         "epg_presets": [
           {
-            "name": "tvteam"
+            "name": "tvteam",
+            "epg_map": "tvg-id"
           },
           {
             "name": "drm",
             "title": "epg.drm-play",
             "alias": "tvteam",
-            "epg_map": "name"
+            "epg_map": "tvg-id"
           }
         ],
         "ext_params": true,
@@ -248,6 +258,40 @@
     },
     {
       "enable": true,
+      "id": "2tv",
+      "name": "2tv",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_2tv.png",
+      "provider_url": "http://2tv.biz/",
+      "api_url": "https://pptt.fun",
+      "api_commands": {
+        "get_playlist": "{API}/pl/{PASSWORD}/playlist.m3u8",
+        "get_vod": "{API}/mk/{PASSWORD}/playlist.m3u8"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "iptv.online",
+            "title": "epg.drm-play"
+          }
+        ],
+        "ext_params": true,
+        "servers": {
+          "ca.seetv.cc": "Canada",
+          "de.seetv.cc": "Germany",
+          "gr.seetv.cc": "Greece",
+          "pl.online24.pm": "Poland",
+          "ru.seetv.cc": "Russia",
+          "ua.online24.pm": "Ukraine"
+        },
+        "vod_parser": "/^(?<title>[^|]+)\\s\\|(?<year>\\d+)\\|\\s?IMDB\\:(?<rating>.+)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "antifriz",
       "name": "Antifriz",
       "type": "pin",
@@ -255,6 +299,7 @@
       "provider_url": "https://antifriz.tv/",
       "api_url": "http://protected-api.com",
       "api_commands": {
+        "account_info": "{API}/auth/info",
         "get_playlist": "https://af-play.com/playlist/{PASSWORD}.m3u8",
         "get_vod": "{API}",
         "get_servers": "{API}/servers"
@@ -320,25 +365,6 @@
     },
     {
       "enable": true,
-      "id": "blinktv",
-      "name": "BlinkTV",
-      "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_blinktv.png",
-      "provider_url": "https://blinktv.cc/",
-      "api_commands": {
-        "get_playlist": "https://blinktv.cc/{LOGIN}/{PASSWORD}/{STREAM_ID}/playlist.m3u8"
-      },
-      "config": {
-        "id_parser" : "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
-        "streams": {
-          "hls": "HLS",
-          "ts": "MPEG-TS"
-        }
-      }
-    },
-    {
-      "enable": true,
       "id": "cbilling",
       "name": "Cbilling",
       "type": "pin",
@@ -346,6 +372,7 @@
       "provider_url": "https://cbilling.eu/",
       "api_url": "http://protected-api.com",
       "api_commands": {
+        "account_info": "{API}/auth/info",
         "get_playlist": "http://248on.com/playlist/{PASSWORD}_otp_dev{DEVICE_ID}.m3u8",
         "get_vod": "{API}",
         "get_servers": "{API}/servers"
@@ -485,6 +512,7 @@
         "get_vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
       },
       "config": {
+        "id_map": "CUID",
         "epg_presets": [
           {
             "name": "drm",
@@ -502,7 +530,7 @@
       "name": "Glanz",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_glanz.png",
-      "provider_url": "http://ottg.cc/",
+      "provider_url": "http://ottg.tv/",
       "api_commands": {
         "get_playlist": "{PLAYLIST}",
         "get_vod": "http://api.{DOMAIN_ID}/playlist/vod?login={LOGIN}&password={PASSWORD}"
@@ -522,11 +550,8 @@
           "ts": "MPEG-TS"
         },
         "domains": {
-          "ottg.cc": "ottg.cc",
-          "ottg.in": "ottg.in",
-          "ottg.tv": "ottg.tv",
-          "ottg.space": "ottg.space",
-          "ottg.eu": "ottg.eu"
+          "ottg.app": "ottg.app",
+          "ottg.cc": "ottg.cc"
         },
         "playlists": {
           "standard": {
@@ -537,27 +562,6 @@
             "name": "No Adult channels",
             "url": "http://pl.{DOMAIN_ID}/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output={STREAM_ID}&censored=0"
           }
-        },
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
-      }
-    },
-    {
-      "enable": true,
-      "id": "hnmedia",
-      "name": "HN Media",
-      "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_hnmedia.png",
-      "provider_url": "https://hnmedia.pro/",
-      "api_commands": {
-        "get_playlist": "https://hnmedia.pro/playlist/{STREAM_ID}/{PASSWORD}.m3u"
-      },
-      "config": {
-        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?token=.+$/",
-        "ext_params": true,
-        "streams": {
-          "hls": "HLS",
-          "hls2": "HLS2",
-          "siptv": "MPEG-TS"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
@@ -575,7 +579,7 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)(?:\\/.+\\.m3u8|\\.ts)$/",
-        "ignore_groups": ["Video on Demand","РЎРµСЂРёР°Р»С‹"],
+        "ignore_groups": ["Video on Demand","Сериалы"],
         "epg_presets": [
           {
             "name": "sharaclub"
@@ -631,23 +635,29 @@
       }
     },
     {
-      "enable": false,
-      "id": "iptv360",
-      "name": "IPTV 360",
+      "enable": true,
+      "id": "iptvplay",
+      "name": "IPTV Play",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptv360.png",
-      "provider_url": "https://iptv360.ru/",
+      "logo": "http://iptv.esalecrm.net/res/logo_iptvplay.png",
+      "provider_url": "https://iptv-play.ru/",
       "api_commands": {
-        "get_playlist": "https://iptv360.ru/playlist/{STREAM_ID}/{PASSWORD}.m3u"
+        "get_playlist": "https://iptv-play.ru/billing/?m3u8&token={PASSWORD}"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
-        "ext_params": true,
-        "streams": {
-          "hls": "HLS",
-          "hls2": "HLS2",
-          "siptv": "MPEG-TS"
-        },
+        "epg_presets": [
+          {
+            "name": "drm",
+            "title": "epg.drm-play.only4",
+            "alias": "only4"
+          },
+          {
+            "name": "drm",
+            "title": "epg.drm-play.iptvx.one",
+            "alias": "iptvx.one"
+          }
+        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -658,7 +668,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_iptvonline.png",
       "provider_url": "https://iptv.online/",
-      "api_url": "https://iptv.online/api/v4",
+      "api_url": "https://see-tv.eu/api/v4",
       "api_commands": {
         "get_playlist": "{API}/playlist/m3u8",
         "request_token": "{API}/auth",
@@ -789,14 +799,14 @@
       "enable": true,
       "id": "klimedia",
       "name": "KLI Media",
-      "type": "login",
+      "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_klimedia.png",
       "provider_url": "https://klimedia.space/",
       "api_commands": {
-        "get_playlist": "https://klimedia.space/{STREAM_ID}/{LOGIN}/{PASSWORD}/playlist.m3u8"
+        "get_playlist": "https://klimedia.space/playlist/{STREAM_ID}/{PASSWORD}.m3u"
       },
       "config": {
-        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/lb\\/(?<id>.+)\\/.+$/",
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "ext_params": true,
         "streams": {
           "hls": "HLS",
@@ -987,8 +997,8 @@
       "name": "Peak TV",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_peaktv.png",
-      "provider_url": "https://peaktv.info/",
-      "api_url": "https://peaktv.info",
+      "provider_url": "https://peaktv.su/",
+      "api_url": "http://peaktv.su",
       "api_commands": {
         "get_playlist": "{API}/{PASSWORD}/hls/peaktvinfo.m3u8"
       },
@@ -996,8 +1006,7 @@
         "epg_presets": [
           {
             "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "yosso"
+            "title": "epg.drm-play"
           }
         ],
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/balancer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
@@ -1071,6 +1080,26 @@
     },
     {
       "enable": true,
+      "id": "reflextv",
+      "name": "ReflexTV",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_reflextv.png",
+      "provider_url": "https://reflextv.ru/",
+      "api_commands": {
+        "get_playlist": "https://reflextv.ru/playlist/{STREAM_ID}/{PASSWORD}.m3u"
+      },
+      "config": {
+        "id_parser" : "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
+        "ext_params": true,
+        "streams": {
+          "hls": "HLS",
+          "siptv": "MPEG-TS"
+        }
+      }
+    },
+    {
+      "enable": true,
       "id": "rutv",
       "name": "RU TV",
       "type": "login",
@@ -1094,7 +1123,7 @@
       "logo": "http://iptv.esalecrm.net/res/logo_russkoetv.png",
       "provider_url": "https://russkoetv.shop/",
       "api_commands": {
-        "get_playlist": "https://russkoetv.shop/play/{PASSWORD}.m3u8"
+        "get_playlist": "http://ru-list.com/play/{PASSWORD}.m3u8"
       },
       "config": {
         "id_map": "tvg-id",
@@ -1119,6 +1148,13 @@
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
         "ext_params": true,
+        "epg_presets": [
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "iptvx.one"
+          }
+        ],
         "url_subst": {
           "regex": "/^(.+\\/\\/).+(\\/[^\\/]+\\/[^\\/]+\\/.+)$/",
           "replace": "$1{SERVER_ID}$2"
@@ -1197,7 +1233,6 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
       "provider_url": "https://sh365.org/",
-      "api_url": "http://api.program.spr24.net/api",
       "api_commands": {
         "get_playlist": "http://{DOMAIN_ID}/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
         "get_vod": "http://app.media24.cc/json/c"
@@ -1207,6 +1242,11 @@
         "epg_presets": [
           {
             "name": "sharavoz"
+          },
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "sharavoz"
           }
         ],
         "ext_params": true,
@@ -1215,11 +1255,14 @@
           "replace": "$1{SERVER_ID}$2{STREAM_ID}$3"
         },
         "domains": {
-          "shrv.gb.net": "shrv.gb.net",
+          "sh365.org": "sh365.org",
+          "tv1.shrv30.online": "shrv30.online",
           "www.sharavoz.tv": "sharavoz.tv",
           "sharavoz.space": "sharavoz.space",
-          "sh365.org": "sh365.org",
-          "sh24.one": "sh24.one"
+          "sh24.one": "sh24.one",
+          "sh24.xyz": "sh24.xyz",
+          "sh385.cc": "sh385.cc",
+          "www.spr24.net": "spr24.net"
         },
         "streams": {
           "index.m3u8": "HLS",
@@ -1231,7 +1274,6 @@
           "ru03.spr24.net": "Moscow (RU03)",
           "nl01.spr24.net": "Amsterdam (NL01)",
           "am01.spr24.net": "Amsterdam (AM01)",
-          "am02.spr24.net": "Amsterdam (AM02)",
           "fr01.spr24.net": "France (FR01)",
           "ch01.spr24.net": "Zurich (CH01)",
           "eu01.spr24.net": "Europe (EU01)",
@@ -1261,6 +1303,65 @@
         "servers": {
           "0": "Server 1",
           "1": "Server 2"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "shurik",
+      "name": "ShurikTV",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_shuriktv.png",
+      "provider_url": "https://schuriktv.nethouse.ru/",
+      "api_url": "https://srv4you.net/api/v1",
+      "api_commands": {
+        "get_playlist": "https://srv4you.net/pl/m3u8/{PASSWORD}/pl.{STREAM_ID}",
+        "account_info": "{API}/customers/expired_packet/{PASSWORD}/"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
+        "epg_presets": [
+          {
+            "name": "shurik"
+          }
+        ],
+        "ext_params": true,
+        "streams": {
+          "m3u8": "HLS",
+          "m3u": "MPEG-TS"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "skaztv",
+      "name": "Skaz TV",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_skaztv.png",
+      "provider_url": "http://skaz.tv/",
+      "api_commands": {
+        "get_playlist": "https://{DOMAIN_ID}/play/{PASSWORD}"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/stream\\/(?<id>.+)\\/.+\\/.+\\.m3u8$/",
+        "epg_presets": [
+          {
+            "name": "tvteam",
+            "epg_map": "tvg-id"
+          },
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "tvteam",
+            "epg_map": "tvg-id"
+          }
+        ],
+        "ext_params": true,
+        "domains": {
+          "skaz.tv": "skaz.tv",
+          "skaztv.online": "skaztv.online"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
@@ -1349,23 +1450,24 @@
       "api_url": "http://{DOMAIN_ID}/api",
       "api_commands": {
         "account_info": "{API}/?apiAction=getUserData,getServersGroups,getUserPackages&sessionId={SESSION_ID}",
-        "get_playlist": "http://troya.one/pl/11/{TOKEN}/playlist.m3u8",
+        "get_playlist": "http://team.ga/pl/11/{TOKEN}/playlist.m3u8",
         "get_servers": "{API}/?apiAction=getServersGroups&sessionId={SESSION_ID}",
         "set_server": "{API}/?apiAction=updateUserData&groupId={SERVER_ID}&sessionId={SESSION_ID}",
         "get_packages": "{API}/?apiAction=getUserPackages&sessionId={SESSION_ID}",
         "request_token": "{API}/?userLogin={LOGIN}&userPasswd={HASH_PASSWORD}"
       },
       "config": {
-        "id_map": "tvg-name",
+        "id_map": "tvg-id",
         "epg_presets": [
           {
-            "name": "tvteam"
+            "name": "tvteam",
+            "epg_map": "tvg-id"
           },
           {
             "name": "drm",
             "title": "epg.drm-play",
             "alias": "tvteam",
-            "epg_map": "name"
+            "epg_map": "tvg-id"
           }
         ],
         "ext_params": true,
@@ -1383,10 +1485,8 @@
           "mpegts": "MPEG-TS"
         },
         "xmltv_sources": [
-          "http://epg.team/tvteam.xml.gz",
-          "http://epg.team/tvteam.3.3.xml.tar.gz",
-          "http://epg.team/tvteam.5.5.xml.tar.gz",
-          "http://epg.team/tvteam.7.7.xml.tar.gz"
+          "http://epg.team/tvteam.1.1.xml.gz",
+          "http://epg.team/tvteam.3.1.xml.tar.gz"
         ]
       }
     },
@@ -1397,7 +1497,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_tvizi.png",
       "provider_url": "https://tvizi.net/",
-      "api_url": "https://iptv.online/api/v4",
+      "api_url": "https://see-tv.eu/api/v4",
       "api_commands": {
         "get_playlist": "{API}/playlist/m3u8",
         "request_token": "{API}/auth",
@@ -1518,6 +1618,25 @@
           "variant": "Adaptive",
           "hls": "Optimal"
         },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "vivamax",
+      "name": "VivaMax",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_vivamax.png",
+      "provider_url": "https://t.me/vivamax_portal",
+      "api_url": "https://pl.vivamax.pro",
+      "config": {
+        "playlists": {
+          "default": {
+            "name": "Default",
+            "url": "{API}/{PASSWORD}/playlist.m3u8"
+          }
+        },
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>[^\\/]+)\\/(?<id>.+)\\/(?<var1>.+)\\.m3u8\\?token=(?<token>.+)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },

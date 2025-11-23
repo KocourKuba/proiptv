@@ -28,22 +28,16 @@ require_once 'json_serializer.php';
 
 /**
  * @template string
- * @template TValue
+ * @template-covariant TValue
  * @implements Iterator<string, TValue>
  */
 class Hashed_Array extends Json_Serializer implements Iterator
 {
-    /** Direction up to the begin */
+    /** Direction to the beginning */
     const UP = -1;
 
-    /** Direction down to the end */
+    /** Direction to the end */
     const DOWN = 1;
-
-    /** Direction to the top */
-    const TOP = PHP_INT_MIN;
-
-    /** Direction to the bottom */
-    const BOTTOM = PHP_INT_MAX;
 
     /**
      * @var array
@@ -56,7 +50,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     protected $map = array();
 
     /**
-     * @var integer
+     * @var int
      */
     private $pos = 0;
 
@@ -87,7 +81,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * @return integer
+     * @return int
      */
     public function size()
     {
@@ -97,7 +91,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * Get value by index
      *
-     * @param integer $ndx
+     * @param int $ndx
      * @return TValue|null
      */
     public function get_by_idx($ndx)
@@ -109,7 +103,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      * return value associated with key
      *
      * @param string $key
-     * @return TValue|null
+     * @return TValue|mixed
      */
     public function get($key)
     {
@@ -128,10 +122,21 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Check if key exist
+     *
+     * @param TValue $value
+     * @return bool
+     */
+    public function has_value($value)
+    {
+        return isset($this->map[self::hash($value)]);
+    }
+
+    /**
      * Return index by key
      *
      * @param string $key
-     * @return integer|false
+     * @return int|false
      */
     public function get_idx($key)
     {
@@ -145,8 +150,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function add($item)
     {
-        $key = self::hash($item);
-        $this->put($key, $item);
+        $this->put(self::hash($item), $item);
     }
 
     /**
@@ -154,7 +158,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public static function hash($item)
     {
-        return (empty($item) ? "" : hash('crc32', $item));
+        return (empty($item) ? '' : hash('crc32', $item));
     }
 
     /**
@@ -180,6 +184,18 @@ class Hashed_Array extends Json_Serializer implements Iterator
     {
         foreach ($items as $key => $item) {
             $this->put($key, $item);
+        }
+    }
+
+    /**
+     * Add items
+     *
+     * @param array $values
+     */
+    public function add_values($values)
+    {
+        foreach ($values as $item) {
+            $this->add($item);
         }
     }
 
@@ -252,10 +268,20 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function erase_keys($keys)
     {
-        $cnt = count($this->seq);
         $this->seq = array_values(array_diff($this->seq, $keys));
         $this->map = array_diff_key($this->map, array_fill_keys($keys, null));
-        return $cnt - count($this->seq);
+    }
+
+    /**
+     * Erase by values from array
+     *
+     * @param array $values
+     */
+    public function erase_values($values)
+    {
+        foreach ($values as $value) {
+            $this->erase(self::hash($value));
+        }
     }
 
     /**
@@ -339,7 +365,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function value_sort()
     {
-        uasort($this->map, array(__CLASS__, "sort_array_cb"));
+        uasort($this->map, array(__CLASS__, 'sort_array_cb'));
         $this->seq = array_keys($this->map);
     }
 
@@ -358,38 +384,16 @@ class Hashed_Array extends Json_Serializer implements Iterator
         if ($k === false || $direction === 0)
             return false;
 
-        switch ($direction) {
-            case self::UP:
-                if ($k !== 0) {
-                    $t = $this->seq[$k - 1];
-                    $this->seq[$k - 1] = $this->seq[$k];
-                    $this->seq[$k] = $t;
-                }
-                break;
-            case self::DOWN:
-                if ($k !== count($this->seq) - 1) {
-                    $t = $this->seq[$k + 1];
-                    $this->seq[$k + 1] = $this->seq[$k];
-                    $this->seq[$k] = $t;
-                }
-                break;
-            case self::TOP:
-                if ($k !== 0) {
-                    $t = $this->seq[$k];
-                    array_splice($this->seq, $k, 1);
-                    array_unshift($this->seq, $t);
-                }
-                break;
-            case self::BOTTOM:
-                $last = count($this->seq) - 1;
-                if ($k !== $last) {
-                    $t = $this->seq[$k];
-                    array_splice($this->seq, $k, 1);
-                    $this->seq[$last] = $t;
-                }
-                break;
-            default:
-                return false;
+        if ($direction < 0 && $k !== 0) {
+            $t = $this->seq[$k - 1];
+            $this->seq[$k - 1] = $this->seq[$k];
+            $this->seq[$k] = $t;
+        } else if ($direction > 0 && $k !== count($this->seq) - 1) {
+            $t = $this->seq[$k + 1];
+            $this->seq[$k + 1] = $this->seq[$k];
+            $this->seq[$k] = $t;
+        } else {
+            return false;
         }
 
         return true;
@@ -404,6 +408,14 @@ class Hashed_Array extends Json_Serializer implements Iterator
         unset($this->seq, $this->map);
         $this->seq = array();
         $this->map = array();
+    }
+
+    /**
+     * Reset position
+     */
+    public function reset()
+    {
+        $this->pos = 0;
     }
 
     /////////////////////////////////////////////////////////////////////

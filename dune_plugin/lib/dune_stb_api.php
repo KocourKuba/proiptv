@@ -385,11 +385,9 @@ function hd_debug_print($val = null, $is_debug = false)
     $caller_name = array_shift($bt);
     $prefix = "(" . str_pad($caller['line'], 4) . ") ";
     if (isset($caller_name['class'])) {
-        if (!is_null($val)) {
-            $val = str_replace(array('"{', '}"', '\"'), array('{', '}', '"'), (string)pretty_json_format($val));
-        }
         $prefix .= "{$caller_name['class']}::";
     }
+
     $prefix .= "{$caller_name['function']}(): ";
 
     if ($val === null) {
@@ -406,8 +404,16 @@ function hd_debug_print($val = null, $is_debug = false)
         }
 
         $prefix .= "{$parent_caller['function']}(): ";
+    } else if ($val instanceof Json_Serializer) {
+        $val = $val->__toString();
+    } else if (is_array($val)) {
+        if (empty($val)) {
+            $val = '{}';
+        } else {
+            $val = str_replace(array('"{', '}"', '\"'), array('{', '}', '"'), (string)pretty_json_format($val));
+        }
     } else if (is_bool($val)) {
-        $val = $val ? 'true' : 'false';
+        $val = var_export($val, true);
     }
 
     hd_print($prefix . $val);
