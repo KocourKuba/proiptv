@@ -17,11 +17,6 @@ echo "version index: $version_index" . PHP_EOL;
 echo "update date $release_date" . PHP_EOL;
 file_put_contents("./dune_plugin/$plugin_info", $xml);
 
-$xml = file_get_contents("build/$plugin_metadata.tpl");
-$xml = preg_replace("|<version>(.*)</version>|", "<version>$full_version</version>", $xml);
-$xml = preg_replace("|<version_index>(.*)</version_index>|", "<version_index>$version_index</version_index>", $xml);
-file_put_contents("./dune_plugin/$plugin_metadata", $xml);
-
 copy("./build/changelog.russian.md", "./dune_plugin/changelog.russian.md");
 copy("./build/changelog.english.md", "./dune_plugin/changelog.english.md");
 

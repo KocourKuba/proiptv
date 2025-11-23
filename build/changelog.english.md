@@ -1,4 +1,9 @@
-﻿### Version 5.1.1018
+﻿### Version 5.1.1024
+- Added missing icons to the plugin delivery
+- Updated default configuration
+- Fixed working with EPG Internet sources if EPG ID contains Cyrillic symbols
+
+### Version 5.1.1018
 - Due to problems on the provider side has disabled additional settings for Cbilling/Antifriz
 
 ### Version 5.1.1014
