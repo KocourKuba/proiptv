@@ -158,9 +158,10 @@ class Movie implements User_Input_Handler
 
             case GUI_EVENT_TIMER:
                 clearstatcache();
-                $post_action = Sleep_Timer::get_sleep_timer() ? Action_Factory::change_behaviour($this->get_action_map(), 1000) : null;
+                $sleep_timer = Sleep_Timer::get_sleep_timer();
+                $post_action = $sleep_timer ? Action_Factory::change_behaviour($this->get_action_map(), 1000) : null;
                 $comps = array();
-                Sleep_Timer::create_estimated_timer_box($comps, $user_input);
+                Sleep_Timer::create_estimated_timer_box($sleep_timer, $comps, $user_input);
                 return Action_Factory::update_osd($comps, $post_action);
 
             case ACTION_SLEEP_TIMER:
@@ -174,15 +175,16 @@ class Movie implements User_Input_Handler
 
             case ACTION_SLEEP_TIMER_ADD:
                 $step = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_STEP, 60);
-                Sleep_Timer::set_sleep_timer(Sleep_Timer::get_sleep_timer() + $step);
+                $sleep_timer = Sleep_Timer::get_sleep_timer() + $step;
+                Sleep_Timer::set_sleep_timer($sleep_timer);
                 $comps = array();
-                Sleep_Timer::create_estimated_timer_box($comps, $user_input, true);
+                Sleep_Timer::create_estimated_timer_box($sleep_timer, $comps, $user_input, true);
                 return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
 
             case ACTION_SLEEP_TIMER_CLEAR:
                 Sleep_Timer::set_sleep_timer(0);
                 $comps = array();
-                Sleep_Timer::create_estimated_timer_box($comps, $user_input, true);
+                Sleep_Timer::create_estimated_timer_box(0, $comps, $user_input, true);
                 return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
         }
 

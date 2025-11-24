@@ -110,10 +110,12 @@ class Starnet_Tv implements User_Input_Handler
                     return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies, Action_Factory::change_behaviour($this->get_action_map(), 1000));
                 }
 
-                $comps = array();
-                Sleep_Timer::create_estimated_timer_box($comps, $user_input);
+                $sleep_timer = Sleep_Timer::get_sleep_timer();
+                hd_debug_print("Sleep time remaining: $sleep_timer seconds", true);
 
-                $post_action = Sleep_Timer::get_sleep_timer() ? Action_Factory::change_behaviour($this->get_action_map(), 1000) : null;
+                $comps = array();
+                Sleep_Timer::create_estimated_timer_box($sleep_timer, $comps, $user_input);
+                $post_action = $sleep_timer ? Action_Factory::change_behaviour($this->get_action_map(), 1000) : null;
                 return Action_Factory::update_osd($comps, $post_action);
 
             case EVENT_INDEXING_DONE:
@@ -142,14 +144,15 @@ class Starnet_Tv implements User_Input_Handler
             case ACTION_SLEEP_TIMER_ADD:
                 $comps = array();
                 $step = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_STEP, 60);
-                Sleep_Timer::set_sleep_timer(Sleep_Timer::get_sleep_timer() + $step);
-                Sleep_Timer::create_estimated_timer_box($comps, $user_input, true);
+                $sleep_timer = Sleep_Timer::get_sleep_timer() + $step;
+                Sleep_Timer::set_sleep_timer($sleep_timer);
+                Sleep_Timer::create_estimated_timer_box($sleep_timer, $comps, $user_input, true);
                 return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
 
             case ACTION_SLEEP_TIMER_CLEAR:
                 Sleep_Timer::set_sleep_timer(0);
                 $comps = array();
-                Sleep_Timer::create_estimated_timer_box($comps, $user_input, true);
+                Sleep_Timer::create_estimated_timer_box(0, $comps, $user_input, true);
                 return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
         }
 

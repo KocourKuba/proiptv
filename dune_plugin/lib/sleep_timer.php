@@ -117,14 +117,14 @@ class Sleep_Timer
     }
 
     /**
+     * @param $timer
      * @param array $comps
      * @param object $user_input
      * @param bool $force
      * @return void
      */
-    public static function create_estimated_timer_box(&$comps, $user_input, $force = false)
+    public static function create_estimated_timer_box($timer, &$comps, $user_input, $force = false)
     {
-        $timer = self::get_sleep_timer();
         if ($user_input->playback_browser_activated || (!$force && ($timer === 0 || $timer > self::$show_time))) {
             return;
         }
@@ -152,7 +152,9 @@ class Sleep_Timer
             $pid = file_get_contents($pid_file);
             shell_exec("kill $pid");
             unlink($pid_file);
-            unlink($script_file);
+            if (file_exists($script_file)) {
+                unlink($script_file);
+            }
         }
 
         if ($sleep_timer_sec === 0) {
@@ -160,9 +162,15 @@ class Sleep_Timer
             return;
         }
 
+        $port = getenv('HD_HTTP_LOCAL_PORT');
+        if (empty($port)) {
+            $port = 80;
+        }
+
         $doc = "#!/bin/sh" . PHP_EOL;
         $doc .= "sleep $sleep_timer_sec" . PHP_EOL;
-        $doc .= 'echo ' . DuneIrControl::$key_codes[GUI_EVENT_DISCRETE_POWER_OFF] . ' > /proc/ir/button' . PHP_EOL;
+        //$doc .= 'echo ' . DuneIrControl::$key_codes[GUI_EVENT_DISCRETE_POWER_OFF] . ' > /proc/ir/button' . PHP_EOL;
+        $doc .= "wget -q -O - \"http://127.0.0.1:$port/cgi-bin/do?cmd=standby\"" . PHP_EOL;
         $doc .= "rm -- $pid_file" . PHP_EOL;
         $doc .= "rm -- $script_file" . PHP_EOL;
         file_put_contents($script_file, $doc);
