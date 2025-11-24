@@ -759,7 +759,6 @@ class Epg_Manager_Xmltv
                         // check if end
                         $end_tv = strpos($line, "</tv>");
                         if ($end_tv !== false) {
-                            /** @noinspection PhpUnusedLocalVariableInspection */
                             $tag_end_pos = $end_tv + $tag_start_pos;
                             $stm->execute();
                             break;
