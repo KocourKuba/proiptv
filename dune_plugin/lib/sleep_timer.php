@@ -170,14 +170,18 @@ class Sleep_Timer
         $doc = "#!/bin/sh" . PHP_EOL;
         $doc .= "sleep $sleep_timer_sec" . PHP_EOL;
         //$doc .= 'echo ' . DuneIrControl::$key_codes[GUI_EVENT_DISCRETE_POWER_OFF] . ' > /proc/ir/button' . PHP_EOL;
-        $doc .= "wget -q -O - \"http://127.0.0.1:$port/cgi-bin/do?cmd=standby\"" . PHP_EOL;
+        $doc .= 'echo ' . DuneIrControl::$new_key_codes[GUI_EVENT_DISCRETE_POWER_OFF] . ' > /proc/ir/button' . PHP_EOL;
+        //$doc .= "wget -q -O - \"http://127.0.0.1:$port/cgi-bin/do?cmd=standby\"" . PHP_EOL;
         $doc .= "rm -- $pid_file" . PHP_EOL;
         $doc .= "rm -- $script_file" . PHP_EOL;
         file_put_contents($script_file, $doc);
         $command = "$script_file > /dev/null 2>&1 & echo $!";
 
-        file_put_contents($pid_file, (int)shell_exec($command));
         self::$sleep_time = time() + $sleep_timer_sec;
+
+        $pid = (int)shell_exec($command);
+        hd_debug_print("sleep_timer PID $pid");
+        file_put_contents($pid_file, $pid);
     }
 
     protected static function get_sleep_timer_ops()
