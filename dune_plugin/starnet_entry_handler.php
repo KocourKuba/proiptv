@@ -392,7 +392,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
             hd_debug_print("Auto resume:      $auto_resume");
             if (!SwitchOnOff::to_bool($auto_resume)) {
                 hd_debug_print("auto resume disabled", true);
-                $post_action = $open_action;
+                return null;
             }
         }
 
