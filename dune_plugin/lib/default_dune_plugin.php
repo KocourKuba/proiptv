@@ -3623,27 +3623,25 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $http_code = $wrapper->get_http_code();
                 if ($content === false) {
                     $err_msg = "Fetch $url failed. HTTP error: $http_code ({$wrapper->get_error_no()})";
-                    hd_debug_print($err_msg);
-                    return false;
+                    throw new Exception($err_msg);
                 }
 
                 $http_code_str = HD::http_status_code_to_string($http_code);
                 if ($http_code >= 400) {
                     $err_msg = "Fetch $url failed. HTTP request failed ($http_code): $http_code_str";
-                    hd_debug_print($err_msg);
-                    return false;
+                    throw new Exception($err_msg);
                 }
 
                 if ($http_code >= 300) {
                     $err_msg = "Fetch $url completed, but ignored. HTTP request ($http_code): $http_code_str";
-                    hd_debug_print($err_msg);
+                    throw new Exception($err_msg);
                 }
 
                 hd_debug_print("Log file sent");
                 $ret = true;
             }
         } catch (Exception $ex) {
-            print_backtrace_exception($ex);
+            hd_debug_print($ex->getMessage());
             $msg = ": Unable to upload log: " . $ex->getMessage();
             if ($error !== null) {
                 $error = $msg;
