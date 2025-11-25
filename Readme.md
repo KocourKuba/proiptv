@@ -1,15 +1,27 @@
 # ProIPTV
 
-Universal **Dune HD** plugin with M3U playlist support. Minimal firmware revision supported by plugin r21.
-Also, have presets for most popular IPTV providers.
-For old devices (Sigma chipset based, non-Android), the latest version is [5.1.1014](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1014)
+Universal **Dune HD** plugin with M3U playlist and XMLTV EPG support. Also, it has many presets for the most popular IPTV providers.
 
-Универсальный плагин M3U плейлистов для плейеров **Dune HD**. Минимальная версия прошивки поддерживаемая плагином r21.
-Так же поддерживаются наиболее известные провайдеры IPTV в виде готовых шаблонов.
-Для старых приставок (на чипсете Sigma, не Android) последняя версия [5.1.1014](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1014)
+Minimal firmware revision supported by the current version of the plugin (7.x) is R22.
 
+For Dune HD ATV devices (Homatics, Boxy, Premier) there are some limitations like network access, Sleep timer, etc.
+
+For devices (Android-based), with a revision lower than R22, the latest version is [6.2.1358](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1358)
+
+For old devices (Sigma chipset-based, non-Android), with a revision R11 or higher, the latest version is [5.1.1014](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1024)
+
+
+Универсальный плагин M3U плейлистов для плейеров **Dune HD**, с поддержкой XMLTV EPG. Так же поддерживаются наиболее известные провайдеры IPTV в виде готовых шаблонов.
+
+Минимальная версия прошивки поддерживаемая текущей версией плагина (7.x) - R22.
+
+Для приставок Dune HD на базе ATV (Homatics, Boxy, Premier) есть ограничения в функциональности. Сеть, таймер выключения.
+
+Для приставок (на Android) с ревизией прошивки меньше R22 - актуальная версия [6.2.1358](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1358)
+
+Для старых приставок (на чипсете Sigma, не Android), с ревизией прошивки R11 и выше - актуальная версия [5.1.1024](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1024)
 <details>
-<summary><b>Supported IPTV providers</b></summary>
+<summary><b>Supported IPTV providers/Поддерживаемые провайдеры IPTV</b></summary>
 
 01. [Antifriz](https://antifriz.tv/)
 02. [BCU Media](https://bcumedia.pro/)
