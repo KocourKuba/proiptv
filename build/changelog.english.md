@@ -1,4 +1,8 @@
-﻿### Version 7.0.1452
+﻿### Version 7.0.1460
+- Prevent the plugin from running if the set-top box tries to resume viewing, but auto resume disabled in the plugin settings
+- The Sleep timer did not work on some devices
+
+### Version 7.0.1452
 - Added the ability to use multiple images of the TV show from xmltv (if exists) in the Ext EPG
 - Adjust the start of the day depending on the time zone (DuneHD recommendations)
 - Added font size change setting for groups/channels in the window in the Play mode
