@@ -146,15 +146,19 @@ class Sleep_Timer
     {
         hd_debug_print("Set sleep_timer for $sleep_timer_sec");
 
-        $script_file = get_temp_path(self::SLEEP_TIMER_SCRIPT . '.sh');
         $pid_file = get_temp_path(self::SLEEP_TIMER_SCRIPT . '.pid');
         if (file_exists($pid_file)) {
             $pid = file_get_contents($pid_file);
-            shell_exec("kill $pid");
             unlink($pid_file);
-            if (file_exists($script_file)) {
-                unlink($script_file);
+            if (posix_kill($pid,0)) {
+                hd_debug_print("Killing process: $pid");
+                shell_exec("kill $pid");
             }
+        }
+
+        $log_file = get_temp_path(self::SLEEP_TIMER_SCRIPT . '.log');
+        if (file_exists($log_file)) {
+            unlink($log_file);
         }
 
         if ($sleep_timer_sec === 0) {
@@ -162,23 +166,10 @@ class Sleep_Timer
             return;
         }
 
-        $port = getenv('HD_HTTP_LOCAL_PORT');
-        if (empty($port)) {
-            $port = 80;
-        }
-
-        $doc = "#!/bin/sh" . PHP_EOL;
-        $doc .= "sleep $sleep_timer_sec" . PHP_EOL;
-        //$doc .= 'echo ' . DuneIrControl::$key_codes[GUI_EVENT_DISCRETE_POWER_OFF] . ' > /proc/ir/button' . PHP_EOL;
-        $doc .= 'echo ' . DuneIrControl::$new_key_codes[GUI_EVENT_DISCRETE_POWER_OFF] . ' > /proc/ir/button' . PHP_EOL;
-        //$doc .= "wget -q -O - \"http://127.0.0.1:$port/cgi-bin/do?cmd=standby\"" . PHP_EOL;
-        $doc .= "rm -- $pid_file" . PHP_EOL;
-        $doc .= "rm -- $script_file" . PHP_EOL;
-        file_put_contents($script_file, $doc);
-        $command = "$script_file > /dev/null 2>&1 & echo $!";
-
         self::$sleep_time = time() + $sleep_timer_sec;
 
+        $script_file = get_install_path('bin/' . self::SLEEP_TIMER_SCRIPT . '.sh');
+        $command = "$script_file $sleep_timer_sec > /dev/null 2>&1 & echo $!";
         $pid = (int)shell_exec($command);
         hd_debug_print("sleep_timer PID $pid");
         file_put_contents($pid_file, $pid);
