@@ -338,7 +338,7 @@ class Epg_Manager_Xmltv
 
             $config = json_decode(file_get_contents($config_file), true);
             if (!LogSeverity::$is_debug) {
-                unlink($config_file);
+                safe_unlink($config_file);
             }
             if ($config === false) {
                 Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, "Invalid config file for indexing");
@@ -350,8 +350,8 @@ class Epg_Manager_Xmltv
             }
 
             $LOG_FILE = get_temp_path("{$config[PARAMS_XMLTV][PARAM_HASH]}_indexing.log");
-            if (file_exists($LOG_FILE) && !LogSeverity::$is_debug) {
-                unlink($LOG_FILE);
+            if (!LogSeverity::$is_debug) {
+                safe_unlink($LOG_FILE);
             }
 
             date_default_timezone_set('UTC');
@@ -405,9 +405,7 @@ class Epg_Manager_Xmltv
             $exception_msg = "XMTLV EPG url not set";
             Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $exception_msg);
             $index_log = get_temp_path("{$params[PARAM_HASH]}_indexing.log");
-            if (file_exists($index_log)) {
-                unlink($index_log);
-            }
+            safe_unlink($index_log);
             return 0;
         }
 
@@ -577,13 +575,8 @@ class Epg_Manager_Xmltv
                 Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $ex->getMessage());
                 print_backtrace_exception($ex);
                 $tmp_filename = $cached_file . ".tmp";
-                if (!empty($tmp_filename) && file_exists($tmp_filename)) {
-                    unlink($tmp_filename);
-                }
-
-                if (file_exists($cached_file)) {
-                    unlink($cached_file);
-                }
+                safe_unlink($tmp_filename);
+                safe_unlink($cached_file);
             }
 
             self::unlock_index($url_hash, INDEXING_DOWNLOAD);
@@ -869,7 +862,7 @@ class Epg_Manager_Xmltv
                 }
                 hd_debug_print_separator();
                 hd_debug_print("Read finished");
-                unlink($index_log);
+                safe_unlink($index_log);
                 $has_imports = true;
             }
 
@@ -887,8 +880,8 @@ class Epg_Manager_Xmltv
                     hd_debug_print_separator();
                     $has_imports = true;
                 }
-                unlink($error_log);
             }
+            safe_unlink($error_log);
         }
 
         if ($has_locks) {
@@ -1213,10 +1206,7 @@ class Epg_Manager_Xmltv
 
     protected static function clear_log($hash)
     {
-        $index_log = get_temp_path("{$hash}_indexing.log");
-        if (file_exists($index_log)) {
-            unlink($index_log);
-        }
+        safe_unlink(get_temp_path("{$hash}_indexing.log"));
     }
 
     /**
@@ -1289,10 +1279,8 @@ class Epg_Manager_Xmltv
         $perf->reset('start_download');
 
         $tmp_filename = $cached_file . ".tmp";
-        if (file_exists($tmp_filename)) {
-            unlink($tmp_filename);
-            unlink("$cached_file.stat");
-        }
+        safe_unlink($tmp_filename);
+        safe_unlink("$cached_file.stat");
 
         hd_debug_print("Download: $url");
         Curl_Wrapper::clear_cached_etag($url);
@@ -1343,10 +1331,8 @@ class Epg_Manager_Xmltv
     protected static function unpack_xmltv($params)
     {
         $cached_file = $params[PARAM_CACHE_PATH];
-        if (file_exists($cached_file)) {
-            hd_debug_print("Remove cached file: $cached_file");
-            unlink($cached_file);
-        }
+        hd_debug_print("Remove cached file: $cached_file");
+        safe_unlink($cached_file);
 
         $perf = new Perf_Collector();
         $perf->reset('start_unpack');
@@ -1386,7 +1372,7 @@ class Epg_Manager_Xmltv
             $cmd = "unzip -oq $tmp_filename -d " . self::$cache_dir . " 2>&1";
             /** @var int $ret */
             system($cmd, $ret);
-            unlink($tmp_filename);
+            safe_unlink($tmp_filename);
             if ($ret !== 0) {
                 throw new Exception("Failed to unpack $tmp_filename (error code: $ret)");
             }

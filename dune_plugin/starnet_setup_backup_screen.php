@@ -170,13 +170,11 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
             $unzip->close();
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
-            if (file_exists($tmp_filename)) {
-                unlink($tmp_filename);
-            }
+            safe_unlink($tmp_filename);
             return Action_Factory::show_title_dialog(TR::t('err_restore'), $ex->getMessage());
         }
 
-        unlink($tmp_filename);
+        safe_unlink($tmp_filename);
 
         foreach (array(".settings", ".db") as $ext) {
             foreach (glob_dir(get_data_path(), "/$ext$/i") as $file) {

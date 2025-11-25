@@ -240,8 +240,8 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $ex->getMessage());
                 }
 
-                if ($tmp_file !== $uri && file_exists($tmp_file)) {
-                    unlink($tmp_file);
+                if ($tmp_file !== $uri) {
+                    safe_unlink($tmp_file);
                 }
                 break;
         }

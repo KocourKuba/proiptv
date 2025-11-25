@@ -2039,6 +2039,13 @@ function create_path($path, $dir_mode = 0777)
     return true;
 }
 
+function safe_unlink($path)
+{
+    if (!empty($path) && file_exists($path) && !is_dir($path)) {
+        unlink($path);
+    }
+}
+
 /** @noinspection PhpUnusedParameterInspection */
 function json_encode_unicode($data, $flags = 0)
 {
@@ -2882,7 +2889,7 @@ function color_palette_restore()
         if (basename($file) !== $hash) continue;
 
         if (copy($file, $skin_config)) {
-            unlink($file);
+            safe_unlink($file);
         }
 
         hd_print('Skin colors restored succesfull!');

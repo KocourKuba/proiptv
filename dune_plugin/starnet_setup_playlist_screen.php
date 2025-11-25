@@ -246,7 +246,7 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
                 }
 
                 if (!$is_old_default && $old_image !== $cached_image) {
-                    unlink($old_image);
+                    safe_unlink($old_image);
                 }
 
                 hd_debug_print("Set image $cached_image as background");

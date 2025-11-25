@@ -688,8 +688,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             Dune_Last_Error::set_last_error(LAST_ERROR_PLAYLIST, $err);
             print_backtrace_exception($ex);
-            if (empty($type) && file_exists($tmp_file)) {
-                unlink($tmp_file);
+            if (empty($type)) {
+                safe_unlink($tmp_file);
             }
         }
 
@@ -756,15 +756,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             hd_debug_print("Playlist cache is not valid or database not exist. Reload playlist.");
             // clear playlist
-            if (file_exists($m3u_file)) {
-                unlink($m3u_file);
-            }
+            safe_unlink($m3u_file);
 
             // clear playlist db
             $this->sql_playlist->detachDatabase($db_file);
-            if (file_exists($db_file)) {
-                unlink($db_file);
-            }
+            safe_unlink($db_file);
 
             $perf = new Perf_Collector();
             $perf->reset('start_download_playlist');
@@ -943,15 +939,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             Dune_Last_Error::set_last_error(LAST_ERROR_PLAYLIST, $err);
-            if (file_exists($m3u_file)) {
-                hd_debug_print("Clear playlist: $m3u_file");
-                unlink($m3u_file);
-            }
+            hd_debug_print("Clear playlist: $m3u_file");
+            safe_unlink($m3u_file);
             $this->sql_playlist->detachDatabase(M3uParser::IPTV_DB);
-            if (file_exists($db_file)) {
-                hd_debug_print("Clear db: $db_file");
-                unlink($db_file);
-            }
+            hd_debug_print("Clear db: $db_file");
+            safe_unlink($db_file);
             hd_debug_print_separator();
         }
 
@@ -1260,9 +1252,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // clear ext epg
         $ext_epg_channels = get_temp_path("channel_ids.txt");
-        if (file_exists($ext_epg_channels)) {
-            unlink($ext_epg_channels);
-        }
+        safe_unlink($ext_epg_channels);
 
         // init playlist parser
         if (false === $this->init_playlist_parser($reload_playlist)) {
@@ -2418,10 +2408,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $this->iptv_m3u_parser->clear_data();
         $tmp_file = self::get_playlist_cache_path() . "{$playlist_id}_playlist.m3u8";
-        if (file_exists($tmp_file)) {
-            hd_debug_print("clear_playlist_cache: remove $tmp_file");
-            unlink($tmp_file);
-        }
+        hd_debug_print("clear_playlist_cache: remove $tmp_file");
+        safe_unlink($tmp_file);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -3313,19 +3301,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // remove settings
         foreach (glob_dir(get_data_path(), "/^$playlist_id.*$/i") as $file) {
             hd_debug_print("remove settings or orders db: $file", true);
-            unlink($file);
+            safe_unlink($file);
         }
 
         // history
         foreach (glob_dir($this->get_history_path(), "/^$playlist_id.*$/i") as $file) {
             hd_debug_print("remove history: $file", true);
-            unlink($file);
+            safe_unlink($file);
         }
 
         // clear cached images for selected id
         foreach (glob_dir(get_cached_image_path(), "/^$playlist_id.*$/i") as $file) {
             hd_debug_print("remove cached image: $file", true);
-            unlink($file);
+            safe_unlink($file);
         }
     }
 
@@ -3651,7 +3639,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if (is_resource($handle)) {
             @fclose($handle);
         }
-        @unlink($zip_file);
+        safe_unlink($zip_file);
 
         return $ret;
     }
@@ -3725,7 +3713,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         clearstatcache();
         if ($zip_file !== $backup_path) {
             hd_print("unlink $zip_file");
-            unlink($zip_file);
+            safe_unlink($zip_file);
         }
 
         return $backup_path;
@@ -3858,7 +3846,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if (empty($plugin_settings)) {
             hd_debug_print("Remove settings: $settings_path");
-            unlink($settings_path);
+            safe_unlink($settings_path);
         } else {
             foreach ($plugin_settings as $key => $value) {
                 hd_debug_print("!!!!! Setting $key is not imported: " . $value);
@@ -3876,7 +3864,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $query = "INSERT INTO $cookies_table (param, value, time_stamp) VALUES('$key', $q_value, $time_stamp);";
                 $this->sql_playlist->exec($query);
                 hd_debug_print("Remove cookie: $token_path");
-                unlink($token_path);
+                safe_unlink($token_path);
             }
         }
 
@@ -3979,7 +3967,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if (empty($orders)) {
             hd_debug_print("Remove orders: $orders_file");
-            unlink($orders_file);
+            safe_unlink($orders_file);
         } else {
             HD::put_data_items("$plugin_orders_name.settings", $orders, false);
             foreach ($plugin_orders as $key => $value) {
@@ -4064,7 +4052,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if (empty($history)) {
             hd_debug_print("Remove VOD history: $vod_history_filename");
-            unlink($vod_history_filename);
+            safe_unlink($vod_history_filename);
         } else {
             HD::put_items($vod_history_filename, $history, false);
             foreach ($history as $type => $param) {

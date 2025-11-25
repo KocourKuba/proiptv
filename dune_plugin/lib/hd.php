@@ -796,12 +796,7 @@ class HD
      */
     public static function erase_items($path)
     {
-        if (file_exists($path)) {
-            hd_debug_print("$path deleted");
-            unlink($path);
-        } else {
-            hd_debug_print("$path not exist");
-        }
+        safe_unlink($path);
     }
 
     /**
@@ -988,8 +983,6 @@ class HD
     public static function clear_cookie($filename, $persistent = false)
     {
         $file_path = $persistent ? get_data_path($filename) : get_temp_path($filename);
-        if (file_exists($file_path)) {
-            unlink($file_path);
-        }
+        safe_unlink($file_path);
     }
 }

@@ -359,21 +359,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
         hd_debug_print("LANUCH PLUGIN");
 
         $this->plugin->init_plugin();
-        if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) {
-            return $this->open_playlist_screen();
-        }
-
-        if (!$this->plugin->load_channels($plugin_cookies)) {
-            return Action_Factory::open_folder(
-                Starnet_Tv_Groups_Screen::ID,
-                $this->plugin->get_plugin_title(),
-                null,
-                null,
-                Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
-            );
-        }
-
         $open_action = Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
+
         $auto_play = false;
         $auto_resume = false;
         $post_action = null;
@@ -391,9 +378,29 @@ class Starnet_Entry_Handler implements User_Input_Handler
             $auto_resume = safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_RESUME);
             hd_debug_print("Auto resume:      $auto_resume");
             if (!SwitchOnOff::to_bool($auto_resume)) {
-                hd_debug_print("auto resume disabled", true);
+                hd_debug_print("auto resume disabled");
                 return null;
             }
+        }
+
+        if ($this->plugin->get_all_playlists_count() === 0) {
+            hd_debug_print("No playlists found. Open playlists page");
+            return $this->open_playlist_screen();
+        }
+
+        if (!$this->plugin->init_playlist_db()) {
+            hd_debug_print("Failed to open current playlist database!");
+            return $this->open_playlist_screen();
+        }
+
+        if (!$this->plugin->load_channels($plugin_cookies)) {
+            return Action_Factory::open_folder(
+                Starnet_Tv_Groups_Screen::ID,
+                $this->plugin->get_plugin_title(),
+                null,
+                null,
+                Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
+            );
         }
 
         if ($post_action !== null) {

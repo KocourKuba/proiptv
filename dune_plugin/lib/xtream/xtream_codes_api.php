@@ -121,8 +121,8 @@ class xtream_codes_api
             }
 
             hd_debug_print("xtream response cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
-            unlink($tmp_file);
         }
+        safe_unlink($tmp_file);
 
         $cached_data = Curl_Wrapper::decodeJsonResponse(false, Curl_Wrapper::getInstance()->download_content($url));
         if ($cached_data !== false) {

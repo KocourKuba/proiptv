@@ -226,7 +226,7 @@ class Dune_Default_Sqlite_Engine
             }
             $this->sql_params->exec_transaction($query);
             if (empty($parameters)) {
-                unlink(get_data_path("common.settings"));
+                safe_unlink(get_data_path("common.settings"));
             }
             foreach ($parameters as $key => $value) {
                 hd_debug_print("!!!!! Parameter $key is not imported: " . $value);
@@ -1177,9 +1177,7 @@ class Dune_Default_Sqlite_Engine
             && strpos($old_cached_image, 'plugin_file://') !== false
             && !$this->sql_playlist->query_value("SELECT COUNT(*) FROM $groups_info_table WHERE icon = $q_icon;")) {
             $old_cached_image_path = get_cached_image_path($old_cached_image);
-            if (file_exists($old_cached_image_path)) {
-                unlink($old_cached_image_path);
-            }
+            safe_unlink($old_cached_image_path);
         }
     }
 

@@ -149,17 +149,14 @@ class Sleep_Timer
         $pid_file = get_temp_path(self::SLEEP_TIMER_SCRIPT . '.pid');
         if (file_exists($pid_file)) {
             $pid = file_get_contents($pid_file);
-            unlink($pid_file);
+            safe_unlink($pid_file);
             if (posix_kill($pid,0)) {
                 hd_debug_print("Killing process: $pid");
                 shell_exec("kill $pid");
             }
         }
 
-        $log_file = get_temp_path(self::SLEEP_TIMER_SCRIPT . '.log');
-        if (file_exists($log_file)) {
-            unlink($log_file);
-        }
+        safe_unlink(get_temp_path(self::SLEEP_TIMER_SCRIPT . '.log'));
 
         if ($sleep_timer_sec === 0) {
             self::$sleep_time = 0;

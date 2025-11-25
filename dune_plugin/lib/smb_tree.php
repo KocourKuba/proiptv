@@ -229,7 +229,7 @@ class smb_tree
         fclose($fp);
 
         if (false === rename($tmp_path, $path)) {
-            unlink($tmp_path);
+            safe_unlink($tmp_path);
             return false;
         }
 
@@ -240,7 +240,7 @@ class smb_tree
         }
 
         $res = parse_ini_file($path, true);
-        unlink($path);
+        safe_unlink($path);
         $path = '/tmp/run/network_mount_list.xml';
         if (!file_exists($path)) {
             return false;

@@ -789,7 +789,7 @@ class vod_standard extends Abstract_Vod
             $diff = time() - $mtime;
             if ($diff > 3600) {
                 hd_debug_print("Vod playlist cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
-                unlink($tmp_file);
+                safe_unlink($tmp_file);
             } else {
                 $need_load = false;
             }
@@ -802,17 +802,13 @@ class vod_standard extends Abstract_Vod
             if ($response === false) {
                 $exception_msg = TR::load('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
                 Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
-                if (file_exists($tmp_file)) {
-                    unlink($tmp_file);
-                }
+                safe_unlink($tmp_file);
             } else {
                 $this->vod_items = Curl_Wrapper::decodeJsonResponse(true, $tmp_file, $assoc);
                 if ($this->vod_items === false) {
                     $exception_msg = TR::load('err_decoding_vod');
                     Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
-                    if (file_exists($tmp_file)) {
-                        unlink($tmp_file);
-                    }
+                    safe_unlink($tmp_file);
                 }
             }
         }
@@ -1001,9 +997,7 @@ class vod_standard extends Abstract_Vod
             hd_debug_print("Unable to load VOD playlist");
             Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $ex->getMessage());
             print_backtrace_exception($ex);
-            if (file_exists($m3u_file)) {
-                unlink($m3u_file);
-            }
+            safe_unlink($m3u_file);
             return false;
         }
 

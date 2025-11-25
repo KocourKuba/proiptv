@@ -181,7 +181,7 @@ class Starnet_Epfs_Handler
                 return;
             }
 
-            unlink($path);
+            safe_unlink($path);
         }
 
         $res = file_put_contents($tmp_path, $new_json);
@@ -192,7 +192,7 @@ class Starnet_Epfs_Handler
 
         if (!rename($tmp_path, $path)) {
             hd_debug_print("Failed to rename $tmp_path to $path");
-            unlink($tmp_path);
+            safe_unlink($tmp_path);
         }
 
         hd_debug_print("written epf path: $path", true);

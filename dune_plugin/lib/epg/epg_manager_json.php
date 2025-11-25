@@ -182,7 +182,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                     hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
                 } else {
                     hd_debug_print("EPG cache $epg_cache_file expired " . ($now - $cache_expired) . " sec ago. Timestamp $mtime. Remove cache file");
-                    unlink($epg_cache_file);
+                    safe_unlink($epg_cache_file);
                 }
             }
 

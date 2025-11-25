@@ -141,10 +141,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         unset($this->category_list, $this->category_index);
         $this->plugin->vod->clear_movie_cache();
         $vod_cache = $this->plugin->vod->get_vod_cache_file();
-        if (file_exists($vod_cache)) {
-            unlink($vod_cache);
-        }
-
+        safe_unlink($vod_cache);
         $this->plugin->get_sql_playlist()->detachDatabase('vod');
     }
 
