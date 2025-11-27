@@ -178,6 +178,7 @@ class Starnet_Tv implements User_Input_Handler
 
         Sleep_Timer::set_show_pos($this->plugin->get_parameter(PARAM_SLEEP_TIMER_POS, 'top_right'));
         Sleep_Timer::set_show_time($this->plugin->get_parameter(PARAM_SLEEP_TIMER_COUNTDOWN, 120));
+        Sleep_Timer::set_timer_power($this->plugin->get_parameter(PARAM_SLEEP_TIMER_POWER, 0));
 
         $groups = array();
 

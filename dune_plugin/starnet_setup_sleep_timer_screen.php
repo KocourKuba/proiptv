@@ -79,6 +79,12 @@ class Starnet_Setup_Sleep_Timer_Screen extends Abstract_Controls_Screen
         Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_STEP,
             TR::t('setup_sleep_time_step'), $sleep_step, $step_ops_translated, static::CONTROLS_WIDTH, true);
 
+        $sleep_power = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_POWER, 0);
+        hd_debug_print(PARAM_SLEEP_TIMER_POWER . ": $sleep_power", true);
+        $power_ops_translated = array(0 => TR::t('system_default'), 1 => TR::t('standby'));
+        Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_POWER,
+            TR::t('setup_sleep_time_power'), $sleep_power, $power_ops_translated, static::CONTROLS_WIDTH, true);
+
         return $defs;
     }
 
@@ -97,7 +103,8 @@ class Starnet_Setup_Sleep_Timer_Screen extends Abstract_Controls_Screen
             case PARAM_SLEEP_TIMER_POS:
             case PARAM_SLEEP_TIMER_COUNTDOWN:
             case PARAM_SLEEP_TIMER_STEP:
-                $this->plugin->set_parameter($control_id, $user_input->{$control_id});
+            case PARAM_SLEEP_TIMER_POWER:
+            $this->plugin->set_parameter($control_id, $user_input->{$control_id});
                 break;
         }
 

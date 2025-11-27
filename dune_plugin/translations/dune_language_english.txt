@@ -146,6 +146,8 @@ duplicates__2 = Duplicates: %s - %s
 selected__1 = Selected: %s
 sleep_timer = Sleep timer
 sleep_after = Sleep:
+system_default = System default
+standby = Standby
 
 plugin_all_channels = All channels
 plugin_all_channels__1 = All channels (%s)
@@ -256,6 +258,7 @@ setup_use_common_fav = Use common "Favorites"
 setup_sleep_time_show = Start sleep countdown at seconds
 setup_sleep_time_pos = Sleep timer position
 setup_sleep_time_step = Manual sleep timer step (min)
+setup_sleep_time_power = Turn off type
 setup_top_left = Top left corner
 setup_top_right = Top right corner
 

@@ -146,6 +146,8 @@ duplicates__2 = Дубликатов: %s - %s
 selected__1 = Выбран: %s
 sleep_timer = Время отключения
 sleep_after = Отключение:
+system_default = Системная настройка
+standby = Отключение видеовыхода
 
 plugin_all_channels = Все каналы
 plugin_all_channels__1 = Все каналы (%s)
@@ -256,6 +258,7 @@ setup_use_common_fav = Использовать общее "Избранное"
 setup_sleep_time_show = Показ обратного отсчета от (секунд)
 setup_sleep_time_pos = Позиция таймера выключения
 setup_sleep_time_step = Шаг ручной установки таймера (минут)
+setup_sleep_time_power = Тип отключения
 setup_top_left = Верхний левый угол
 setup_top_right = Верхний правый угол
 

@@ -267,6 +267,7 @@ const PARAM_EPG_SOURCE = 'epg_source';
 const PARAM_SLEEP_TIMER_POS = 'sleep_timer_pos';
 const PARAM_SLEEP_TIMER_COUNTDOWN = 'sleep_timer_countdown';
 const PARAM_SLEEP_TIMER_STEP = 'sleep_timer_step';
+const PARAM_SLEEP_TIMER_POWER = 'sleep_timer_power';
 const PARAM_PICONS_DELAY_LOAD = 'epg_delayed_index';
 const PARAM_NEWUI_CHANNEL_POSITION = 'channel_position';
 const PARAM_INTERNAL_EPG_IDX = 'epg_idx';

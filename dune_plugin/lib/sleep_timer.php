@@ -60,6 +60,11 @@ class Sleep_Timer
     protected static $sleep_timer_op = 0;
 
     /**
+     * @var int
+     */
+    protected static $sleep_timer_power = 0;
+
+    /**
      * return estimated time to sleep
      *
      * @return int
@@ -96,6 +101,18 @@ class Sleep_Timer
     public static function set_timer_op($op)
     {
         self::$sleep_timer_op = $op;
+    }
+
+    /**
+     * Switch off type
+     * 0 - system default, 1 - standby
+     *
+     * @param int $type
+     * @return void
+     */
+    public static function set_timer_power($type)
+    {
+        self::$sleep_timer_power = $type;
     }
 
     /**
@@ -163,10 +180,11 @@ class Sleep_Timer
             return;
         }
 
+        $type = self::$sleep_timer_power;
         self::$sleep_time = time() + $sleep_timer_sec;
 
         $script_file = get_install_path('bin/' . self::SLEEP_TIMER_SCRIPT . '.sh');
-        $command = "$script_file $sleep_timer_sec > /dev/null 2>&1 & echo $!";
+        $command = "$script_file $sleep_timer_sec $type > /dev/null 2>&1 & echo $!";
         $pid = (int)shell_exec($command);
         hd_debug_print("sleep_timer PID $pid");
         file_put_contents($pid_file, $pid);
