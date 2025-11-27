@@ -195,7 +195,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if (isset($user_input->{COLUMN_CHANNEL_ID})) {
                     $ch_id = $user_input->{COLUMN_CHANNEL_ID};
                 }
-                return Action_Factory::close_and_run($this->plugin->iptv->jump_to_channel($ch_id));
+                return Action_Factory::close_and_run($this->plugin->jump_to_channel($ch_id));
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;

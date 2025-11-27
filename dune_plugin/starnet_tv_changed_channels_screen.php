@@ -143,7 +143,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->iptv->jump_to_channel($channel_id);
+                return $this->plugin->jump_to_channel($channel_id);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 if ($this->plugin->get_changed_channels_count(PARAM_NEW, $channel_id)) {

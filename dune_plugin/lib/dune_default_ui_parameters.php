@@ -431,6 +431,38 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         }
         $this->set_channel_epg_shift($channel_id, $user_input->{PARAM_EPG_SHIFT_HOURS}, $user_input->{PARAM_EPG_SHIFT_MINS});
     }
+
+    /**
+     * @param string $channel_id
+     * @return array
+     */
+    public function jump_to_channel($channel_id)
+    {
+        hd_debug_print(null, true);
+
+        $channel = $this->get_channel_info($channel_id);
+        if (empty($channel)) {
+            hd_debug_print("Unknown channel id: $channel_id", true);
+            return null;
+        }
+
+        $group_id = $channel[COLUMN_GROUP_ID];
+        $pos = array_search($channel_id, $this->get_channels_order($group_id));
+        return Action_Factory::open_folder(
+            Default_Dune_Plugin::get_group_media_url_str($group_id),
+            $group_id,
+            null,
+            null,
+            User_Input_Handler_Registry::create_screen_action(
+                Starnet_Tv_Channel_List_Screen::ID,
+                ACTION_JUMP_TO_CHANNEL,
+                null,
+                array('number' => $pos)
+            )
+        );
+    }
+
+
     ///////////////////////////////////////////////////////////////////////
 
     protected static function add_epg_shift_defs(&$defs, $handler, $initial_epg_shift, $apply)

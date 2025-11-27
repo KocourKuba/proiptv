@@ -305,34 +305,4 @@ class Starnet_Tv implements User_Input_Handler
 
         return $tv_info;
     }
-
-    /**
-     * @param string $channel_id
-     * @return array
-     */
-    public function jump_to_channel($channel_id)
-    {
-        hd_debug_print(null, true);
-
-        $channel = $this->plugin->get_channel_info($channel_id);
-        if (empty($channel)) {
-            hd_debug_print("Unknown channel id: $channel_id", true);
-            return null;
-        }
-
-        $group_id = $channel[COLUMN_GROUP_ID];
-        $pos = array_search($channel_id, $this->plugin->get_channels_order($group_id));
-        return Action_Factory::open_folder(
-            Default_Dune_Plugin::get_group_media_url_str($group_id),
-            $group_id,
-            null,
-            null,
-            User_Input_Handler_Registry::create_screen_action(
-                Starnet_Tv_Channel_List_Screen::ID,
-                ACTION_JUMP_TO_CHANNEL,
-                null,
-                array('number' => $pos)
-            )
-        );
-    }
 }

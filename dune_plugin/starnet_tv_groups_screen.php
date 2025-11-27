@@ -261,7 +261,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
                 if (isset($user_input->{COLUMN_CHANNEL_ID})) {
-                    return $this->plugin->iptv->jump_to_channel($user_input->{COLUMN_CHANNEL_ID});
+                    return $this->plugin->jump_to_channel($user_input->{COLUMN_CHANNEL_ID});
                 }
                 break;
 

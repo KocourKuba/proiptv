@@ -155,7 +155,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                     '', $this->plugin->change_tv_favorites($opt_type, $selected_media_url->channel_id));
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->iptv->jump_to_channel($selected_media_url->channel_id);
+                return $this->plugin->jump_to_channel($selected_media_url->channel_id);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();

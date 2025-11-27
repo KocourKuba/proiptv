@@ -230,7 +230,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->iptv->jump_to_channel($channel_id);
+                return $this->plugin->jump_to_channel($channel_id);
 
             case ACTION_SHORTCUT:
                 if (!isset($user_input->{COLUMN_PLAYLIST_ID}) || $this->plugin->get_active_playlist_id() === $user_input->{COLUMN_PLAYLIST_ID}) {
