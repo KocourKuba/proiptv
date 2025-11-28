@@ -264,6 +264,7 @@ const PARAM_EPG_SHIFT_MINS = 'epg_shift_mins';
 const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_GROUP_FONT_SIZE = 'group_font_size';
 const PARAM_EPG_SOURCE = 'epg_source';
+const PARAM_SLEEP_TIMER_ENABLED = 'sleep_timer_enabled';
 const PARAM_SLEEP_TIMER_POS = 'sleep_timer_pos';
 const PARAM_SLEEP_TIMER_COUNTDOWN = 'sleep_timer_countdown';
 const PARAM_SLEEP_TIMER_STEP = 'sleep_timer_step';

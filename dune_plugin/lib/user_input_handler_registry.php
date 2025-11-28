@@ -87,9 +87,10 @@ class User_Input_Handler_Registry
      * @param string $name
      * @param string|null $caption
      * @param array|null $add_params
+     * @param int $flags
      * @return array
      */
-    public static function create_action(User_Input_Handler $handler, $name, $caption = null, $add_params = null)
+    public static function create_action(User_Input_Handler $handler, $name, $caption = null, $add_params = null, $flags = 0)
     {
         $params = array('handler_id' => $handler->get_handler_id(), 'control_id' => $name);
         if (isset($add_params)) {
@@ -101,6 +102,7 @@ class User_Input_Handler_Registry
             $arr[GuiAction::caption] = $caption;
         }
         $arr[GuiAction::params] = $params;
+        $arr[GuiAction::flags] = $flags;
 
         return $arr;
     }

@@ -148,6 +148,8 @@ sleep_timer = Sleep-Timer
 sleep_after = Schlafen:
 system_default = Systemstandard
 standby = Standby
+sleep_timer_clear = Schlaftimer freimachen
+sleep_timer_add = Zusätzliche Schlafzeit
 
 plugin_all_channels = Alle Kanäle
 plugin_all_channels__1 = Alle Kanäle (%s)
@@ -255,6 +257,7 @@ setup_download_timeout = Download-Zeitüberschreitung (sec)
 setup_native_url = URL vom Konto
 setup_native_file = Playlist-Datei
 setup_use_common_fav = Gemeinsame "Favoriten" verwenden
+setup_sleep_timer_enabled = Enable Sleep Timer
 setup_sleep_time_show = Starten Sie den Schlaf-Countdown bei Sekunden
 setup_sleep_time_pos = Position des Sleep-Timers
 setup_sleep_time_step = Manueller Sleep-Timer-Schritt (Minuten)

@@ -148,6 +148,8 @@ sleep_timer = Время отключения
 sleep_after = Отключение:
 system_default = Системная настройка
 standby = Отключение видеовыхода
+sleep_timer_clear = Сбросить таймер
+sleep_timer_add = Добавить время
 
 plugin_all_channels = Все каналы
 plugin_all_channels__1 = Все каналы (%s)
@@ -255,6 +257,7 @@ setup_download_timeout = Таймаут скачивания (сек)
 setup_native_url = Ссылка из кабинета
 setup_native_file = Файл плейлиста
 setup_use_common_fav = Использовать общее "Избранное"
+setup_sleep_timer_enabled = Разрешить таймер выключения
 setup_sleep_time_show = Показ обратного отсчета от (секунд)
 setup_sleep_time_pos = Позиция таймера выключения
 setup_sleep_time_step = Шаг ручной установки таймера (минут)

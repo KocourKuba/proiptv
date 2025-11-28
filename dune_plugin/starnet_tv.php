@@ -72,7 +72,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
-        if (!is_limited_apk()) {
+        if (!is_limited_apk() && $this->plugin->get_bool_parameter(PARAM_SLEEP_TIMER_ENABLED)) {
             // this key used to fire event from background xmltv indexing script
             $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
             $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER_CLEAR);
@@ -134,7 +134,9 @@ class Starnet_Tv implements User_Input_Handler
                 break;
 
             case ACTION_SLEEP_TIMER:
-                if ($browser_active) break;
+                if ($browser_active) {
+                    return Action_Factory::run_default(GUI_EVENT_KEY_C_YELLOW);
+                }
 
                 return Sleep_Timer::show_sleep_timer_dialog($this);
 
@@ -147,7 +149,9 @@ class Starnet_Tv implements User_Input_Handler
                 return Action_Factory::change_behaviour($this->get_action_map(), 1000);
 
             case ACTION_SLEEP_TIMER_ADD:
-                if ($browser_active) break;
+                if ($browser_active) {
+                    return Action_Factory::run_default(GUI_EVENT_KEY_B_GREEN);
+                }
 
                 $comps = array();
                 $step = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_STEP, 60);
@@ -157,7 +161,9 @@ class Starnet_Tv implements User_Input_Handler
                 return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
 
             case ACTION_SLEEP_TIMER_CLEAR:
-                if ($browser_active) break;
+                if ($browser_active) {
+                    return Action_Factory::run_default(GUI_EVENT_KEY_A_RED);
+                }
 
                 Sleep_Timer::set_sleep_timer(0);
                 $comps = array();

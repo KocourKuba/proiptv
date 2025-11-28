@@ -313,6 +313,24 @@ class Action_Factory
     }
 
     /**
+     * Call default action that previously bind by system on selected event
+     *
+     * @param string $event
+     * @param array $post_action
+     * @return array
+     */
+    public static function run_default($event, $post_action = null)
+    {
+        return array(
+            GuiAction::handler_string_id => RUN_DEFAULT_ACTION_ID,
+            GuiAction::data => array(
+                RunDefaultActionData::event => $event,
+                RunDefaultActionData::post_action => $post_action,
+                ),
+            );
+    }
+
+    /**
      * @param string|null $archive_id
      * @param array $post_action
      * @return array

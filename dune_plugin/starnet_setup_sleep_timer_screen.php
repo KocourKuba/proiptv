@@ -57,33 +57,44 @@ class Starnet_Setup_Sleep_Timer_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // sleep timer position
-        $sleep_pos = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_POS, 'top_right');
-        hd_debug_print(PARAM_SLEEP_TIMER_POS . ": $sleep_pos", true);
-        $pos_ops_translated = array('top_left' => TR::t('setup_top_left'), 'top_right' => TR::t('setup_top_right'));
-        Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_POS,
-            TR::t('setup_sleep_time_pos'), $sleep_pos, $pos_ops_translated, static::CONTROLS_WIDTH, true);
+        $sleep_enabled = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_ENABLED, SwitchOnOff::on);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_SLEEP_TIMER_ENABLED, TR::t('setup_sleep_timer_enabled'), SwitchOnOff::translate($sleep_enabled),
+            SwitchOnOff::to_image($sleep_enabled), static::CONTROLS_WIDTH);
 
-        //////////////////////////////////////
-        // sleep timer countdown
-        $sleep_countdown = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_COUNTDOWN, 120);
-        hd_debug_print(PARAM_SLEEP_TIMER_COUNTDOWN . ": $sleep_countdown", true);
-        $countdown_ops_translated = array(60 => '60', 120 => '120', 180 => '180', 240 => '240', 300 => '300');
-        Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_COUNTDOWN,
-            TR::t('setup_sleep_time_show'), $sleep_countdown, $countdown_ops_translated, static::CONTROLS_WIDTH, true);
+        if (SwitchOnOff::to_bool($sleep_enabled)) {
+            //////////////////////////////////////
+            // sleep timer position
+            $sleep_pos = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_POS, 'top_right');
+            hd_debug_print(PARAM_SLEEP_TIMER_POS . ": $sleep_pos", true);
+            $pos_ops_translated = array('top_left' => TR::t('setup_top_left'), 'top_right' => TR::t('setup_top_right'));
+            Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_POS,
+                TR::t('setup_sleep_time_pos'), $sleep_pos, $pos_ops_translated, static::CONTROLS_WIDTH, true);
 
-        //////////////////////////////////////
-        // sleep timer step
-        $sleep_step = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_STEP, 60);
-        hd_debug_print(PARAM_SLEEP_TIMER_STEP . ": $sleep_step", true);
-        $step_ops_translated = array(30 => '0.5', 60 => '1', 120 => '2', 300 => '5', 600 => '10');
-        Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_STEP,
-            TR::t('setup_sleep_time_step'), $sleep_step, $step_ops_translated, static::CONTROLS_WIDTH, true);
+            //////////////////////////////////////
+            // sleep timer countdown
+            $sleep_countdown = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_COUNTDOWN, 120);
+            hd_debug_print(PARAM_SLEEP_TIMER_COUNTDOWN . ": $sleep_countdown", true);
+            $countdown_ops_translated = array(60 => '60', 120 => '120', 180 => '180', 240 => '240', 300 => '300');
+            Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_COUNTDOWN,
+                TR::t('setup_sleep_time_show'), $sleep_countdown, $countdown_ops_translated, static::CONTROLS_WIDTH, true);
 
-        $sleep_power = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_POWER, 0);
-        hd_debug_print(PARAM_SLEEP_TIMER_POWER . ": $sleep_power", true);
-        $power_ops_translated = array(0 => TR::t('system_default'), 1 => TR::t('standby'));
-        Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_POWER,
-            TR::t('setup_sleep_time_power'), $sleep_power, $power_ops_translated, static::CONTROLS_WIDTH, true);
+            //////////////////////////////////////
+            // sleep timer step
+            $sleep_step = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_STEP, 60);
+            hd_debug_print(PARAM_SLEEP_TIMER_STEP . ": $sleep_step", true);
+            $step_ops_translated = array(30 => '0.5', 60 => '1', 120 => '2', 300 => '5', 600 => '10');
+            Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_STEP,
+                TR::t('setup_sleep_time_step'), $sleep_step, $step_ops_translated, static::CONTROLS_WIDTH, true);
+
+            //////////////////////////////////////
+            // sleep timer power off mode
+            $sleep_power = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_POWER, 0);
+            hd_debug_print(PARAM_SLEEP_TIMER_POWER . ": $sleep_power", true);
+            $power_ops_translated = array(0 => TR::t('system_default'), 1 => TR::t('standby'));
+            Control_Factory::add_combobox($defs, $this, null, PARAM_SLEEP_TIMER_POWER,
+                TR::t('setup_sleep_time_power'), $sleep_power, $power_ops_translated, static::CONTROLS_WIDTH, true);
+        }
 
         return $defs;
     }
@@ -99,6 +110,10 @@ class Starnet_Setup_Sleep_Timer_Screen extends Abstract_Controls_Screen
             case GUI_EVENT_KEY_RETURN:
                 $parent_media_url = MediaURL::decode($user_input->parent_media_url);
                 return self::make_return_action($parent_media_url);
+
+            case PARAM_SLEEP_TIMER_ENABLED:
+                $this->plugin->toggle_parameter($control_id);
+                break;
 
             case PARAM_SLEEP_TIMER_POS:
             case PARAM_SLEEP_TIMER_COUNTDOWN:
