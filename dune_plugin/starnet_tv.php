@@ -104,6 +104,7 @@ class Starnet_Tv implements User_Input_Handler
         // playback_browser_activated => 0
         // playback_stop_pressed => 1
 
+        $browser_active = isset($user_input->playback_browser_activated) && (int)$user_input->playback_browser_activated === 1;
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
                 if (is_limited_apk()) {
@@ -133,15 +134,21 @@ class Starnet_Tv implements User_Input_Handler
                 break;
 
             case ACTION_SLEEP_TIMER:
+                if ($browser_active) break;
+
                 return Sleep_Timer::show_sleep_timer_dialog($this);
 
             case Sleep_Timer::CONTROL_SLEEP_TIME_SET:
+                if ($browser_active) break;
+
                 $min = (int)$user_input->{Sleep_Timer::CONTROL_SLEEP_TIME_MIN};
                 Sleep_Timer::set_timer_op($min);
                 Sleep_Timer::set_sleep_timer($min * 60);
                 return Action_Factory::change_behaviour($this->get_action_map(), 1000);
 
             case ACTION_SLEEP_TIMER_ADD:
+                if ($browser_active) break;
+
                 $comps = array();
                 $step = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_STEP, 60);
                 $sleep_timer = Sleep_Timer::get_sleep_timer() + $step;
@@ -150,6 +157,8 @@ class Starnet_Tv implements User_Input_Handler
                 return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
 
             case ACTION_SLEEP_TIMER_CLEAR:
+                if ($browser_active) break;
+
                 Sleep_Timer::set_sleep_timer(0);
                 $comps = array();
                 Sleep_Timer::create_estimated_timer_box(0, $comps, $user_input, true);
