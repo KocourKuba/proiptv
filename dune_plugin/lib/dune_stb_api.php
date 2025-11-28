@@ -2610,7 +2610,7 @@ function wrap_string_to_lines($long_string, $max_chars, $separator = PHP_EOL)
                     trim(preg_replace('/([!?])\.+\s*$/Uu', '$1', $long_string))),
                     $max_chars, $separator, true))
         ),
-        0, 2
+        0, 15
     );
 
     return implode(PHP_EOL, $lines);

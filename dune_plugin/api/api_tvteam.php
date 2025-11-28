@@ -179,6 +179,30 @@ class api_tvteam extends api_default
     /**
      * @inheritDoc
      */
+    public function GetServers()
+    {
+        hd_debug_print(null, true);
+
+        if (empty($this->servers)) {
+            $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
+            hd_debug_print("GetServers: " . pretty_json_format($response), true);
+            if (((int)$response->status === 1) && isset($response->status, $response->data->serversGroupsList)) {
+                foreach ($response->data->serversGroupsList as $server) {
+                    $this->servers[$server->groupId] = "$server->portalDomainName ($server->streamDomainName)";
+                }
+            }
+
+            if (isset($this->account_info->data->userData->groupId)) {
+                $this->SetProviderParameter(MACRO_SERVER_ID, $this->account_info->data->userData->groupId);
+            }
+        }
+
+        return $this->servers;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function SetServer($server, &$error_msg)
     {
         parent::SetServer($server, $error_msg);
