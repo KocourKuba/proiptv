@@ -1246,7 +1246,8 @@
           {
             "name": "drm",
             "title": "epg.drm-play",
-            "alias": "sharavoz"
+            "alias": "sharavoz",
+            "epg_map": "id"
           }
         ],
         "ext_params": true,
