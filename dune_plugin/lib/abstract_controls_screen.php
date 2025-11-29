@@ -25,6 +25,7 @@
  */
 
 require_once 'abstract_screen.php';
+require_once 'user_input_handler.php';
 
 abstract class Abstract_Controls_Screen extends Abstract_Screen implements User_Input_Handler
 {
