@@ -208,16 +208,12 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
         array_map('unlink', glob(get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*')));
         rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
+        // force plugin to fully reinit
         $this->plugin->init_plugin(true);
 
-        return Action_Factory::show_title_dialog(
-            TR::t('setup_restore_done'),
-            '',
-            Action_Factory::close_and_run(
-                Action_Factory::refresh_entry_points(
-                    User_Input_Handler_Registry::create_screen_action(Starnet_Entry_Handler::ID, ACTION_RELOAD)
-                )
-            )
-        );
+        $actions[] = Action_Factory::show_title_dialog(TR::t('setup_restore_done'));
+        $actions[] = Action_Factory::close_and_run();
+        $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Entry_Handler::ID, ACTION_RELOAD);
+        return Action_Factory::composite($actions);
     }
 }

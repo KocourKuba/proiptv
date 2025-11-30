@@ -183,13 +183,6 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
                 break;
 
             case self::ACTION_EDIT_PROVIDER_SETTINGS:
-                /*
-                $provider = $this->plugin->get_provider($playlist_id);
-                if ($provider !== null && !$provider->request_provider_token()) {
-                    hd_debug_print("Can't get provider token");
-                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
-                }
-                */
                 return Action_Factory::open_folder(
                     Starnet_Setup_Provider_Screen::make_controls_media_url_str(static::ID, $user_input->return_index, $playlist_id),
                     TR::t('edit_provider_settings')
@@ -253,22 +246,18 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
                 $this->plugin->set_background_image($cached_image);
                 $this->plugin->init_screen_view_parameters($cached_image);
 
-                return Action_Factory::invalidate_all_folders(
-                    $plugin_cookies,
-                    null,
-                    Action_Factory::reset_controls($this->do_get_control_defs($parent_media_url))
-                );
+                $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+                $actions[] = User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
+                return Action_Factory::composite($actions);
 
             case self::ACTION_BG_RESET_DEFAULT:
                 hd_debug_print("Background set to default");
                 $this->plugin->set_background_image(null);
                 $this->plugin->init_screen_view_parameters($this->plugin->plugin_info['app_background']);
 
-                return Action_Factory::invalidate_all_folders(
-                    $plugin_cookies,
-                    null,
-                    Action_Factory::reset_controls($this->do_get_control_defs($parent_media_url))
-                );
+                $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+                $actions[] = User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
+                return Action_Factory::composite($actions);
 
             case self::CONTROL_RESET_PLAYLIST_DLG:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_RESET_PLAYLIST_DLG_APPLY);
@@ -280,8 +269,11 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
 
             case ACTION_RELOAD:
                 $this->plugin->reset_channels_loaded();
-                $this->plugin->init_playlist_db(true);
-                $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
+                if ($this->plugin->init_playlist_db(true)) {
+                    $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
+                } else {
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_init_database'));
+                }
                 break;
 
             case ACTION_REFRESH_SCREEN:

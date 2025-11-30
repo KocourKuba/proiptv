@@ -24,9 +24,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'rows_screen.php';
+require_once 'lib/screen.php';
+require_once 'lib/user_input_handler.php';
 
-abstract class Abstract_Rows_Screen implements Rows_Screen
+abstract class Abstract_Rows_Screen implements Screen, User_Input_Handler
 {
     const ID = 'abstract_rows_screen';
 
@@ -40,19 +41,26 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
         $this->plugin = $plugin;
     }
 
+    /**
+     * @param MediaURL $media_url
+     * @param object $plugin_cookies
+     * @return array
+     */
+    public abstract function get_rows_pane(MediaURL $media_url, $plugin_cookies);
+
     ///////////////////////////////////////////////////////////////////////
+    // User_Input_Handler interface
 
     /**
-     * This is not override of User_Input_Handler interface!
-     * It helper method to call inherited classes
-     * that implemens User_Input_Handler interface
-     *
-     * @return string
+     * @inheritDoc
      */
     public function get_handler_id()
     {
         return static::get_id() . '_handler';
     }
+
+    ///////////////////////////////////////////////////////////////////////
+    // Screen interface
 
     /**
      * @inheritDoc
@@ -99,7 +107,7 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
             PluginFolderView::data => array(
                 PluginRowsFolderView::pane => $this->get_rows_pane($media_url, $plugin_cookies),
                 PluginRowsFolderView::actions => $this->get_action_map($media_url, $plugin_cookies),
-                PluginRowsFolderView::timer => $this->get_timer($media_url, $plugin_cookies),
+                PluginRowsFolderView::timer => $this->get_timer(),
                 PluginRowsFolderView::sel_state => null,
             )
         );
@@ -108,7 +116,7 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
     /**
      * @inheritDoc
      */
-    public function get_timer(MediaURL $media_url, $plugin_cookies)
+    public function get_timer()
     {
         return null;
     }

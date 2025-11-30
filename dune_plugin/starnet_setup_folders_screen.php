@@ -168,7 +168,6 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
 
             case self::ACTION_EPG_RESET_DEFAULT:
                 hd_debug_print(self::ACTION_EPG_RESET_DEFAULT);
-                $action_reload = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
                 foreach ($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL, $this->plugin->get_active_playlist_id()) as $id) {
                     Epg_Manager_Xmltv::clear_epg_files($id);
                 }
@@ -176,6 +175,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                 $this->plugin->init_epg_manager();
 
                 $default_path = $this->plugin->get_cache_dir();
+                $action_reload = User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $default_path),
                     $default_path, $action_reload, static::CONTROLS_WIDTH);
 
@@ -188,12 +188,15 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                 $this->plugin->set_parameter(PARAM_CACHE_PATH, str_replace("//", "/", $data->{PARAM_FILEPATH}));
                 $this->plugin->init_epg_manager();
 
-                $action_reload = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                $action_reload = User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
                 return Action_Factory::show_title_dialog(
                     TR::t('folder_screen_selected_folder__1', $data->{Starnet_Folder_Screen::PARAM_CAPTION}),
                     $data->{PARAM_FILEPATH},
                     $action_reload,
                     static::CONTROLS_WIDTH);
+
+            case RESET_CONTROLS_ACTION_ID:
+                break;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs(), $post_action);

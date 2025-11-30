@@ -1,9 +1,10 @@
 <?php
 
-require_once 'lib/default_dune_plugin.php';
 require_once 'movie_series.php';
 require_once 'movie_season.php';
 require_once 'movie_variant.php';
+require_once 'lib/default_dune_plugin.php';
+require_once 'lib/user_input_handler_registry.php';
 
 class Movie implements User_Input_Handler
 {
@@ -60,14 +61,6 @@ class Movie implements User_Input_Handler
         $this->plugin = $plugin;
     }
 
-    /**
-     * @return string
-     */
-    public function get_handler_id()
-    {
-        return static::ID;
-    }
-
     public function __sleep()
     {
         $vars = get_object_vars($this);
@@ -75,11 +68,12 @@ class Movie implements User_Input_Handler
         return array_keys($vars);
     }
 
-    public function get_action_map()
+    protected function do_get_action_map()
     {
+        hd_debug_print(null, true);
+
         User_Input_Handler_Registry::get_instance()->register_handler($this);
 
-        $actions = array();
         $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
         if (!is_limited_apk()) {
@@ -89,6 +83,17 @@ class Movie implements User_Input_Handler
         }
 
         return $actions;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    // User_Input_Handler interface
+
+    /**
+     * @inheritDoc
+     */
+    public function get_handler_id()
+    {
+        return static::ID;
     }
 
     /**
@@ -159,7 +164,7 @@ class Movie implements User_Input_Handler
             case GUI_EVENT_TIMER:
                 clearstatcache();
                 $sleep_timer = Sleep_Timer::get_sleep_timer();
-                $post_action = $sleep_timer ? Action_Factory::change_behaviour($this->get_action_map(), 1000) : null;
+                $post_action = $sleep_timer ? Action_Factory::change_behaviour($this->do_get_action_map(), 1000) : null;
                 $comps = array();
                 Sleep_Timer::create_estimated_timer_box($sleep_timer, $comps, $user_input);
                 return Action_Factory::update_osd($comps, $post_action);
@@ -171,7 +176,7 @@ class Movie implements User_Input_Handler
                 $min = (int)$user_input->{Sleep_Timer::CONTROL_SLEEP_TIME_MIN};
                 Sleep_Timer::set_timer_op($min);
                 Sleep_Timer::set_sleep_timer($min * 60);
-                return Action_Factory::change_behaviour($this->get_action_map(), 1000);
+                return Action_Factory::change_behaviour($this->do_get_action_map(), 1000);
 
             case ACTION_SLEEP_TIMER_ADD:
                 $step = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_STEP, 60);
@@ -179,17 +184,19 @@ class Movie implements User_Input_Handler
                 Sleep_Timer::set_sleep_timer($sleep_timer);
                 $comps = array();
                 Sleep_Timer::create_estimated_timer_box($sleep_timer, $comps, $user_input, true);
-                return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
+                return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->do_get_action_map(), 1000));
 
             case ACTION_SLEEP_TIMER_CLEAR:
                 Sleep_Timer::set_sleep_timer(0);
                 $comps = array();
                 Sleep_Timer::create_estimated_timer_box(0, $comps, $user_input, true);
-                return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
+                return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->do_get_action_map(), 1000));
         }
 
         return null;
     }
+
+    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @param string $name
@@ -480,7 +487,7 @@ class Movie implements User_Input_Handler
             PluginVodInfo::series => $series_array,
             PluginVodInfo::initial_series_ndx => $initial_series_ndx,
             PluginVodInfo::buffering_ms => (int)$this->plugin->get_setting(PARAM_BUFFERING_TIME, 1000),
-            PluginVodInfo::actions => $this->get_action_map(),
+            PluginVodInfo::actions => $this->do_get_action_map(),
             PluginVodInfo::initial_position_ms => $initial_start,
         );
 

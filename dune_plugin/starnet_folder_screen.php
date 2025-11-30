@@ -30,7 +30,7 @@ require_once 'lib/smb_tree.php';
 require_once 'lib/hd.php';
 require_once 'lib/curl_wrapper.php';
 
-class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Input_Handler
+class Starnet_Folder_Screen extends Abstract_Regular_Screen
 {
     const ID = 'file_list';
     const ACTION_FS = 'fs_action';
@@ -80,10 +80,12 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
+        return $this->do_get_action_map($media_url);
+    }
 
-        $actions = array();
+    protected function do_get_action_map(MediaURL $media_url)
+    {
+        hd_debug_print(null, true);
 
         $fs_action = User_Input_Handler_Registry::create_action($this, self::ACTION_FS);
         $actions[GUI_EVENT_KEY_ENTER] = $fs_action;
@@ -148,7 +150,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
-                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                $actions = $this->do_get_action_map($parent_media_url);
                 if (isset($parent_media_url->{PARAM_FILEPATH})
                     && $parent_media_url->{PARAM_FILEPATH} !== self::SMB_MOUNT_PATH
                     && $parent_media_url->{PARAM_FILEPATH} !== self::NETWORK_MOUNT_PATH) {

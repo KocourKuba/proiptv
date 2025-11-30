@@ -24,8 +24,9 @@
  */
 
 require_once 'lib/abstract_preloaded_regular_screen.php';
+require_once 'lib/user_input_handler_registry.php';
 
-class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Screen implements User_Input_Handler
+class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'edit_proiders_list';
 
@@ -38,12 +39,15 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
+        return $this->do_get_action_map();
+    }
 
+    protected function do_get_action_map()
+    {
+        hd_debug_print(null, true);
 
         $info = User_Input_Handler_Registry::create_action($this, self::ACTION_SHOW_QR, TR::t('info'));
 
-        $actions = array();
         $actions[GUI_EVENT_KEY_INFO] = $info;
         $actions[GUI_EVENT_KEY_D_BLUE] = $info;
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);

@@ -29,7 +29,7 @@ require_once 'rows_factory.php';
 require_once 'gcomps_factory.php';
 require_once 'gcomp_geom.php';
 
-class Dummy_Epfs_Screen extends Abstract_Rows_Screen implements User_Input_Handler
+class Dummy_Epfs_Screen extends Abstract_Rows_Screen
 {
     const ID = 'dummy_epf';
 
@@ -40,8 +40,12 @@ class Dummy_Epfs_Screen extends Abstract_Rows_Screen implements User_Input_Handl
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
+        return $this->do_get_action_map();
+    }
+
+    protected function do_get_action_map()
+    {
         hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
 
         return array(GUI_EVENT_KEY_ENTER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER));
     }

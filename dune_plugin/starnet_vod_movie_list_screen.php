@@ -26,19 +26,25 @@
 
 require_once 'lib/abstract_regular_screen.php';
 require_once 'lib/short_movie_range.php';
+require_once 'lib/user_input_handler_registry.php';
 require_once 'starnet_vod_search_screen.php';
 
-class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements User_Input_Handler
+class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
 {
     const ID = 'vod_movies_list';
 
     /**
-     * @param MediaURL $media_url
-     * @param object $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
+        return $this->do_get_action_map();
+    }
+
+    protected function do_get_action_map()
+    {
+        hd_debug_print(null, true);
+
         $actions[GUI_EVENT_KEY_ENTER] = Action_Factory::open_folder();
         $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
         $add_to_favorite = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));

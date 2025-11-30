@@ -25,9 +25,10 @@
 
 require_once 'lib/dune_plugin_constants.php';
 require_once 'lib/abstract_preloaded_regular_screen.php';
+require_once 'lib/user_input_handler_registry.php';
 require_once 'starnet_setup_screen.php';
 
-class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen implements User_Input_Handler
+class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'tv_groups';
 
@@ -42,9 +43,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
+        return $this->do_get_action_map();
+    }
 
-        $actions = array();
+    protected function do_get_action_map()
+    {
+        hd_debug_print(null, true);
 
         $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, ACTION_OPEN_FOLDER);
         $actions[GUI_EVENT_KEY_PLAY] = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_FOLDER);
@@ -115,11 +119,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $error_msg);
                 }
 
-                if (is_limited_apk()) {
-                    return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies,
-                        Action_Factory::change_behaviour($this->get_action_map($parent_media_url, &$plugin_cookies), 1000));
-                }
-                break;
+                if (!is_limited_apk()) break;
+
+                $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map(), 1000);
+                return Action_Factory::composite($actions);
 
             case EVENT_INDEXING_DONE:
                 return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
@@ -145,7 +149,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
-                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                $actions = $this->do_get_action_map();
                 return Action_Factory::change_behaviour($actions);
 
             case ACTION_ITEM_UP:
@@ -457,40 +461,25 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return null;
                 }
 
-                $this->force_parent_reload = true;
                 $this->plugin->vod = null;
-                $this->plugin->reset_channels_loaded();
                 $this->plugin->set_active_playlist_id($user_input->{COLUMN_PLAYLIST_ID});
-                $this->plugin->load_channels($plugin_cookies);
-                return Action_Factory::invalidate_all_folders(
-                    $plugin_cookies,
-                    null,
-                    User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN)
-                );
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_REFRESH_SCREEN:
-                return Action_Factory::close_and_run(
-                    Action_Factory::refresh_entry_points(
-                        Action_Factory::open_folder(
-                            static::ID,
-                            $this->plugin->get_plugin_title(),
-                            null,
-                            null,
-                            Action_Factory::change_behaviour(
-                                $this->get_action_map($parent_media_url, $plugin_cookies)
-                            )
-                        )
-                    )
-                );
+                $actions[] = Action_Factory::refresh_entry_points();
+                $actions[] = Action_Factory::close_and_run();
+                $actions[] = Action_Factory::open_folder(static::ID, $this->plugin->get_plugin_title());
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map());
+                return Action_Factory::composite($actions);
 
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
 
                 $this->force_parent_reload = true;
-                $this->plugin->reset_channels();
-                $this->plugin->load_channels($plugin_cookies, isset($user_input->clear_playlist));
-                $post_action = User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
-                return Action_Factory::invalidate_all_folders($plugin_cookies,null, $post_action);
+                $this->plugin->load_channels($plugin_cookies, true);
+                $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+                $actions[] = User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                return Action_Factory::composite($actions);
 
             case ACTION_INVALIDATE:
                 $this->force_parent_reload = true;
@@ -606,7 +595,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     /**
      * @inheritDoc
      */
-    public function get_timer(MediaURL $media_url, $plugin_cookies)
+    public function get_timer()
     {
         return Action_Factory::timer(1000);
     }

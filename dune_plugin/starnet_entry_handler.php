@@ -61,6 +61,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
         $this->plugin = $plugin;
     }
 
+    ///////////////////////////////////////////////////////////////////////
+    // User_Input_Handler interface
+
     /**
      * @inheritDoc
      */
@@ -171,7 +174,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 Epg_Manager_Json::clear_epg_files();
                 Epg_Manager_Xmltv::clear_epg_files();
                 $this->plugin->reset_channels_loaded();
-                return Action_Factory::clear_rows_info_cache(Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared')));
+                $actions[] = Action_Factory::clear_rows_info_cache();
+                $actions[] = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
+                return Action_Factory::composite($actions);
 
             case ACTION_FORCE_OPEN:
                 hd_debug_print_separator();
@@ -184,13 +189,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 }
 
                 hd_debug_print("action: launch open", true);
-                return Action_Factory::open_folder(
-                    Starnet_Tv_Groups_Screen::ID,
-                    $this->plugin->get_plugin_title(),
-                    null,
-                    null,
-                    User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD)
-                );
+                $actions[] = Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
+                $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD);
+                return Action_Factory::composite($actions);
 
             case self::ACTION_CONFIRM_BACKUP_DLG:
                 hd_debug_print("Call select backup folder");
@@ -211,28 +212,28 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_backup'));
                 }
 
-                return Action_Factory::show_title_dialog(TR::t('setup_copy_done'),
-                    '', User_Input_Handler_Registry::create_action(
-                        $this,
-                        self::ACTION_PLUGIN_ENTRY,
-                        null,
-                        array(PARAM_ACTION_ID => $data->{PARAM_ACTION_ID}, 'mandatory_playback' => 0)
-                    )
+                $actions[] = Action_Factory::show_title_dialog(TR::t('setup_copy_done'));
+                $actions[] = User_Input_Handler_Registry::create_action(
+                    $this,
+                    self::ACTION_PLUGIN_ENTRY,
+                    null,
+                    array(PARAM_ACTION_ID => $data->{PARAM_ACTION_ID}, 'mandatory_playback' => 0)
                 );
+                return Action_Factory::composite($actions);
 
             case ACTION_RELOAD:
-                $this->plugin->reset_channels();
-                $this->plugin->load_channels($plugin_cookies);
-                return Action_Factory::refresh_entry_points(Starnet_Epfs_Handler::update_epfs_file($plugin_cookies,
-                    isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep)));
+                $first_run = isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep);
+                $this->plugin->load_channels($plugin_cookies, true);
+                $actions[] = Action_Factory::refresh_entry_points();
+                $actions[] = Starnet_Epfs_Handler::update_epfs_file($plugin_cookies, $first_run);
+                return Action_Factory::composite($actions);
 
             case self::ACTION_CONTINUE_UNINSTALL:
                 $action = color_palette_restore();
-                if ($action !== null) {
-                    hd_debug_print("Palette restored");
-                    return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), TR::t('setup_patch_success'));
-                }
-                break;
+                if ($action === null) break;
+
+                hd_debug_print("Palette restored");
+                return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), TR::t('setup_patch_success'));
 
             case self::ACTION_PLUGIN_ENTRY:
                 if (!isset($user_input->action_id)) {
@@ -270,22 +271,22 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         return Action_Factory::show_error(false, TR::t('err_vod_not_available'));
 
                     case self::ACTION_UPDATE_EPFS:
-                        $this->plugin->init_plugin();
+                        $first_run = isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep);
                         $this->plugin->load_channels($plugin_cookies);
-                        return Action_Factory::refresh_entry_points(Starnet_Epfs_Handler::update_epfs_file($plugin_cookies,
-                            isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep)));
+                        $actions[] = Action_Factory::refresh_entry_points();
+                        $actions[] = Starnet_Epfs_Handler::update_epfs_file($plugin_cookies, $first_run);
+                        return Action_Factory::composite($actions);
 
                     case self::ACTION_UNINSTALL:
                         Default_Archive::clear_cache();
-                        if (color_palette_check()) {
-                            return Action_Factory::show_confirmation_dialog(
-                                TR::t('setup_settings_patch_palette'),
-                                $this,
-                                self::ACTION_CONTINUE_UNINSTALL,
-                                TR::t('setup_restore_patch')
-                            );
-                        }
-                        break;
+                        if (!color_palette_check()) break;
+
+                        return Action_Factory::show_confirmation_dialog(
+                            TR::t('setup_settings_patch_palette'),
+                            $this,
+                            self::ACTION_CONTINUE_UNINSTALL,
+                            TR::t('setup_restore_patch')
+                        );
 
                     default:
                         break;
@@ -297,6 +298,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         return null;
     }
+
+    ///////////////////////////////////////////////////////////////////////
 
     private function check_upgrade($user_input)
     {
@@ -367,7 +370,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
         }
 
         if (!$this->plugin->init_playlist_db()) {
-            hd_debug_print("Failed to open current playlist database!");
             return $this->open_playlist_screen();
         }
 

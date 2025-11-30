@@ -25,27 +25,34 @@
  */
 
 require_once 'lib/abstract_preloaded_regular_screen.php';
+require_once 'lib/user_input_handler_registry.php';
 
-class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implements User_Input_Handler
+class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'filter_screen';
     const FILTER_ICON_PATH = 'plugin_file://icons/icon_filter.png';
 
     /**
-     * @param MediaURL $media_url
-     * @param object $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return array(
-            GUI_EVENT_KEY_ENTER => User_Input_Handler_Registry::create_action($this,
-                ACTION_CREATE_FILTER, null, array(ACTION_FILTER => ACTION_OPEN_FOLDER)),
-            GUI_EVENT_KEY_B_GREEN => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up')),
-            GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down')),
-            GUI_EVENT_KEY_D_BLUE => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete')),
-            GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
-        );
+        return $this->do_get_action_map();
+    }
+
+    protected function do_get_action_map()
+    {
+        hd_debug_print(null, true);
+
+        $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this,
+                ACTION_CREATE_FILTER, null, array(ACTION_FILTER => ACTION_OPEN_FOLDER));
+        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+
+        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
+        $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
+        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
+
+        return $actions;
     }
 
     /**

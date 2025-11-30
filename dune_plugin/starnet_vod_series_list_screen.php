@@ -25,8 +25,9 @@
  */
 
 require_once 'lib/abstract_preloaded_regular_screen.php';
+require_once 'lib/user_input_handler_registry.php';
 
-class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen implements User_Input_Handler
+class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'vod_series';
     const ACTION_QUALITY_SELECTED = 'select_quality';
@@ -46,6 +47,50 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
      * @var array
      */
     protected $default_audio;
+
+    /**
+     * @inheritDoc
+     */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        return $this->do_get_action_map($media_url);
+    }
+
+    protected function do_get_action_map(MediaURL $media_url)
+    {
+        hd_debug_print(null, true);
+
+        $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
+        $actions[GUI_EVENT_KEY_ENTER] = $action_play;
+        $actions[GUI_EVENT_KEY_PLAY] = $action_play;
+
+        if ($this->plugin->vod->getVodQuality()) {
+            $movie = $this->plugin->vod->get_loaded_movie($media_url->movie_id);
+            $variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_QUALITY, 'auto');
+            if (!is_null($movie) && isset($movie->qualities_list) && count($movie->qualities_list) > 1) {
+                $q_exist = (in_array($variant, $movie->qualities_list) ? "" : "? ");
+                $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
+                    ACTION_QUALITY,
+                    TR::t('vod_screen_quality__1', "$q_exist$variant"));
+            }
+        }
+
+        if ($this->plugin->vod->getVodAudio()) {
+            $movie = $this->plugin->vod->get_loaded_movie($media_url->movie_id);
+            if (!is_null($movie)) {
+                $selected_audio = safe_get_value($this->default_audio, $media_url->movie_id, 'auto');
+                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this,
+                    ACTION_AUDIO,
+                    TR::t('vod_screen_audio__1', $selected_audio));
+            }
+        }
+
+        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_WATCHED, TR::t('vod_screen_viewed_not_viewed'));
+        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
+
+        return $actions;
+    }
 
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
@@ -111,7 +156,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 $this->plugin->set_setting(PARAM_VOD_DEFAULT_QUALITY, $quality);
                 $parent_url = MediaURL::decode($user_input->parent_media_url);
-                return Action_Factory::change_behaviour($this->get_action_map($parent_url, $plugin_cookies));
+                return Action_Factory::change_behaviour($this->do_get_action_map($parent_url));
 
             case ACTION_AUDIO:
                 $movie = $this->plugin->vod->get_loaded_movie($selected_media_url->movie_id);
@@ -150,7 +195,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $this->default_audio[$selected_media_url->movie_id] = $audio;
 
                 $parent_url = MediaURL::decode($user_input->parent_media_url);
-                return Action_Factory::change_behaviour($this->get_action_map($parent_url, $plugin_cookies));
+                return Action_Factory::change_behaviour($this->do_get_action_map($parent_url));
 
             case ACTION_WATCHED:
                 $movie = $this->plugin->vod->get_loaded_movie($selected_media_url->movie_id);
@@ -193,47 +238,6 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
     }
 
     ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @param MediaURL $media_url
-     * @param object $plugin_cookies
-     * @return array
-     */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
-        $actions = array(
-            GUI_EVENT_KEY_ENTER => $action_play,
-            GUI_EVENT_KEY_PLAY => $action_play,
-        );
-
-        if ($this->plugin->vod->getVodQuality()) {
-            $movie = $this->plugin->vod->get_loaded_movie($media_url->movie_id);
-            $variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_QUALITY, 'auto');
-            if (!is_null($movie) && isset($movie->qualities_list) && count($movie->qualities_list) > 1) {
-                $q_exist = (in_array($variant, $movie->qualities_list) ? "" : "? ");
-                $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
-                    ACTION_QUALITY,
-                    TR::t('vod_screen_quality__1', "$q_exist$variant"));
-            }
-        }
-
-        if ($this->plugin->vod->getVodAudio()) {
-            $movie = $this->plugin->vod->get_loaded_movie($media_url->movie_id);
-            if (!is_null($movie)) {
-                $selected_audio = safe_get_value($this->default_audio, $media_url->movie_id, 'auto');
-                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this,
-                    ACTION_AUDIO,
-                    TR::t('vod_screen_audio__1', $selected_audio));
-            }
-        }
-
-        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_WATCHED, TR::t('vod_screen_viewed_not_viewed'));
-        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
-        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
-
-        return $actions;
-    }
 
     /**
      * Get MediaURL string representation (json encoded)

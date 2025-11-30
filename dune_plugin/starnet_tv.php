@@ -27,6 +27,7 @@ require_once 'lib/hashed_array.php';
 require_once 'lib/ordered_array.php';
 require_once 'lib/osd_component_factory.php';
 require_once 'lib/sleep_timer.php';
+require_once 'lib/user_input_handler_registry.php';
 require_once 'lib/epg/default_epg_item.php';
 require_once 'lib/m3u/KnownCatchupSourceTags.php';
 require_once 'vod/vod_standard.php';
@@ -58,15 +59,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->playback_url_is_stream_url = false;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function get_handler_id()
-    {
-        return static::ID . '_handler';
-    }
-
-    public function get_action_map()
+    protected function do_get_action_map()
     {
         hd_debug_print(null, true);
 
@@ -81,6 +74,17 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         return $actions;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    // User_Input_Handler interface
+
+    /**
+     * @inheritDoc
+     */
+    public function get_handler_id()
+    {
+        return static::ID . '_handler';
     }
 
     /**
@@ -108,7 +112,7 @@ class Starnet_Tv implements User_Input_Handler
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
                 if (is_limited_apk()) {
-                    return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies, Action_Factory::change_behaviour($this->get_action_map(), 1000));
+                    return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies, Action_Factory::change_behaviour($this->do_get_action_map(), 1000));
                 }
 
                 $sleep_timer = Sleep_Timer::get_sleep_timer();
@@ -116,7 +120,7 @@ class Starnet_Tv implements User_Input_Handler
 
                 $comps = array();
                 Sleep_Timer::create_estimated_timer_box($sleep_timer, $comps, $user_input);
-                $post_action = $sleep_timer ? Action_Factory::change_behaviour($this->get_action_map(), 1000) : null;
+                $post_action = $sleep_timer ? Action_Factory::change_behaviour($this->do_get_action_map(), 1000) : null;
                 return Action_Factory::update_osd($comps, $post_action);
 
             case EVENT_INDEXING_DONE:
@@ -146,7 +150,7 @@ class Starnet_Tv implements User_Input_Handler
                 $min = (int)$user_input->{Sleep_Timer::CONTROL_SLEEP_TIME_MIN};
                 Sleep_Timer::set_timer_op($min);
                 Sleep_Timer::set_sleep_timer($min * 60);
-                return Action_Factory::change_behaviour($this->get_action_map(), 1000);
+                return Action_Factory::change_behaviour($this->do_get_action_map(), 1000);
 
             case ACTION_SLEEP_TIMER_ADD:
                 if ($browser_active) {
@@ -158,7 +162,7 @@ class Starnet_Tv implements User_Input_Handler
                 $sleep_timer = Sleep_Timer::get_sleep_timer() + $step;
                 Sleep_Timer::set_sleep_timer($sleep_timer);
                 Sleep_Timer::create_estimated_timer_box($sleep_timer, $comps, $user_input, true);
-                return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
+                return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->do_get_action_map(), 1000));
 
             case ACTION_SLEEP_TIMER_CLEAR:
                 if ($browser_active) {
@@ -168,11 +172,13 @@ class Starnet_Tv implements User_Input_Handler
                 Sleep_Timer::set_sleep_timer(0);
                 $comps = array();
                 Sleep_Timer::create_estimated_timer_box(0, $comps, $user_input, true);
-                return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->get_action_map(), 1000));
+                return Action_Factory::update_osd($comps, Action_Factory::change_behaviour($this->do_get_action_map(), 1000));
         }
 
         return null;
     }
+
+    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @param MediaURL $media_url
@@ -289,7 +295,7 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::epg_day_use_local_tz => USE_TZ_LOCAL,
             PluginTvInfo::epg_day_shift_sec => 0,
 
-            PluginTvInfo::actions => $this->get_action_map(),
+            PluginTvInfo::actions => $this->do_get_action_map(),
             PluginTvInfo::timer => Action_Factory::timer(1000),
         );
 

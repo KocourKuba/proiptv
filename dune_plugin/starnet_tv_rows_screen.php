@@ -29,8 +29,9 @@ require_once 'lib/epfs/abstract_rows_screen.php';
 require_once 'lib/epfs/rows_factory.php';
 require_once 'lib/epfs/gcomps_factory.php';
 require_once 'lib/epfs/gcomp_geom.php';
+require_once 'lib/user_input_handler_registry.php';
 
-class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_Handler
+class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 {
     const ID = 'rows_epfs';
     const ICON_PROP = 'icon_prop';
@@ -52,6 +53,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        return $this->do_get_action_map();
+    }
+
+    protected function do_get_action_map()
     {
         hd_debug_print(null, true);
 
@@ -90,7 +96,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     /**
      * @inheritDoc
      */
-    public function get_timer(MediaURL $media_url, $plugin_cookies)
+    public function get_timer()
     {
         return Action_Factory::timer(1000);
     }
@@ -150,8 +156,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                 if (!is_limited_apk()) return null;
 
-                return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies,
-                    Action_Factory::change_behaviour($this->get_action_map($media_url, &$plugin_cookies), 1000));
+                $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map(), 1000);
+                return Action_Factory::composite($actions);
 
             case EVENT_INDEXING_DONE:
                 return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
@@ -380,13 +387,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
-                $this->plugin->reset_channels();
-                $this->plugin->load_channels($plugin_cookies);
+                $this->plugin->load_channels($plugin_cookies, true);
                 safe_unlink(Starnet_Epfs_Handler::get_epfs_path(Starnet_Epfs_Handler::$epf_id));
-                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+                $actions[] = User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                return Action_Factory::composite($actions);
 
             case ACTION_REFRESH_SCREEN:
-                return Action_Factory::invalidate_all_folders($plugin_cookies);
+                $actions[] = Action_Factory::refresh_entry_points();
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map());
+                return Action_Factory::composite($actions);
         }
 
         return Action_Factory::invalidate_epfs_folders($plugin_cookies, $post_action);

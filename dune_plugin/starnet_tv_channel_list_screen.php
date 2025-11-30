@@ -24,8 +24,9 @@
  */
 
 require_once 'lib/abstract_preloaded_regular_screen.php';
+require_once 'lib/user_input_handler_registry.php';
 
-class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen implements User_Input_Handler
+class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'tv_channel_list';
 
@@ -49,6 +50,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        return $this->do_get_action_map($media_url);
+    }
+
+    protected function do_get_action_map(MediaURL $media_url)
     {
         hd_debug_print(null, true);
 
@@ -110,14 +116,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                if (!$this->force_parent_reload) {
-                    return Action_Factory::close_and_run();
+                $actions[] = Action_Factory::close_and_run();
+                if ($this->force_parent_reload) {
+                    $this->force_parent_reload = false;
+                    hd_debug_print("Force parent reload", true);
+                    $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE);
                 }
-
-                $this->force_parent_reload = false;
-                hd_debug_print("Force parent reload", true);
-                return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
+                return Action_Factory::composite($actions);
 
             case GUI_EVENT_TIMER:
                 $error_msg = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
@@ -126,11 +131,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $error_msg);
                 }
 
-                if (is_limited_apk()) {
-                    return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies,
-                        Action_Factory::change_behaviour($this->get_action_map($parent_media_url, &$plugin_cookies), 1000));
-                }
-                break;
+                if (!is_limited_apk()) break;
+
+                $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($parent_media_url), 1000);
+                return Action_Factory::composite($actions);
 
             case EVENT_INDEXING_DONE:
                 return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
@@ -147,15 +152,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 hd_debug_print("Applying epg shift hours: " . $user_input->{PARAM_EPG_SHIFT_HOURS}, true);
                 hd_debug_print("Applying epg shift mins: " . $user_input->{PARAM_EPG_SHIFT_MINS}, true);
                 $this->plugin->set_channel_epg_shift($channel_id, $user_input->{PARAM_EPG_SHIFT_HOURS}, $user_input->{PARAM_EPG_SHIFT_MINS});
-                if (isset($new_value)) {
-                    $attrs['initial_sel_ndx'] = $user_input->control_id === PARAM_EPG_SHIFT_HOURS ? 0 : 1;
-                    return Action_Factory::close_dialog_and_run(
-                        Action_Factory::invalidate_folders(array($user_input->parent_media_url),
-                            $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id, -1), $attrs)
-                        )
-                    );
-                }
-                break;
+                if (!isset($new_value)) break;
+
+                $attrs['initial_sel_ndx'] = $user_input->control_id === PARAM_EPG_SHIFT_HOURS ? 0 : 1;
+                $actions[] = Action_Factory::close_dialog();
+                $actions[] = Action_Factory::invalidate_folders(array($user_input->parent_media_url));
+                $actions[] = $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id, -1), $attrs);
+                return Action_Factory::composite($actions);
 
             case ACTION_PLAY_ITEM:
                 try {
@@ -199,8 +202,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
-                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                return Action_Factory::change_behaviour($actions);
+                return Action_Factory::change_behaviour($this->do_get_action_map($parent_media_url));
 
             case ACTION_ITEM_UP:
                 $sel_ndx--;
@@ -350,26 +352,19 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_SHORTCUT:
-                if (!isset($user_input->{COLUMN_PLAYLIST_ID}) || $this->plugin->get_active_playlist_id() === $user_input->{COLUMN_PLAYLIST_ID}) {
-                    return null;
-                }
-
-                $this->plugin->set_active_playlist_id($user_input->{COLUMN_PLAYLIST_ID});
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                $actions[] = Action_Factory::close_and_run();
+                $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,
+                    ACTION_SHORTCUT,
+                    '',
+                    array(COLUMN_PLAYLIST_ID => $user_input->{COLUMN_PLAYLIST_ID})
+                );
+                return Action_Factory::composite($actions);
 
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
-                $this->plugin->reset_channels();
-                $this->plugin->load_channels($plugin_cookies);
-                return Action_Factory::invalidate_all_folders(
-                    $plugin_cookies,
-                    array(Starnet_Tv_Groups_Screen::ID),
-                    Action_Factory::close_and_run(
-                        Action_Factory::close_and_run(
-                            Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title())
-                        )
-                    )
-                );
+                $actions[] = Action_Factory::close_and_run();
+                $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD);
+                return Action_Factory::composite($actions);
 
             case ACTION_INVALIDATE:
                 $this->force_parent_reload = true;
@@ -455,7 +450,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
     /**
      * @inheritDoc
      */
-    public function get_timer(MediaURL $media_url, $plugin_cookies)
+    public function get_timer()
     {
         return Action_Factory::timer(1000);
     }

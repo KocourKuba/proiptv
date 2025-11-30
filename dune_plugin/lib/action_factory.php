@@ -801,4 +801,12 @@ class Action_Factory
             ),
         );
     }
+
+    public static function composite($actions)
+    {
+        return array(
+            GuiAction::handler_string_id => COMPOSITE_ACTION_ID,
+            GuiAction::data => array(CompositeActionData::actions => $actions),
+        );
+    }
 }

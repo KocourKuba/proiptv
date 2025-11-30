@@ -24,8 +24,9 @@
  */
 
 require_once 'lib/abstract_preloaded_regular_screen.php';
+require_once 'lib/user_input_handler_registry.php';
 
-class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen implements User_Input_Handler
+class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'edit_playlists';
 
@@ -51,10 +52,12 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
+        return $this->do_get_action_map();
+    }
 
-        $actions = array();
+    protected function do_get_action_map()
+    {
+        hd_debug_print(null, true);
 
         if ($this->plugin->get_all_playlists_count() !== 0) {
             $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
@@ -116,21 +119,21 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_PLUGIN_SETTINGS:
-                if ($this->plugin->is_playlist_entry_exist($selected_id)) {
-                    return $this->plugin->show_protect_settings_dialog($this,
-                        Action_Factory::open_folder(
-                            Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID, $user_input->sel_ndx, $selected_id),
-                            TR::t('setup_playlist')
-                        )
-                    );
+                if (!$this->plugin->is_playlist_entry_exist($selected_id)) {
+                    hd_debug_print("Unknown playlist: $selected_id", true);
+                    return null;
                 }
 
-                hd_debug_print("Unknown playlist: $selected_id", true);
-                return null;
+                return $this->plugin->show_protect_settings_dialog($this,
+                    Action_Factory::open_folder(
+                        Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID, $user_input->sel_ndx, $selected_id),
+                        TR::t('setup_playlist')
+                    )
+                );
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
-                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                $actions = $this->do_get_action_map();
                 return Action_Factory::change_behaviour($actions);
 
             case ACTION_ITEM_UP:
@@ -359,8 +362,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
         $sel_idx = array_search($res, $this->plugin->get_all_playlists_ids());
         $this->force_parent_reload = $this->plugin->get_active_playlist_id() === $res;
-        $this->plugin->reset_channels();
-        if ($this->plugin->load_channels($plugin_cookies)) {
+        if ($this->plugin->load_channels($plugin_cookies, true)) {
             return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_idx);
         }
 

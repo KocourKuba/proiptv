@@ -37,9 +37,7 @@ interface Screen
     public function get_next_folder_view(MediaURL $media_url, &$plugin_cookies);
 
     /**
-     * @param MediaURL $media_url
-     * @param object $plugin_cookies
      * @return mixed|null
      */
-    public function get_timer(MediaURL $media_url, $plugin_cookies);
+    public function get_timer();
 }

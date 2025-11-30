@@ -25,8 +25,9 @@
  */
 
 require_once 'screen.php';
+require_once 'user_input_handler.php';
 
-abstract class Abstract_Screen implements Screen
+abstract class Abstract_Screen implements Screen, User_Input_Handler
 {
     const ID = 'abstract_screen';
 
@@ -41,14 +42,10 @@ abstract class Abstract_Screen implements Screen
     }
 
     ///////////////////////////////////////////////////////////////////////
-    // static methods
+    // User_Input_Handler interface
 
     /**
-     * This is not override of User_Input_Handler interface!
-     * It helper method to call inherited classes
-     * that implements User_Input_Handler interface
-     *
-     * @return string
+     * @inheritDoc
      */
     public function get_handler_id()
     {
@@ -59,12 +56,9 @@ abstract class Abstract_Screen implements Screen
     // Screen interface
 
     /**
-     * @param MediaURL $media_url
-     * @param object $plugin_cookies
-     * @return mixed|null
-     * @noinspection PhpReturnDocTypeMismatchInspection
+     * @inheritDoc
      */
-    public function get_timer(MediaURL $media_url, $plugin_cookies)
+    public function get_timer()
     {
         return null;
     }

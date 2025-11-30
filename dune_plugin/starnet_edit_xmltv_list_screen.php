@@ -24,8 +24,9 @@
  */
 
 require_once 'lib/abstract_preloaded_regular_screen.php';
+require_once 'lib/user_input_handler_registry.php';
 
-class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen implements User_Input_Handler
+class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'edit_xmltv_list';
 
@@ -50,13 +51,16 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
+        return $this->do_get_action_map();
+    }
+
+    protected function do_get_action_map()
+    {
         hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
 
         $action_return = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $action_select = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER, TR::t('select'));
 
-        $actions = array();
         $actions[GUI_EVENT_KEY_B_GREEN] = $action_select;
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_SETTINGS, TR::t('edit'));
 
@@ -87,7 +91,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
-                $target_action = null;
+                $actions[] = Action_Factory::close_and_run();
                 if ($this->force_parent_reload && isset($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_END_ACTION})) {
                     $this->force_parent_reload = false;
                     $source_window = safe_get_member($parent_media_url, PARAM_SOURCE_WINDOW_ID);
@@ -95,13 +99,13 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     hd_debug_print("Force parent reload: $source_window action: $end_action", true);
 
                     if ($source_window === Starnet_Entry_Handler::ID) {
-                        $target_action = Action_Factory::invalidate_all_folders($plugin_cookies);
+                        $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                     } else {
-                        $target_action = User_Input_Handler_Registry::create_screen_action($source_window, $end_action);
+                        $actions[] = User_Input_Handler_Registry::create_screen_action($source_window, $end_action);
                     }
                 }
 
-                return Action_Factory::close_and_run($target_action);
+                return Action_Factory::composite($actions);
 
             case GUI_EVENT_KEY_ENTER:
                 if ($this->plugin->is_selected_xmltv_id($selected_id)) {
@@ -114,24 +118,23 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case EVENT_INDEXING_DONE:
-                $post_action = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
-                return $this->plugin->get_import_xmltv_logs_actions(
-                    $plugin_cookies,
-                    $post_action,
-                    $this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL, $this->plugin->get_active_playlist_id())
-                );
+                $xmltv_ids = $this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL, $this->plugin->get_active_playlist_id());
+                $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies, null,  $xmltv_ids);
+                $actions[] = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
+                return Action_Factory::composite($actions);
 
             case GUI_EVENT_TIMER:
-                $post_action = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
-                if (isset($plugin_cookies->ticker)) {
-                    $post_action = Action_Factory::change_behaviour(
-                        $this->get_action_map($parent_media_url, $plugin_cookies),
-                        self::REFRESH_TIMER,
-                        $post_action
-                    );
+                if (is_limited_apk()) {
+                    $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
                 }
 
-                return is_limited_apk() ? $this->plugin->get_import_xmltv_logs_actions($plugin_cookies, $post_action) : $post_action;
+                if (isset($plugin_cookies->ticker)) {
+                    $actions[] = Action_Factory::change_behaviour($this->do_get_action_map(), self::REFRESH_TIMER);
+                }
+
+                $actions[] = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
+
+                return Action_Factory::composite($actions);
 
             case GUI_EVENT_KEY_INFO:
                 return $this->do_show_xmltv_info($selected_id);
@@ -164,7 +167,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if ($bg_indexing_runs || isset($plugin_cookies->ticker)) {
                     hd_debug_print("Run timer", true);
                     $plugin_cookies->ticker = 1;
-                    return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), self::REFRESH_TIMER);
+                    return Action_Factory::change_behaviour($this->do_get_action_map(), self::REFRESH_TIMER);
                 }
                 break;
 
@@ -419,7 +422,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         }
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
+        return Action_Factory::change_behaviour($this->do_get_action_map(), 0,
             $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
     }
 
@@ -644,7 +647,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
     /**
      * @inheritDoc
      */
-    public function get_timer(MediaURL $media_url, $plugin_cookies)
+    public function get_timer()
     {
         return Action_Factory::timer(100);
     }

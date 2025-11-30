@@ -25,9 +25,8 @@
  */
 
 require_once 'abstract_screen.php';
-require_once 'user_input_handler.php';
 
-abstract class Abstract_Controls_Screen extends Abstract_Screen implements User_Input_Handler
+abstract class Abstract_Controls_Screen extends Abstract_Screen
 {
     const CONTROLS_WIDTH = 850;
 
@@ -111,6 +110,7 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen implements User_
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
+
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         return $actions;
@@ -129,7 +129,7 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen implements User_
             PluginControlsFolderView::defs => $defs,
             PluginControlsFolderView::initial_sel_ndx => -1,
             PluginControlsFolderView::actions => $this->get_action_map($media_url, $plugin_cookies),
-            PluginControlsFolderView::timer => $this->get_timer($media_url, $plugin_cookies),
+            PluginControlsFolderView::timer => $this->get_timer(),
             PluginControlsFolderView::params => array(
                 PluginFolderViewParams::paint_path_box => true,
                 PluginFolderViewParams::paint_content_box_background => true,

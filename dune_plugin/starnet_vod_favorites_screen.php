@@ -25,20 +25,26 @@
  */
 
 require_once 'lib/abstract_preloaded_regular_screen.php';
+require_once 'lib/user_input_handler_registry.php';
 
-class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen implements User_Input_Handler
+class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'vod_favorites';
 
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param MediaURL $media_url
-     * @param object $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
+        return $this->do_get_action_map();
+    }
+
+    protected function do_get_action_map()
+    {
+        hd_debug_print(null, true);
+
         $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
 
         $actions[GUI_EVENT_KEY_ENTER] = $action_play;

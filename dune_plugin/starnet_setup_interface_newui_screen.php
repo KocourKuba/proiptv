@@ -118,15 +118,14 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-                $post_action = self::make_return_action($parent_media_url);
-
                 if ($this->force_parent_reload) {
                     $this->force_parent_reload = false;
                     hd_debug_print("Force parent reload", true);
-                    $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
+                    $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                 }
-                return $post_action;
+
+                $actions[] = self::make_return_action(MediaURL::decode($user_input->parent_media_url));
+                return Action_Factory::composite($actions);
 
             case PARAM_NEWUI_CHANNEL_POSITION:
             case PARAM_NEWUI_ICONS_IN_ROW:

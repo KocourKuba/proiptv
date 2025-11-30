@@ -29,6 +29,8 @@ require_once 'archive.php';
 
 abstract class Abstract_Regular_Screen extends Abstract_Screen
 {
+    const ID = 'abstract_regular_screen';
+
     /**
      * @param string $parent_id
      * @param array $add_params
@@ -99,7 +101,7 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
         $folder_view = $folder_views[$this->get_folder_view_index()];
         $folder_view[PluginRegularFolderView::actions] = $this->get_action_map($media_url, $plugin_cookies);
         $folder_view[PluginRegularFolderView::initial_range] = $this->get_folder_range($media_url, 0, $plugin_cookies);
-        $folder_view[PluginRegularFolderView::timer] = $this->get_timer($media_url, $plugin_cookies);
+        $folder_view[PluginRegularFolderView::timer] = $this->get_timer();
         $archive = $this->get_image_archive($media_url);
         $archive_def = is_null($archive) ? null : $archive->get_image_archive_def();
 

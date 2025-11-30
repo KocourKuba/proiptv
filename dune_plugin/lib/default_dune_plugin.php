@@ -971,7 +971,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $playlist_id = $this->get_active_playlist_id();
         if (!$this->is_playlist_entry_exist($playlist_id)) {
-            hd_debug_print("Playlist info for ID: $playlist_id is not exist!");
+            $err = "Playlist info for ID: $playlist_id is not exist!";
+            Dune_Last_Error::set_last_error(LAST_ERROR_PLAYLIST, $err);
+            hd_debug_print($err);
             return false;
         }
 
@@ -992,6 +994,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Load playlist settings database: $db_file", true);
         $this->sql_playlist = new Sql_Wrapper($db_file);
         if (!$this->sql_playlist->is_valid()) {
+            $err = "Database $db_file is not valid!";
+            Dune_Last_Error::set_last_error(LAST_ERROR_PLAYLIST, $err);
+            hd_debug_print($err);
             return false;
         }
 
@@ -1201,14 +1206,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $plugin_cookies->toggle_move = false;
 
         $this->init_plugin();
+        if ($reload_playlist) {
+            $this->reset_channels();
+        }
 
         // Init playlist db
         if (!$this->init_playlist_db()) {
-            hd_debug_print("Init playlist db failed");
             return false;
         }
-
-        Dune_Last_Error::clear_last_error(LAST_ERROR_PLAYLIST);
 
         $playlist_id = $this->get_active_playlist_id();
         $perf = new Perf_Collector();
@@ -1241,7 +1246,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return true;
         }
 
-        if ($this->channels_loaded && !$reload_playlist) {
+        if ($this->channels_loaded) {
             hd_debug_print("Channels already loaded", true);
             return true;
         }
@@ -2823,7 +2828,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     public function get_plugin_title()
     {
-        return $this->plugin_info['app_caption'];
+        $params = $this->get_playlist_parameters($this->get_active_playlist_id());
+        $name = safe_get_value($params, PARAM_NAME, '');
+        $title = $this->plugin_info['app_caption'];
+        if (!empty($name)) {
+            $title .= " ($name)";
+        }
+
+        return $title;
     }
 
     /**
