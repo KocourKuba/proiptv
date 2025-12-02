@@ -112,10 +112,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                     return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_error_file_not_found'));
                 }
 
-                if ($this->plugin->get_active_playlist_id() !== $selected_id) {
-                    $this->plugin->set_active_playlist_id($selected_id);
-                    $this->force_parent_reload = true;
-                }
+                $this->plugin->set_active_playlist_id($selected_id);
+                $this->force_parent_reload = true;
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_PLUGIN_SETTINGS:
@@ -287,6 +285,10 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
                 $this->force_parent_reload = true;
                 $this->plugin->set_playlist_shortcut($selected_id, $user_input->{LIST_IDX});
+                break;
+
+            case ACTION_RELOAD:
+                $this->force_parent_reload = true;
                 break;
 
             case ACTION_INVALIDATE:

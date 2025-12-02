@@ -111,7 +111,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_init_database'));
                 }
                 return $this->plugin->show_protect_settings_dialog($this,
-                    Action_Factory::open_folder(Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup')));
+                    Action_Factory::open_folder(Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID), TR::t('setup_playlist')));
 
             case ACTION_PASSWORD_APPLY:
                 return $this->plugin->apply_protect_settings_dialog($user_input);
@@ -340,8 +340,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
     {
         $media_url = Starnet_Edit_Playlists_Screen::make_callback_media_url_str(Starnet_Entry_Handler::ID,
             array(
-                PARAM_END_ACTION => ACTION_FORCE_OPEN,
-                PARAM_CANCEL_ACTION => ACTION_EMPTY,
                 PARAM_EXTENSION => PLAYLIST_PATTERN,
                 Starnet_Edit_Playlists_Screen::PARAM_ALLOW_ORDER => true,
             )

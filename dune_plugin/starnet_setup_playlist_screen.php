@@ -176,7 +176,11 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                return self::make_return_action($parent_media_url);
+                $ret_action = null;
+                if ($this->force_parent_reload) {
+                    $ret_action = ACTION_RELOAD;
+                }
+                return self::make_return_action($parent_media_url, $ret_action);
 
             case CONTROL_EDIT_NAME:
                 $this->plugin->set_playlist_parameter($playlist_id, PARAM_NAME, $user_input->{CONTROL_EDIT_NAME});
@@ -268,9 +272,10 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_RELOAD:
+                $this->force_parent_reload = true;
                 $this->plugin->reset_channels_loaded();
                 if ($this->plugin->init_playlist_db(true)) {
-                    $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
+                    $post_action = Action_Factory::invalidate_all_folders($plugin_cookies);
                 } else {
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_init_database'));
                 }

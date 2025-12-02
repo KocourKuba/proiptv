@@ -266,7 +266,6 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             case GUI_EVENT_KEY_RETURN:
                 $ret_action = ACTION_REFRESH_SCREEN;
                 if ($this->force_parent_reload) {
-                    $this->plugin->reset_channels_loaded();
                     $ret_action = ACTION_RELOAD;
                 }
                 return self::make_return_action($parent_media_url, $ret_action);
