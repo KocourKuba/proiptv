@@ -921,16 +921,21 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             $type = safe_get_value($params, PARAM_TYPE);
             if ($type === PARAM_PROVIDER) {
                 $provider = $this->plugin->create_provider_class(safe_get_value($params, PARAM_PROVIDER));
-                if (is_null($provider)) continue;
-
-                if ($title !== $provider->getName()) {
-                    $title .= " ({$provider->getName()})";
-                }
-                $icon_file = $provider->getLogo();
-                if ($provider->hasApiCommand(API_COMMAND_GET_VOD)) {
-                    $detailed_info = "$title||" . TR::load('plugin_vod__1', ': ' . TR::load('yes'));
+                if (is_null($provider)) {
+                    $missed = true;
+                    $title = "Unknown provider - $playlist_id";
+                    $icon_file = get_image_path("iptv.png");
+                    $detailed_info = TR::load("err_error_no_data");
                 } else {
-                    $detailed_info = "$title||" . TR::load('plugin_vod__1', ': ' . TR::load('no'));
+                    if ($title !== $provider->getName()) {
+                        $title .= " ({$provider->getName()})";
+                    }
+                    $icon_file = $provider->getLogo();
+                    if ($provider->hasApiCommand(API_COMMAND_GET_VOD)) {
+                        $detailed_info = "$title||" . TR::load('plugin_vod__1', ': ' . TR::load('yes'));
+                    } else {
+                        $detailed_info = "$title||" . TR::load('plugin_vod__1', ': ' . TR::load('no'));
+                    }
                 }
             } else {
                 $uri = safe_get_value($params, PARAM_URI);
