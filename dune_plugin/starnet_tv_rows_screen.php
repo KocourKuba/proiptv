@@ -1061,14 +1061,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         ///////////// start_time, end_time, genre, country, person /////////////////
 
         $epg_data = $this->plugin->get_epg_info($channel_id, $archive_tm);
+        $desc = safe_get_value($epg_data, PluginTvEpgProgram::description);
         if (!isset($epg_data[PluginTvEpgProgram::start_tm_sec])) {
             hd_debug_print("no epg data");
-            $channel_desc = $epg_data[PluginTvEpgProgram::description];
-            if (!empty($channel_desc)) {
+            if (!empty($desc)) {
                 $geom = GComp_Geom::place_top_left(PaneParams::info_width, -1, 0, $next_pos_y);
                 $defs[] = GComps_Factory::label($geom,
                     null,
-                    $channel_desc,
+                    $desc,
                     13 - $title_num,
                     PaneParams::prog_item_font_color,
                     PaneParams::prog_item_font_size,
@@ -1079,16 +1079,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         } else {
             $program = (object)array();
             $program->time = sprintf("%s - %s",
-                format_datetime('H:i', $epg_data[PluginTvEpgProgram::start_tm_sec]),
-                format_datetime('H:i', $epg_data[PluginTvEpgProgram::end_tm_sec])
+                format_datetime('H:i', safe_get_value($epg_data, PluginTvEpgProgram::start_tm_sec)),
+                format_datetime('H:i', safe_get_value($epg_data, PluginTvEpgProgram::end_tm_sec))
             );
 
-            $title = $epg_data[PluginTvEpgProgram::name];
-            if (!empty($epg_data[PluginTvExtEpgProgram::sub_title])) {
+            $sub_title = safe_get_value($epg_data, PluginTvExtEpgProgram::sub_title);
+            if (!empty($sub_title)) {
                 $geom = GComp_Geom::place_top_left(PaneParams::info_width, -1, 0, $next_pos_y);
                 $defs[] = GComps_Factory::label($geom,
                     null,
-                    $epg_data[PluginTvExtEpgProgram::sub_title],
+                    $sub_title,
                     1,
                     PaneParams::prog_title_font_color,
                     PaneParams::prog_item_font_size,
@@ -1096,7 +1096,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 $next_pos_y += PaneParams::prog_item_height;
             }
 
-            $desc = $epg_data[PluginTvEpgProgram::description];
             if (isset($epg_data[PluginTvEpgProgram::icon_url])) {
                 $fanart_url = $epg_data[PluginTvEpgProgram::icon_url];
             }
@@ -1114,6 +1113,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
             ///////////// Program title ////////////////
 
+            $title = safe_get_value($epg_data, PluginTvEpgProgram::name);
             if (!empty($title)) {
                 $lines = array_slice(explode("\n",
                     iconv('Windows-1251', 'UTF-8',
@@ -1125,8 +1125,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
                 $prog_title = implode("\n", $lines);
 
-                if (strlen($prog_title) < strlen($title))
+                if (strlen($prog_title) < strlen($title)) {
                     $prog_title = $title;
+                }
 
                 $lines = min(2, count($lines));
                 $geom = GComp_Geom::place_top_left(PaneParams::info_width + 100, PaneParams::prog_item_height, 0, $next_pos_y + ($lines > 1 ? 20 : 0));
