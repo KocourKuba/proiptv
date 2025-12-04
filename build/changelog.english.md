@@ -1,4 +1,14 @@
-﻿### Version 7.0.1460
+﻿### Version 7.0.1478
+- Added setting to disable the Sleep timer
+- Added a setting for the timer Sleep method. As in the system or disabling the video output
+- The ability to change the broadcast server for TV Team has been returned
+- The display of the current playlist in the top menu has been returned. I had to try very hard
+- Reworked the handling of buttons in the preview browser. All colored buttons in this mode work as specified by the Dune engine
+- Reworked the auto resume handling to work correctly in NewUI and Classic
+- Fixed handling of some errors in NewUI
+- Fixed translation strings for some NewUI context menu items
+
+### Version 7.0.1460
 - Prevent the plugin from running if the set-top box tries to resume viewing, but auto resume disabled in the plugin settings
 - The Sleep timer did not work on some devices
 
