@@ -1345,16 +1345,26 @@ class Epg_Manager_Xmltv
 
         if (0 === mb_strpos($hdr, "\x1f\x8b\x08")) {
             hd_debug_print("GZ signature:  " . bin2hex(substr($hdr, 0, 3)), true);
-            rename($tmp_filename, $cached_file . '.gz');
-            $tmp_filename = $cached_file . '.gz';
+            $gz_filename = $cached_file . '.gz';
+            if (!rename($tmp_filename, $gz_filename)) {
+                throw new Exception("Failed to rename $tmp_filename to $gz_filename");
+            }
+            $tmp_filename = $gz_filename;
+            hd_debug_print("ungzip $tmp_filename to $cached_file");
             $cmd = "gzip -d $tmp_filename 2>&1";
-            /** @var int $ret */
-            system($cmd, $ret);
-            if ($ret !== 0) {
-                throw new Exception("Failed to ungzip $tmp_filename (error code: $ret)");
+            $out = system($cmd, $ret);
+            if ($ret > 1) {
+                throw new Exception("Failed to unpack $tmp_filename (error code: $ret)\n$out");
+            }
+            if ($ret === 1 && file_exists($cached_file)) {
+                hd_debug_print("Unpack $tmp_filename with error code: $ret\n$out");
             }
             clearstatcache();
             $size = filesize($cached_file);
+            if ($size === 0) {
+                safe_unlink($cached_file);
+                throw new Exception("Unpacked file empty!");
+            }
             touch($cached_file, $file_time);
             $action = 'UnGZip:';
         } else if (0 === mb_strpos($hdr, "\x50\x4b\x03\x04")) {
