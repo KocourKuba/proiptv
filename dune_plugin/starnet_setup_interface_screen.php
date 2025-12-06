@@ -63,7 +63,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // Show in main screen
         if (!is_limited_apk()) {
-            $show_tv = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_SHOW_TV);
+            $show_tv = get_cookie_bool_param($plugin_cookies, self::CONTROL_SHOW_TV);
             hd_debug_print(self::CONTROL_SHOW_TV . ": $show_tv", true);
             Control_Factory::add_image_button($defs, $this, null,
                 self::CONTROL_SHOW_TV, TR::t('setup_show_in_main'), SwitchOnOff::translate($show_tv),
@@ -72,14 +72,14 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // auto play
-        $auto_play = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_PLAY, false);
+        $auto_play = get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_PLAY, false);
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_AUTO_PLAY, TR::t('setup_autostart'), SwitchOnOff::translate($auto_play),
             SwitchOnOff::to_image($auto_play), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // auto resume
-        $auto_resume = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_RESUME);
+        $auto_resume = get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_RESUME);
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'), SwitchOnOff::translate($auto_resume),
             SwitchOnOff::to_image($auto_resume), static::CONTROLS_WIDTH);
@@ -134,7 +134,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
             case self::CONTROL_SHOW_TV:
             case self::CONTROL_AUTO_PLAY:
             case self::CONTROL_AUTO_RESUME:
-                self::toggle_cookie_param($plugin_cookies, $control_id);
+                toggle_cookie_param($plugin_cookies, $control_id);
                 break;
 
             case PARAM_SHOW_VOD_ICON:

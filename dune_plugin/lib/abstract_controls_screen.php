@@ -74,35 +74,6 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
         return Action_Factory::composite($actions);
     }
 
-    /**
-     * @param object $plugin_cookies
-     * @param string $param
-     * @param bool $default
-     * @return mixed
-     */
-    protected static function get_cookie_bool_param($plugin_cookies, $param, $default = true)
-    {
-        if (!isset($plugin_cookies->{$param})) {
-            $plugin_cookies->{$param} = SwitchOnOff::to_def($default);
-        }
-
-        return $plugin_cookies->{$param};
-    }
-
-    /**
-     * @param object $plugin_cookies
-     * @param string $param
-     * @return string
-     */
-    protected static function toggle_cookie_param($plugin_cookies, $param)
-    {
-        $old = safe_get_member($plugin_cookies, $param, SwitchOnOff::off);
-        $new = SwitchOnOff::toggle($old);
-        $plugin_cookies->{$param} = $new;
-        hd_debug_print("toggle new cookie param $param: $old -> $new", true);
-        return $new;
-    }
-
     ///////////////////////////////////////////////////////////////////////
 
     /**

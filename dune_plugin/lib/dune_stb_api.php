@@ -2423,6 +2423,35 @@ function extract_column($rows, $column)
 }
 
 /**
+ * @param object $plugin_cookies
+ * @param string $param
+ * @param bool $default
+ * @return mixed
+ */
+function get_cookie_bool_param($plugin_cookies, $param, $default = true)
+{
+    if (!isset($plugin_cookies->{$param})) {
+        $plugin_cookies->{$param} = SwitchOnOff::to_def($default);
+    }
+
+    return $plugin_cookies->{$param};
+}
+
+/**
+ * @param object $plugin_cookies
+ * @param string $param
+ * @return string
+ */
+function toggle_cookie_param($plugin_cookies, $param)
+{
+    $old = safe_get_member($plugin_cookies, $param, SwitchOnOff::off);
+    $new = SwitchOnOff::toggle($old);
+    $plugin_cookies->{$param} = $new;
+    hd_debug_print("toggle new cookie param $param: $old -> $new", true);
+    return $new;
+}
+
+/**
  * @param string $doc
  * @return SimpleXMLElement
  * @throws Exception
