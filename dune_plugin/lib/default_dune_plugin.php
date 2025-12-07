@@ -393,7 +393,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $ext_epg[$start][PluginTvExtEpgProgram::country] = $value[PluginTvExtEpgProgram::country];
                 }
 
-                if (!empty($start[PluginTvExtEpgProgram::director])) {
+                if (!empty($value[PluginTvExtEpgProgram::director])) {
                     $ext_epg[$start][PluginTvExtEpgProgram::director] = $value[PluginTvExtEpgProgram::director];
                 }
                 if (!empty($value[PluginTvExtEpgProgram::composer])) {

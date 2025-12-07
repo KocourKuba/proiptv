@@ -202,19 +202,15 @@ class Epg_Manager_Xmltv
                                 $items[$program_start][PluginTvExtEpgProgram::main_category] = self::get_node_value($tag, 'category');
                                 $items[$program_start][PluginTvExtEpgProgram::year] = self::get_node_value($tag, 'date');
                                 $items[$program_start][PluginTvExtEpgProgram::country] = self::get_node_value($tag, 'country');
+                                $items[$program_start][PluginTvExtEpgProgram::icon_urls] = self::get_node_values($tag, 'image');
                                 foreach ($tag->getElementsByTagName('credits') as $sub_tag) {
-                                    $items[$program_start][PluginTvExtEpgProgram::director] = self::get_node_value($sub_tag, 'director');
-                                    $items[$program_start][PluginTvExtEpgProgram::producer] = self::get_node_value($sub_tag, 'producer');
-                                    $items[$program_start][PluginTvExtEpgProgram::actor] = self::get_node_value($sub_tag, 'actor');
-                                    $items[$program_start][PluginTvExtEpgProgram::presenter] = self::get_node_value($sub_tag, 'presenter'); //Ведущий
-                                    $items[$program_start][PluginTvExtEpgProgram::writer] = self::get_node_value($sub_tag, 'writer');
-                                    $items[$program_start][PluginTvExtEpgProgram::editor] = self::get_node_value($sub_tag, 'editor');
-                                    $items[$program_start][PluginTvExtEpgProgram::composer] = self::get_node_value($sub_tag, 'composer');
-                                }
-                                foreach ($tag->getElementsByTagName('image') as $sub_tag) {
-                                    if (!empty($sub_tag->nodeValue)) {
-                                        $items[$program_start][PluginTvExtEpgProgram::icon_urls][] = $sub_tag->nodeValue;
-                                    }
+                                    $items[$program_start][PluginTvExtEpgProgram::director] = self::get_node_values($sub_tag, 'director');
+                                    $items[$program_start][PluginTvExtEpgProgram::producer] = self::get_node_values($sub_tag, 'producer');
+                                    $items[$program_start][PluginTvExtEpgProgram::actor] = self::get_node_values($sub_tag, 'actor');
+                                    $items[$program_start][PluginTvExtEpgProgram::presenter] = self::get_node_values($sub_tag, 'presenter'); //moderator
+                                    $items[$program_start][PluginTvExtEpgProgram::writer] = self::get_node_values($sub_tag, 'writer');
+                                    $items[$program_start][PluginTvExtEpgProgram::editor] = self::get_node_values($sub_tag, 'editor');
+                                    $items[$program_start][PluginTvExtEpgProgram::composer] = self::get_node_values($sub_tag, 'composer');
                                 }
                             }
                         }
@@ -1180,6 +1176,11 @@ class Epg_Manager_Xmltv
         return true;
     }
 
+    /**
+     * @param DOMElement $node
+     * @param string $name
+     * @return string
+     */
     protected static function get_node_value($node, $name)
     {
         $value = '';
@@ -1193,6 +1194,29 @@ class Epg_Manager_Xmltv
         return $value;
     }
 
+    /**
+     * @param DOMElement $node
+     * @param string $name
+     * @return array
+     */
+    protected static function get_node_values($node, $name)
+    {
+        $values = array();
+        foreach ($node->getElementsByTagName($name) as $element) {
+            if (!empty($element->nodeValue)) {
+                $values[] = $element->nodeValue;
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * @param DOMElement $node
+     * @param string $name
+     * @param string $attribute
+     * @return string
+     */
     protected static function get_node_attribute($node, $name, $attribute)
     {
         $value = '';
