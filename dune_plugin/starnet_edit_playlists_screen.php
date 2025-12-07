@@ -331,7 +331,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             return null;
         }
 
-        return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
+        return Action_Factory::show_dialog($defs, "{$provider->getName()} ({$provider->getId()})");
     }
 
     protected function apply_edit_provider_dlg($user_input, $parent_media_url)
@@ -368,11 +368,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_idx);
         }
 
-        return Action_Factory::invalidate_all_folders(
-            $plugin_cookies,
-            null,
-            Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
-        );
+        $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+        $actions[] = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
+        return Action_Factory::composite($actions);
     }
 
     /**
@@ -506,32 +504,32 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
         $name = '';
         Control_Factory::add_label($defs, '', TR::t('name'), -10);
-        Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, '',
-            $name, false, false, false, true, self::DLG_CONTROLS_WIDTH);
+        Control_Factory::add_text_field($defs, $this, CONTROL_EDIT_NAME, '', $name,
+            false, false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
 
         $opts_idx = CONTROL_PLAYLIST_IPTV;
         $opts[CONTROL_PLAYLIST_IPTV] = TR::t('edit_list_playlist_iptv');
         $opts[CONTROL_PLAYLIST_VOD] = TR::t('edit_list_playlist_vod');
         Control_Factory::add_label($defs, '', TR::t('edit_list_playlist_type'), -10);
-        Control_Factory::add_combobox($defs, $this, null, CONTROL_EDIT_TYPE,
-            '', $opts_idx, $opts, self::DLG_CONTROLS_WIDTH);
+        Control_Factory::add_combobox($defs, $this, CONTROL_EDIT_TYPE, '', $opts_idx,
+            $opts, null, Control_Factory::DLG_CONTROLS_WIDTH);
 
         $url = 'http://';
         Control_Factory::add_label($defs, '', TR::t('url'), -10);
-        Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, '',
-            $url, false, false, false, true, self::DLG_CONTROLS_WIDTH);
+        Control_Factory::add_text_field($defs, $this, CONTROL_URL_PATH, '', $url,
+            false, false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
 
         $mapper = CONTROL_DETECT_ID;
         Control_Factory::add_label($defs, '', TR::t('edit_list_playlist_detect_id'), -10);
-        Control_Factory::add_combobox($defs, $this, null, CONTROL_DETECT_ID,
-            '', $mapper, $mapper_ops, self::DLG_CONTROLS_WIDTH, true);
+        Control_Factory::add_combobox($defs, $this, CONTROL_DETECT_ID, '',
+            $mapper, $mapper_ops, null, Control_Factory::DLG_CONTROLS_WIDTH, true);
 
         Control_Factory::add_vgap($defs, 50);
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_URL_DLG_APPLY, TR::t('ok'));
+        Control_Factory::add_cancel_button($defs);
         Control_Factory::add_vgap($defs, 10);
 
-        return Action_Factory::show_dialog($window_title, $defs, true);
+        return Action_Factory::show_dialog($defs, $window_title);
     }
 
     /**
@@ -575,27 +573,27 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
         $name = basename($uri);
         Control_Factory::add_label($defs, '', TR::t('name'), -10);
-        Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, '',
-            $name, false, false, false, true, self::DLG_CONTROLS_WIDTH);
+        Control_Factory::add_text_field($defs, $this, CONTROL_EDIT_NAME, '', $name,
+            false, false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
 
         $opts[CONTROL_PLAYLIST_IPTV] = TR::t('edit_list_playlist_iptv');
         $opts[CONTROL_PLAYLIST_VOD] = TR::t('edit_list_playlist_vod');
         Control_Factory::add_label($defs, '', TR::t('edit_list_playlist_type'), -10);
-        Control_Factory::add_combobox($defs, $this, null, CONTROL_EDIT_TYPE,
-            '', CONTROL_PLAYLIST_IPTV, $opts, self::DLG_CONTROLS_WIDTH);
+        Control_Factory::add_combobox($defs, $this, CONTROL_EDIT_TYPE, '',
+            CONTROL_PLAYLIST_IPTV, $opts, null, Control_Factory::DLG_CONTROLS_WIDTH);
 
         $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
         Control_Factory::add_label($defs, '', TR::t('edit_list_playlist_detect_id'), -10);
-        Control_Factory::add_combobox($defs, $this, null, CONTROL_DETECT_ID,
-            '', CONTROL_DETECT_ID, $mapper_ops, self::DLG_CONTROLS_WIDTH, true);
+        Control_Factory::add_combobox($defs, $this, CONTROL_DETECT_ID, '',
+            CONTROL_DETECT_ID, $mapper_ops, null, Control_Factory::DLG_CONTROLS_WIDTH, true);
 
         $param = array(CONTROL_URL_PATH => $uri);
         Control_Factory::add_vgap($defs, 50);
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_PL_TYPE_DLG_APPLY, TR::t('ok'), 300, $param);
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_PL_TYPE_DLG_APPLY, TR::t('ok'), $param);
+        Control_Factory::add_cancel_button($defs);
         Control_Factory::add_vgap($defs, 10);
 
-        return Action_Factory::show_dialog(TR::t('edit_list_playlist_type'), $defs, true);
+        return Action_Factory::show_dialog($defs, TR::t('edit_list_playlist_type'));
     }
 
     /**
@@ -688,14 +686,10 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             return Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
         }
 
-        return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $new_count - $old_count, count($lines)),
-            '',
-            Action_Factory::close_and_run(
-                Action_Factory::open_folder(
-                    $parent_media_url->get_media_url_string(), TR::t('setup_channels_src_edit_playlists')
-                )
-            )
-        );
+        $actions[] = Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $new_count - $old_count, count($lines)));
+        $actions[] = Action_Factory::close_and_run();
+        $actions[] = Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('setup_channels_src_edit_playlists'));
+        return Action_Factory::composite($actions);
     }
 
     protected function selected_m3u_file($user_input)
@@ -734,12 +728,10 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 hd_debug_print("Problem importing '$file' " . $ex->getMessage());
             }
         }
-        return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $this->plugin->get_all_playlists_count() - $old_count, count($files)),
-            '',
-            Action_Factory::close_and_run(
-                Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('setup_channels_src_edit_playlists'))
-            )
-        );
+        $actions[] = Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $this->plugin->get_all_playlists_count() - $old_count, count($files)));
+        $actions[] = Action_Factory::close_and_run();
+        $actions[] = Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('setup_channels_src_edit_playlists'));
+        return Action_Factory::composite($actions);
     }
 
     /**

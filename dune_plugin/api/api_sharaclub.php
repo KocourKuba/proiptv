@@ -80,8 +80,8 @@ class api_sharaclub extends api_default
         Control_Factory::add_vgap($defs, 20);
 
         if ($this->hasApiCommand(API_COMMAND_PAY)) {
-            Control_Factory::add_button($defs, $handler, null,
-                ACTION_ADD_MONEY_DLG, "", TR::t('add_money'), 450, true);
+            Control_Factory::add_button($defs, $handler, ACTION_ADD_MONEY_DLG,
+                "", TR::t('add_money'), null, 450, true);
         }
 
         if (empty($account_info)) {
@@ -112,7 +112,7 @@ class api_sharaclub extends api_default
 
         Control_Factory::add_vgap($defs, 20);
 
-        return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1100);
+        return Action_Factory::show_dialog($defs, TR::t('subscription'));
     }
 
     /**
@@ -136,7 +136,7 @@ class api_sharaclub extends api_default
                 Control_Factory::add_vgap($defs, 50);
             }
 
-            return Action_Factory::show_dialog(TR::t("add_money"), $defs, true, 600);
+            return Action_Factory::show_dialog($defs, TR::t("add_money"), Action_Factory::SMALL_DLG_WIDTH);
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
         }

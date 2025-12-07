@@ -108,7 +108,7 @@ class api_cbilling extends api_default
 
         Control_Factory::add_vgap($defs, 20);
 
-        return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1000, null /*$attrs*/);
+        return Action_Factory::show_dialog($defs, TR::t('subscription'));
     }
 
     /**

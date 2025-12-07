@@ -28,8 +28,6 @@ require_once 'abstract_regular_screen.php';
 
 abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
 {
-    const DLG_CONTROLS_WIDTH = 850;
-
     protected $force_parent_reload = false;
 
     /**

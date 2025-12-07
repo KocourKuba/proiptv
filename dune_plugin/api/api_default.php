@@ -1042,9 +1042,9 @@ class api_default
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        Control_Factory::add_text_field($defs, $handler, null,
-            CONTROL_EDIT_NAME, TR::t('name'), $name,
-            false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+        Control_Factory::add_text_field($defs, $handler, CONTROL_EDIT_NAME,
+            TR::t('name'), $name, false,
+            false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
 
         $type = $this->getType();
         if ($type !== PROVIDER_TYPE_PIN && $type !== PROVIDER_TYPE_LOGIN) {
@@ -1052,18 +1052,18 @@ class api_default
         }
 
         if ($type === PROVIDER_TYPE_PIN) {
-            Control_Factory::add_text_field($defs, $handler, null,
-                self::CONTROL_PASSWORD, TR::t('token'), $this->GetProviderParameter(MACRO_PASSWORD),
-                false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+            Control_Factory::add_text_field($defs, $handler, self::CONTROL_PASSWORD,
+                TR::t('token'), $this->GetProviderParameter(MACRO_PASSWORD), false,
+                false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
         }
 
         if ($type === PROVIDER_TYPE_LOGIN) {
-            Control_Factory::add_text_field($defs, $handler, null,
-                self::CONTROL_LOGIN, TR::t('login'), $this->GetProviderParameter(MACRO_LOGIN),
-                false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-            Control_Factory::add_text_field($defs, $handler, null,
-                self::CONTROL_PASSWORD, TR::t('password'), $this->GetProviderParameter(MACRO_PASSWORD),
-                false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+            Control_Factory::add_text_field($defs, $handler, self::CONTROL_LOGIN,
+                TR::t('login'), $this->GetProviderParameter(MACRO_LOGIN), false,
+                false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
+            Control_Factory::add_text_field($defs, $handler, self::CONTROL_PASSWORD,
+                TR::t('password'), $this->GetProviderParameter(MACRO_PASSWORD), false,
+                false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
         }
 
         if ($is_new) {
@@ -1074,35 +1074,32 @@ class api_default
             $config_domains = $this->getConfigValue(CONFIG_DOMAINS);
             if (!empty($config_domains) && count($config_domains) > 1 && strpos($command_url, MACRO_DOMAIN_ID) !== false) {
                 $idx = key($config_domains);
-                Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_DOMAIN,
-                    TR::t('domain'), $idx, $config_domains, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+                Control_Factory::add_combobox($defs, $handler, self::CONTROL_DOMAIN, TR::t('domain'),
+                    $idx, $config_domains, null, Control_Factory::DLG_CONTROLS_WIDTH);
             }
 
             $config_servers = $this->getConfigValue(CONFIG_SERVERS);
             if (!empty($config_servers) && count($config_servers) > 1 && strpos($command_url, MACRO_SERVER_ID) !== false) {
                 $idx = key($config_servers);
-                Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_SERVER,
-                    TR::t('server'), $idx, $config_servers, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+                Control_Factory::add_combobox($defs, $handler, self::CONTROL_SERVER, TR::t('server'),
+                    $idx, $config_servers, null, Control_Factory::DLG_CONTROLS_WIDTH);
             }
 
             $config_qialities = $this->getConfigValue(CONFIG_QUALITIES);
             if (!empty($config_qialities) && count($config_qialities) > 1 && strpos($command_url, MACRO_QUALITY_ID) !== false) {
                 $idx = key($config_qialities);
-                Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_QUALITY,
-                    TR::t('quality'), $idx, $config_qialities, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+                Control_Factory::add_combobox($defs, $handler, self::CONTROL_QUALITY, TR::t('quality'),
+                    $idx, $config_qialities, null, Control_Factory::DLG_CONTROLS_WIDTH);
             }
         }
 
         Control_Factory::add_vgap($defs, 50);
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler,
-            ACTION_EDIT_PROVIDER_DLG_APPLY,
-            TR::t('ok'),
-            300,
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_EDIT_PROVIDER_DLG_APPLY, TR::t('ok'),
             array(PARAM_PROVIDER => $this->getId(), CONTROL_EDIT_ITEM => $playlist_id)
         );
 
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_cancel_button($defs);
         Control_Factory::add_vgap($defs, 10);
 
         return $defs;

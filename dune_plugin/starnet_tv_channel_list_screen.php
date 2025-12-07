@@ -313,16 +313,16 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                     $this->force_parent_reload = $this->plugin->hide_channels_by_mask($user_input->hide, $parent_group) !== 0;
                 } else {
                     $defs = array();
-                    Control_Factory::add_text_field($defs, $this, null, self::ACTION_CUSTOM_DELETE, '',
+                    Control_Factory::add_text_field($defs, $this, self::ACTION_CUSTOM_DELETE, '',
                         $this->plugin->get_parameter(PARAM_CUSTOM_DELETE_STRING),
-                        false, false, false, false, 800);
+                        false, false, false, false, Control_Factory::DLG_CONTROLS_WIDTH);
 
                     Control_Factory::add_vgap($defs, 100);
-                    Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_CUSTOM_STRING_DLG_APPLY, TR::t('ok'), 300);
-                    Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+                    Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_CUSTOM_STRING_DLG_APPLY, TR::t('ok'));
+                    Control_Factory::add_cancel_button($defs);
                     Control_Factory::add_vgap($defs, 10);
 
-                    return Action_Factory::show_dialog(TR::t('tv_screen_hide_string'), $defs, true, 1300);
+                    return Action_Factory::show_dialog($defs, TR::t('tv_screen_hide_string'));
                 }
                 break;
 

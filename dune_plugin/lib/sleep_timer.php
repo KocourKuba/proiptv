@@ -122,15 +122,14 @@ class Sleep_Timer
     public static function show_sleep_timer_dialog($handler)
     {
         $defs = array();
-        Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_SLEEP_TIME_MIN, TR::t('sleep_after'),
-            self::$sleep_timer_op, self::get_sleep_timer_ops(), 200);
+        Control_Factory::add_combobox($defs, $handler, self::CONTROL_SLEEP_TIME_MIN, TR::t('sleep_after'), self::$sleep_timer_op,
+            self::get_sleep_timer_ops(), null, 250);
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, self::CONTROL_SLEEP_TIME_SET, TR::t('apply'), 300);
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, self::CONTROL_SLEEP_TIME_SET, TR::t('apply'));
+        Control_Factory::add_cancel_button($defs);
 
         $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
-        return Action_Factory::show_dialog(TR::t('sleep_timer'), $defs, true,
-            Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, $attrs);
+        return Action_Factory::show_dialog($defs, TR::t('sleep_timer'), Action_Factory::DEF_DLG_WIDTH, true, $attrs);
     }
 
     /**

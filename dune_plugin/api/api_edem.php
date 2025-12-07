@@ -129,35 +129,32 @@ class api_edem extends api_default
         hd_debug_print(null, true);
         $defs = array();
 
-        Control_Factory::add_text_field($defs, $handler, null,
-            CONTROL_EDIT_NAME, TR::t('name'), $name,
-            false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+        Control_Factory::add_text_field($defs, $handler, CONTROL_EDIT_NAME,
+            TR::t('name'), $name, false,
+            false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
 
         $subdomain = $this->GetProviderParameter(MACRO_SUBDOMAIN);
         if (!empty($subdomain) && $subdomain !== $this->getConfigValue(CONFIG_SUBDOMAIN)) {
-            Control_Factory::add_text_field($defs, $handler, null,
-                self::CONTROL_OTT_SUBDOMAIN, TR::t('domain'), $this->GetProviderParameter(MACRO_SUBDOMAIN),
-                false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+            Control_Factory::add_text_field($defs, $handler, self::CONTROL_OTT_SUBDOMAIN,
+                TR::t('domain'), $this->GetProviderParameter(MACRO_SUBDOMAIN), false,
+                false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
         }
 
-        Control_Factory::add_text_field($defs, $handler, null,
-            self::CONTROL_OTT_KEY, TR::t('ottkey'), $this->GetProviderParameter(MACRO_OTTKEY),
-            false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+        Control_Factory::add_text_field($defs, $handler, self::CONTROL_OTT_KEY,
+            TR::t('ottkey'), $this->GetProviderParameter(MACRO_OTTKEY), false,
+            false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
 
-        Control_Factory::add_text_field($defs, $handler, null,
-            self::CONTROL_VPORTAL, TR::t('vportal'), $this->GetProviderParameter(MACRO_VPORTAL),
-            false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+        Control_Factory::add_text_field($defs, $handler, self::CONTROL_VPORTAL,
+            TR::t('vportal'), $this->GetProviderParameter(MACRO_VPORTAL), false,
+            false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
 
         Control_Factory::add_vgap($defs, 50);
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler,
-            ACTION_EDIT_PROVIDER_DLG_APPLY,
-            TR::t('ok'),
-            300,
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_EDIT_PROVIDER_DLG_APPLY, TR::t('ok'),
             array(PARAM_PROVIDER => $this->getId(), CONTROL_EDIT_ITEM => $playlist_id)
         );
 
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_cancel_button($defs);
         Control_Factory::add_vgap($defs, 10);
 
         return $defs;

@@ -60,11 +60,8 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // backup
 
-        Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_BACKUP, TR::t('setup_backup_settings'), TR::t('select_folder'), $folder_icon, static::CONTROLS_WIDTH);
-
-        Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_RESTORE, TR::t('setup_restore_settings'), TR::t('select_file'), $folder_icon, static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_BACKUP, TR::t('setup_backup_settings'), TR::t('select_folder'), $folder_icon);
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_RESTORE, TR::t('setup_restore_settings'), TR::t('select_file'), $folder_icon);
 
         return $defs;
     }
@@ -118,7 +115,7 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
 
             case self::ACTION_RESTORE_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
-                return $this->do_restore_settings($data->{Starnet_Folder_Screen::PARAM_CAPTION}, $data->{PARAM_FILEPATH});
+                return $this->do_restore_settings($data->{PARAM_CAPTION}, $data->{PARAM_FILEPATH});
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs(), $post_action);

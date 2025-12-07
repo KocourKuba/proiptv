@@ -212,10 +212,13 @@ const PARAM_SOURCE_WINDOW_ID = 'source_window_id';
 const PARAM_END_ACTION = 'end_action';
 const PARAM_CANCEL_ACTION = 'cancel_action';
 const PARAM_SELECTED_ACTION = 'selected_action';
+const PARAM_ACTION = 'param_action';
 const PARAM_ACTION_ID = 'action_id';
 const PARAM_WINDOW_COUNTER = 'window_counter';
 const PARAM_EXTENSION = 'extension';
+const PARAM_CAPTION = 'caption';
 const PARAM_FILEPATH = 'filepath';
+const PARAM_MANDATORY_PLAYBACK = 'mandatory_playback';
 
 const PARAM_ADULT_PASSWORD = 'adult_password';
 const PARAM_SETTINGS_PASSWORD = 'settings_password';

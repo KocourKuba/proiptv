@@ -72,28 +72,25 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
         }
 
         if (count($engine_variants) > 1) {
-            Control_Factory::add_combobox($defs, $this, null,
-                PARAM_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'),
-                $engine, $engine_variants, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_combobox($defs, $this, PARAM_EPG_CACHE_ENGINE,
+                TR::t('setup_epg_cache_engine'), $engine,
+                $engine_variants, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
         } else if (count($engine_variants) === 1) {
-            Control_Factory::add_button($defs, $this, null, "dummy",
-                TR::t('setup_epg_cache_engine'), reset($engine_variants), static::CONTROLS_WIDTH);
+            Control_Factory::add_button($defs, $this, "dummy", TR::t('setup_epg_cache_engine'), reset($engine_variants));
         }
 
         //////////////////////////////////////
         // ext epg
         if (is_ext_epg_supported()) {
             $ext_epg = $this->plugin->get_setting(PARAM_SHOW_EXT_EPG, SwitchOnOff::on);
-            Control_Factory::add_image_button($defs, $this, null,
-                PARAM_SHOW_EXT_EPG, TR::t('setup_ext_epg'), SwitchOnOff::translate($ext_epg),
-                SwitchOnOff::to_image($ext_epg), static::CONTROLS_WIDTH);
+            Control_Factory::add_image_button($defs, $this, PARAM_SHOW_EXT_EPG,
+                TR::t('setup_ext_epg'), SwitchOnOff::translate($ext_epg), SwitchOnOff::to_image($ext_epg));
         }
 
         //////////////////////////////////////
         // clear epg cache
-        Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_ITEMS_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear'), TR::t('clear'),
-            get_image_path('brush.png'), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_ITEMS_CLEAR_EPG_CACHE,
+            TR::t('entry_epg_cache_clear'), TR::t('clear'), get_image_path('brush.png'));
 
         if ($engine === ENGINE_JSON && isset($epg_presets)) {
             if (count($epg_presets) > 1) {
@@ -102,26 +99,25 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 foreach ($epg_presets as $epg_preset) {
                     $presets[] = safe_get_value($epg_preset, 'title', $epg_preset['name']);
                 }
-                Control_Factory::add_combobox($defs, $this, null,
-                    PARAM_EPG_JSON_PRESET, TR::t('setup_epg_cache_json'),
-                    $preset, $presets, static::CONTROLS_WIDTH, true);
+                Control_Factory::add_combobox($defs, $this, PARAM_EPG_JSON_PRESET,
+                    TR::t('setup_epg_cache_json'), $preset,
+                    $presets, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
             }
 
             foreach (array(1, 2, 3, 6, 12) as $hour) {
                 $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
             }
             $cache_time = $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1);
-            Control_Factory::add_combobox($defs, $this, null,
-                PARAM_EPG_CACHE_TIME, TR::t('setup_cache_time_epg'),
-                $cache_time, $caching_range, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_combobox($defs, $this, PARAM_EPG_CACHE_TIME,
+                TR::t('setup_cache_time_epg'), $cache_time,
+                $caching_range, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
         // Fake EPG
         $fake_epg = $this->plugin->get_setting(PARAM_FAKE_EPG, SwitchOnOff::off);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_FAKE_EPG, TR::t('entry_epg_fake'), SwitchOnOff::translate($fake_epg),
-            SwitchOnOff::to_image($fake_epg), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, PARAM_FAKE_EPG,
+            TR::t('entry_epg_fake'), SwitchOnOff::translate($fake_epg), SwitchOnOff::to_image($fake_epg));
 
         return $defs;
     }
@@ -164,7 +160,9 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
                 $this->plugin->clear_playlist_epg_cache();
-                return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'), '', Action_Factory::reset_controls($this->do_get_control_defs()));
+                $actions[] = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
+                $actions[] = Action_Factory::reset_controls($this->do_get_control_defs());
+                return Action_Factory::composite($actions);
 
             case PARAM_FAKE_EPG:
                 $this->plugin->toggle_setting($control_id, false);
@@ -173,19 +171,14 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
-                if (!$this->plugin->load_channels($plugin_cookies, true)) {
-                    return Action_Factory::invalidate_all_folders(
-                        $plugin_cookies,
-                        null,
-                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
-                    );
+                if ($this->plugin->load_channels($plugin_cookies, true)) {
+                    $actions[] = Action_Factory::reset_controls($this->do_get_control_defs());
+                } else {
+                    $actions[] = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
                 }
 
-                return Action_Factory::invalidate_all_folders(
-                    $plugin_cookies,
-                    null,
-                    Action_Factory::reset_controls($this->do_get_control_defs())
-                );
+                $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+                return Action_Factory::composite($actions);
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs());

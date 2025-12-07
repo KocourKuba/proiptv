@@ -65,56 +65,49 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
         if (!is_limited_apk()) {
             $show_tv = get_cookie_bool_param($plugin_cookies, self::CONTROL_SHOW_TV);
             hd_debug_print(self::CONTROL_SHOW_TV . ": $show_tv", true);
-            Control_Factory::add_image_button($defs, $this, null,
-                self::CONTROL_SHOW_TV, TR::t('setup_show_in_main'), SwitchOnOff::translate($show_tv),
-                SwitchOnOff::to_image($show_tv), static::CONTROLS_WIDTH);
+            Control_Factory::add_image_button($defs, $this, self::CONTROL_SHOW_TV,
+                TR::t('setup_show_in_main'), SwitchOnOff::translate($show_tv), SwitchOnOff::to_image($show_tv));
         }
 
         //////////////////////////////////////
         // auto play
         $auto_play = get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_PLAY, false);
-        Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_AUTO_PLAY, TR::t('setup_autostart'), SwitchOnOff::translate($auto_play),
-            SwitchOnOff::to_image($auto_play), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_AUTO_PLAY,
+            TR::t('setup_autostart'), SwitchOnOff::translate($auto_play), SwitchOnOff::to_image($auto_play));
 
         //////////////////////////////////////
         // auto resume
         $auto_resume = get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_RESUME);
-        Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'), SwitchOnOff::translate($auto_resume),
-            SwitchOnOff::to_image($auto_resume), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_AUTO_RESUME,
+            TR::t('setup_continue_play'), SwitchOnOff::translate($auto_resume), SwitchOnOff::to_image($auto_resume));
 
         $ask_exit = $this->plugin->get_parameter(PARAM_ASK_EXIT, SwitchOnOff::on);
         hd_debug_print(PARAM_ASK_EXIT . ": $ask_exit", true);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_ASK_EXIT, TR::t('setup_ask_exit'), SwitchOnOff::translate($ask_exit),
-            SwitchOnOff::to_image($ask_exit), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, PARAM_ASK_EXIT,
+            TR::t('setup_ask_exit'), SwitchOnOff::translate($ask_exit), SwitchOnOff::to_image($ask_exit));
 
         //////////////////////////////////////
         // show separate VOD icon
         $show_vod_icon = $this->plugin->get_parameter(PARAM_SHOW_VOD_ICON, SwitchOnOff::off);
         hd_debug_print(PARAM_SHOW_VOD_ICON . ": $show_vod_icon", true);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SHOW_VOD_ICON, TR::t('setup_show_vod_icon'), SwitchOnOff::translate($show_vod_icon),
-            SwitchOnOff::to_image($show_vod_icon), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, PARAM_SHOW_VOD_ICON,
+            TR::t('setup_show_vod_icon'), SwitchOnOff::translate($show_vod_icon), SwitchOnOff::to_image($show_vod_icon));
 
         //////////////////////////////////////
         // epg font size
         $epg_font_size = $this->plugin->get_parameter(PARAM_EPG_FONT_SIZE, SwitchOnOff::off);
         hd_debug_print(PARAM_EPG_FONT_SIZE . ": $epg_font_size", true);
         $font_ops_translated = array(SwitchOnOff::on => TR::t('setup_small'), SwitchOnOff::off => TR::t('setup_normal'));
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_EPG_FONT_SIZE, TR::t('setup_epg_font'), SwitchOnOff::translate_from($font_ops_translated, $epg_font_size),
-            SwitchOnOff::to_image($epg_font_size), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, PARAM_EPG_FONT_SIZE,
+            TR::t('setup_epg_font'), SwitchOnOff::translate_from($font_ops_translated, $epg_font_size), SwitchOnOff::to_image($epg_font_size));
 
         //////////////////////////////////////
         // group/channel font size
         $group_font_size = $this->plugin->get_parameter(PARAM_GROUP_FONT_SIZE, SwitchOnOff::off);
         hd_debug_print(PARAM_GROUP_FONT_SIZE . ": $group_font_size", true);
         $font_ops_translated = array(SwitchOnOff::on => TR::t('setup_small'), SwitchOnOff::off => TR::t('setup_normal'));
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_GROUP_FONT_SIZE, TR::t('setup_group_font'), SwitchOnOff::translate_from($font_ops_translated, $group_font_size),
-            SwitchOnOff::to_image($group_font_size), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, PARAM_GROUP_FONT_SIZE,
+            TR::t('setup_group_font'), SwitchOnOff::translate_from($font_ops_translated, $group_font_size), SwitchOnOff::to_image($group_font_size));
 
         return $defs;
     }

@@ -62,34 +62,35 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // adult channel password
-        Control_Factory::add_image_button($defs, $this, array('adult' => true), self::CONTROL_ADULT_PASS_DLG,
-            TR::t('setup_adult_title'), TR::t('setup_adult_change'), get_image_path('text.png'), static::CONTROLS_WIDTH);
+        $params = array('adult' => true);
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_ADULT_PASS_DLG, TR::t('setup_adult_title'),
+            TR::t('setup_adult_change'), get_image_path('text.png'), Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         //////////////////////////////////////
         // Settings protection
-        Control_Factory::add_image_button($defs, $this, array('adult' => false), self::CONTROL_ADULT_PASS_DLG,
-            TR::t('setup_settings_protection_title'), TR::t('setup_adult_change'), get_image_path('text.png'), static::CONTROLS_WIDTH);
+        $params['adult'] = false;
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_ADULT_PASS_DLG, TR::t('setup_settings_protection_title'),
+            TR::t('setup_adult_change'), get_image_path('text.png'), Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         //////////////////////////////////////
         // Curl connect timeout
         foreach (array(30, 60, 90, 120, 180, 240, 300) as $sec) {
             $range[$sec] = $sec;
         }
-        Control_Factory::add_combobox($defs, $this, null, PARAM_CURL_CONNECT_TIMEOUT, TR::t('setup_connect_timeout'),
-            $this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30), $range, static::CONTROLS_WIDTH, true);
+        Control_Factory::add_combobox($defs, $this, PARAM_CURL_CONNECT_TIMEOUT, TR::t('setup_connect_timeout'), $this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30),
+            $range, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
         // Curl download timeout
-        Control_Factory::add_combobox($defs, $this, null, PARAM_CURL_DOWNLOAD_TIMEOUT, TR::t('setup_download_timeout'),
-            $this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120), $range, static::CONTROLS_WIDTH, true);
+        Control_Factory::add_combobox($defs, $this, PARAM_CURL_DOWNLOAD_TIMEOUT, TR::t('setup_download_timeout'), $this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120),
+            $range, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
         // Settings full size remote
         if (is_limited_apk()) {
             $remote = $this->plugin->get_parameter(PARAM_FULL_SIZE_REMOTE, SwitchOnOff::off);
-            Control_Factory::add_image_button($defs, $this, null,
-                PARAM_FULL_SIZE_REMOTE, TR::t('setup_settings_full_remote'), SwitchOnOff::translate($remote),
-                SwitchOnOff::to_image($remote), static::CONTROLS_WIDTH);
+            Control_Factory::add_image_button($defs, $this, PARAM_FULL_SIZE_REMOTE,
+                TR::t('setup_settings_full_remote'), SwitchOnOff::translate($remote), SwitchOnOff::to_image($remote));
         }
 
         //////////////////////////////////////
@@ -99,16 +100,14 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
             $fix_palette = SwitchOnOff::off;
             $this->plugin->set_parameter(PARAM_FIX_PALETTE, $fix_palette);
         }
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_FIX_PALETTE, TR::t('setup_settings_patch_palette'), SwitchOnOff::translate($fix_palette),
-            SwitchOnOff::to_image($fix_palette), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, PARAM_FIX_PALETTE,
+            TR::t('setup_settings_patch_palette'), SwitchOnOff::translate($fix_palette), SwitchOnOff::to_image($fix_palette));
 
         //////////////////////////////////////
         // debugging
         $debug_state = safe_get_member($plugin_cookies, PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_COOKIE_ENABLE_DEBUG, TR::t('setup_debug'), SwitchOnOff::translate($debug_state),
-            SwitchOnOff::to_image($debug_state), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, PARAM_COOKIE_ENABLE_DEBUG,
+            TR::t('setup_debug'), SwitchOnOff::translate($debug_state), SwitchOnOff::to_image($debug_state));
 
         return $defs;
     }
@@ -213,20 +212,20 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
 
         $old_pass = $this->plugin->get_parameter($adult ? PARAM_ADULT_PASSWORD : PARAM_SETTINGS_PASSWORD);
         if (!empty($old_pass)) {
-            Control_Factory::add_text_field($defs, $this, null, 'pass1', TR::t('setup_old_pass'),
-                '', true, true, false, true, 500);
+            Control_Factory::add_text_field($defs, $this, 'pass1', TR::t('setup_old_pass'), '',
+                true, true, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
         }
 
-        Control_Factory::add_text_field($defs, $this, null, 'pass2', TR::t('setup_new_pass'),
-            '', true, true, false, true, 500);
+        Control_Factory::add_text_field($defs, $this, 'pass2', TR::t('setup_new_pass'), '',
+            true, true, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
 
         Control_Factory::add_vgap($defs, 50);
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_ADULT_PASS_DLG_APPLY, TR::t('ok'), 300, array("adult" => $adult));
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_ADULT_PASS_DLG_APPLY, TR::t('ok'), array('adult' => $adult));
+        Control_Factory::add_cancel_button($defs);
         Control_Factory::add_vgap($defs, 10);
 
         $title = $adult ? TR::t('setup_adult_password') : TR::t('setup_settings_protection');
-        return Action_Factory::show_dialog($title, $defs, true);
+        return Action_Factory::show_dialog($defs, $title);
     }
 }

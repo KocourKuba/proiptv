@@ -88,8 +88,8 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // Account
 
-        Control_Factory::add_image_button($defs, $this, null, ACTION_EDIT_PROVIDER_DLG,
-            TR::t('edit_account'), TR::t('setup_change_settings'), get_image_path('info.png'), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, ACTION_EDIT_PROVIDER_DLG, TR::t('edit_account'),
+            TR::t('setup_change_settings'), get_image_path('info.png'));
 
         if ($provider->hasApiCommand(API_COMMAND_GET_VOD) !== null
             && $provider->getConfigValue(CONFIG_VOD_PARSER) !== null) {
@@ -106,8 +106,8 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             $idx = $provider->GetProviderParameter(MACRO_STREAM_ID);
             hd_debug_print("streams ($idx): " . json_encode($streams), true);
 
-            Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_STREAM,
-                TR::t('stream'), $idx, $streams, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_STREAM, TR::t('stream'),
+                $idx, $streams, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -118,8 +118,8 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             $idx = $provider->GetProviderParameter(MACRO_DOMAIN_ID);
             hd_debug_print("domains ($idx): " . json_encode($domains), true);
 
-            Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_DOMAIN,
-                TR::t('domain'), $idx, $domains, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_DOMAIN, TR::t('domain'),
+                $idx, $domains, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -130,8 +130,8 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             $idx = $provider->GetProviderParameter(MACRO_SERVER_ID);
             hd_debug_print("servers ($idx): " . json_encode($servers), true);
 
-            Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_SERVER,
-                TR::t('server'), $idx, $servers, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_SERVER, TR::t('server'),
+                $idx, $servers, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -142,8 +142,8 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             $idx = $provider->GetProviderParameter(MACRO_DEVICE_ID);
             hd_debug_print("devices ($idx): " . json_encode($devices), true);
 
-            Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_DEVICE,
-                TR::t('device'), $idx, $devices, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_DEVICE, TR::t('device'),
+                $idx, $devices, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -154,8 +154,8 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             $idx = $provider->GetProviderParameter(MACRO_QUALITY_ID);
             hd_debug_print("qualities ($idx): " . json_encode($qualities), true);
 
-            Control_Factory::add_combobox($defs, $this, null, api_default::CONTROL_QUALITY,
-                TR::t('quality'), $idx, $qualities, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_QUALITY, TR::t('quality'),
+                $idx, $qualities, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -168,22 +168,21 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         }
         $pl_idx = $provider->GetPlaylistIptvId();
 
-        Control_Factory::add_combobox($defs, $this, null, self::CONTROL_SELECTED_PLAYLIST,
-            TR::t('provider_playlist'), $pl_idx, $pl_names, static::CONTROLS_WIDTH, true);
+        Control_Factory::add_combobox($defs, $this, self::CONTROL_SELECTED_PLAYLIST, TR::t('provider_playlist'),
+            $pl_idx, $pl_names, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
 
         if ($pl_idx === DIRECT_PLAYLIST_ID) {
             //////////////////////////////////////
             // Direct playlist url
             $url = $provider->GetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV);
-            Control_Factory::add_text_field($defs, $this, null, self::CONTROL_CUSTOM_URL, TR::t('direct_url'),
-                $url, false, false, false, true, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_text_field($defs, $this, self::CONTROL_CUSTOM_URL, TR::t('direct_url'), $url,
+                false, false, false, true, Control_Factory::SCR_CONTROLS_WIDTH, true);
         } else if ($pl_idx === DIRECT_FILE_PLAYLIST_ID) {
             //////////////////////////////////////
             // Direct playlist file
             $file_path = $provider->GetProviderParameter(PARAM_CUSTOM_FILE_PLAYLIST_IPTV);
             $path_str = HD::string_ellipsis($file_path);
-            Control_Factory::add_image_button($defs, $this, null, ACTION_CHOOSE_FILE,
-                TR::t('select_file'), $path_str, get_image_path('m3u_file.png'), static::CONTROLS_WIDTH);
+            Control_Factory::add_image_button($defs, $this, ACTION_CHOOSE_FILE, TR::t('select_file'), $path_str, get_image_path('m3u_file.png'));
         } else {
             //////////////////////////////////////
             // Icon replacements settings
@@ -191,9 +190,9 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             $icon_replacements = $provider->getConfigValue(CONFIG_ICON_REPLACE);
             if (!empty($icon_replacements)) {
                 $icon_idx = $provider->GetProviderParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
-                Control_Factory::add_combobox($defs, $this, null, PARAM_REPLACE_ICON,
-                    TR::t('setup_channels_square_icons'), $icon_idx, SwitchOnOff::$translated,
-                    static::CONTROLS_WIDTH, true);
+                Control_Factory::add_combobox($defs, $this, PARAM_REPLACE_ICON, TR::t('setup_channels_square_icons'),
+                    $icon_idx, SwitchOnOff::$translated, null,
+                    Control_Factory::SCR_CONTROLS_WIDTH, true);
             }
 
             //////////////////////////////////////
@@ -210,16 +209,15 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                 foreach ($playlist_mirrors as $key => $value) {
                     $pairs[$key] = $key;
                 }
-                Control_Factory::add_combobox($defs, $this, null, PARAM_SELECTED_MIRROR,
-                    TR::t('setup_channels_using_mirror'), $idx, $pairs,
-                    static::CONTROLS_WIDTH, true);
+                Control_Factory::add_combobox($defs, $this, PARAM_SELECTED_MIRROR, TR::t('setup_channels_using_mirror'),
+                    $idx, $pairs, null,
+                    Control_Factory::SCR_CONTROLS_WIDTH, true);
             }
         }
 
         $fav_id = $this->plugin->get_setting(PARAM_USE_COMMON_FAV, SwitchOnOff::off);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_USE_COMMON_FAV, TR::t('setup_use_common_fav'), SwitchOnOff::translate($fav_id),
-            SwitchOnOff::to_image($fav_id), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, PARAM_USE_COMMON_FAV,
+            TR::t('setup_use_common_fav'), SwitchOnOff::translate($fav_id), SwitchOnOff::to_image($fav_id));
 
         //////////////////////////////////////
         // Cache time
@@ -236,15 +234,15 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $param = PARAM_PLAYLIST_CACHE_TIME_IPTV . ($pl_idx === 'default' ? '' : "_$pl_idx");
         $cache_time = $this->plugin->get_setting($param, 1);
         hd_debug_print("Playlist $param = $cache_time");
-        Control_Factory::add_combobox($defs, $this, null,
-            PARAM_PLAYLIST_CACHE_TIME_IPTV, TR::t('setup_cache_time_iptv'),
-            $cache_time, $caching_range, static::CONTROLS_WIDTH, true);
+        Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_CACHE_TIME_IPTV,
+            TR::t('setup_cache_time_iptv'), $cache_time,
+            $caching_range, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
 
         if ($has_vod_cache) {
             $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME_VOD, 1);
-            Control_Factory::add_combobox($defs, $this, null,
-                PARAM_PLAYLIST_CACHE_TIME_VOD, TR::t('setup_cache_time_vod'),
-                $cache_time, $caching_range, static::CONTROLS_WIDTH, true);
+            Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_CACHE_TIME_VOD,
+                TR::t('setup_cache_time_vod'), $cache_time,
+                $caching_range, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
         }
 
         return $defs;
@@ -284,7 +282,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                     return null;
                 }
 
-                return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
+                return Action_Factory::show_dialog($defs, "{$provider->getName()} ({$provider->getId()})");
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
                 $res = $this->plugin->get_provider($playlist_id)->ApplySetupUI($user_input);

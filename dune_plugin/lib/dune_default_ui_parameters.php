@@ -32,7 +32,6 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     const CONTROL_ZOOM = 'zoom_select';
     const CONTROL_EXTERNAL_PLAYER = 'use_external_player';
 
-    const EPG_DIALOG_WIDTH = 1600;
     const EPG_PROGRESS_WIDTH = 750;
 
     /**
@@ -187,17 +186,17 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        Control_Factory::add_text_field($defs, $handler, null, 'pass', TR::t('setup_pass'),
-            '', true, true, false, true, 500, true);
+        Control_Factory::add_text_field($defs, $handler, 'pass', TR::t('setup_pass'), '',
+            true, true, false, true, Control_Factory::DLG_CONTROLS_WIDTH, true);
 
         Control_Factory::add_vgap($defs, 50);
 
-        $new_params['param_action'] = json_encode($param_action);
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_PASSWORD_APPLY, TR::t('ok'), 300, $new_params);
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        $new_params[PARAM_ACTION] = json_encode($param_action);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_PASSWORD_APPLY, TR::t('ok'), $new_params);
+        Control_Factory::add_cancel_button($defs);
         Control_Factory::add_vgap($defs, 10);
 
-        return Action_Factory::show_dialog(TR::t('setup_enter_pass'), $defs, true);
+        return Action_Factory::show_dialog($defs, TR::t('setup_enter_pass'));
     }
 
     /**
@@ -210,8 +209,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             return null;
         }
 
-        if (isset($user_input->param_action)) {
-            return json_decode($user_input->param_action, true);
+        if (isset($user_input->{PARAM_ACTION})) {
+            return json_decode($user_input->{PARAM_ACTION}, true);
         }
 
         return null;
@@ -227,17 +226,15 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        Control_Factory::add_text_field($defs, $handler, null, CONTROL_EDIT_NAME, '',
-            $initial_value, false, false, false, true, 800, true);
+        Control_Factory::add_text_field($defs, $handler, CONTROL_EDIT_NAME, '', $initial_value,
+            false, false, false, true, Control_Factory::DLG_CONTROLS_WIDTH, true);
 
         Control_Factory::add_vgap($defs, 50);
-
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_EXPORT_APPLY_DLG, TR::t('ok'), 300);
-
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_EXPORT_APPLY_DLG, TR::t('ok'));
+        Control_Factory::add_cancel_button($defs);
         Control_Factory::add_vgap($defs, 10);
 
-        return Action_Factory::show_dialog(TR::t('enter_name'), $defs, true);
+        return Action_Factory::show_dialog($defs, TR::t('enter_name'));
     }
 
     /**
@@ -286,11 +283,11 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         Control_Factory::add_smart_label($defs, '', $text);
         Control_Factory::add_vgap($defs, -80);
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_DONATE_DLG, TR::t('setup_donate_title'), 300);
-        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_DONATE_DLG, TR::t('setup_donate_title'));
+        Control_Factory::add_ok_button($defs, true);
         Control_Factory::add_vgap($defs, 10);
 
-        return Action_Factory::show_dialog(TR::t('setup_changelog'), $defs, true, 1800);
+        return Action_Factory::show_dialog($defs, TR::t('setup_changelog'), Action_Factory::MAX_DLG_WIDTH);
     }
 
     public function do_donate_dialog()
@@ -308,7 +305,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             Control_Factory::add_vgap($defs, 450);
 
             $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
-            return Action_Factory::show_dialog(TR::t('setup_donate_title'), $defs, true, 1150, $attrs);
+            return Action_Factory::show_dialog($defs, TR::t('setup_donate_title'), Action_Factory::DEF_DLG_WIDTH, true, $attrs);
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
         }
@@ -354,12 +351,12 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             Control_Factory::add_vgap($defs, -64);
             $pos_percent = round(100 * $diff / ($prog_info[PluginTvEpgProgram::end_tm_sec] - $prog_info[PluginTvEpgProgram::start_tm_sec]));
             Control_Factory_Ext::add_progress_bar_ext($defs,
-                self::EPG_DIALOG_WIDTH - self::EPG_PROGRESS_WIDTH - 150,
+                Action_Factory::MID_DLG_WIDTH - self::EPG_PROGRESS_WIDTH - 150,
                 self::EPG_PROGRESS_WIDTH, $pos_percent);
 
             // Elapsed percent placed after elapsed time on the same line
             $percent_text = sprintf("<gap width=%s/><text color=%s size=normal>%s%%</text>",
-                self::EPG_DIALOG_WIDTH - 100,
+                Action_Factory::MID_DLG_WIDTH - 100,
                 DEF_LABEL_TEXT_COLOR_TURQUOISE,
                 $pos_percent);
             Control_Factory::add_vgap($defs, -74);
@@ -371,7 +368,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
             // help line if description more than dialog height
             $help_text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-                self::EPG_DIALOG_WIDTH - 1050,
+                Action_Factory::MID_DLG_WIDTH - 1050,
                 get_image_path('page_plus_btn.png'),
                 get_image_path('page_minus_btn.png'),
                 DEF_LABEL_TEXT_COLOR_SILVER,
@@ -383,11 +380,11 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
         self::add_epg_shift_defs($defs, $handler, $this->get_channel_epg_shift($prog_info[PluginTvEpgProgram::ext_id]), true);
 
-        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
+        Control_Factory::add_ok_button($defs, true);
 
         Control_Factory::add_vgap($defs, 10);
 
-        return Action_Factory::show_dialog($title, $defs, true, self::EPG_DIALOG_WIDTH, $attrs);
+        return Action_Factory::show_dialog($defs, $title, Action_Factory::MID_DLG_WIDTH, true, $attrs);
     }
 
     public function do_edit_channel_parameters($handler, $channel_id)
@@ -399,8 +396,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         if (!is_limited_apk()) {
             $pl_opts_idx = SwitchOnOff::to_def($this->get_channel_ext_player($channel_id));
             $pl_opts = array(SwitchOnOff::on => TR::t('tv_screen_external_player'), SwitchOnOff::off => TR::t('tv_screen_internal_player'));
-            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_EXTERNAL_PLAYER,
-                TR::t('setup_playback_settings'), $pl_opts_idx, $pl_opts, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+            Control_Factory::add_combobox($defs, $handler, self::CONTROL_EXTERNAL_PLAYER, TR::t('setup_playback_settings'),
+                $pl_opts_idx, $pl_opts, null, Control_Factory::DLG_CONTROLS_WIDTH);
         }
 
         if ($this->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
@@ -409,16 +406,16 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 $zoom_opts_idx = DuneVideoZoomPresets::not_set;
             }
 
-            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_ZOOM,
-                TR::t('tv_screen_channel_zoom'), $zoom_opts_idx, $this->get_zoom_opts_translated(), Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+            Control_Factory::add_combobox($defs, $handler, self::CONTROL_ZOOM, TR::t('tv_screen_channel_zoom'),
+                $zoom_opts_idx, $this->get_zoom_opts_translated(), null, Control_Factory::DLG_CONTROLS_WIDTH);
         }
 
         self::add_epg_shift_defs($defs, $handler, $this->get_channel_epg_shift($channel_id), false);
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_EDIT_CHANNEL_APPLY, TR::t('ok'), 300);
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_EDIT_CHANNEL_APPLY, TR::t('ok'));
+        Control_Factory::add_cancel_button($defs);
 
-        return Action_Factory::show_dialog(TR::t('tv_screen_edit_channel'), $defs, true);
+        return Action_Factory::show_dialog($defs, TR::t('tv_screen_edit_channel'));
     }
 
     public function do_edit_channel_apply($user_input, $channel_id)
@@ -473,16 +470,16 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         }
         $shift_ops_hours[0] = TR::t('setup_epg_shift_hours__1', sprintf(" %02d", 0));
 
-        Control_Factory::add_combobox($defs, $handler, null, PARAM_EPG_SHIFT_HOURS,
-            TR::t('setup_epg_shift_hours'), (int)($initial_epg_shift / 3600), $shift_ops_hours, 250, false, $apply);
+        Control_Factory::add_combobox($defs, $handler, PARAM_EPG_SHIFT_HOURS, TR::t('setup_epg_shift_hours'),
+            (int)($initial_epg_shift / 3600), $shift_ops_hours, null, 250, false, $apply);
 
         $shift_ops_mins = array();
         for ($i = 0; $i < 60; $i += 5) {
             $shift_ops_mins[$i] = TR::t('setup_epg_shift_mins__1', sprintf("%02d", $i));
         }
 
-        Control_Factory::add_combobox($defs, $handler, null, PARAM_EPG_SHIFT_MINS,
-            TR::t('setup_epg_shift_min'), (int)(abs($initial_epg_shift % 3600) / 60), $shift_ops_mins, 250, false, $apply);
+        Control_Factory::add_combobox($defs, $handler, PARAM_EPG_SHIFT_MINS, TR::t('setup_epg_shift_min'),
+            (int)(abs($initial_epg_shift % 3600) / 60), $shift_ops_mins, null, 250, false, $apply);
     }
 
     protected function get_zoom_opts_translated()

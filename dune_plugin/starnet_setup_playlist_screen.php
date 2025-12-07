@@ -89,53 +89,49 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // Plugin name
         $this->plugin->create_setup_header($defs);
-        $ret_index = 1;
 
         $playlist_id = isset($media_url->{PARAM_PLAYLIST_ID}) ? $media_url->{PARAM_PLAYLIST_ID} : $this->plugin->get_active_playlist_id();
 
         //////////////////////////////////////
         // Playlist name
 
+        $params = array(PARAM_RETURN_INDEX => 1);
         $uri = $this->plugin->get_playlist_parameter($playlist_id, PARAM_URI);
         $name = $this->plugin->get_playlist_parameter($playlist_id, PARAM_NAME, basename($uri));
-        Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, TR::t('playlist_name'),
-            $name, false, false, false, true, static::CONTROLS_WIDTH, true);
-        $ret_index += 1;
+        Control_Factory::add_text_field($defs, $this, CONTROL_EDIT_NAME, TR::t('playlist_name'), $name,
+            false, false, false, true, Control_Factory::SCR_CONTROLS_WIDTH,
+            true, false, $params);
 
         //////////////////////////////////////
         // IPTV settings
 
         if ($this->plugin->get_playlist_parameter($playlist_id, PARAM_TYPE) === PARAM_PROVIDER) {
-            Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::ACTION_EDIT_PROVIDER_SETTINGS,
-                TR::t('edit_provider_settings'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
+            Control_Factory::add_image_button($defs, $this, self::ACTION_EDIT_PROVIDER_SETTINGS, TR::t('edit_provider_settings'),
+                TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
         } else {
-            Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::ACTION_EDIT_IPTV_SETTINGS,
-                TR::t('edit_iptv_settings'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
+            Control_Factory::add_image_button($defs, $this, self::ACTION_EDIT_IPTV_SETTINGS, TR::t('edit_iptv_settings'),
+                TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
         }
-        $ret_index += 2;
 
         //////////////////////////////////////
         // Category settings
-        Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::ACTION_EDIT_CATEGORY_SCREEN,
-            TR::t('setup_category_title'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
-        $ret_index += 2;
+        Control_Factory::add_image_button($defs, $this, self::ACTION_EDIT_CATEGORY_SCREEN, TR::t('setup_category_title'),
+            TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         //////////////////////////////////////
         // Interface NewUI settings
-        Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), ACTION_EDIT_NEWUI_SETTINGS,
-            TR::t('setup_interface_newui_title'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
-        $ret_index += 2;
+        Control_Factory::add_image_button($defs, $this, ACTION_EDIT_NEWUI_SETTINGS, TR::t('setup_interface_newui_title'),
+            TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         //////////////////////////////////////
         // EPG settings
-        Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_EPG_SCREEN,
-            TR::t('setup_epg_settings'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
-        $ret_index += 2;
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_EPG_SCREEN, TR::t('setup_epg_settings'),
+            TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         //////////////////////////////////////
         // Streaming settings
-        Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_PLAYBACK_SCREEN,
-            TR::t('setup_playback_settings'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_PLAYBACK_SCREEN, TR::t('setup_playback_settings'),
+            TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         //////////////////////////////////////
         // change background
@@ -145,16 +141,14 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
             $button = substr(basename($this->plugin->get_background_image()), strlen($this->plugin->get_active_playlist_id()) + 1);
         }
 
-        Control_Factory::add_image_button($defs, $this, null,
-            ACTION_CHANGE_BACKGROUND, TR::t('change_background'), $button,
-            get_image_path('image.png'), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, ACTION_CHANGE_BACKGROUND,
+            TR::t('change_background'), $button, get_image_path('image.png'), Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         //////////////////////////////////////
         // reset playlist settings
 
-        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_RESET_PLAYLIST_DLG,
-            TR::t('setup_channels_src_reset_playlist'), TR::t('clear'),
-            get_image_path('brush.png'), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_RESET_PLAYLIST_DLG, TR::t('setup_channels_src_reset_playlist'),
+            TR::t('clear'), get_image_path('brush.png'), Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         Control_Factory::add_vgap($defs, 10);
 
@@ -235,7 +229,7 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 $old_image = $this->plugin->get_background_image();
                 $is_old_default = $this->plugin->is_background_image_default();
-                $cached_image = get_cached_image_path($this->plugin->get_active_playlist_id() . '_' . $data->{Starnet_Folder_Screen::PARAM_CAPTION});
+                $cached_image = get_cached_image_path($this->plugin->get_active_playlist_id() . '_' . $data->{PARAM_CAPTION});
 
                 hd_print("copy from: " . $data->{PARAM_FILEPATH} . " to: $cached_image");
                 if (!copy($data->{PARAM_FILEPATH}, $cached_image)) {

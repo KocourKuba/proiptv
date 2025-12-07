@@ -112,7 +112,7 @@ class api_korona extends api_default
 
         Control_Factory::add_vgap($defs, 20);
 
-        return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1100);
+        return Action_Factory::show_dialog($defs, TR::t('subscription'));
     }
 
     /**

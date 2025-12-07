@@ -198,7 +198,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                     array(
                         PARAM_END_ACTION => self::ACTION_PLUGIN_ENTRY,
-                        PARAM_ACTION_ID => $user_input->action_id,
+                        PARAM_ACTION_ID => $user_input->{PARAM_ACTION_ID},
                         PARAM_EXTENSION => 'zip',
                         Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => Starnet_Setup_Backup_Screen::ACTION_BACKUP_FOLDER_SELECTED,
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
@@ -217,7 +217,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     $this,
                     self::ACTION_PLUGIN_ENTRY,
                     null,
-                    array(PARAM_ACTION_ID => $data->{PARAM_ACTION_ID}, 'mandatory_playback' => 0)
+                    array(PARAM_ACTION_ID => $data->{PARAM_ACTION_ID}, PARAM_MANDATORY_PLAYBACK => 0)
                 );
                 return Action_Factory::composite($actions);
 
@@ -310,11 +310,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
             file_put_contents($flag, '');
             $defs = array();
 
-            $ret_action = array(PARAM_ACTION_ID => $user_input->action_id, 'mandatory_playback' => 0);
-            Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_CONFIRM_BACKUP_DLG, TR::t('yes'), 300, $ret_action);
-            Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_PLUGIN_ENTRY, TR::t('no'), 300, $ret_action);
+            $ret_action = array(PARAM_ACTION_ID => $user_input->{PARAM_ACTION_ID}, PARAM_MANDATORY_PLAYBACK => 0);
+            Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_CONFIRM_BACKUP_DLG, TR::t('yes'), $ret_action);
+            Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_PLUGIN_ENTRY, TR::t('no'), $ret_action);
 
-            return Action_Factory::show_dialog(TR::t('yes_no_confirm_backup'), $defs);
+            return Action_Factory::show_dialog($defs, TR::t('yes_no_confirm_backup'));
         }
 
         return null;
@@ -333,7 +333,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
         Control_Factory::add_vgap($defs, 20);
         Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
         Control_Factory::add_vgap($defs, 450);
-        return Action_Factory::show_dialog($title, $defs, true, 1000);
+        return Action_Factory::show_dialog($defs, $title);
     }
 
     private function open_playlist_screen()
@@ -382,7 +382,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
         }
 
         $auto_play = false;
-        $mandatory_playback = (int)safe_get_member($user_input, 'mandatory_playback');
+        $mandatory_playback = (int)safe_get_member($user_input, PARAM_MANDATORY_PLAYBACK);
         $auto_resume = safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_RESUME);
 
         if ($user_input->action_id === self::ACTION_LAUNCH) {

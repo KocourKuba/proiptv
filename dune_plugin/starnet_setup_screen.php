@@ -60,44 +60,37 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen
 
         $defs = array();
 
-        $ret_index = 0;
+        $params = array(PARAM_RETURN_INDEX => 0);
         //////////////////////////////////////
         // Plugin name
+        $caption = " v.{$this->plugin->plugin_info['app_version']} [{$this->plugin->plugin_info['app_release_date']}]";
         Control_Factory::add_vgap($defs, -10);
-        Control_Factory::add_image_button($defs, $this, null,
-            ACTION_PLUGIN_INFO,
-            Dune_Default_UI_Parameters::AUTHOR_LOGO,
-            " v.{$this->plugin->plugin_info['app_version']} [{$this->plugin->plugin_info['app_release_date']}]",
-            get_image_path('info.png'),
-            Abstract_Controls_Screen::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, ACTION_PLUGIN_INFO, Dune_Default_UI_Parameters::AUTHOR_LOGO, $caption,
+            get_image_path('info.png'), Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         Control_Factory::add_vgap($defs, 10);
-        $ret_index += 2;
 
         //////////////////////////////////////
         // Interface settings
-        Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_INTERFACE_SCREEN,
-            TR::t('setup_interface_title'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
-        $ret_index += 2;
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_INTERFACE_SCREEN, TR::t('setup_interface_title'),
+            TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         if (!is_limited_apk()) {
             //////////////////////////////////////
             // Sleep timer settings
-            Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_SLEEP_TIMER_SCREEN,
-                TR::t('setup_sleep_timer_title'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
-            $ret_index += 2;
+            Control_Factory::add_image_button($defs, $this, self::CONTROL_SLEEP_TIMER_SCREEN, TR::t('setup_sleep_timer_title'),
+                TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
         }
 
         //////////////////////////////////////
         // Folders settings
-        Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_FOLDERS_SCREEN,
-            TR::t('setup_folder_settings'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
-        $ret_index += 2;
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_FOLDERS_SCREEN, TR::t('setup_folder_settings'),
+            TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         //////////////////////////////////////
         // Extended settings
-        Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_EXT_SETUP_SCREEN,
-            TR::t('setup_extended_setup'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_EXT_SETUP_SCREEN, TR::t('setup_extended_setup'),
+            TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         return $defs;
     }

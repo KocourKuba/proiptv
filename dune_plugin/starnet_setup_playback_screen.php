@@ -65,16 +65,14 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // Per channel zoom
         $per_channel_zoom = $this->plugin->get_setting(PARAM_PER_CHANNELS_ZOOM, SwitchOnOff::on);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_PER_CHANNELS_ZOOM, TR::t('setup_per_channel_zoom'), SwitchOnOff::translate($per_channel_zoom),
-            SwitchOnOff::to_image($per_channel_zoom), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, PARAM_PER_CHANNELS_ZOOM,
+            TR::t('setup_per_channel_zoom'), SwitchOnOff::translate($per_channel_zoom), SwitchOnOff::to_image($per_channel_zoom));
 
         //////////////////////////////////////
         // Force detection stream
         $force_detection = $this->plugin->get_setting(PARAM_DUNE_FORCE_TS, SwitchOnOff::off);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_DUNE_FORCE_TS, TR::t('setup_channels_dune_force_ts'), SwitchOnOff::translate($force_detection),
-            SwitchOnOff::to_image($force_detection), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, PARAM_DUNE_FORCE_TS,
+            TR::t('setup_channels_dune_force_ts'), SwitchOnOff::translate($force_detection), SwitchOnOff::to_image($force_detection));
 
         //////////////////////////////////////
         // buffering time
@@ -91,12 +89,12 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
         hd_debug_print("Current buffering: $buffering");
         Control_Factory::add_combobox($defs,
             $this,
-            null,
             PARAM_BUFFERING_TIME,
             TR::t('setup_buffer_time'),
             $buffering,
             $show_buf_time_ops,
-            static::CONTROLS_WIDTH,
+            null,
+            Control_Factory::SCR_CONTROLS_WIDTH,
             true);
 
         //////////////////////////////////////
@@ -114,12 +112,12 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
         hd_debug_print("Current archive delay: $delay");
         Control_Factory::add_combobox($defs,
             $this,
-            null,
             PARAM_ARCHIVE_DELAY_TIME,
             TR::t('setup_delay_time'),
             $delay,
             $show_delay_time_ops,
-            static::CONTROLS_WIDTH,
+            null,
+            Control_Factory::SCR_CONTROLS_WIDTH,
             true);
 
         //////////////////////////////////////
@@ -129,23 +127,22 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
         $catchup_ops[ATTR_CATCHUP_SHIFT] = ATTR_CATCHUP_SHIFT;
         $catchup_ops[ATTR_CATCHUP_FLUSSONIC] = ATTR_CATCHUP_FLUSSONIC;
         $catchup_idx = safe_get_value($params, PARAM_USER_CATCHUP, ATTR_CATCHUP_UNKNOWN);
-        Control_Factory::add_combobox($defs, $this, null, PARAM_USER_CATCHUP,
-            TR::t('setup_channels_archive_type'), $catchup_idx, $catchup_ops, static::CONTROLS_WIDTH, true);
+        Control_Factory::add_combobox($defs, $this, PARAM_USER_CATCHUP, TR::t('setup_channels_archive_type'),
+            $catchup_idx, $catchup_ops, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
         // UserAgent
 
         $user_agent = safe_get_value($params, PARAM_USER_AGENT, '');
-        Control_Factory::add_text_field($defs, $this, null, PARAM_USER_AGENT, TR::t('setup_channels_user_agent'),
-            $user_agent, false, false, false, true, static::CONTROLS_WIDTH, true);
+        Control_Factory::add_text_field($defs, $this, PARAM_USER_AGENT, TR::t('setup_channels_user_agent'), $user_agent,
+            false, false, false, true, Control_Factory::SCR_CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
         // enable/disable dune_params
 
         $enable_dune_params = safe_get_value($params, PARAM_USE_DUNE_PARAMS, SwitchOnOff::on);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_USE_DUNE_PARAMS, TR::t('setup_channels_enable_dune_params'), SwitchOnOff::translate($enable_dune_params),
-            SwitchOnOff::to_image($enable_dune_params), static::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, PARAM_USE_DUNE_PARAMS,
+            TR::t('setup_channels_enable_dune_params'), SwitchOnOff::translate($enable_dune_params), SwitchOnOff::to_image($enable_dune_params));
 
         //////////////////////////////////////
         // dune_params
@@ -159,8 +156,8 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
             $dune_params_str = $provider->getConfigValue(PARAM_DUNE_PARAMS);
         }
 
-        Control_Factory::add_text_field($defs, $this, null, PARAM_DUNE_PARAMS, TR::t('setup_channels_dune_params'),
-            $dune_params_str, false, false, false, true, static::CONTROLS_WIDTH, true);
+        Control_Factory::add_text_field($defs, $this, PARAM_DUNE_PARAMS, TR::t('setup_channels_dune_params'), $dune_params_str,
+            false, false, false, true, Control_Factory::SCR_CONTROLS_WIDTH, true);
 
         return $defs;
     }

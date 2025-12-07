@@ -699,8 +699,8 @@ class vod_standard extends Abstract_Vod
 
             if (isset($filter['text'])) {
                 $initial_value = isset($user_value) ? $user_value : '';
-                Control_Factory::add_text_field($defs, $parent, null, $name,
-                    $filter['title'], $initial_value, true, false, false, false, 600);
+                Control_Factory::add_text_field($defs, $parent, $name, $filter['title'],
+                    $initial_value, true, false, false, false, Control_Factory::DLG_CONTROLS_WIDTH);
                 Control_Factory::add_vgap($defs, 20);
                 $added = true;
             }
@@ -711,8 +711,8 @@ class vod_standard extends Abstract_Vod
                     $idx = array_search($user_value, $filter['values']) ?: -1;
                 }
 
-                Control_Factory::add_combobox($defs, $parent, null, $name,
-                    $filter['title'], $idx, $filter['values'], 600);
+                Control_Factory::add_combobox($defs, $parent, $name, $filter['title'],
+                    $idx, $filter['values'], null, Control_Factory::DLG_CONTROLS_WIDTH);
                 Control_Factory::add_vgap($defs, 20);
                 $added = true;
             }
@@ -722,10 +722,12 @@ class vod_standard extends Abstract_Vod
             return null;
         }
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $parent, ACTION_RUN_FILTER, TR::t('ok'), 300, array(ACTION_ITEMS_EDIT => $initial));
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $parent, ACTION_RUN_FILTER, TR::t('ok'),
+            array(ACTION_ITEMS_EDIT => $initial)
+        );
+        Control_Factory::add_cancel_button($defs);
         Control_Factory::add_vgap($defs, 10);
-        return Action_Factory::show_dialog(TR::t('filter'), $defs, true);
+        return Action_Factory::show_dialog($defs, TR::t('filter'));
     }
 
     /**

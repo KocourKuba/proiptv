@@ -3019,10 +3019,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         Control_Factory::add_vgap($defs, 20);
-        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
         Control_Factory::add_vgap($defs, 10);
+        Control_Factory::add_ok_button($defs, true);
 
-        return Action_Factory::show_dialog(TR::t('channel_info_dlg'), $defs, true, 1750);
+        return Action_Factory::show_dialog($defs, TR::t('channel_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
     }
 
     /**
@@ -3168,10 +3168,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $search_text = safe_get_member($plugin_cookies, PARAM_COOKIE_LAST_TV_SEARCH, '');
 
         $defs = array();
-        Control_Factory::add_text_field($defs, $handler, null, ACTION_NEW_SEARCH, '', $search_text,
-            false, false, true, true, 1300, false, true);
+        Control_Factory::add_text_field($defs, $handler, ACTION_NEW_SEARCH, '', $search_text, false,
+            false, true, true, Control_Factory::DLG_MAX_CONTROLS_WIDTH, false, true);
         Control_Factory::add_vgap($defs, 500);
-        return Action_Factory::show_dialog(TR::t('tv_screen_search_channel'), $defs, true, 1300);
+        return Action_Factory::show_dialog($defs, TR::t('tv_screen_search_channel'));
     }
 
     /**
@@ -3208,7 +3208,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     hd_debug_print("found channel: '$ch_title', id: $ch_id in group: '{$group_row[COLUMN_GROUP_ID]}'", true);
                     $add_params[COLUMN_CHANNEL_ID] = $ch_id;
                     Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_JUMP_TO_CHANNEL_IN_GROUP,
-                        $ch_title, 900, $add_params);
+                        $ch_title, $add_params, Control_Factory::DLG_CONTROLS_WIDTH);
                 }
             }
         }
@@ -3216,11 +3216,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if ($q_result === false) {
             Control_Factory::add_multiline_label($defs, '', TR::t('tv_screen_not_found'), 6);
             Control_Factory::add_vgap($defs, 20);
-            Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_SHOW_SEARCH_DLG,
-                '', TR::t('new_search'), 300);
+            Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_SHOW_SEARCH_DLG, TR::t('new_search'));
         }
 
-        return Action_Factory::show_dialog(TR::t('search'), $defs, true);
+        return Action_Factory::show_dialog($defs, TR::t('search'));
     }
 
     /**
@@ -3450,13 +3449,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $attrs['timer'] = Action_Factory::timer(10000);
                 $attrs['actions'] = array(GUI_EVENT_TIMER => Action_Factory::close_dialog());
                 $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
-                return Action_Factory::show_title_dialog(
-                    TR::t('err_load_xmltv_source'),
-                    Dune_Last_Error::get_last_error(LAST_ERROR_XMLTV),
-                    $post_action,
-                    0,
-                    $attrs
-                );
+                return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_source'), Dune_Last_Error::get_last_error(LAST_ERROR_XMLTV),
+                    $post_action, Action_Factory::DEF_DLG_WIDTH, $attrs);
 
             case 0:
                 hd_debug_print("No imports", true);

@@ -343,27 +343,27 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             $name = safe_get_value($item, PARAM_NAME);
 
             Control_Factory::add_label($defs, '', TR::t('name'), -10);
-            Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, '',
-                $name, false, false, false, true, self::DLG_CONTROLS_WIDTH);
+            Control_Factory::add_text_field($defs, $this, CONTROL_EDIT_NAME, '', $name,
+                false, false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
 
             Control_Factory::add_label($defs, '', TR::t('url'), -10);
-            Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, '',
-                $url, false, false, false, true, self::DLG_CONTROLS_WIDTH);
+            Control_Factory::add_text_field($defs, $this, CONTROL_URL_PATH, '', $url,
+                false, false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
         }
 
         foreach (array(XMLTV_CACHE_AUTO, 0.25, 0.5, 1, 2, 3, 4, 5, 6, 7) as $value) {
             $opts[$value] = $value !== XMLTV_CACHE_AUTO ? $value : TR::t('auto');
         }
         Control_Factory::add_label($defs, '', TR::t('entry_epg_cache_time'), -10);
-        Control_Factory::add_combobox($defs, $this, null, self::CONTROL_CACHE_TIME, '',
-            $cache_selected, $opts, self::DLG_CONTROLS_WIDTH);
+        Control_Factory::add_combobox($defs, $this, self::CONTROL_CACHE_TIME, '', $cache_selected,
+            $opts, null, Control_Factory::DLG_CONTROLS_WIDTH);
 
         Control_Factory::add_vgap($defs, 50);
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_URL_DLG_APPLY, TR::t('ok'), 300, $param);
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_URL_DLG_APPLY, TR::t('ok'), $param);
+        Control_Factory::add_cancel_button($defs);
         Control_Factory::add_vgap($defs, 10);
 
-        return Action_Factory::show_dialog($window_title, $defs, true);
+        return Action_Factory::show_dialog($defs, $window_title);
     }
 
     /**
@@ -482,12 +482,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             return Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
         }
 
-        return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $new_count - $old_count, count($lines)),
-            '',
-            Action_Factory::close_and_run(
-                Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('setup_edit_xmltv_list'))
-            )
-        );
+        $actions[] = Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $new_count - $old_count, count($lines)));
+        $actions[] = Action_Factory::close_and_run();
+        $actions[] = Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('setup_edit_xmltv_list'));
+        return Action_Factory::composite($actions);
     }
 
     /**
@@ -765,9 +763,9 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         }
 
         Control_Factory::add_vgap($defs, 30);
-        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
+        Control_Factory::add_ok_button($defs, true);
         Control_Factory::add_vgap($defs, 10);
 
-        return Action_Factory::show_dialog(TR::t('xmltv_info_dlg'), $defs, true, 1000);
+        return Action_Factory::show_dialog($defs, TR::t('xmltv_info_dlg'));
     }
 }

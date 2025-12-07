@@ -26,6 +26,11 @@
 
 class Action_Factory
 {
+    const DEF_DLG_WIDTH = 1300;
+    const SMALL_DLG_WIDTH = 850;
+    const MID_DLG_WIDTH = 1600;
+    const MAX_DLG_WIDTH = 1800;
+
     /**
      * @param string|null $media_url_str
      * @param string|null $caption
@@ -162,7 +167,7 @@ class Action_Factory
      * @param int $preferred_width
      * @return array
      */
-    public static function show_title_dialog($title, $multiline = '', $post_action = null, $preferred_width = 0, $attrs = array())
+    public static function show_title_dialog($title, $multiline = '', $post_action = null, $preferred_width = self::SMALL_DLG_WIDTH, $attrs = array())
     {
         $defs = array();
 
@@ -187,20 +192,21 @@ class Action_Factory
         }
 
         Control_Factory::add_multiline_label($defs, '', $text, 15);
-        Control_Factory::add_custom_close_dialog_and_apply_button($defs, 'close_button', TR::t('ok'), 300, $post_action);
+        Control_Factory::add_custom_close_dialog_and_apply_button($defs, 'close_button', TR::t('ok'),
+            Control_Factory::DLG_BUTTON_WIDTH, $post_action);
 
-        return self::show_dialog($title, $defs, false, $preferred_width, $attrs);
+        return self::show_dialog($defs, $title, $preferred_width, false, $attrs);
     }
 
     /**
-     * @param string $title
      * @param array &$defs
-     * @param bool $close_by_return
+     * @param string $title
      * @param int $preferred_width
+     * @param bool $close_by_return
      * @param array $attrs
      * @return array
      */
-    public static function show_dialog($title, $defs, $close_by_return = false, $preferred_width = 0, $attrs = array())
+    public static function show_dialog($defs, $title, $preferred_width = self::DEF_DLG_WIDTH, $close_by_return = true, $attrs = array())
     {
         $initial_sel_ndx = isset($attrs['initial_sel_ndx']) ? $attrs['initial_sel_ndx'] : -1;
         $actions = isset($attrs['actions']) ? $attrs['actions'] : null;
@@ -240,10 +246,10 @@ class Action_Factory
             Control_Factory::add_multiline_label($defs, '', $multiline, 15);
         }
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, $action, TR::t('yes'), 300, $add_params);
-        Control_Factory::add_close_dialog_button($defs, TR::t('no'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, $action, TR::t('yes'), $add_params);
+        Control_Factory::add_close_dialog_button($defs, TR::t('no'));
 
-        return self::show_dialog($title, $defs, false, $preferred_width, $attrs);
+        return self::show_dialog($defs, $title, $preferred_width, false, $attrs);
     }
 
     /**

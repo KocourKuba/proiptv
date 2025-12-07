@@ -382,7 +382,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 $group = $this->plugin->get_group($selected_media_url->group_id, PARAM_ALL);
                 if (is_null($group)) break;
 
-                $cached_image_name = $this->plugin->get_active_playlist_id() . '_' . $data->{Starnet_Folder_Screen::PARAM_CAPTION};
+                $cached_image_name = $this->plugin->get_active_playlist_id() . '_' . $data->{PARAM_CAPTION};
                 $cached_image_path = get_cached_image_path($cached_image_name);
                 hd_print("copy from: " . $data->{PARAM_FILEPATH} . " to: $cached_image_path");
                 if (!copy($data->{PARAM_FILEPATH}, $cached_image_path)) {
