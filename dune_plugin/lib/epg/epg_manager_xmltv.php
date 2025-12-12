@@ -148,7 +148,7 @@ class Epg_Manager_Xmltv
 
         $items = array();
         foreach (self::$xmltv_sources as $key => $params) {
-            hd_debug_print("Looking in XMLTV source: {$params[PARAM_URI]}");
+            hd_debug_print("Looking in XMLTV source: {$params[PARAM_URI]} ({$params[PARAM_HASH]})");
             if (self::is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_ENTRIES)) {
                 hd_debug_print("EPG {$params[PARAM_URI]} still indexing, append to delayed queue channel id: $channel_id");
                 $this->delayed_epg[] = $channel_id;
@@ -599,7 +599,7 @@ class Epg_Manager_Xmltv
                     throw new Exception("reindex_xmltv_channels: Can't open file: $cached_file");
                 }
 
-                $db = self::open_sqlite_db($url_hash, self::TABLE_CHANNELS, false);
+                $db = self::open_sqlite_db($url_hash, self::TABLE_CHANNELS, false, true);
                 if ($db === false) {
                     throw new Exception("reindex_xmltv_channels: Can't open db: $url_hash");
                 }
@@ -708,7 +708,7 @@ class Epg_Manager_Xmltv
                     throw new Exception("reindex_xmltv_entries: Can't open file: $cached_file");
                 }
 
-                $db = self::open_sqlite_db($url_hash, self::TABLE_ENTRIES, false);
+                $db = self::open_sqlite_db($url_hash, self::TABLE_ENTRIES, false, true);
                 if ($db === false) {
                     throw new Exception("reindex_xmltv_entries: Can't open db: $url_hash");
                 }
@@ -1129,6 +1129,7 @@ class Epg_Manager_Xmltv
             return $channel_positions;
         }
 
+        hd_debug_print("Found EPG id's: " . json_encode($channel_ids));
         hd_debug_print("Load position indexes for: $channel_id ($channel_title)", true);
         $db_entries = self::open_sqlite_db($params[PARAM_HASH], self::TABLE_ENTRIES, true);
         if ($db_entries === false) {
@@ -1258,9 +1259,10 @@ class Epg_Manager_Xmltv
      * @param string $db_name
      * @param string $table_name
      * @param bool $readonly
+     * @param bool $clear_cache
      * @return Sql_Wrapper|bool
      */
-    protected static function open_sqlite_db($db_name, $table_name, $readonly)
+    protected static function open_sqlite_db($db_name, $table_name, $readonly, $clear_cache = false)
     {
         if ($table_name === self::TABLE_ENTRIES) {
             $db_name = $db_name . "_entries";
@@ -1274,7 +1276,7 @@ class Epg_Manager_Xmltv
         }
 
         // if database not exist or requested mode is read-write create new database
-        if (!isset(self::$epg_db[$db_name]) || (!$readonly && self::$epg_db[$db_name]->is_readonly())) {
+        if ($clear_cache || !isset(self::$epg_db[$db_name]) || (!$readonly && self::$epg_db[$db_name]->is_readonly())) {
             $flags = $readonly ? SQLITE3_OPEN_READONLY : (SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
             $db = new Sql_Wrapper($db_file, $flags);
             if (!$db->is_valid()) {
