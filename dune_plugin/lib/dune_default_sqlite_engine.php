@@ -1878,7 +1878,7 @@ class Dune_Default_Sqlite_Engine
     public function get_channels_by_order_cnt($group_id, $include_hidden = false)
     {
         if (!$this->sql_playlist->is_database_attached(M3uParser::IPTV_DB)) {
-            hd_debug_print("Database iptv not attached");
+            hd_debug_print("get_channels_by_order_cnt: Database 'iptv' not attached");
             return 0;
         }
 

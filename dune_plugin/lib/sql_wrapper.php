@@ -60,6 +60,7 @@ class Sql_Wrapper
      */
     public function attachDatabase($db_filename, $name)
     {
+        hd_debug_print(null, true);
         hd_debug_print("Trying to attach: as '$name' db: '$db_filename'", true);
         $result = $this->is_database_attached($name, $db_filename);
         if ($result === 2) {
@@ -144,7 +145,7 @@ class Sql_Wrapper
     public function is_table_exists($table_name, $db_name = null)
     {
         if (!is_null($db_name) && !$this->is_database_attached($db_name)) {
-            hd_debug_print("Database '$db_name' not attached!");
+            hd_debug_print("is_table_exists: Database '$db_name' not attached!");
             return false;
         }
 
@@ -161,7 +162,7 @@ class Sql_Wrapper
     public function is_column_exists($table_name, $column_name, $db_name = null)
     {
         if (!is_null($db_name) && !$this->is_database_attached($db_name)) {
-            hd_debug_print("Database '$db_name' not attached!");
+            hd_debug_print("is_column_exists: Database '$db_name' not attached!");
             return false;
         }
 
@@ -176,7 +177,7 @@ class Sql_Wrapper
     public function get_master_table_list($db_name = null)
     {
         if (!is_null($db_name) && !$this->is_database_attached($db_name)) {
-            hd_debug_print("Database '$db_name' not attached!");
+            hd_debug_print("get_master_table_list: Database '$db_name' not attached!");
             return array();
         }
 

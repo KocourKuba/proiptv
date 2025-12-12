@@ -118,7 +118,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_PLAYLIST_SCREEN:
                 $this->plugin->init_plugin();
-                return $this->plugin->show_protect_settings_dialog($this, $this->open_playlist_screen());
+                return $this->plugin->show_protect_settings_dialog($this, $this->open_playlist_screen($plugin_cookies));
 
             case self::ACTION_CALL_XMLTV_SOURCES_SCREEN:
                 $this->plugin->init_plugin();
@@ -183,12 +183,17 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 hd_debug_print("FORCE LANUCH PLUGIN");
                 hd_debug_print_separator();
 
-                $this->plugin->init_plugin();
+                $this->plugin->init_plugin(true);
                 if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) {
-                    return $this->open_playlist_screen();
+                    return $this->open_playlist_screen($plugin_cookies);
+                }
+
+                if (!$this->plugin->init_playlist_parser() || !$this->plugin->load_and_parse_m3u_iptv_playlist(true)) {
+                    return $this->open_playlist_screen($plugin_cookies);
                 }
 
                 hd_debug_print("action: launch open", true);
+                $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                 $actions[] = Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
                 $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD);
                 return Action_Factory::composite($actions);
@@ -257,15 +262,21 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         hd_debug_print("LANUCH PLUGIN VOD");
                         hd_debug_print_separator();
 
-                        $this->plugin->init_plugin();
+                        $this->plugin->init_plugin(true);
                         if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) {
-                            return $this->open_playlist_screen();
+                            return $this->open_playlist_screen($plugin_cookies);
+                        }
+
+                        if (!$this->plugin->init_playlist_parser() || !$this->plugin->load_and_parse_m3u_iptv_playlist(true)) {
+                            return $this->open_playlist_screen($plugin_cookies);
                         }
 
                         if ($this->plugin->load_channels($plugin_cookies)
                             && $this->plugin->is_vod_enabled()
                             && SwitchOnOff::to_bool($plugin_cookies->{PARAM_SHOW_VOD_ICON})) {
-                            return Action_Factory::open_folder(Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID));
+                            $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+                            $actions[] = Action_Factory::open_folder(Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID));
+                            return Action_Factory::composite($actions);
                         }
 
                         return Action_Factory::show_error(false, TR::t('err_vod_not_available'));
@@ -336,7 +347,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
         return Action_Factory::show_dialog($defs, $title);
     }
 
-    private function open_playlist_screen()
+    /**
+     * @param $plugin_cookies
+     * @return array
+     */
+    private function open_playlist_screen($plugin_cookies)
     {
         $media_url = Starnet_Edit_Playlists_Screen::make_callback_media_url_str(Starnet_Entry_Handler::ID,
             array(
@@ -345,7 +360,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
             )
         );
 
-        return Action_Factory::open_folder($media_url, TR::t('setup_channels_src_edit_playlists'));
+        $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+        $actions[] = Action_Factory::open_folder($media_url, TR::t('setup_channels_src_edit_playlists'));
+        return Action_Factory::composite($actions);
     }
 
     /**
@@ -361,24 +378,30 @@ class Starnet_Entry_Handler implements User_Input_Handler
         hd_debug_print_separator();
         hd_debug_print("LANUCH PLUGIN");
 
-        $this->plugin->init_plugin();
+        $this->plugin->init_plugin(true);
         if ($this->plugin->get_all_playlists_count() === 0) {
             hd_debug_print("No playlists found. Open playlists page");
-            return $this->open_playlist_screen();
+            return $this->open_playlist_screen($plugin_cookies);
         }
 
         if (!$this->plugin->init_playlist_db()) {
-            return $this->open_playlist_screen();
+            return $this->open_playlist_screen($plugin_cookies);
+        }
+
+        if (!$this->plugin->init_playlist_parser() || !$this->plugin->load_and_parse_m3u_iptv_playlist(true)) {
+            return $this->open_playlist_screen($plugin_cookies);
         }
 
         if (!$this->plugin->load_channels($plugin_cookies)) {
-            return Action_Factory::open_folder(
+            $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+            $actions[] = Action_Factory::open_folder(
                 Starnet_Tv_Groups_Screen::ID,
                 $this->plugin->get_plugin_title(),
                 null,
                 null,
                 Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
             );
+            return Action_Factory::composite($actions);
         }
 
         $auto_play = false;

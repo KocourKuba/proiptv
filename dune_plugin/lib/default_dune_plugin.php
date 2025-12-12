@@ -743,7 +743,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $m3u_file = $base_name . '.m3u8';
         $db_file = $base_name . '.db';
         try {
-            if (!$force) {
+            if (!$force || !$this->sql_playlist->is_database_attached($db_file, M3uParser::IPTV_DB)) {
                 $is_expired = $this->is_playlist_cache_expired(true);
                 if (!$is_expired) {
                     $database_attached = $this->sql_playlist->attachDatabase($db_file, M3uParser::IPTV_DB);
@@ -983,11 +983,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Process playlist: {$params[PARAM_NAME]} ($playlist_id)");
 
         $db_file = get_data_path("$playlist_id.db");
+        hd_debug_print("Playlist DB: $playlist_id.db");
 
         if ($this->sql_playlist) {
             // attach to playlist db. if db not exist it will be created
             if (!$force && $this->sql_playlist->is_database_attached('main', $db_file) === 2) {
-                hd_debug_print("Database already inited!", true);
+                hd_debug_print("Database 'main' already inited!", true);
                 return true;
             }
             $this->reset_playlist_db();
