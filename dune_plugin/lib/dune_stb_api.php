@@ -2944,3 +2944,15 @@ function recursive_copy($source, $target)
         $dir->close();
     }
 }
+
+/**
+ * Convert dune serial number to uuid
+ * @return string
+ */
+function get_uuid()
+{
+    // convert 0000-0003-6081-4dc6-c48f-dbd4-bb02-7cba
+    // to 00000003-6081-4dc6-c48f-dbd4bb027cba
+    $parts = explode('-', strtolower(get_serial_number()));
+    return "$parts[0]$parts[1]-$parts[2]-$parts[3]-$parts[4]-$parts[5]$parts[6]$parts[7]";
+}
