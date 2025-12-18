@@ -425,7 +425,7 @@ class Dune_Default_Sqlite_Engine
         $q_name = Sql_Wrapper::sql_quote($name);
         $query = "SELECT value FROM $parameters_table WHERE playlist_id = '$playlist_id' AND name = $q_name;";
         $value = $this->sql_params->query_value($query);
-        return empty($value) ? $default : $value;
+        return is_null($value) ? $default : $value;
     }
 
     /**
