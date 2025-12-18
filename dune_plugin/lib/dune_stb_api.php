@@ -70,6 +70,7 @@ const LAST_PLAYBACK_EVENT = 'last_playback_event';
 
 const CACHED_IMAGE_SUBDIR = 'cached_img';
 
+const ACCEPT_JSON = 'Accept: application/json';
 const CONTENT_TYPE_JSON = 'Content-Type: application/json; charset=utf-8';
 const CONTENT_TYPE_WWW_FORM_URLENCODED = 'Content-Type: application/x-www-form-urlencoded';
 
