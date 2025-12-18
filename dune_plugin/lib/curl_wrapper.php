@@ -461,7 +461,7 @@ class Curl_Wrapper
 
         if (!empty($this->post_data)) {
             if (in_array(CONTENT_TYPE_JSON, $opts[CURLOPT_HTTPHEADER])) {
-                $opts[CURLOPT_POSTFIELDS] = is_r22_or_higher() ? json_encode($this->post_data) : escaped_raw_json_encode($this->post_data);
+                $opts[CURLOPT_POSTFIELDS] = json_encode($this->post_data);
             } else {
                 $data = '';
                 foreach($this->post_data as $key => $value) {
