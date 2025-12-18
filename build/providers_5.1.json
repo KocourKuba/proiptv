@@ -1479,7 +1479,8 @@
         },
         "domains": {
           "tv.team": "tv.team",
-          "tvteam.eu": "tvteam.eu"
+          "tvteam.eu": "tvteam.eu",
+          "tvteam.pro": "tvteam.pro"
         },
         "streams": {
           "mono.m3u8": "HLS",
