@@ -1364,6 +1364,10 @@ class Epg_Manager_Xmltv
         $perf->reset('start_unpack');
 
         $tmp_filename = $cached_file . ".tmp";
+        if (!file_exists($tmp_filename)) {
+            throw new Exception("$tmp_filename is not exists");
+        }
+
         $file_time = filemtime($tmp_filename);
         $handle = fopen($tmp_filename, "rb");
         $hdr = fread($handle, 8);
@@ -1378,6 +1382,7 @@ class Epg_Manager_Xmltv
             $tmp_filename = $gz_filename;
             hd_debug_print("ungzip $tmp_filename to $cached_file");
             $cmd = "gzip -d $tmp_filename 2>&1";
+            /** @var int $ret */
             $out = system($cmd, $ret);
             if ($ret > 1) {
                 throw new Exception("Failed to unpack $tmp_filename (error code: $ret)\n$out");
