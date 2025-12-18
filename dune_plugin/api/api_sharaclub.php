@@ -159,7 +159,7 @@ class api_sharaclub extends api_default
                     $this->servers[(int)$server->id] = $server->name;
                 }
 
-                $this->plugin->set_playlist_parameter($this->playlist_id, MACRO_SERVER_ID, $response->current);
+                $this->SetProviderParameter(MACRO_SERVER_ID, $response->current);
             }
         }
 
