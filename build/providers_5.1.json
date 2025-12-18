@@ -1202,7 +1202,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_sharaclub.png",
       "provider_url": "https://shara.club/",
-      "api_url": "http://list.playtv.pro/api/players.php",
+      "api_url": "http://list.sharatv.pro/api/players.php",
       "api_commands": {
         "get_playlist": "http://{PLAYLIST}/tv_live-{STREAM_ID}/{LOGIN}-{PASSWORD}",
         "get_vod": "http://{PLAYLIST}/kino-full/{LOGIN}-{PASSWORD}",

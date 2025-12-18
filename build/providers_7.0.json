@@ -1400,7 +1400,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_sharaclub.png",
       "provider_url": "https://shara.club/",
-      "api_url": "http://list.playtv.pro/api/players.php",
+      "api_url": "http://list.sharatv.pro/api/players.php",
       "api_commands": {
         "account_info": "{API}?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
         "pay": "{API}?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor",
