@@ -118,8 +118,7 @@ class vod_iptvonline extends vod_standard
             '',                             // rate_mpaa,
             self::collect_countries($movieData),      // country,
             '',                                // budget
-            array(),                                  // details
-            array(TR::t('quality') => $movieData->quality)   // rate details
+            array(TR::t('quality') => $movieData->quality) // details
         );
 
         return $movie;
