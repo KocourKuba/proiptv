@@ -182,7 +182,7 @@ class Epg_Manager_Xmltv
                             $xml_node = new DOMDocument();
                             $res = $xml_node->loadXML($xml_str);
                             if ($res === false) {
-                                throw new Exception("Exception in line: $xml_str");
+                                throw new Exception("Exception in line:\n$xml_str");
                             }
 
                             foreach ($xml_node->getElementsByTagName('programme') as $tag) {
@@ -587,6 +587,7 @@ class Epg_Manager_Xmltv
             hd_debug_print("Start index channels and picons...");
             self::lock_index($url_hash, INDEXING_CHANNELS);
 
+            libxml_use_internal_errors(true);
             $success = false;
             $file = false;
             try {
@@ -619,19 +620,54 @@ class Epg_Manager_Xmltv
                 }
 
                 $query = '';
+                $last_buffer = '';
                 while (!feof($file)) {
-                    $line = stream_get_line($file, 0, "</channel>");
-                    if (empty($line)) continue;
-                    $pos = strpos($line, "<channel ");
-                    if ($pos === false) continue;
-                    if ($pos !== 0) {
-                        $line = substr($line, $pos);
+                    // search for open tag <channel>
+                    $chunk = fread($file, 8192);
+                    $buffer = $last_buffer . $chunk;
+                    $pos = strpos($buffer, '<channel id');
+                    if ($pos === false) {
+                        $last_buffer = $chunk;
+                        continue;
                     }
 
-                    $line = $line . "</channel>";
+                    // calculate start position in file and seek to + length of searched tag
+                    $last_buffer = '';
+                    $start_pos = ftell($file) - strlen($buffer) + $pos;
+                    fseek($file, $start_pos + 11);
+
+                    // read content until closed tag found
+                    $line = '';
+                    while (!feof($file)) {
+                        // search for closing tag </channel>
+                        $chunk = fread($file, 8192);
+                        $buffer = $last_buffer . $chunk;
+                        $pos = strpos($buffer, '</channel>');
+                        if ($pos === false) {
+                            $last_buffer = $chunk;
+                            continue;
+                        }
+
+                        $last_buffer = '';
+                        // calculate end position in file
+                        $end_pos = ftell($file) - strlen($buffer) + $pos + 10;
+                        // seek to start position and read found text
+                        fseek($file, $start_pos);
+                        $line = fread($file, $end_pos - $start_pos);
+                        break;
+                    }
+                    if (feof($file) || empty($line)) continue;
 
                     $xml_node = new DOMDocument();
-                    $xml_node->loadXML($line);
+                    if (!$xml_node->loadXML($line, LIBXML_NOWARNING | LIBXML_NOERROR)) {
+                        hd_debug_print("Error parsing xml file:\n$line");
+                        foreach (libxml_get_errors() as $error) {
+                            $xml_error = "Error [$error->code] at line $error->line, column $error->column: " . trim($error->message) . "\n";
+                            hd_debug_print($xml_error);
+                        }
+                        libxml_clear_errors();
+                        continue;
+                    }
                     foreach ($xml_node->getElementsByTagName('channel') as $tag) {
                         $channel_id = $tag->getAttribute('id');
                     }
@@ -691,6 +727,7 @@ class Epg_Manager_Xmltv
                 return;
             }
         }
+        libxml_use_internal_errors(false);
 
         /// Reindex positions
         if ($indexing_flag & INDEXING_ENTRIES) {
