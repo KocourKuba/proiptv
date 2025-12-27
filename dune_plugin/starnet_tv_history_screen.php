@@ -199,7 +199,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
         $items = array();
         $now = time();
         foreach ($this->plugin->get_tv_history() as $channel_row) {
-            hd_debug_print("Channel: " . json_encode($channel_row));
+            hd_debug_print("Channel: " . json_format_unescaped($channel_row));
             $channel_id = $channel_row[COLUMN_CHANNEL_ID];
             $channel_ts = $channel_row[COLUMN_TIMESTAMP];
             $prog_info = $this->plugin->get_epg_info($channel_id, $channel_ts);

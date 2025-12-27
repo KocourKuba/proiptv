@@ -189,14 +189,14 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         if (LogSeverity::$is_debug) {
             $new_ids = $this->plugin->get_changed_channels_ids(PARAM_NEW);
             if (!empty($new_ids)) {
-                hd_debug_print("New channels: " . pretty_json_format($new_ids), true);
+                hd_debug_print("New channels: " . json_format_unescaped($new_ids), true);
             }
         }
 
         if (LogSeverity::$is_debug) {
             $removed_ids = $this->plugin->get_changed_channels_ids(PARAM_REMOVED);
             if (!empty($removed_ids)) {
-                hd_debug_print("Removed channels: " . pretty_json_format($removed_ids), true);
+                hd_debug_print("Removed channels: " . json_format_unescaped($removed_ids), true);
             }
         }
 

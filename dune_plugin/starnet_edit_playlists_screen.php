@@ -499,7 +499,6 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
         $window_title = TR::t('edit_list_add_url');
         $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
-
         Control_Factory::add_vgap($defs, 20);
 
         $name = '';
@@ -512,7 +511,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $opts[CONTROL_PLAYLIST_VOD] = TR::t('edit_list_playlist_vod');
         Control_Factory::add_label($defs, '', TR::t('edit_list_playlist_type'), -10);
         Control_Factory::add_combobox($defs, $this, CONTROL_EDIT_TYPE, '', $opts_idx,
-            $opts, null, Control_Factory::DLG_CONTROLS_WIDTH);
+            $opts, Control_Factory::DLG_CONTROLS_WIDTH);
 
         $url = 'http://';
         Control_Factory::add_label($defs, '', TR::t('url'), -10);
@@ -522,7 +521,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $mapper = CONTROL_DETECT_ID;
         Control_Factory::add_label($defs, '', TR::t('edit_list_playlist_detect_id'), -10);
         Control_Factory::add_combobox($defs, $this, CONTROL_DETECT_ID, '',
-            $mapper, $mapper_ops, null, Control_Factory::DLG_CONTROLS_WIDTH, true);
+            $mapper, $mapper_ops, Control_Factory::DLG_CONTROLS_WIDTH, $params, true);
 
         Control_Factory::add_vgap($defs, 50);
         Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_URL_DLG_APPLY, TR::t('ok'));
@@ -568,6 +567,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
     {
         hd_debug_print(null, true);
         $defs = array();
+        $params = array();
 
         Control_Factory::add_vgap($defs, 20);
 
@@ -580,12 +580,12 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $opts[CONTROL_PLAYLIST_VOD] = TR::t('edit_list_playlist_vod');
         Control_Factory::add_label($defs, '', TR::t('edit_list_playlist_type'), -10);
         Control_Factory::add_combobox($defs, $this, CONTROL_EDIT_TYPE, '',
-            CONTROL_PLAYLIST_IPTV, $opts, null, Control_Factory::DLG_CONTROLS_WIDTH);
+            CONTROL_PLAYLIST_IPTV, $opts, Control_Factory::DLG_CONTROLS_WIDTH);
 
         $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
         Control_Factory::add_label($defs, '', TR::t('edit_list_playlist_detect_id'), -10);
         Control_Factory::add_combobox($defs, $this, CONTROL_DETECT_ID, '',
-            CONTROL_DETECT_ID, $mapper_ops, null, Control_Factory::DLG_CONTROLS_WIDTH, true);
+            CONTROL_DETECT_ID, $mapper_ops, Control_Factory::DLG_CONTROLS_WIDTH, $params, true);
 
         $param = array(CONTROL_URL_PATH => $uri);
         Control_Factory::add_vgap($defs, 50);

@@ -104,10 +104,10 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $streams = $provider->GetStreams();
         if (!empty($streams) && count($streams) > 1) {
             $idx = $provider->GetProviderParameter(MACRO_STREAM_ID);
-            hd_debug_print("streams ($idx): " . json_encode($streams), true);
+            hd_debug_print("streams ($idx): " . json_format_unescaped($streams), true);
 
             Control_Factory::add_combobox($defs, $this, api_default::CONTROL_STREAM, TR::t('stream'),
-                $idx, $streams, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                $idx, $streams, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         }
 
         //////////////////////////////////////
@@ -116,10 +116,10 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $domains = $provider->GetDomains();
         if (!empty($domains) && count($domains) > 1) {
             $idx = $provider->GetProviderParameter(MACRO_DOMAIN_ID);
-            hd_debug_print("domains ($idx): " . json_encode($domains), true);
+            hd_debug_print("domains ($idx): " . json_format_unescaped($domains), true);
 
             Control_Factory::add_combobox($defs, $this, api_default::CONTROL_DOMAIN, TR::t('domain'),
-                $idx, $domains, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                $idx, $domains, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         }
 
         //////////////////////////////////////
@@ -128,10 +128,10 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $servers = $provider->GetServers();
         if (!empty($servers) && count($servers) > 1) {
             $idx = $provider->GetProviderParameter(MACRO_SERVER_ID);
-            hd_debug_print("servers ($idx): " . json_encode($servers), true);
+            hd_debug_print("servers ($idx): " . json_format_unescaped($servers), true);
 
             Control_Factory::add_combobox($defs, $this, api_default::CONTROL_SERVER, TR::t('server'),
-                $idx, $servers, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                $idx, $servers, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         }
 
         //////////////////////////////////////
@@ -140,10 +140,10 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $devices = $provider->GetDevices();
         if (!empty($devices) && count($devices) > 1) {
             $idx = $provider->GetProviderParameter(MACRO_DEVICE_ID);
-            hd_debug_print("devices ($idx): " . json_encode($devices), true);
+            hd_debug_print("devices ($idx): " . json_format_unescaped($devices), true);
 
             Control_Factory::add_combobox($defs, $this, api_default::CONTROL_DEVICE, TR::t('device'),
-                $idx, $devices, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                $idx, $devices, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         }
 
         //////////////////////////////////////
@@ -152,10 +152,10 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $qualities = $provider->GetQualities();
         if (!empty($qualities) && count($qualities) > 1) {
             $idx = $provider->GetProviderParameter(MACRO_QUALITY_ID);
-            hd_debug_print("qualities ($idx): " . json_encode($qualities), true);
+            hd_debug_print("qualities ($idx): " . json_format_unescaped($qualities), true);
 
             Control_Factory::add_combobox($defs, $this, api_default::CONTROL_QUALITY, TR::t('quality'),
-                $idx, $qualities, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                $idx, $qualities, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         }
 
         //////////////////////////////////////
@@ -169,7 +169,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $pl_idx = $provider->GetPlaylistIptvId();
 
         Control_Factory::add_combobox($defs, $this, self::CONTROL_SELECTED_PLAYLIST, TR::t('provider_playlist'),
-            $pl_idx, $pl_names, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+            $pl_idx, $pl_names, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         if ($pl_idx === DIRECT_PLAYLIST_ID) {
             //////////////////////////////////////
@@ -191,8 +191,8 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             if (!empty($icon_replacements)) {
                 $icon_idx = $provider->GetProviderParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
                 Control_Factory::add_combobox($defs, $this, PARAM_REPLACE_ICON, TR::t('setup_channels_square_icons'),
-                    $icon_idx, SwitchOnOff::$translated, null,
-                    Control_Factory::SCR_CONTROLS_WIDTH, true);
+                    $icon_idx, SwitchOnOff::$translated, Control_Factory::SCR_CONTROLS_WIDTH,
+                    $params, true);
             }
 
             //////////////////////////////////////
@@ -210,8 +210,8 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                     $pairs[$key] = $key;
                 }
                 Control_Factory::add_combobox($defs, $this, PARAM_SELECTED_MIRROR, TR::t('setup_channels_using_mirror'),
-                    $idx, $pairs, null,
-                    Control_Factory::SCR_CONTROLS_WIDTH, true);
+                    $idx, $pairs, Control_Factory::SCR_CONTROLS_WIDTH,
+                    $params, true);
             }
         }
 
@@ -236,13 +236,13 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         hd_debug_print("Playlist $param = $cache_time");
         Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_CACHE_TIME_IPTV,
             TR::t('setup_cache_time_iptv'), $cache_time,
-            $caching_range, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+            $caching_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         if ($has_vod_cache) {
             $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME_VOD, 1);
             Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_CACHE_TIME_VOD,
                 TR::t('setup_cache_time_vod'), $cache_time,
-                $caching_range, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                $caching_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         }
 
         return $defs;

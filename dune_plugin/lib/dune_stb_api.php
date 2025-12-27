@@ -618,7 +618,7 @@ function hd_debug_print($val = null, $is_debug = false)
         if (empty($val)) {
             $val = '{}';
         } else {
-            $val = str_replace(array('"{', '}"', '\"'), array('{', '}', '"'), (string)pretty_json_format($val));
+            $val = str_replace(array('"{', '}"', '\"'), array('{', '}', '"'), (string)json_format_unescaped($val));
         }
     } else if (is_bool($val)) {
         $val = var_export($val, true);
@@ -2515,25 +2515,34 @@ function parse_json_file($path, $assoc = true)
     return json_decode(file_get_contents($path), $assoc);
 }
 
-function escaped_raw_json_encode($param)
+function json_format_readable($content)
 {
-    return str_replace('"', '\"', pretty_json_format($param));
+    return json_format($content, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }
 
-function pretty_json_format($content, $options = JSON_UNESCAPED_UNICODE)
+function json_format_unescaped($content)
+{
+    return json_format($content, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+}
+
+function json_format($content, $options = 0)
 {
     $pretty_print = (bool)($options & JSON_PRETTY_PRINT);
     $unescape_unicode = (bool)($options & JSON_UNESCAPED_UNICODE);
     $unescape_slashes = (bool)($options & JSON_UNESCAPED_SLASHES);
 
-    $json = json_encode($content);
-    if (!$json || (!$pretty_print && !$unescape_unicode && !$unescape_slashes)) {
-        return $json;
+    if ($content instanceof Json_Serializer) {
+        $json_str = $content->__toString();
+    } else {
+        $json_str = json_encode($content);
+    }
+    if (!$json_str || (!$pretty_print && !$unescape_unicode && !$unescape_slashes)) {
+        return $json_str;
     }
 
     $result = '';
     $pos = 0;
-    $strLen = strlen($json);
+    $strLen = strlen($json_str);
     $indentStr = $pretty_print ? ' ': '';
     $newLine = $pretty_print ? PHP_EOL : '';
     $outOfQuotes = true;
@@ -2542,7 +2551,7 @@ function pretty_json_format($content, $options = JSON_UNESCAPED_UNICODE)
 
     for ($i = 0; $i < $strLen; $i++) {
         // take the next character in the string
-        $char = $json[$i];
+        $char = $json_str[$i];
 
         // Inside a quoted string?
         if ('"' === $char && $noescape) {
@@ -2588,7 +2597,7 @@ function pretty_json_format($content, $options = JSON_UNESCAPED_UNICODE)
             $char .= $indentStr;
         } else if ('}' === $char || ']' === $char) {
             $pos--;
-            $prevChar = $json[$i - 1];
+            $prevChar = $json_str[$i - 1];
 
             if ('{' !== $prevChar && '[' !== $prevChar) {
                 // If this character is the end of an element,

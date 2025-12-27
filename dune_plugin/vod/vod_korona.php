@@ -70,15 +70,19 @@ class vod_korona extends vod_standard
                 $movie->add_season_data($movie_season);
 
                 foreach ($season->series as $episode) {
-                    hd_debug_print("movie playback_url: {$episode->files['url']}");
-                    $movie_serie = new Movie_Series($episode->id, TR::t('vod_screen_series__1', $episode->number), $episode->files[0]->url, $season->id);
+                    hd_debug_print("episode playback_url: {$episode->files['url']}");
+                    $movie_serie = new Movie_Series($episode->id,
+                        TR::t('vod_screen_series__1', $episode->number),
+                        new Movie_Playback_Url($episode->files[0]->url),
+                        $season->id
+                    );
                     $movie_serie->description = $episode->name;
                     $movie->add_series_data($movie_serie);
                 }
             }
         } else {
             hd_debug_print("movie playback_url: {$movieData->files[0]->url}");
-            $movie_serie = new Movie_Series($movie_id, $movieData->name, $movieData->files[0]->url);
+            $movie_serie = new Movie_Series($movie_id, $movieData->name, new Movie_Playback_Url($movieData->files[0]->url));
             $movie->add_series_data($movie_serie);
         }
 
@@ -300,9 +304,9 @@ class vod_korona extends vod_standard
         }
 
         $curl_opt[CURLOPT_CUSTOMREQUEST] = $params;
-        $jsonItems = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
+        $jsonItems = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, 1, $curl_opt);
         if ($jsonItems === false) {
-            $exception_msg = TR::load('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
+            $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
             hd_debug_print($exception_msg);
             Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
             return false;
@@ -311,7 +315,7 @@ class vod_korona extends vod_standard
         if (LogSeverity::$is_debug) {
             $command_url = $this->provider->getApiCommand(API_COMMAND_GET_VOD) . $params;
             file_put_contents(get_temp_path(Hashed_Array::hash($command_url) . '.json'),
-                pretty_json_format($jsonItems, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+                json_format_readable($jsonItems));
         }
 
         return $jsonItems;

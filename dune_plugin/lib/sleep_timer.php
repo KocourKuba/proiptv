@@ -123,7 +123,7 @@ class Sleep_Timer
     {
         $defs = array();
         Control_Factory::add_combobox($defs, $handler, self::CONTROL_SLEEP_TIME_MIN, TR::t('sleep_after'), self::$sleep_timer_op,
-            self::get_sleep_timer_ops(), null, 250);
+            self::get_sleep_timer_ops(), 250);
 
         Control_Factory::add_close_dialog_and_apply_button($defs, $handler, self::CONTROL_SLEEP_TIME_SET, TR::t('apply'));
         Control_Factory::add_cancel_button($defs);

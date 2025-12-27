@@ -180,7 +180,7 @@ class M3uParser extends Json_Serializer
 
         // replace patterns in playlist icon
         if (!empty($this->icon_replace_pattern)) {
-            hd_debug_print("Using specific playlist icon replacement: " . json_encode($this->icon_replace_pattern), true);
+            hd_debug_print("Using specific playlist icon replacement: " . json_format_unescaped($this->icon_replace_pattern), true);
         }
     }
 

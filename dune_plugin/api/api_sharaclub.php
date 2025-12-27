@@ -153,7 +153,7 @@ class api_sharaclub extends api_default
 
         if (empty($this->servers)) {
             $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
-            hd_debug_print("GetServers: " . pretty_json_format($response), true);
+            hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             if (isset($response->status)) {
                 foreach ($response->allow_nums as $server) {
                     $this->servers[(int)$server->id] = $server->name;

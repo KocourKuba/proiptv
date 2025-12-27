@@ -94,7 +94,7 @@ class vod_glanz extends vod_standard
             );
 
             hd_debug_print("movie playback_url: $item->url");
-            $movie->add_series_data(new Movie_Series($movie_id, $item->name, $item->url));
+            $movie->add_series_data(new Movie_Series($movie_id, $item->name, new Movie_Playback_Url($item->url)));
             break;
         }
 

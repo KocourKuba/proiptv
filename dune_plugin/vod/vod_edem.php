@@ -64,68 +64,68 @@ class vod_edem extends vod_standard
     {
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
-        $movieData = $this->make_json_request(array('cmd' => "flick", 'fid' => (int)$movie_id, 'offset' => 0, 'limit' => 0));
+        $post_params = array('cmd' => "flick", 'fid' => (int)$movie_id, 'offset' => 0, 'limit' => 0);
+        $jsonData = $this->make_json_request($post_params, true);
 
-        if ($movieData === false) {
+        if ($jsonData === false) {
             hd_debug_print("failed to load movie: $movie_id");
             return null;
         }
 
+        hd_debug_print(json_format_unescaped($jsonData), true);
         $movie = new Movie($movie_id, $this->plugin);
-        $qualities_str = '';
-        if ($movieData->type === 'multistream') {
+        $type = safe_get_value($jsonData, 'type');
+        if ($type === 'stream') {
+            $movie->add_series_data(self::fill_variants($movie_id, $jsonData));
+        } else if ($type === 'multistream') {
             // collect series
-            foreach ($movieData->items as $item) {
-                $episodeData = $this->make_json_request(array('cmd' => "flick", 'fid' => (int)$item->fid, 'offset' => 0, 'limit' => 0));
+            foreach (safe_get_value($jsonData, 'items', array()) as $item) {
+                $fid = (int)safe_get_value($item, 'fid', -1);
+                if ($fid === -1) continue;
 
-                $movie_serie = new Movie_Series($item->fid, $item->title, $item->url);
-                if (isset($episodeData->variants) && count((array)$episodeData->variants) === 1) {
-                    $movie_serie->description = $movie->to_string(key($episodeData->variants));
-                } else {
-                    $variants_data = (array)$episodeData->variants;
-                    $qualities_str = '';
-                    foreach ($variants_data as $key => $url) {
-                        $movie_serie->qualities[(string)$key] = new Movie_Variant($item->fid . "_" . $key, $key, $url);
-                        if (!empty($qualities_str)) {
-                            $qualities_str .= ",";
-                        }
-                        $qualities_str .= ($key === 'auto' ? '' : $key);
-                    }
-
-                    $movie_serie->description = TR::load('vod_screen_quality') . "|" . rtrim($qualities_str, " ,\r\n\0");
+                $post_params['fid'] = $fid;
+                $episodeData = $this->make_json_request($post_params, true);
+                if ($episodeData !== false) {
+                    $movie->add_series_data(self::fill_variants($fid, $episodeData));
                 }
-                $movie->add_series_data($movie_serie);
             }
         } else {
-            $movie_serie = new Movie_Series($movie_id, $movieData->title, $movieData->url);
-            if (isset($movieData->variants) && count((array)$movieData->variants) === 1) {
-                $movie_serie->description = $movie->to_string(key($movieData->variants));
-            } else {
-                $variants_data = (array)$movieData->variants;
-                foreach ($variants_data as $key => $url) {
-                    $movie_serie->qualities[$key] = new Movie_Variant($movie_id . "_" . $key, $key, $url);
-                    if (!empty($qualities_str)) {
-                        $qualities_str .= ",";
-                    }
-                    $qualities_str .= ($key === 'auto' ? '' : $key);
-                }
-
-                $qualities_str = rtrim($qualities_str, " ,\r\n\0");
-                $movie_serie->description = TR::load('vod_screen_quality') . "|$qualities_str";
-            }
-            $movie->add_series_data($movie_serie);
+            hd_debug_print("Unsupported type: '$type' for '$movie_id'");
+            return null;
         }
 
-        $age = !empty($movieData->agelimit) ? "$movieData->agelimit+" : '';
-        $age_limit = empty($age) ? array() : array(TR::t('vod_screen_age_limit') => $age);
+        $rate_details = array();
+
+        $age = safe_get_value($jsonData, 'agelimit');
+        if (!empty($age)) {
+            $rate_details[TR::t('vod_screen_age_limit')] = "$age+";
+        }
+
+        if (safe_get_value($jsonData, 'fhd', false)) {
+            $rate_details['Full HD'] = TR::load('yes');
+        }
+
+        if (safe_get_value($jsonData, '4k', false)) {
+            $rate_details['4K'] = TR::load('yes');
+        }
+
+        if (safe_get_value($jsonData, 'hdr', false)) {
+            $rate_details['HDR'] = TR::load('yes');
+        }
+
+        $details = array();
+        if (!empty($qualities)) {
+            sort($qualities);
+            $details[TR::t('vod_screen_quality')] = implode(',', array_unique($qualities));
+        }
 
         $movie->set_data(
-            $movieData->title,      // caption
+            safe_get_value($jsonData, 'title', 'no title'),      // caption
             '',         // caption_original
-            isset($movieData->description) ? $movieData->description : '',  // description
-            isset($movieData->img) ? $movieData->img : '',  // poster_url
-            isset($movieData->duration) ? $movieData->duration : '',    // length
-            isset($movieData->year) ? $movieData->year : '',    // year
+            safe_get_value($jsonData, 'description', ''),  // description
+            safe_get_value($jsonData, 'img', ''),  // poster_url
+            safe_get_value($jsonData, 'duration', ''),    // length
+            safe_get_value($jsonData, 'year', ''),    // year
             '',          // director
             '',          // scenario
             '',            // actors
@@ -135,18 +135,39 @@ class vod_edem extends vod_standard
             '',            // rate_mpaa
             '',              // country
             '',              // budget
-            array(TR::t('vod_screen_quality') => $qualities_str), // details
-            $age_limit // rate details
+            $details, // details
+            $rate_details // rate details
         );
 
         return $movie;
     }
 
     /**
-     * @param array|null $params
-     * @return bool|object
+     * @param string $movie_id
+     * @param array $movieData
+     * @return Movie_Series
+     * @throws Exception
      */
-    protected function make_json_request($params = null)
+    protected static function fill_variants($movie_id, $movieData)
+    {
+        hd_debug_print("Default playback_url for {$movieData['title']}: {$movieData['url']}");
+        $movie_serie = new Movie_Series($movie_id, $movieData['title'], new Movie_Playback_Url($movieData['url']));
+        $variants = safe_get_value($movieData, 'variants', array());
+        $movie_serie->description = TR::load('vod_screen_quality') . '|' . implode(',', array_diff(array_keys($variants), array('auto')));
+        foreach ($variants as $key => $url) {
+            if ($key !== 'auto') {
+                $movie_serie->add_variant_data($key, new Movie_Variant($key, new Movie_Playback_Url($url)));
+            }
+        }
+
+        return $movie_serie;
+    }
+
+    /**
+     * @param array|null $params
+     * @return bool|object|array
+     */
+    protected function make_json_request($params = null, $assoc = false)
     {
         $pairs = array();
         if ($params !== null) {
@@ -162,7 +183,7 @@ class vod_edem extends vod_standard
         $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
         $curl_opt[CURLOPT_POSTFIELDS] = $pairs;
 
-        return $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
+        return $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, $assoc ? 2 : 1, $curl_opt);
     }
 
     /**
@@ -170,36 +191,41 @@ class vod_edem extends vod_standard
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
-        $doc = $this->make_json_request();
-        if ($doc === false) {
+        hd_debug_print(null, true);
+
+        $jsonData = $this->make_json_request(null, true);
+        if ($jsonData === false) {
+            hd_debug_print("Broken response");
             return false;
         }
 
-        if (isset($doc->type) && $doc->type === 'error') {
-            hd_debug_print("doc: " . pretty_json_format($doc, true), true);
-            hd_debug_print($doc->description, true);
+        if (safe_get_value($jsonData, 'type') === 'error') {
+            hd_debug_print("Error response: " . json_format_unescaped($jsonData), true);
         }
+
         $category_list = array();
         $category_index = array();
 
-        if (isset($doc->items)) {
-            foreach ($doc->items as $node) {
-                $cat = new Vod_Category((string)$node->request->fid, (string)$node->title);
-                $category_list[] = $cat;
-                $category_index[$cat->get_id()] = $cat;
-            }
+        foreach (safe_get_value($jsonData, 'items', array()) as $node) {
+            $request = safe_get_value($node, 'request', array());
+            if (!isset($request['fid'])) continue;
+
+            $title = safe_get_value($node, 'title', 'no title');
+            $cat = new Vod_Category((string)$request['fid'], $title);
+            $category_list[] = $cat;
+            $category_index[$cat->get_id()] = $cat;
         }
 
         $exist_filters = array();
-        if (isset($doc->controls->filters)) {
-            foreach ($doc->controls->filters as $filter) {
-                $first = reset($filter->items);
-                $key = key(array_diff_key((array)$first->request, array('filter' => 'on')));
-                $exist_filters[$key] = array('title' => $filter->title, 'values' => array(-1 => TR::t('no')));
-                foreach ($filter->items as $item) {
-                    $val = $item->request->{$key};
-                    $exist_filters[$key]['values'][$val] = $item->title;
-                }
+        $controls = safe_get_value($jsonData, 'controls', array());
+        $filters = safe_get_value($controls, 'filters', array());
+        foreach ($filters as $filter) {
+            $first = reset($filter['items']);
+            $key = key(array_diff_key($first['request'], array('filter' => 'on')));
+            $exist_filters[$key] = array('title' => $filter['title'], 'values' => array(-1 => TR::t('no')));
+            foreach ($filter['items'] as $item) {
+                $val = $item['request'][$key];
+                $exist_filters[$key]['values'][$val] = $item['title'];
             }
         }
 
@@ -216,36 +242,49 @@ class vod_edem extends vod_standard
     public function getSearchList($keyword)
     {
         hd_debug_print("getSearchList $keyword");
-        $searchRes = $this->make_json_request(array('cmd' => "search", 'query' => $keyword));
-
-        return $searchRes === false ? array() : $this->CollectSearchResult($keyword, $searchRes);
+        $post_params = array('cmd' => "search", 'query' => $keyword);
+        return $this->CollectSearchResult($keyword, $this->make_json_request($post_params, true));
     }
 
     /**
      * @param string $query_id
-     * @param object $json
+     * @param array $requestData
      * @return array
      */
-    protected function CollectSearchResult($query_id, $json)
+    protected function CollectSearchResult($query_id, $requestData)
     {
-        hd_debug_print("query_id: $query_id");
+        hd_debug_print("query_id: $query_id", true);
         $movies = array();
+        if ($requestData === false) {
+            return $movies;
+        }
 
         $current_offset = $this->get_current_page($query_id);
-        if ($current_offset < 0)
+        if ($current_offset < 0) {
             return $movies;
+        }
 
-        foreach ($json->items as $entry) {
-            if ($entry->type === 'next') {
-                $this->get_next_page($query_id, $entry->request->offset - $current_offset);
+        if (!isset($requestData['items'])) {
+            hd_debug_print("No items in query! " . json_format_unescaped($requestData), true);
+            return $movies;
+        }
+
+        foreach ($requestData['items'] as $entry) {
+            $request = safe_get_value($entry, 'request');
+            $type = safe_get_value($entry, 'type');
+            if (empty($type)) continue;
+
+            if ($type === 'next') {
+                $this->get_next_page($query_id, safe_get_value($request, 'offset', $current_offset) - $current_offset);
             } else {
+                $title = safe_get_value($entry, 'title');
                 $movie = new Short_Movie(
-                    $entry->request->fid,
-                    $entry->title,
-                    $entry->imglr,
-                    TR::t('vod_screen_movie_info__3', $entry->title, $entry->year)
+                    safe_get_value($request, 'fid'),
+                    $title,
+                    safe_get_value($entry, 'imglr'),
+                    TR::t('vod_screen_movie_info__3', $title, safe_get_value($entry, 'year'))
                 );
-                $movie->big_poster_url = $entry->img;
+                $movie->big_poster_url = safe_get_value($entry, 'img');
                 $movies[] = $movie;
             }
         }
@@ -295,9 +334,7 @@ class vod_edem extends vod_standard
 
         $post_params['filter'] = 'on';
         $post_params['offset'] = $page_idx;
-        $json = $this->make_json_request($post_params);
-
-        return $json === false ? array() : $this->CollectSearchResult($params, $json);
+        return $this->CollectSearchResult($params, $this->make_json_request($post_params, true));
     }
 
     /**
@@ -305,13 +342,12 @@ class vod_edem extends vod_standard
      */
     public function getMovieList($query_id)
     {
-        $page_idx = $this->get_next_page($query_id);
-        if ($page_idx < 0)
+        $page_idx = $this->get_current_page($query_id);
+        if ($page_idx < 0) {
             return array();
+        }
 
         $post_params = array('cmd' => "flicks", 'fid' => (int)$query_id, 'offset' => $page_idx, 'limit' => 50);
-        $json = $this->make_json_request($post_params);
-
-        return $json === false ? array() : $this->CollectSearchResult($query_id, $json);
+        return $this->CollectSearchResult($query_id, $this->make_json_request($post_params, true));
     }
 }

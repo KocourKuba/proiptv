@@ -159,9 +159,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function get_folder_view($media_url_str, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url_str, true);
-
         $media_url = MediaURL::decode($media_url_str);
+        hd_debug_print($media_url, true);
+
         return $this->get_screen_by_url($media_url)->get_folder_view($media_url, $plugin_cookies);
     }
 
@@ -343,7 +343,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
             foreach ($day_epg_items['items'] as $start => $value) {
                 if (!isset($value[PluginTvEpgProgram::end_tm_sec], $value[PluginTvEpgProgram::name], $value[PluginTvEpgProgram::description])) {
-                    hd_debug_print("malformed epg data: " . pretty_json_format($value));
+                    hd_debug_print("malformed epg data: " . json_format_unescaped($value));
                     continue;
                 }
 
@@ -425,7 +425,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $filename = sprintf("%s-%s-%s.json", $playlist_id, Hashed_Array::hash($channel_id), strftime('%Y-%m-%d', $day_start_tm_sec));
                     hd_debug_print("save ext_epg to: $filename");
                     $tmp_file = get_temp_path($filename);
-                    if (file_put_contents($tmp_file, pretty_json_format($ext_epg)) && file_exists($tmp_file)) {
+                    if (file_put_contents($tmp_file, json_encode($ext_epg)) && file_exists($tmp_file)) {
                         safe_unlink("$dir/$filename");
                         rename($tmp_file, "$dir/$filename");
                     }
@@ -628,7 +628,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             $params = $this->get_playlist_parameters($playlist_id);
-            hd_debug_print("Using playlist " . json_encode($params));
+            hd_debug_print("Using playlist " . json_format_unescaped($params));
 
             $type = safe_get_value($params, PARAM_TYPE);
 
@@ -769,7 +769,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $playlist_id = $this->get_active_playlist_id();
             $params = $this->get_playlist_parameters($playlist_id);
-            hd_debug_print("Using playlist " . json_encode($params));
+            hd_debug_print("Using playlist " . json_format_unescaped($params));
             $type = safe_get_value($params, PARAM_TYPE);
 
             hd_debug_print("m3u playlist: {$params[PARAM_NAME]} ($playlist_id)");
@@ -795,7 +795,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     }
                     $cmd = API_COMMAND_GET_PLAYLIST;
                     $curl_opts = $provider->getCurlOpts($cmd);
-                    $exec_result = $provider->execApiCommand($cmd, $m3u_file, false, $curl_opts);
+                    $exec_result = $provider->execApiCommand($cmd, $m3u_file, 0, $curl_opts);
                     $res = $provider->postExecAction($cmd, $exec_result, $m3u_file);
                     if ($res === false) {
                         $logfile = "Error code: " . $provider->getCurlWrapper()->get_error_no() . "\n" . $provider->getCurlWrapper()->get_error_desc();
@@ -869,7 +869,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     PARAM_CACHE => $source[PARAM_CACHE]
                 );
             }
-            hd_debug_print("saved playlist sources: " . json_encode($hashes), true);
+            hd_debug_print("saved playlist sources: " . json_format_unescaped($hashes), true);
 
             $sources = $this->iptv_m3u_parser->getXmltvSources();
             foreach ($sources as $url) {
@@ -1249,11 +1249,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return true;
         }
 
-        if ($this->channels_loaded) {
-            hd_debug_print("Channels already loaded", true);
-            return true;
-        }
-
         $enable_vod_icon = SwitchOnOff::to_def($this->vod_enabled && $this->get_bool_parameter(PARAM_SHOW_VOD_ICON, false));
         $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
         hd_debug_print("Show VOD icon: $enable_vod_icon", true);
@@ -1305,8 +1300,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        if ($this->channels_loaded && !$delay_load && $this->use_xmltv) {
-            $this->check_and_run_bg_indexing($this->get_active_sources(), INDEXING_ENTRIES, $plugin_cookies);
+        if ($this->channels_loaded) {
+            hd_debug_print("Channels loaded", true);
+            if (!$delay_load && $this->use_xmltv) {
+                $this->check_and_run_bg_indexing($this->get_active_sources(), INDEXING_ENTRIES, $plugin_cookies);
+            }
             return true;
         }
 
@@ -1363,7 +1361,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $query_new_groups = "SELECT * FROM $iptv_groups WHERE group_id NOT IN (SELECT group_id FROM $groups_info_table);";
         $new_groups = $this->sql_playlist->fetch_array($query_new_groups);
         if (!empty($new_groups)) {
-            hd_debug_print("Adding new groups: " . pretty_json_format(extract_column($new_groups, COLUMN_GROUP_ID)), true);
+            hd_debug_print("Adding new groups: " . json_format_unescaped(extract_column($new_groups, COLUMN_GROUP_ID)), true);
             $query = '';
             foreach ($new_groups as $group_row) {
                 $group_id = $group_row[COLUMN_GROUP_ID];
@@ -1437,7 +1435,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         FROM $iptv_channels WHERE $add_where
                         GROUP BY channel_id ORDER BY ROWID;";
             $this->sql_playlist->exec($query);
-            hd_debug_print("Adding new channels: " . json_encode($new_channels), true);
+            hd_debug_print("Adding new channels: " . json_format_unescaped($new_channels), true);
         }
 
         // update group_id title and adult if changed for channels
@@ -1649,8 +1647,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         );
 
         $config_file = get_temp_path(sprintf(self::PARSE_CONFIG, $source_id));
-        hd_debug_print("Config: " . json_encode($config), true);
-        file_put_contents($config_file, pretty_json_format($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        hd_debug_print("Config: " . json_format_unescaped($config), true);
+        file_put_contents($config_file, json_format_readable($config));
 
         export_DuneSystem();
 
@@ -1728,7 +1726,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if (!is_array($values)) {
             $values = array($values);
         }
-        hd_debug_print("Set selected: " . json_encode($values), true);
+        hd_debug_print("Set selected: " . json_format_unescaped($values), true);
 
         $table_name = self::SELECTED_XMLTV_TABLE;
         $query = '';
@@ -2140,7 +2138,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $replaces[catchup_params::CU_END_MIN] = date('M', $now);
             $replaces[catchup_params::CU_END_SEC] = date('S', $now);
 
-            hd_debug_print("replaces: " . pretty_json_format($replaces), true);
+            hd_debug_print("replaces: " . json_format_unescaped($replaces), true);
             foreach ($replaces as $key => $value) {
                 if (strpos($stream_url, $key) !== false) {
                     hd_debug_print("replace $key to $value", true);
@@ -3105,15 +3103,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $playlist_sources = $this->get_xmltv_sources_hash(XMLTV_SOURCE_PLAYLIST, $playlist_id);
         $ext_sources = $this->get_xmltv_sources_hash(XMLTV_SOURCE_EXTERNAL, null);
         $all_sources = array_unique(array_merge($playlist_sources, $ext_sources));
-        hd_debug_print("Load All XMLTV sources keys: " . json_encode($all_sources), true);
+        hd_debug_print("Load All XMLTV sources keys: " . json_format_unescaped($all_sources), true);
 
         $cur_sources = $this->get_selected_xmltv_ids();
-        hd_debug_print("Load selected XMLTV sources keys: " . json_encode($cur_sources), true);
+        hd_debug_print("Load selected XMLTV sources keys: " . json_format_unescaped($cur_sources), true);
 
         // remove non-existing values from selected sources
         $removed_source = array_diff($cur_sources, $all_sources);
         if (!empty($removed_source)) {
-            hd_debug_print("Removed source: " . json_encode($removed_source));
+            hd_debug_print("Removed source: " . json_format_unescaped($removed_source));
             foreach ($removed_source as $source) {
                 $this->remove_selected_xmltv_id($source);
             }
@@ -3786,7 +3784,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         foreach ($plugin_settings as $key => $param) {
-            hd_debug_print("$key => '" . (is_array($param) ? json_encode($param) : $param) . "'", true);
+            hd_debug_print("$key => '" . (is_array($param) ? json_format_unescaped($param) : $param) . "'", true);
         }
 
         // Move settings to db
@@ -3905,7 +3903,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Load (PLUGIN_ORDERS): $plugin_orders_name.settings");
         $plugin_orders = HD::get_items($orders_file, true, false);
         foreach ($plugin_orders as $key => $param) {
-            hd_debug_print("$key => '" . (is_array($param) ? json_encode($param) : $param) . "'", true);
+            hd_debug_print("$key => '" . (is_array($param) ? json_format_unescaped($param) : $param) . "'", true);
         }
 
         // Current group icons in the orders settings
@@ -4037,7 +4035,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $query = '';
             /** @var array $param */
             foreach ($history[VOD_HISTORY] as $movie_id => $param) {
-                hd_debug_print("$movie_id => '" . (is_array($param) ? json_encode($param) : $param) . "'", true);
+                hd_debug_print("$movie_id => '" . (is_array($param) ? json_format_unescaped($param) : $param) . "'", true);
                 $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
                 /** @var History_Item $item */
                 foreach ($param as $series_id => $item) {
@@ -4074,7 +4072,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         } else {
             HD::put_items($vod_history_filename, $history, false);
             foreach ($history as $type => $param) {
-                hd_debug_print("!!!!! Vod history $type is not imported: " . (is_array($param) ? json_encode($param) : $param), true);
+                hd_debug_print("!!!!! Vod history $type is not imported: " . (is_array($param) ? json_format_unescaped($param) : $param), true);
             }
         }
     }

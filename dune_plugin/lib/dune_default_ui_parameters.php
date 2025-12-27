@@ -397,7 +397,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             $pl_opts_idx = SwitchOnOff::to_def($this->get_channel_ext_player($channel_id));
             $pl_opts = array(SwitchOnOff::on => TR::t('tv_screen_external_player'), SwitchOnOff::off => TR::t('tv_screen_internal_player'));
             Control_Factory::add_combobox($defs, $handler, self::CONTROL_EXTERNAL_PLAYER, TR::t('setup_playback_settings'),
-                $pl_opts_idx, $pl_opts, null, Control_Factory::DLG_CONTROLS_WIDTH);
+                $pl_opts_idx, $pl_opts, Control_Factory::DLG_CONTROLS_WIDTH);
         }
 
         if ($this->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
@@ -407,7 +407,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             }
 
             Control_Factory::add_combobox($defs, $handler, self::CONTROL_ZOOM, TR::t('tv_screen_channel_zoom'),
-                $zoom_opts_idx, $this->get_zoom_opts_translated(), null, Control_Factory::DLG_CONTROLS_WIDTH);
+                $zoom_opts_idx, $this->get_zoom_opts_translated(), Control_Factory::DLG_CONTROLS_WIDTH);
         }
 
         self::add_epg_shift_defs($defs, $handler, $this->get_channel_epg_shift($channel_id), false);
@@ -470,8 +470,9 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         }
         $shift_ops_hours[0] = TR::t('setup_epg_shift_hours__1', sprintf(" %02d", 0));
 
+        $params = array();
         Control_Factory::add_combobox($defs, $handler, PARAM_EPG_SHIFT_HOURS, TR::t('setup_epg_shift_hours'),
-            (int)($initial_epg_shift / 3600), $shift_ops_hours, null, 250, false, $apply);
+            (int)($initial_epg_shift / 3600), $shift_ops_hours, 250, $params, false, $apply);
 
         $shift_ops_mins = array();
         for ($i = 0; $i < 60; $i += 5) {
@@ -479,7 +480,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         }
 
         Control_Factory::add_combobox($defs, $handler, PARAM_EPG_SHIFT_MINS, TR::t('setup_epg_shift_min'),
-            (int)(abs($initial_epg_shift % 3600) / 60), $shift_ops_mins, null, 250, false, $apply);
+            (int)(abs($initial_epg_shift % 3600) / 60), $shift_ops_mins, 250, $params, false, $apply);
     }
 
     protected function get_zoom_opts_translated()

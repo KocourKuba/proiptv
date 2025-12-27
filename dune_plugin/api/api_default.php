@@ -24,7 +24,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once "lib/curl_wrapper.php";
+require_once 'lib/curl_wrapper.php';
+require_once 'lib/json_serializer.php';
 
 /*
     {
@@ -101,6 +102,11 @@ class api_default
     protected $api_url = '';
 
     /**
+     * @var string
+     */
+    protected $vod_api_url = '';
+
+    /**
      * @var array
      */
     protected $api_commands = array();
@@ -148,11 +154,6 @@ class api_default
 
     ////////////////////////////////////////////////////////////////////////
     /// non configurable vars
-
-    public function __toString()
-    {
-        return (string)pretty_json_format(get_object_vars($this));
-    }
 
     /**
      * @return string|null
@@ -438,7 +439,7 @@ class api_default
             if ($account_info === false || isset($account_info->error)) {
                 hd_debug_print("Failed to get provider info", true);
             } else {
-                hd_debug_print("get_provider_info: " . pretty_json_format($account_info), true);
+                hd_debug_print("get_provider_info: " . json_format_unescaped($account_info), true);
                 $this->account_info = $account_info;
             }
         }
@@ -481,11 +482,11 @@ class api_default
     /**
      * @param string $command
      * @param string $file
-     * @param bool $decode
+     * @param int $decode
      * @param array $curl_opt
-     * @return bool|object
+     * @return bool|object|array
      */
-    public function execApiCommand($command, $file = null, $decode = true, $curl_opt = array())
+    public function execApiCommand($command, $file = null, $decode = 1, $curl_opt = array())
     {
         hd_debug_print(null, true);
         hd_debug_print("execApiCommand: $command", true);
@@ -548,7 +549,7 @@ class api_default
             return $response;
         }
 
-        $data = Curl_Wrapper::decodeJsonResponse(false, $response);
+        $data = Curl_Wrapper::decodeJsonResponse(false, $response, $decode === 2);
         if ($data === false || $data === null) {
             hd_debug_print("Can't decode response on request: " . $command_url);
         }
@@ -579,6 +580,7 @@ class api_default
             MACRO_PLAYLIST_IPTV => 'GetPlaylistIptvUrl',
             MACRO_PLAYLIST_VOD => 'GetPlaylistVodUrl',
             MACRO_API => 'getApiUrl',
+            MACRO_VOD_API => 'getVodApiUrl',
             MACRO_MIRROR => 'GetPlaylistMirror',
             MACRO_EPG_DOMAIN => 'GetEpgDomain',
             MACRO_SESSION_ID => 'GetSessionId',
@@ -618,8 +620,9 @@ class api_default
         foreach ($params_macroses as $macro => $default) {
             if (strpos($string, $macro) !== false) {
                 $value = trim($this->GetProviderParameter($macro, $default));
-                hd_debug_print("Replace $macro: $string", true);
+                hd_debug_print("Replace $macro with value '$value'", true);
                 $string = str_replace($macro, $value, $string);
+                hd_debug_print("Result: $string", true);
             }
         }
 
@@ -682,6 +685,21 @@ class api_default
     public function setApiUrl($api_url)
     {
         $this->api_url = $api_url;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVodApiUrl()
+    {
+        return $this->vod_api_url;
+    }
+    /**
+     * @param string $vod_api_url
+     */
+    public function setVodApiUrl($vod_api_url)
+    {
+        $this->vod_api_url = $vod_api_url;
     }
 
     /**
@@ -1075,21 +1093,21 @@ class api_default
             if (!empty($config_domains) && count($config_domains) > 1 && strpos($command_url, MACRO_DOMAIN_ID) !== false) {
                 $idx = key($config_domains);
                 Control_Factory::add_combobox($defs, $handler, self::CONTROL_DOMAIN, TR::t('domain'),
-                    $idx, $config_domains, null, Control_Factory::DLG_CONTROLS_WIDTH);
+                    $idx, $config_domains, Control_Factory::DLG_CONTROLS_WIDTH);
             }
 
             $config_servers = $this->getConfigValue(CONFIG_SERVERS);
             if (!empty($config_servers) && count($config_servers) > 1 && strpos($command_url, MACRO_SERVER_ID) !== false) {
                 $idx = key($config_servers);
                 Control_Factory::add_combobox($defs, $handler, self::CONTROL_SERVER, TR::t('server'),
-                    $idx, $config_servers, null, Control_Factory::DLG_CONTROLS_WIDTH);
+                    $idx, $config_servers, Control_Factory::DLG_CONTROLS_WIDTH);
             }
 
             $config_qialities = $this->getConfigValue(CONFIG_QUALITIES);
             if (!empty($config_qialities) && count($config_qialities) > 1 && strpos($command_url, MACRO_QUALITY_ID) !== false) {
                 $idx = key($config_qialities);
                 Control_Factory::add_combobox($defs, $handler, self::CONTROL_QUALITY, TR::t('quality'),
-                    $idx, $config_qialities, null, Control_Factory::DLG_CONTROLS_WIDTH);
+                    $idx, $config_qialities, Control_Factory::DLG_CONTROLS_WIDTH);
             }
         }
 
@@ -1121,7 +1139,7 @@ class api_default
         } else {
             hd_debug_print("load info for existing playlist id: $this->playlist_id", true);
             $params = $this->plugin->get_playlist_parameters($this->playlist_id);
-            hd_debug_print("provider info: " . pretty_json_format($params), true);
+            hd_debug_print("provider info: " . json_format_unescaped($params), true);
         }
 
         if (safe_get_value($params, PARAM_NAME) !== $user_input->{CONTROL_EDIT_NAME}) {
@@ -1157,7 +1175,7 @@ class api_default
             }
         }
 
-        hd_debug_print("ApplySetupUI compiled account info for '$this->playlist_id': " . pretty_json_format($params), true);
+        hd_debug_print("ApplySetupUI compiled account info for '$this->playlist_id': " . json_format_unescaped($params), true);
         $this->plugin->set_playlist_parameters($this->playlist_id, $params);
 
         // set config parameters if they not set in the playlist parameters

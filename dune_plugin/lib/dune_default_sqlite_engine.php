@@ -334,7 +334,7 @@ class Dune_Default_Sqlite_Engine
     public function set_playlist_parameters($playlist_id, $stg)
     {
         hd_debug_print(null, true);
-        hd_debug_print("Setting playlist $playlist_id to " . json_encode($stg), true);
+        hd_debug_print("Setting playlist $playlist_id to " . json_format_unescaped($stg), true);
 
         $table_name = self::PLAYLISTS_TABLE;
 

@@ -151,7 +151,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 }
 
                 if (!empty($item)) {
-                    hd_debug_print("source: $source, item: " . json_encode($item), true);
+                    hd_debug_print("source: $source, item: " . json_format_unescaped($item), true);
                     return $this->do_edit_url_dlg($source, $selected_id);
                 }
                 return null;
@@ -356,7 +356,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         }
         Control_Factory::add_label($defs, '', TR::t('entry_epg_cache_time'), -10);
         Control_Factory::add_combobox($defs, $this, self::CONTROL_CACHE_TIME, '', $cache_selected,
-            $opts, null, Control_Factory::DLG_CONTROLS_WIDTH);
+            $opts, Control_Factory::DLG_CONTROLS_WIDTH);
 
         Control_Factory::add_vgap($defs, 50);
         Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_URL_DLG_APPLY, TR::t('ok'), $param);
@@ -406,7 +406,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $item[PARAM_HASH] = $new_id;
         $item[PARAM_CACHE] = $user_input->{self::CONTROL_CACHE_TIME};
 
-        hd_debug_print("Save source ID: $new_id, old ID: $id, params: " . json_encode($item), true);
+        hd_debug_print("Save source ID: $new_id, old ID: $id, params: " . json_format_unescaped($item), true);
 
         if (empty($id)) {
             Epg_Manager_Xmltv::clear_epg_files($new_id);
@@ -534,7 +534,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print("All XMLTV sources: " . $all_sources, true);
 
         $selected_sources = $this->plugin->get_selected_xmltv_ids();
-        hd_debug_print("Selected sources: " . json_encode($selected_sources), true);
+        hd_debug_print("Selected sources: " . json_format_unescaped($selected_sources), true);
         $has_locks = false;
         foreach ($all_sources as $key => $item) {
             $detailed_info = '';

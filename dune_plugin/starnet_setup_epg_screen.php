@@ -74,7 +74,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
         if (count($engine_variants) > 1) {
             Control_Factory::add_combobox($defs, $this, PARAM_EPG_CACHE_ENGINE,
                 TR::t('setup_epg_cache_engine'), $engine,
-                $engine_variants, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                $engine_variants, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         } else if (count($engine_variants) === 1) {
             Control_Factory::add_button($defs, $this, "dummy", TR::t('setup_epg_cache_engine'), reset($engine_variants));
         }
@@ -101,7 +101,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 }
                 Control_Factory::add_combobox($defs, $this, PARAM_EPG_JSON_PRESET,
                     TR::t('setup_epg_cache_json'), $preset,
-                    $presets, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                    $presets, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
             }
 
             foreach (array(1, 2, 3, 6, 12) as $hour) {
@@ -110,7 +110,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
             $cache_time = $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1);
             Control_Factory::add_combobox($defs, $this, PARAM_EPG_CACHE_TIME,
                 TR::t('setup_cache_time_epg'), $cache_time,
-                $caching_range, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                $caching_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         }
 
         //////////////////////////////////////

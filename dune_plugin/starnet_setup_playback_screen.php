@@ -93,8 +93,8 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
             TR::t('setup_buffer_time'),
             $buffering,
             $show_buf_time_ops,
-            null,
             Control_Factory::SCR_CONTROLS_WIDTH,
+            $params,
             true);
 
         //////////////////////////////////////
@@ -116,8 +116,8 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
             TR::t('setup_delay_time'),
             $delay,
             $show_delay_time_ops,
-            null,
             Control_Factory::SCR_CONTROLS_WIDTH,
+            $params,
             true);
 
         //////////////////////////////////////
@@ -128,7 +128,7 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
         $catchup_ops[ATTR_CATCHUP_FLUSSONIC] = ATTR_CATCHUP_FLUSSONIC;
         $catchup_idx = safe_get_value($params, PARAM_USER_CATCHUP, ATTR_CATCHUP_UNKNOWN);
         Control_Factory::add_combobox($defs, $this, PARAM_USER_CATCHUP, TR::t('setup_channels_archive_type'),
-            $catchup_idx, $catchup_ops, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+            $catchup_idx, $catchup_ops, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////
         // UserAgent

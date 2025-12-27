@@ -103,9 +103,10 @@ class vod_ipstream extends vod_standard
                     $movie->add_season_data($movie_season);
 
                     foreach ($season->episodes as $episode) {
-                        hd_debug_print("movie playback_url: $episode->video");
+                        hd_debug_print("episode playback_url: $episode->video");
                         $movie_serie = new Movie_Series("$season->season:$episode->episode",
-                            TR::t('vod_screen_series__1', $episode->episode), $episode->video,
+                            TR::t('vod_screen_series__1', $episode->episode),
+                            new Movie_Playback_Url($episode->video),
                             $season->season
                         );
                         $movie->add_series_data($movie_serie);
@@ -113,7 +114,7 @@ class vod_ipstream extends vod_standard
                 }
             } else {
                 hd_debug_print("movie playback_url: $item->video");
-                $movie->add_series_data(new Movie_Series($movie_id, $item->name, $item->video));
+                $movie->add_series_data(new Movie_Series($movie_id, $item->name, new Movie_Playback_Url($item->video)));
             }
 
             break;

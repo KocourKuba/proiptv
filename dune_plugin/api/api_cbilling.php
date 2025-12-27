@@ -65,7 +65,7 @@ class api_cbilling extends api_default
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
             $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
-            hd_debug_print("get_provider_info: " . pretty_json_format($this->account_info), true);
+            hd_debug_print("get_provider_info: " . json_format_unescaped($this->account_info), true);
         }
 
         return $this->account_info;
@@ -120,7 +120,7 @@ class api_cbilling extends api_default
 
         if (empty($this->servers)) {
             $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
-            hd_debug_print("GetServers: " . pretty_json_format($response), true);
+            hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             if (isset($response->data)) {
                 foreach ($response->data as $server) {
                     $this->servers[$server->name] = $server->country;

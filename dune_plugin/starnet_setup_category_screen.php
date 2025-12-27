@@ -61,7 +61,6 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
         hd_debug_print(null, true);
 
         $defs = array();
-
         //////////////////////////////////////
         // Plugin name
         $this->plugin->create_setup_header($defs);
@@ -74,7 +73,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
         $picons_ops[COMBINED_PICONS] = TR::t('combined_picons');
         $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
         Control_Factory::add_combobox($defs, $this, PARAM_USE_PICONS, TR::t('setup_channels_picons_source'),
-            $picons_idx, $picons_ops, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+            $picons_idx, $picons_ops, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 /*
         //////////////////////////////////////
         // Delayed picons indexing

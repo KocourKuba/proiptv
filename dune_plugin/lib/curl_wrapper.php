@@ -418,6 +418,8 @@ class Curl_Wrapper
      */
     private function exec_php_curl($url, $save_file, $use_cache = false)
     {
+        hd_debug_print("curl: '$url' saved to '$save_file' use cache: " . var_export($use_cache, true), true);
+
         $this->http_code = 0;
         self::$http_response_headers = null;
 
@@ -486,7 +488,7 @@ class Curl_Wrapper
                 if (is_bool($v)) {
                     hd_debug_print(HD::curlopt_to_string($k) . " ($k) = " . var_export($v, true));
                 } else if (is_array($v)) {
-                    hd_debug_print(HD::curlopt_to_string($k) . " ($k) = " . json_encode($v));
+                    hd_debug_print(HD::curlopt_to_string($k) . " ($k) = " . json_format_unescaped($v));
                 } else {
                     hd_debug_print(HD::curlopt_to_string($k) . " ($k) = $v");
                 }

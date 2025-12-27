@@ -119,7 +119,7 @@ class api_tvteam extends api_default
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
             $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
-            hd_debug_print("get provider info response: " . pretty_json_format($this->account_info), true);
+            hd_debug_print("get provider info response: " . json_format_unescaped($this->account_info), true);
 
             if (isset($this->account_info->data->userData->userToken)) {
                 $this->plugin->set_cookie(PARAM_TOKEN, $this->account_info->data->userData->userToken);
@@ -162,7 +162,7 @@ class api_tvteam extends api_default
             Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "$info_msg\n\n$error_msg");
         } else {
             $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
-            hd_debug_print("request provider token response: " . pretty_json_format($response), true);
+            hd_debug_print("request provider token response: " . json_format_unescaped($response), true);
             if (!$response) {
                 Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "Bad provider response");
             } else if ($response->status === 0 || !empty($response->error)) {
@@ -185,7 +185,7 @@ class api_tvteam extends api_default
 
         if (empty($this->servers)) {
             $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
-            hd_debug_print("GetServers: " . pretty_json_format($response), true);
+            hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             if (((int)$response->status === 1) && isset($response->status, $response->data->serversGroupsList)) {
                 foreach ($response->data->serversGroupsList as $server) {
                     $this->servers[$server->groupId] = "$server->portalDomainName ($server->streamDomainName)";
@@ -208,7 +208,7 @@ class api_tvteam extends api_default
         parent::SetServer($server, $error_msg);
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
-        hd_debug_print("SetServer: " . pretty_json_format($response), true);
+        hd_debug_print("SetServer: " . json_format_unescaped($response), true);
         if (isset($response->status) && (int)$response->status === 1) {
             $this->account_info = null;
             $this->servers = array();

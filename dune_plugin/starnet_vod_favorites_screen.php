@@ -158,11 +158,12 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
             $movie = $this->plugin->vod->get_loaded_movie($movie_id);
             if (is_null($movie)) continue;
 
+            $movie_info = $movie->get_movie_info();
             $items[] = array(
                 PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::make_vod_media_url_str($movie_id),
-                PluginRegularFolderItem::caption => $movie->movie_info[PluginMovie::name],
+                PluginRegularFolderItem::caption => $movie_info[PluginMovie::name],
                 PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::icon_path => $movie->movie_info[PluginMovie::poster_url],
+                    ViewItemParams::icon_path => $movie_info[PluginMovie::poster_url],
                 )
             );
         }

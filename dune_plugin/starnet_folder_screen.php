@@ -236,7 +236,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
             $dir[] = $filepath;
         }
 
-        hd_debug_print("dir: " . json_encode($dir), true);
+        hd_debug_print("dir: " . json_format_unescaped($dir), true);
         $files_list = $this->get_file_list($plugin_cookies, $dir, !safe_get_member($media_url, self::PARAM_CHOOSE_FILE, false));
 
         $items = array();
@@ -431,13 +431,13 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                 }
 
                 $s[self::SELECTED_TYPE_SMB] = $smb_shares->get_mount_all_smb($info);
-                hd_debug_print("smb: " . json_encode($s));
+                hd_debug_print("smb: " . json_format_unescaped($s));
                 return $s;
             }
 
             if ($dir === self::NETWORK_MOUNT_PATH) {
                 $s[self::SELECTED_TYPE_NFS] = smb_tree::get_mount_nfs();
-                hd_debug_print("nfs: " . json_encode($s));
+                hd_debug_print("nfs: " . json_format_unescaped($s));
                 return $s;
             }
 
@@ -855,10 +855,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
         $smb_view_ops[3] = TR::t('folder_screen_search_smb');
 
         $defs = array();
-        Control_Factory::add_combobox($defs, $this, 'smb_view',
-            TR::t('folder_screen_show'), $smb_view,
-            $smb_view_ops, null, 0
-        );
+        Control_Factory::add_combobox($defs, $this, 'smb_view', TR::t('folder_screen_show'), $smb_view, $smb_view_ops);
 
         Control_Factory::add_custom_close_dialog_and_apply_button($defs, '_do_save_smb_setup', TR::t('apply'),
             Control_Factory::DLG_BUTTON_WIDTH, User_Input_Handler_Registry::create_action($this, self::ACTION_SAVE_SMB_SETUP));

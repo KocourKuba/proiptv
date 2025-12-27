@@ -167,7 +167,7 @@ class vod_sharavoz extends vod_standard
         if ($stream_type === xtream_codes_api::VOD) {
             $url = $this->xtream->get_stream_url($stream_id);
             hd_debug_print("movie playback_url: $url", true);
-            $movie->add_series_data(new Movie_Series($movie_id, $item->info->name, $url));
+            $movie->add_series_data(new Movie_Series($movie_id, $item->info->name, new Movie_Playback_Url($url)));
         } else if ($stream_type === xtream_codes_api::SERIES) {
             foreach ($item->episodes as $season_id => $season) {
                 $movie_season = new Movie_Season($season_id);
@@ -183,7 +183,11 @@ class vod_sharavoz extends vod_standard
                     }
                     $url = $this->xtream->get_stream_url($id);
                     hd_debug_print("episode playback_url: $url", true);
-                    $movie_serie = new Movie_Series($episode->id, TR::t('vod_screen_series__1', $episode->episode_num), $url, $season_id);
+                    $movie_serie = new Movie_Series($episode->id,
+                        TR::t('vod_screen_series__1', $episode->episode_num),
+                        new Movie_Playback_Url($url),
+                        $season_id
+                    );
                     $movie_serie->poster = $episode->movie_image;
                     if (!empty($episode->title)) {
                         $movie_serie->description = $episode->title;

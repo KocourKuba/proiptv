@@ -140,7 +140,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen
         foreach ($this->plugin->get_all_vod_history() as $movie_info) {
             if (empty($movie_info)) continue;
 
-            hd_debug_print("history info: " . json_encode($movie_info), true);
+            hd_debug_print("history info: " . json_format_unescaped($movie_info), true);
             $movie_id = $movie_info['movie_id'];
             $movie = $this->plugin->vod->get_loaded_movie($movie_id);
             if (is_null($movie)) continue;
@@ -188,9 +188,9 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen
             }
 
             if ($movie->has_seasons()) {
-                $screen_media_url = Starnet_Vod_Seasons_List_Screen::make_vod_media_url_str($movie->id);
+                $screen_media_url = Starnet_Vod_Seasons_List_Screen::make_vod_media_url_str($movie->get_id());
             } else {
-                $screen_media_url = Starnet_Vod_Series_List_Screen::make_vod_media_url_str($movie->id);
+                $screen_media_url = Starnet_Vod_Series_List_Screen::make_vod_media_url_str($movie->get_id());
             }
 
             $items[] = array(

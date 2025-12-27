@@ -64,13 +64,14 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
         if (is_null($movie)) {
             $movie = new Movie($media_url->movie_id, $this->plugin);
             hd_debug_print("empty movie or no series data");
-            $movie->movie_info[PluginMovie::description] = TR::t('warn_msg5');
+            $movie_info = $movie->get_movie_info();
+            $movie_info[PluginMovie::description] = TR::t('warn_msg5');
             return array(
                 PluginFolderView::multiple_views_supported => false,
                 PluginFolderView::archive => null,
                 PluginFolderView::view_kind => PLUGIN_FOLDER_VIEW_MOVIE,
                 PluginFolderView::data => array(
-                    PluginMovieFolderView::movie => $movie->movie_info,
+                    PluginMovieFolderView::movie => $movie_info,
                     PluginMovieFolderView::left_button_caption => TR::t('ok'),
                     PluginMovieFolderView::left_button_action => Action_Factory::close_and_run(),
                     PluginMovieFolderView::has_right_button => false,
@@ -85,20 +86,22 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
             );
         }
 
-        hd_debug_print("movie: " . pretty_json_format($movie->movie_info), true);
+        $movie_info = $movie->get_movie_info();
+        hd_debug_print("movie info: " . json_format_unescaped($movie_info), true);
 
         $fav_ids = $this->plugin->get_channels_order(VOD_FAV_GROUP_ID);
-        $right_button_caption = in_array($movie->id, $fav_ids) ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
-        $right_button_action = User_Input_Handler_Registry::create_action($this, PARAM_FAVORITES, null, array('movie_id' => $movie->id));
+        $movie_id = $movie->get_id();
+        $right_button_caption = in_array($movie_id, $fav_ids) ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
+        $right_button_action = User_Input_Handler_Registry::create_action($this, PARAM_FAVORITES, null, array('movie_id' => $movie_id));
 
         if ($movie->has_seasons()) {
-            $screen_media_url = Starnet_Vod_Seasons_List_Screen::make_vod_media_url_str($movie->id);
+            $screen_media_url = Starnet_Vod_Seasons_List_Screen::make_vod_media_url_str($movie_id);
         } else {
-            $screen_media_url = Starnet_Vod_Series_List_Screen::make_vod_media_url_str($movie->id);
+            $screen_media_url = Starnet_Vod_Series_List_Screen::make_vod_media_url_str($movie_id);
         }
 
         $movie_folder_view = array(
-            PluginMovieFolderView::movie => $movie->movie_info,
+            PluginMovieFolderView::movie => $movie_info,
             PluginMovieFolderView::has_right_button => true,
             PluginMovieFolderView::right_button_caption => $right_button_caption,
             PluginMovieFolderView::right_button_action => $right_button_action,

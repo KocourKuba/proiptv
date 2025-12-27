@@ -1,12 +1,37 @@
 <?php
+/**
+ * The MIT License (MIT)
+ *
+ * @Author: sharky72 (https://github.com/KocourKuba)
+ * Original code from DUNE HD
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense
+ * of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
 
 require_once 'movie_series.php';
 require_once 'movie_season.php';
 require_once 'movie_variant.php';
 require_once 'lib/default_dune_plugin.php';
 require_once 'lib/user_input_handler_registry.php';
+require_once 'lib/json_serializer.php';
 
-class Movie implements User_Input_Handler
+class Movie extends Json_Serializer implements User_Input_Handler
 {
     const ID = 'movie';
 
@@ -21,24 +46,14 @@ class Movie implements User_Input_Handler
     public $movie_info;
 
     /**
-     * @var array|Movie_Season[]
+     * @var Movie_Season[]
      */
-    public $seasons_list;
+    public $seasons_list = array();
 
     /**
-     * @var array|Movie_Series[]
+     * @var Movie_Series[]
      */
-    public $series_list;
-
-    /**
-     * @var array|string[]
-     */
-    public $qualities_list;
-
-    /**
-     * @var array|string[]
-     */
-    public $audios_list;
+    public $series_list = array();
 
     /**
      * @var Default_Dune_Plugin
@@ -128,7 +143,7 @@ class Movie implements User_Input_Handler
                 }
 
                 $series_list = array_values($this->series_list);
-                hd_debug_print("Series list: " . json_encode($series_list), true);
+                hd_debug_print("Series list: " . json_format_unescaped($series_list), true);
                 $episode = $series_list[$user_input->plugin_vod_series_ndx];
 
                 $watched = (isset($user_input->playback_end_of_stream) && (int)$user_input->playback_end_of_stream !== 0)
@@ -282,6 +297,14 @@ class Movie implements User_Input_Handler
     }
 
     /**
+     * @return void
+     */
+    public function clear_season_data()
+    {
+        $this->seasons_list = array();
+    }
+
+    /**
      * @param Movie_Season $movie_season
      * @throws Exception
      */
@@ -291,18 +314,36 @@ class Movie implements User_Input_Handler
     }
 
     /**
+     * @return void
+     */
+    public function clear_series_data()
+    {
+        $this->series_list = array();
+    }
+
+    /**
      * @param Movie_Series $movie_series
      * @throws Exception
      */
     public function add_series_data($movie_series)
     {
         $this->series_list[$movie_series->id] = $movie_series;
-        if (!empty($series->qualities)) {
-            $this->qualities_list = array_keys($series->qualities);
-        }
-        if (!empty($series->audios)) {
-            $this->audios_list = array_keys($series->audios);
-        }
+    }
+
+    /**
+     * @return string
+     */
+    public function get_id()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @return array
+     */
+    public function get_movie_info()
+    {
+        return $this->movie_info;
     }
 
     /**
@@ -310,7 +351,23 @@ class Movie implements User_Input_Handler
      */
     public function has_seasons()
     {
-        return (is_array($this->seasons_list) && !empty($this->seasons_list));
+        return !empty($this->seasons_list);
+    }
+
+    /**
+     * @return array
+     */
+    public function get_seasons_list()
+    {
+        return $this->seasons_list;
+    }
+
+    /**
+     * @return Movie_Season
+     */
+    public function get_season($season_id)
+    {
+        return isset($this->seasons_list[$season_id]) ? $this->seasons_list[$season_id] : null;
     }
 
     /**
@@ -318,35 +375,178 @@ class Movie implements User_Input_Handler
      */
     public function has_series()
     {
-        return (is_array($this->series_list) && !empty($this->series_list));
+        return !empty($this->series_list);
     }
 
     /**
-     * @return bool
+     * @return Movie_Series[]
      */
-    public function has_qualities()
+    public function get_series_list()
     {
-        if (!$this->has_series()) {
-            return false;
-        }
-
-        $values = array_values($this->series_list);
-        $val = $values[0];
-        return isset($val->qualities) && count($val->qualities) > 1;
+        return $this->series_list;
     }
 
     /**
+     * @return Movie_Series
+     */
+    public function get_series($series_id)
+    {
+        return isset($this->series_list[$series_id]) ? $this->series_list[$series_id] : reset($this->series_list);
+    }
+
+    /**
+     * @param string $series_id
      * @return bool
      */
-    public function has_audios()
+    public function has_qualities($series_id)
+    {
+        $qualities = $this->get_qualities($series_id);
+        return !empty($qualities);
+    }
+
+    /**
+     * @param $series_id
+     * @return array
+     */
+    public function get_qualities($series_id)
     {
         if (!$this->has_series()) {
-            return false;
+            hd_debug_print("no series present", true);
+            return array();
         }
 
-        $values = array_values($this->series_list);
-        $val = $values[0];
-        return isset($val->audios) && count($val->audios) > 1;
+        $series = $this->get_series($series_id);
+        return array_map(function ($variant) {
+            return $variant->name;
+        }, $series->variants);
+    }
+
+    /**
+     * @param string $series_id
+     * @param string $id
+     * @return Movie_Variant
+     */
+    public function get_quality($series_id, $id)
+    {
+        if (!$this->has_series()) {
+            hd_debug_print("no series present", true);
+            return null;
+        }
+
+        return $this->get_series($series_id)->get_variant($id);
+    }
+
+    /**
+     * @param string $series_id
+     * @param string $quality_id
+     * @return bool
+     */
+    public function has_audios($series_id, $quality_id)
+    {
+        $a_variants = $this->get_audios($series_id, $quality_id);
+        return !empty($a_variants);
+    }
+
+    /**
+     * @param string $series_id
+     * @param string $quality_id
+     * @return string[]|null
+     */
+    public function get_audios($series_id, $quality_id)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("get_audios : series: $series_id, quality: $quality_id", true);
+        if (!$this->has_series()) {
+            hd_debug_print("no series present", true);
+            return null;
+        }
+
+        $q_variant = $this->get_quality($series_id, $quality_id);
+        if (empty($q_variant)) {
+            hd_debug_print("no quality present", true);
+            return null;
+        }
+
+        $a_variants = $q_variant->get_variants();
+        if (empty($a_variants)) {
+            hd_debug_print("no audio present", true);
+            return null;
+        }
+
+        return array_map(function ($variant) {
+            return $variant->name;
+        }, $a_variants);
+    }
+
+    /**
+     * @param string $series_id
+     * @param string $quality_id
+     * @param string $id
+     * @return Movie_Playback_Url|null
+     */
+    public function get_audio($series_id, $quality_id, $id)
+    {
+        $q_variant = $this->get_quality($series_id, $quality_id);
+        if (empty($q_variant)) {
+            hd_debug_print("no quality present", true);
+            return null;
+        }
+
+        $a_variant = $q_variant->get_variant($id);
+        if (is_null($a_variant)) {
+            hd_debug_print("no audio present for '$id", true);
+            return null;
+        }
+
+        return $a_variant->get_default_playback_url();
+    }
+
+    /**
+     * Collect quality information only from first series
+     * Return array of key => variant_name
+     *
+     * @param string $season_id
+     * @return array
+     */
+    public function collect_all_qualities($season_id)
+    {
+        hd_debug_print("season_id: $season_id", true);
+        $series_quality = array();
+        foreach ($this->series_list as $series_id => $episode) {
+            if (!is_null($season_id) && $season_id !== $episode->season_id) continue;
+
+            $series_quality = $this->get_qualities($series_id);
+            if (!empty($series_quality)) {
+                unset($series_quality['auto']);
+                break;
+            }
+        }
+
+        return $series_quality;
+    }
+
+    /**
+     * Collect audio information only from first series and first quality
+     * @param string $season_id
+     * @return array
+     */
+    public function collect_all_audios($season_id)
+    {
+        $quality_audios = array();
+        foreach ($this->series_list as $series_id => $episode) {
+            if (!is_null($season_id) && $season_id !== $episode->season_id) continue;
+
+            $series_quality = $this->get_qualities($series_id);
+            foreach ($series_quality as $key => $quality) {
+                $quality_audios = $this->get_audios($series_id, $key);
+                if (!empty($quality_audios)) {
+                    unset($quality_audios['auto']);
+                    break;
+                }
+            }
+        }
+
+        return $quality_audios;
     }
 
     /**
@@ -366,32 +566,26 @@ class Movie implements User_Input_Handler
 
         switch ($media_url->screen_id) {
             case Starnet_Vod_Seasons_List_Screen::ID:
-                if (!$this->has_seasons()) {
-                    hd_debug_print("get_movie_play_info: Invalid movie: season list is empty");
-                    print_backtrace();
-                    return array();
-                }
-                $list = $this->series_list;
-                break;
+                if ($this->has_seasons()) break;
+
+                hd_debug_print("get_movie_play_info: Invalid movie: season list is empty");
+                print_backtrace();
+                return array();
 
             case Starnet_Vod_Series_List_Screen::ID:
             case Starnet_Vod_Movie_Screen::ID:
-                if (!$this->has_series()) {
-                    hd_debug_print("get_movie_play_info: Invalid movie: series list is empty");
-                    print_backtrace();
-                    return array();
-                }
-                $list = $this->series_list;
-                break;
+                if ($this->has_series()) break;
+
+                hd_debug_print("get_movie_play_info: Invalid movie: series list is empty");
+                print_backtrace();
+                return array();
 
             case Starnet_Vod_List_Screen::ID:
-                if (empty($this->series_list)) {
-                    hd_debug_print("get_movie_play_info: Invalid movie playlist: list is empty");
-                    print_backtrace();
-                    return array();
-                }
-                $list = $this->series_list;
-                break;
+                if ($this->has_series()) break;
+
+                hd_debug_print("get_movie_play_info: Invalid movie playlist: list is empty");
+                print_backtrace();
+                return array();
 
             default:
                 hd_debug_print("get_movie_play_info: Unknown list screen: $media_url->screen_id");
@@ -402,29 +596,38 @@ class Movie implements User_Input_Handler
         $sel_id = safe_get_member($media_url, 'episode_id');
         $series_array = array();
         $initial_series_ndx = 0;
-        $variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_QUALITY, 'auto');
+        $def_q_variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_QUALITY, 'auto');
+        hd_debug_print("default quality: $def_q_variant", true);
+        $def_a_variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_AUDIO, 'auto');
+        hd_debug_print("default audio: $def_a_variant", true);
         $counter = 0; // series index. Not the same as the key of series list
         $initial_start_array = array();
-        foreach ($list as $series) {
-            if (isset($series->qualities)) {
-                if (!array_key_exists($variant, $series->qualities)) {
-                    $best_var = $series->qualities;
-                    array_pop($best_var);
-                    foreach ($best_var as $key => $var) {
-                        $variant = $key;
-                    }
-                }
-
-                if (isset($series->qualities[$variant])) {
-                    $playback_url = $series->qualities[$variant]->playback_url;
-                    $playback_url_is_stream_url = $series->qualities[$variant]->playback_url_is_stream_url;
-                } else {
-                    $playback_url = $series->playback_url;
-                    $playback_url_is_stream_url = $series->playback_url_is_stream_url;
-                }
+        foreach ($this->series_list as $series) {
+            $q_variant = $series->get_variant($def_q_variant);
+            if (is_null($q_variant)) {
+                hd_debug_print("Default Playback data for series '$series->id': {$series->default_playback_url->url}", true);
+                $playback_info = $series->default_playback_url;
             } else {
-                $playback_url = $series->playback_url;
-                $playback_url_is_stream_url = $series->playback_url_is_stream_url;
+                // check if quality variant has audio variant
+                $a_variant = $q_variant->get_variant($def_a_variant);
+                if (empty($a_variant)) {
+                    $playback_info = $q_variant->default_playback_url;
+                    hd_debug_print("Default Audio Playback data for quality '$def_q_variant' - $playback_info->url", true);
+                } else {
+                    $playback_info = $a_variant->default_playback_url;
+                    hd_debug_print("Playback data for for quality '$def_q_variant' and audio '$def_a_variant' - $playback_info->url", true);
+                }
+            }
+
+            if ($playback_info->is_stream_url) {
+                $vod_url = $playback_info->url;
+            } else {
+                hd_debug_print("Request playback url for $series->id", true);
+                $vod_url = $this->plugin->vod->get_vod_playback_url($series->id, $def_q_variant, $def_a_variant);
+                if (empty($vod_url)) {
+                    hd_debug_print("no valid playback url for '$series->id' skipping");
+                    continue;
+                }
             }
 
             if (!is_null($sel_id) && $series->id === $sel_id) {
@@ -454,20 +657,21 @@ class Movie implements User_Input_Handler
             }
 
             $initial_start_array[$counter] = $pos * 1000;
-            $playback_url = HD::make_ts($playback_url);
+            $vod_url = HD::make_ts($vod_url);
+
             $dune_params = $this->plugin->collect_dune_params();
             if (!empty($dune_params)) {
                 $magic = str_replace('=', ':', http_build_query($dune_params, null, ','));
                 hd_debug_print("dune_params: $magic");
-                $playback_url .= HD::DUNE_PARAMS_MAGIC . $magic;
+                $vod_url .= HD::DUNE_PARAMS_MAGIC . $magic;
             }
 
-            hd_debug_print("Url: $playback_url", true);
-            hd_debug_print("Playback movie: $media_url->movie_id, episode: $series->id ($variant)", true);
+            hd_debug_print("Url: $vod_url", true);
+            hd_debug_print("Playback movie: $media_url->movie_id, episode: $series->id ($def_q_variant)", true);
             $series_array[] = array(
                 PluginVodSeriesInfo::name => $name,
-                PluginVodSeriesInfo::playback_url => $playback_url,
-                PluginVodSeriesInfo::playback_url_is_stream_url => $playback_url_is_stream_url,
+                PluginVodSeriesInfo::playback_url => $vod_url,
+                PluginVodSeriesInfo::playback_url_is_stream_url => true,
             );
 
             $counter++;
@@ -491,7 +695,7 @@ class Movie implements User_Input_Handler
             PluginVodInfo::initial_position_ms => $initial_start,
         );
 
-        hd_debug_print("info: " . json_encode($info), true);
+        hd_debug_print("movie_info: " . json_format_unescaped($info), true);
         return $info;
     }
 }

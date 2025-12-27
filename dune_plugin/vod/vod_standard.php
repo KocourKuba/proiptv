@@ -357,7 +357,7 @@ class vod_standard extends Abstract_Vod
                 ''          // country,
             );
 
-            $movie->add_series_data(new Movie_Series($movie_id, $title, ''));
+            $movie->add_series_data(new Movie_Series($movie_id, $title, new Movie_Playback_Url('')));
             return $movie;
         }
 
@@ -402,10 +402,21 @@ class vod_standard extends Abstract_Vod
                 $country        // country,
             );
 
-            $movie->add_series_data(new Movie_Series($movie_id, $title, $url));
+            $movie->add_series_data(new Movie_Series($movie_id, $title, new Movie_Playback_Url($url)));
         }
 
         return $movie;
+    }
+
+    /**
+     * @param string $series_id
+     * @param string $quality
+     * @param string $audio
+     * @return null
+     */
+    public function get_vod_playback_url($series_id, $quality = 'auto', $audio = 'auto')
+    {
+        return null;
     }
 
     /**
@@ -414,6 +425,7 @@ class vod_standard extends Abstract_Vod
      */
     public function set_next_page($page_id, $value)
     {
+        hd_debug_print(null, true);
         hd_debug_print("set_next_page page_id: $page_id idx: $value", true);
         $this->pages[$page_id] = $value;
     }
@@ -643,6 +655,7 @@ class vod_standard extends Abstract_Vod
      */
     public function get_next_page($page_id, $increment = 1)
     {
+        hd_debug_print(null, true);
         if (!array_key_exists($page_id, $this->pages)) {
             $this->pages[$page_id] = 0;
         }
@@ -679,7 +692,7 @@ class vod_standard extends Abstract_Vod
 
         foreach ($this->vod_filters as $name) {
             $filter = $this->get_filter($name);
-            hd_debug_print("filter: $name : " . json_encode($filter));
+            hd_debug_print("filter: $name : " . json_format_unescaped($filter));
             if ($filter === null) {
                 hd_debug_print("no filters with '$name'");
                 continue;
@@ -712,7 +725,7 @@ class vod_standard extends Abstract_Vod
                 }
 
                 Control_Factory::add_combobox($defs, $parent, $name, $filter['title'],
-                    $idx, $filter['values'], null, Control_Factory::DLG_CONTROLS_WIDTH);
+                    $idx, $filter['values'], Control_Factory::DLG_CONTROLS_WIDTH, $params);
                 Control_Factory::add_vgap($defs, 20);
                 $added = true;
             }
@@ -802,7 +815,7 @@ class vod_standard extends Abstract_Vod
         } else {
             $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
             if ($response === false) {
-                $exception_msg = TR::load('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
+                $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
                 Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
                 safe_unlink($tmp_file);
             } else {

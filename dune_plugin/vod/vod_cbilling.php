@@ -72,7 +72,7 @@ class vod_cbilling extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
         $params[CURLOPT_CUSTOMREQUEST] = "/video/$movie_id";
-        $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
+        $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, 1, $params);
         if (!isset($response->data)) {
             return null;
         }
@@ -114,9 +114,11 @@ class vod_cbilling extends vod_standard
                 $movie->add_season_data($movie_season);
 
                 foreach ($season->series as $serie) {
+                    $url = $this->server . $serie->files[0]->url . "?token=$this->token";
+                    hd_debug_print("episode playback_url: $url");
                     $movie_serie = new Movie_Series($serie->id,
                         TR::t('vod_screen_series__1', $serie->number),
-                        "$this->server{$serie->files[0]->url}?token=$this->token",
+                        new Movie_Playback_Url($url),
                         $season->number
                     );
 
@@ -131,7 +133,12 @@ class vod_cbilling extends vod_standard
                 }
             }
         } else {
-            $movie->add_series_data(new Movie_Series($movie_id, $movieData->name, "$this->server{$movieData->files[0]->url}?token=$this->token"));
+            $url = $this->server . $movieData->files[0]->url . "?token=$this->token";
+            hd_debug_print("movie playback_url: $url");
+            $movie->add_series_data(new Movie_Series($movie_id,
+                $movieData->name,
+                new Movie_Playback_Url($url))
+            );
         }
 
         return $movie;
@@ -144,7 +151,7 @@ class vod_cbilling extends vod_standard
     {
         $jsonItems = $this->provider->execApiCommand(API_COMMAND_GET_VOD);
         if ($jsonItems === false) {
-            $exception_msg = TR::load('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
+            $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
             hd_debug_print($exception_msg);
             Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
             return false;
@@ -161,7 +168,7 @@ class vod_cbilling extends vod_standard
 
             // fetch genres for category
             $params[CURLOPT_CUSTOMREQUEST] = "/cat/$id/genres";
-            $genres = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
+            $genres = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, 1, $params);
             if ($genres === false) {
                 continue;
             }
@@ -198,7 +205,7 @@ class vod_cbilling extends vod_standard
             return array();
 
         $params[CURLOPT_CUSTOMREQUEST] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx";
-        $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
+        $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, 1, $params);
         return $response === false ? array() : $this->CollectSearchResult($response);
     }
 
@@ -250,7 +257,7 @@ class vod_cbilling extends vod_standard
             $params[CURLOPT_CUSTOMREQUEST] = "/genres/$genre_id?page=$page_idx";
         }
 
-        $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
+        $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, 1, $params);
         return $response === false ? array() : $this->CollectSearchResult($response);
     }
 }

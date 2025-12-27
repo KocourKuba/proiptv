@@ -68,9 +68,9 @@ class api_korona extends api_default
         $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_WWW_FORM_URLENCODED;
         $curl_opt[CURLOPT_POSTFIELDS] = $pairs;
 
-        $data = $this->execApiCommand($cmd, null, true, $curl_opt);
+        $data = $this->execApiCommand($cmd, null, 1, $curl_opt);
         if (isset($data->access_token)) {
-            hd_debug_print("token requested: " . pretty_json_format($data), true);
+            hd_debug_print("token requested: " . json_format_unescaped($data), true);
             $this->plugin->set_cookie(PARAM_TOKEN, $data->access_token, time() + $data->expires_in);
             $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $data->access_token, PHP_INT_MAX);
             return true;
@@ -83,8 +83,8 @@ class api_korona extends api_default
             return $this->request_provider_token(true);
         }
 
-        hd_debug_print("token not received: " . pretty_json_format($data), true);
-        Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token') . "\n\n" . pretty_json_format($data));
+        hd_debug_print("token not received: " . json_format_unescaped($data), true);
+        Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token') . "\n\n" . json_format_unescaped($data));
         return false;
     }
 
@@ -124,7 +124,7 @@ class api_korona extends api_default
 
         if (empty($this->servers)) {
             $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
-            hd_debug_print("GetServers: " . pretty_json_format($response), true);
+            hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             if (isset($response->data)) {
                 foreach ($response->data as $server) {
                     $this->servers[(string)$server->id] = $server->title;

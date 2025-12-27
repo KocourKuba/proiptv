@@ -175,7 +175,7 @@ class api_edem extends api_default
             $is_new = false;
             hd_debug_print("load info for existing playlist id: $this->playlist_id", true);
             $params = $this->plugin->get_playlist_parameters($this->playlist_id);
-            hd_debug_print("provider info: " . pretty_json_format($params), true);
+            hd_debug_print("provider info: " . json_format_unescaped($params), true);
         }
 
         if (safe_get_value($params, PARAM_NAME) !== $user_input->{CONTROL_EDIT_NAME}) {
@@ -207,7 +207,7 @@ class api_edem extends api_default
             }
         }
 
-        hd_debug_print("ApplySetupUI compiled account info for '$this->playlist_id': " . pretty_json_format($params), true);
+        hd_debug_print("ApplySetupUI compiled account info for '$this->playlist_id': " . json_format_unescaped($params), true);
         $this->plugin->set_playlist_parameters($this->playlist_id, $params);
 
         // Set default playlist settings for new provider

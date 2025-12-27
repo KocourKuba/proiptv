@@ -91,7 +91,7 @@ class api_iptvonline extends api_default
         $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
         $curl_opt[CURLOPT_POSTFIELDS] = $pairs;
 
-        $data = $this->execApiCommand($cmd, null, true, $curl_opt);
+        $data = $this->execApiCommand($cmd, null, 1, $curl_opt);
         if (isset($data->access_token)) {
             hd_debug_print("token requested", true);
             $this->plugin->set_cookie(PARAM_TOKEN, $data->access_token, $data->expires_time);
@@ -106,8 +106,8 @@ class api_iptvonline extends api_default
             return $this->request_provider_token(true);
         }
 
-        hd_debug_print("token not received: " . pretty_json_format($data), true);
-        Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token') . "\n" . pretty_json_format($data));
+        hd_debug_print("token not received: " . json_format_unescaped($data), true);
+        Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token') . "\n" . json_format_unescaped($data));
         return false;
     }
 
@@ -137,7 +137,7 @@ class api_iptvonline extends api_default
                 return $curl_wrapper->download_file($response->data, $file);
 
             case API_COMMAND_GET_DEVICE:
-                hd_debug_print("GetServers: " . pretty_json_format($response), true);
+                hd_debug_print("GetServers: " . json_format_unescaped($response), true);
                 if (!isset($response->status) || $response->status !== 200) break;
 
                 $this->device = $response;
@@ -158,11 +158,11 @@ class api_iptvonline extends api_default
                     return true;
                 }
 
-                hd_debug_print("Can't set device: " . json_encode($response));
+                hd_debug_print("Can't set device: " . json_format_unescaped($response));
                 if (isset($response->message)) {
                     $error_msg = $response->message;
                 } else {
-                    $error_msg = pretty_json_format($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    $error_msg = json_format_readable($response);
                 }
                 break;
         }
@@ -229,7 +229,7 @@ class api_iptvonline extends api_default
         $cmd = API_COMMAND_GET_DEVICE;
         if (empty($this->device)) {
             $curl_opts = $this->getCurlOpts($cmd);
-            $response = $this->execApiCommand($cmd, null, true, $curl_opts);
+            $response = $this->execApiCommand($cmd, null, 1, $curl_opts);
             if ($this->postExecAction($cmd, $response) === false) {
                 return array();
             }
@@ -268,7 +268,7 @@ class api_iptvonline extends api_default
         $curl_params[CURLOPT_POSTFIELDS] = array("server_location" => $server);
         $cmd = API_COMMAND_SET_DEVICE;
         $curl_opts = $this->getCurlOpts($cmd, $curl_params);
-        $response = $this->execApiCommand($cmd, null, true, $curl_opts);
+        $response = $this->execApiCommand($cmd, null, 1, $curl_opts);
         return $this->postExecAction($cmd, $response, $error_msg);
     }
 

@@ -135,16 +135,15 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                 $this->plugin->init_epg_manager();
 
-                return $this->plugin->show_protect_settings_dialog($this, Action_Factory::open_folder(
-                    Starnet_Edit_Xmltv_List_Screen::make_callback_media_url_str(
-                        Starnet_Entry_Handler::ID,
-                        array(
-                            PARAM_END_ACTION => ACTION_RELOAD,
-                            PARAM_CANCEL_ACTION => RESET_CONTROLS_ACTION_ID,
-                        )
-                    ),
-                    TR::t('setup_edit_xmltv_list')
-                ));
+                $callback = Starnet_Edit_Xmltv_List_Screen::make_callback_media_url_str(
+                    Starnet_Entry_Handler::ID,
+                    array(
+                        PARAM_END_ACTION => ACTION_RELOAD,
+                        PARAM_CANCEL_ACTION => RESET_CONTROLS_ACTION_ID,
+                    )
+                );
+
+                return $this->plugin->show_protect_settings_dialog($this, Action_Factory::open_folder($callback, TR::t('setup_edit_xmltv_list')));
 
             case self::ACTION_CALL_BACKUP_SETTINGS:
                 $this->plugin->init_plugin();
@@ -355,6 +354,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
     {
         $media_url = Starnet_Edit_Playlists_Screen::make_callback_media_url_str(Starnet_Entry_Handler::ID,
             array(
+                PARAM_END_ACTION => ACTION_RELOAD,
+                PARAM_CANCEL_ACTION => RESET_CONTROLS_ACTION_ID,
                 PARAM_EXTENSION => PLAYLIST_PATTERN,
                 Starnet_Edit_Playlists_Screen::PARAM_ALLOW_ORDER => true,
             )

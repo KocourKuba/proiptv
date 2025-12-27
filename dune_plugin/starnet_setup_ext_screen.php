@@ -77,13 +77,15 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
         foreach (array(30, 60, 90, 120, 180, 240, 300) as $sec) {
             $range[$sec] = $sec;
         }
-        Control_Factory::add_combobox($defs, $this, PARAM_CURL_CONNECT_TIMEOUT, TR::t('setup_connect_timeout'), $this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30),
-            $range, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+        Control_Factory::add_combobox($defs, $this, PARAM_CURL_CONNECT_TIMEOUT, TR::t('setup_connect_timeout'),
+            $this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30),
+            $range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////
         // Curl download timeout
-        Control_Factory::add_combobox($defs, $this, PARAM_CURL_DOWNLOAD_TIMEOUT, TR::t('setup_download_timeout'), $this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120),
-            $range, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+        Control_Factory::add_combobox($defs, $this, PARAM_CURL_DOWNLOAD_TIMEOUT, TR::t('setup_download_timeout'),
+            $this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120),
+            $range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////
         // Settings full size remote

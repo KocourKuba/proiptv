@@ -314,6 +314,7 @@ const PARAM_SHORTCUT = 'shortcut';
 const PARAM_CACHE_DIR = 'cache_dir';
 const PARAM_PL_TYPE = 'playlist_type';
 const PARAM_VOD_DEFAULT_QUALITY = 'quality';
+const PARAM_VOD_DEFAULT_AUDIO = 'audio';
 const PARAM_REPLACE_ICON = 'replace_playlist_icon';
 const PARAMS_XMLTV = 'xmltv_params';
 const PARAM_TOKEN = 'token';
@@ -368,6 +369,7 @@ const INDEXING_ALL = 7; // INDEXING_DOWNLOAD | INDEXING_CHANNELS | INDEXING_ENTR
 
 // macroses used to replace template in providers playlists
 const MACRO_API = '{API}';
+const MACRO_VOD_API = '{VOD_API}';
 const MACRO_PROVIDER = '{PROVIDER}';
 const MACRO_LOGIN = '{LOGIN}';
 const MACRO_PASSWORD = '{PASSWORD}';

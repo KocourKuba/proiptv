@@ -238,7 +238,7 @@ class Epg_Manager_Xmltv
                     );
                 }
             } else if (!empty($this->delayed_epg) && self::get_any_index_locked() !== false) {
-                hd_debug_print("Delayed epg: " . json_encode($this->delayed_epg));
+                hd_debug_print("Delayed epg: " . json_format_unescaped($this->delayed_epg));
                 $items = array($day_start_ts => array(
                     PluginTvEpgProgram::end_tm_sec => $day_end_ts,
                     PluginTvEpgProgram::name => TR::load('epg_not_ready'),
@@ -513,7 +513,7 @@ class Epg_Manager_Xmltv
             }
         }
 
-        hd_debug_print("Indexes info: " . json_encode($result));
+        hd_debug_print("Indexes info: " . json_format_unescaped($result));
         return $result;
     }
 
@@ -999,7 +999,7 @@ class Epg_Manager_Xmltv
             unset(self::$epg_db[$hash]);
         }
 
-        Curl_Wrapper::clear_cached_etag_by_hash($hash);
+        Curl_Wrapper::clear_cached_etag($hash);
 
         $dirs = glob(self::get_lock_name($hash, 0, '*'), GLOB_ONLYDIR);
         $locks = array();
@@ -1166,7 +1166,7 @@ class Epg_Manager_Xmltv
             return $channel_positions;
         }
 
-        hd_debug_print("Found EPG id's: " . json_encode($channel_ids));
+        hd_debug_print("Found EPG id's: " . json_format_unescaped($channel_ids));
         hd_debug_print("Load position indexes for: $channel_id ($channel_title)", true);
         $db_entries = self::open_sqlite_db($params[PARAM_HASH], self::TABLE_ENTRIES, true);
         if ($db_entries === false) {
@@ -1182,7 +1182,7 @@ class Epg_Manager_Xmltv
             $ids = Sql_Wrapper::sql_make_list_from_values($channel_ids);
             hd_debug_print("No positions found for channel $channel_id ($channel_title) and channel id's: $ids");
         } else {
-            hd_debug_print("Channel positions: " . json_encode($channel_positions), true);
+            hd_debug_print("Channel positions: " . json_format_unescaped($channel_positions), true);
         }
 
         return $channel_positions;
@@ -1356,7 +1356,7 @@ class Epg_Manager_Xmltv
             if ($curl_wrapper->get_error_no() !== 0) {
                 $msg = "CURL errno: {$curl_wrapper->get_error_no()}\n{$curl_wrapper->get_error_desc()}\nHTTP code: $http_code";
             } else {
-                $msg = "HTTP request failed ($http_code)\n\n" . $curl_wrapper->get_raw_response_headers();
+                $msg = "HTTP request failed ($http_code)\n\n" . Curl_Wrapper::get_raw_response_headers();
             }
 
             throw new Exception("Can't download file\n$msg");
@@ -1364,7 +1364,7 @@ class Epg_Manager_Xmltv
 
         $http_code = $curl_wrapper->get_http_code();
         if ($http_code !== 200) {
-            throw new Exception("Download error ($http_code) $url\n\n" . $curl_wrapper->get_raw_response_headers());
+            throw new Exception("Download error ($http_code) $url\n\n" . Curl_Wrapper::get_raw_response_headers());
         }
 
         $perf->setLabel('end_download');

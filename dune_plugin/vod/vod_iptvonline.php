@@ -58,67 +58,86 @@ class vod_iptvonline extends vod_standard
         $params[CURLOPT_CUSTOMREQUEST] = "/movies/$arr[1]";
         $json = $this->make_json_request($params);
 
-        if ($json === false || $json === null) {
+        if ($json === false) {
             hd_debug_print("failed to load movie: $movie_id");
             return null;
         }
 
+        hd_debug_print("Movie response for ($arr[1]): " . json_format_unescaped($json), true);
         $movie = new Movie($movie_id, $this->plugin);
-        $movieData = $json->data;
+        $movieData = safe_get_value($json, 'data', array());
         if ($arr[0] === API_ACTION_MOVIE) {
-            $movie_serie = new Movie_Series($arr[1], $movieData->medias->title, $movieData->medias->url);
-            foreach ($movieData->medias->audios as $item) {
-                $key = $item->translate;
-                $movie_serie->audios[$key] = new Movie_Variant($key, $key, $item->url);
+            $medias = safe_get_value($movieData, 'medias', array());
+            $url = safe_get_value($medias, 'url');
+            hd_debug_print("movie playback_url: $url", true);
+
+            $playback_url = new Movie_Playback_Url($url);
+            $movie_series = new Movie_Series($arr[1], $medias['title'], $playback_url);
+            $quality = new Movie_Variant($medias['title'], $playback_url);
+            foreach (safe_get_value($medias, 'audios', array()) as $item) {
+                $key = safe_get_value($item, 'translate');
+                if (!empty($key)) {
+                    hd_debug_print("url for audio '$key' - {$item['url']}", true);
+                    $quality->add_variant_data($key, new Movie_Variant($key, new Movie_Playback_Url($item['url'])));
+                }
             }
-            $movie->add_series_data($movie_serie);
+            $movie_series->add_variant_data('auto', $quality);
+
+            $movie->add_series_data($movie_series);
         } else if ($arr[0] === API_ACTION_SERIAL) {
             // collect series
-            foreach ($movieData->seasons as $season) {
-                $movie_season = new Movie_Season($season->season);
-                if (!empty($season->title)) {
-                    $movie_season->description = $season->title;
-                }
+            foreach (safe_get_value($movieData, 'seasons', array()) as $season) {
+                $movie_season = new Movie_Season($season['season']);
+                $movie_season->description = safe_get_value($season, 'title');
                 $movie->add_season_data($movie_season);
 
-                foreach ($season->episodes as $episode) {
-                    hd_debug_print("movie playback_url: $episode->url");
+                foreach (safe_get_value($season, 'episodes', array()) as $episode) {
+                    $url = safe_get_value($episode, 'url');
 
-                    $audios = array();
-                    foreach ($episode->audios as $item) {
-                        $key = $item->translate;
-                        $audios[$key] = new Movie_Variant($key, $key, $item->url);
+                    hd_debug_print("episode playback_url: $url", true);
+                    $series_id = "{$season['season']}:{$episode['episode']}";
+                    $series_name = TR::load('vod_screen_series__1', $episode['episode']);
+                    $playback_url = new Movie_Playback_Url($url);
+                    $movie_series = new Movie_Series($series_id, $series_name, $playback_url, $season['season']);
+                    $qualty = new Movie_Variant($series_name, $playback_url);
+                    foreach (safe_get_value($episode, 'audios', array()) as $item) {
+                        $key = safe_get_value($item, 'translate');
+                        if (!empty($key)) {
+                            hd_debug_print("url for audio '$key' - {$item['url']}", true);
+                            $qualty->add_variant_data($key, new Movie_Variant($key, new Movie_Playback_Url($item['url'])));
+                        }
                     }
-
-                    $movie_serie = new Movie_Series("$season->season:$episode->episode",
-                        TR::t('vod_screen_series__1', $episode->episode),
-                        $episode->url,
-                        $season->season
-                    );
-                    $movie_serie->description = $episode->title;
-                    $movie_serie->audios = $audios;
-                    $movie->add_series_data($movie_serie);
+                    $movie_season->description = safe_get_value($episode, 'title');
+                    $movie_series->add_variant_data($series_id, $qualty);
+                    $movie->add_series_data($movie_series);
                 }
             }
         }
 
+        $details = array();
+        $qualities = safe_get_value($movieData, 'quality');
+        if (!empty($qualities)) {
+            $details[TR::t('vod_screen_quality')] = $qualities;
+        }
+
+        hd_debug_print("Result movie: " . $movie, true);
         $movie->set_data(
-            $movieData->ru_title,                     // caption,
-            $movieData->orig_title,                   // caption_original,
-            $movieData->plot,                         // description,
-            $movieData->posters->big,                 // poster_url,
-            $movieData->duration / 60,      // length,
-            $movieData->year,                         // year,
-            $movieData->director,                     // director,
+            $movieData['ru_title'],                   // caption,
+            $movieData['orig_title'],                 // caption_original,
+            $movieData['plot'],                       // description,
+            $movieData['posters']['big'],             // poster_url,
+            $movieData['duration'] / 60,    // length,
+            $movieData['year'],                       // year,
+            $movieData['director'],                   // director,
             '',                           // scenario,
-            $movieData->cast,                         // actors,
-            self::collect_genres($movieData),         // genres,
-            $movieData->imdb_rating,                  // rate_imdb,
-            $movieData->kinopoisk_rating,             // rate_kinopoisk,
+            $movieData['cast'],                       // actors,
+            implode(',', safe_get_value($movieData, 'genres', array())),         // genres,
+            $movieData['imdb_rating'],                // rate_imdb,
+            $movieData['kinopoisk_rating'],           // rate_kinopoisk,
             '',                             // rate_mpaa,
-            self::collect_countries($movieData),      // country,
+            implode(',', safe_get_value($movieData, 'countries', array())),      // country,
             '',                                // budget
-            array(TR::t('quality') => $movieData->quality) // details
+            $details                                  // details
         );
 
         return $movie;
@@ -142,8 +161,8 @@ class vod_iptvonline extends vod_standard
         $exist_filters = array();
         $params[CURLOPT_CUSTOMREQUEST] = '/' . API_ACTION_FILTERS;
         $data = $this->make_json_request($params);
-        if (!isset($data->success, $data->data->filter_by) || !$data->success) {
-            hd_debug_print("Wrong response on filter request: " . json_encode($data), true);
+        if ($data === false || !isset($data['data']['filter_by'])) {
+            hd_debug_print("Wrong response on filter request: " . json_format_unescaped($data), true);
             return false;
         }
 
@@ -155,16 +174,18 @@ class vod_iptvonline extends vod_standard
             )
         );
 
-        foreach ($data->data->filter_by as $filter) {
-            if (!isset($filter->id)) continue;
+        foreach (safe_get_value($data['data'], 'filter_by', array()) as $filter) {
+            $id = safe_get_value($filter, 'id');
+            if (empty($id)) continue;
 
-            if (empty($filter->items)) {
-                $exist_filters[$filter->id] = array('title' => $filter->title, 'text' => true);
+            $items = safe_get_value($filter, 'items', array());
+            if (empty($items)) {
+                $exist_filters[$id] = array('title' => $filter['title'], 'text' => true);
             } else {
-                $exist_filters[$filter->id] = array('title' => $filter->title, 'values' => array(-1 => TR::t('no')));
-                foreach ($filter->items as $item) {
-                    if ($item->enabled) {
-                        $exist_filters[$filter->id]['values'][$item->id] = $item->title;
+                $exist_filters[$id] = array('title' => $filter['title'], 'values' => array(-1 => TR::t('no')));
+                foreach ($items as $item) {
+                    if ($item['enabled']) {
+                        $exist_filters[$id]['values'][$item['id']] = $item['title'];
                     }
                 }
             }
@@ -211,7 +232,7 @@ class vod_iptvonline extends vod_standard
 
     /**
      * @param string $query_id
-     * @param object $json
+     * @param array $json
      * @param string|null $search
      * @return array
      */
@@ -221,29 +242,38 @@ class vod_iptvonline extends vod_standard
         hd_debug_print("query_id: $query_id");
 
         $movies = array();
-        if (!isset($json->data->items))
+        if (!isset($json['data']['items'])) {
             return $movies;
+        }
 
         $page_id = is_null($search) ? $query_id : "{$query_id}_$search";
         $current_idx = $this->get_current_page($page_id);
         if ($current_idx < 0)
             return $movies;
 
-        $data = $json->data;
-        foreach ($data->items as $entry) {
+        $data = safe_get_value($json, 'data', array());
+        foreach (safe_get_value($data, 'items', array()) as $entry) {
+            $ru_title = safe_get_value($entry, 'ru_title');
+            $posters = safe_get_value($entry, 'posters', array());
             $movie = new Short_Movie(
-                "{$query_id}_$entry->id",
-                $entry->ru_title,
-                $entry->posters->medium,
-                TR::t('vod_screen_movie_info__4', $entry->ru_title, $entry->year, self::collect_countries($entry), self::collect_genres($entry))
+                "{$query_id}_{$entry['id']}",
+                $ru_title,
+                safe_get_value($posters, 'medium'),
+                TR::t('vod_screen_movie_info__4',
+                    $ru_title,
+                    $entry['year'],
+                    implode(',', safe_get_value($entry, 'countries', array())),
+                    implode(',', safe_get_value($entry, 'genres', array()))
+                )
             );
 
-            $movie->big_poster_url = $entry->posters->big;
+            $movie->big_poster_url = safe_get_value($posters, 'big');
             $movies[] = $movie;
         }
 
-        if ($data->pagination->pages === $current_idx) {
-            hd_debug_print("Last page: {$data->pagination->pages}");
+        $page = $data['pagination']['pages'];
+        if ($page === $current_idx) {
+            hd_debug_print("Last page: $page");
             $this->set_next_page($page_id, -1);
         }
 
@@ -335,41 +365,9 @@ class vod_iptvonline extends vod_standard
         return ($json === false || $json === null) ? array() : $this->CollectSearchResult($query_id, $json);
     }
 
-    protected static function collect_genres($entry)
-    {
-        $genres_str = '';
-        if (isset($entry->genres)) {
-            $genres = array();
-            foreach ($entry->genres as $genre) {
-                if (!empty($genre)) {
-                    $genres[] = $genre;
-                }
-            }
-            $genres_str = implode(", ", $genres);
-        }
-
-        return $genres_str;
-    }
-
-    protected static function collect_countries($entry)
-    {
-        $countries_str = '';
-        if (isset($entry->countries)) {
-            $countries = array();
-            foreach ($entry->countries as $country) {
-                if (!empty($country)) {
-                    $countries[] = $country;
-                }
-            }
-            $countries_str = implode(", ", $countries);
-        }
-
-        return $countries_str;
-    }
-
     /**
      * @param array|null $params
-     * @return bool|object
+     * @return bool|array
      */
     protected function make_json_request($params = null)
     {
@@ -388,9 +386,9 @@ class vod_iptvonline extends vod_standard
             $curl_opt[CURLOPT_POSTFIELDS] = $params[CURLOPT_POSTFIELDS];
         }
 
-        $data = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
-        if (!isset($data->success, $data->status) || !$data->success || $data->status !== 200) {
-            hd_debug_print("Wrong response: " . json_encode($data));
+        $data = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, 2, $curl_opt);
+        if (!isset($data['success'], $data['status']) || !$data['success'] || $data['status'] !== 200) {
+            hd_debug_print("Wrong response: " . json_format_unescaped($data));
             return false;
         }
 

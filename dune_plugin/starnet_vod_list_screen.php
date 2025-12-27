@@ -89,7 +89,22 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_PLAY_ITEM:
                 try {
-                    $this->update_series_list();
+                    $list_movie = $this->plugin->vod->get_loaded_movie(VOD_LIST_GROUP_ID);
+                    if (empty($list_movie)) {
+                        throw new Exception("vod list movie not found");
+                    }
+
+                    $list_movie->clear_series_data();
+                    foreach ($this->plugin->get_channels_order(VOD_LIST_GROUP_ID) as $movie_id) {
+                        $movie = $this->plugin->vod->get_loaded_movie($movie_id);
+                        if (is_null($movie)) continue;
+                        $movie_info = $movie->get_movie_info();
+
+                        $series = new Movie_Series($movie_id, $movie_info[PluginMovie::name], $movie->get_series($movie_id)->default_playback_url);
+                        $list_movie->add_series_data($series);
+                    }
+                    $this->plugin->vod->set_cached_movie($list_movie);
+
                     $vod_info = $this->plugin->vod->get_vod_info($selected_media_url);
                     $post_action = $this->plugin->vod->vod_player_exec($vod_info, isset($user_input->external));
                 } catch (Exception $ex) {
@@ -197,20 +212,21 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
             if (is_null($movie)) continue;
 
             $movie_history = $this->plugin->get_vod_history($movie_id);
+            $movie_info = $movie->get_movie_info();
             $detailed_info = '';
-            $caption = $movie->movie_info[PluginMovie::name];
+            $caption = $movie_info[PluginMovie::name];
             $color = DEF_LABEL_TEXT_COLOR_WHITE;
-            foreach ($movie_history as $movie_info) {
-                $view_date = format_datetime("d.m.Y H:i", $movie_info[COLUMN_TIMESTAMP]);
-                if ($movie_info[COLUMN_WATCHED] || $movie_info[COLUMN_DURATION] === -1) {
+            foreach ($movie_history as $history) {
+                $view_date = format_datetime("d.m.Y H:i", $history[COLUMN_TIMESTAMP]);
+                if ($history[COLUMN_WATCHED] || $history[COLUMN_DURATION] === -1) {
                     $detailed_info = TR::t('vod_screen_all_viewed__2', $caption, $view_date);
                     $color = DEF_LABEL_TEXT_COLOR_SKYBLUE;
                 } else {
                     $detailed_info = TR::t('vod_screen_last_viewed__4',
                         $caption,
                         $view_date,
-                        (int)((float)$movie_info[COLUMN_POSITION] / (float)$movie_info[COLUMN_DURATION] * 100),
-                        format_duration_seconds($movie_info[COLUMN_POSITION])
+                        (int)((float)$history[COLUMN_POSITION] / (float)$history[COLUMN_DURATION] * 100),
+                        format_duration_seconds($history[COLUMN_POSITION])
                     );
                     $color = DEF_LABEL_TEXT_COLOR_TURQUOISE;
                 }
@@ -221,7 +237,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
                 PluginRegularFolderItem::media_url => self::make_group_media_url_str($movie_id),
                 PluginRegularFolderItem::caption => $caption,
                 PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::icon_path => $movie->movie_info[PluginMovie::poster_url],
+                    ViewItemParams::icon_path => $movie_info[PluginMovie::poster_url],
                     ViewItemParams::item_detailed_info => $detailed_info,
                     ViewItemParams::item_caption_color => $color,
                 )
@@ -244,29 +260,5 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
             $this->plugin->get_screen_view('icons_5x2_movie_caption'),
             $this->plugin->get_screen_view('icons_5x2_movie_no_caption'),
         );
-    }
-
-    /**
-     * @return void
-     * @throws Exception
-     */
-    private function update_series_list()
-    {
-        $list_movie = $this->plugin->vod->get_loaded_movie(VOD_LIST_GROUP_ID);
-        if (empty($list_movie)) {
-            hd_debug_print("vod list movie not found");
-            return;
-        }
-
-        $list_movie->series_list = array();
-        foreach ($this->plugin->get_channels_order(VOD_LIST_GROUP_ID) as $movie_id) {
-            $movie = $this->plugin->vod->get_loaded_movie($movie_id);
-            if (is_null($movie)) continue;
-
-            $series = new Movie_Series($movie_id, $movie->movie_info[PluginMovie::name], $movie->series_list[$movie_id]->playback_url);
-            $series->playback_url_is_stream_url = $movie->series_list[$movie_id]->playback_url_is_stream_url;
-            $list_movie->series_list[] = $series;
-        }
-        $this->plugin->vod->set_cached_movie($list_movie);
     }
 }

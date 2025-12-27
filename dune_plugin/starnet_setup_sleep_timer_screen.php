@@ -67,7 +67,7 @@ class Starnet_Setup_Sleep_Timer_Screen extends Abstract_Controls_Screen
             hd_debug_print(PARAM_SLEEP_TIMER_POS . ": $sleep_pos", true);
             $pos_ops_translated = array('top_left' => TR::t('setup_top_left'), 'top_right' => TR::t('setup_top_right'));
             Control_Factory::add_combobox($defs, $this, PARAM_SLEEP_TIMER_POS, TR::t('setup_sleep_time_pos'),
-                $sleep_pos, $pos_ops_translated, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                $sleep_pos, $pos_ops_translated, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
             //////////////////////////////////////
             // sleep timer countdown
@@ -75,7 +75,7 @@ class Starnet_Setup_Sleep_Timer_Screen extends Abstract_Controls_Screen
             hd_debug_print(PARAM_SLEEP_TIMER_COUNTDOWN . ": $sleep_countdown", true);
             $countdown_ops_translated = array(60 => '60', 120 => '120', 180 => '180', 240 => '240', 300 => '300');
             Control_Factory::add_combobox($defs, $this, PARAM_SLEEP_TIMER_COUNTDOWN, TR::t('setup_sleep_time_show'),
-                $sleep_countdown, $countdown_ops_translated, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                $sleep_countdown, $countdown_ops_translated, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
             //////////////////////////////////////
             // sleep timer step
@@ -83,7 +83,7 @@ class Starnet_Setup_Sleep_Timer_Screen extends Abstract_Controls_Screen
             hd_debug_print(PARAM_SLEEP_TIMER_STEP . ": $sleep_step", true);
             $step_ops_translated = array(30 => '0.5', 60 => '1', 120 => '2', 300 => '5', 600 => '10');
             Control_Factory::add_combobox($defs, $this, PARAM_SLEEP_TIMER_STEP, TR::t('setup_sleep_time_step'),
-                $sleep_step, $step_ops_translated, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                $sleep_step, $step_ops_translated, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
             //////////////////////////////////////
             // sleep timer power off mode
@@ -91,7 +91,7 @@ class Starnet_Setup_Sleep_Timer_Screen extends Abstract_Controls_Screen
             hd_debug_print(PARAM_SLEEP_TIMER_POWER . ": $sleep_power", true);
             $power_ops_translated = array(0 => TR::t('system_default'), 1 => TR::t('standby'));
             Control_Factory::add_combobox($defs, $this, PARAM_SLEEP_TIMER_POWER, TR::t('setup_sleep_time_power'),
-                $sleep_power, $power_ops_translated, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                $sleep_power, $power_ops_translated, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         }
 
         return $defs;

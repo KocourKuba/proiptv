@@ -71,7 +71,7 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen
         $ch_pos = $this->plugin->get_setting(PARAM_NEWUI_CHANNEL_POSITION, 0);
         Control_Factory::add_combobox($defs, $this, PARAM_NEWUI_CHANNEL_POSITION,
             TR::t('setup_channel_position'), $ch_pos,
-            $channel_position, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+            $channel_position, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////
         // Channels in rows in NewUI
@@ -81,7 +81,7 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen
         $icon_idx = $this->plugin->get_setting(PARAM_NEWUI_ICONS_IN_ROW, 7);
         Control_Factory::add_combobox($defs, $this, PARAM_NEWUI_ICONS_IN_ROW,
             TR::t('setup_icons_in_row'), $icon_idx,
-            $icons_in_row, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+            $icons_in_row, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////
         // Show caption

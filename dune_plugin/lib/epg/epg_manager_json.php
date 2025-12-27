@@ -261,7 +261,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         }
 
         $parser_params = $preset[EPG_JSON_PARSER];
-        hd_debug_print("parser params: " . json_encode($parser_params), true);
+        hd_debug_print("parser params: " . json_format_unescaped($parser_params), true);
 
         try {
             $opts = null;

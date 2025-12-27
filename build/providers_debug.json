@@ -602,6 +602,8 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_glanz.png",
       "provider_url": "http://ottg.tv/",
+      "api_url": "http://pl.{DOMAIN_ID}",
+      "vod_api_url": "http://api.{DOMAIN_ID}",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "epg_presets": [
@@ -622,17 +624,17 @@
         "playlists": {
           "standard": {
             "name": "Standard",
-            "url": "http://pl.{DOMAIN_ID}/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output={STREAM_ID}"
+            "url": "{API}/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output={STREAM_ID}"
           },
           "no_adult": {
             "name": "No Adult channels",
-            "url": "http://pl.{DOMAIN_ID}/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output={STREAM_ID}&censored=0"
+            "url": "{API}/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output={STREAM_ID}&censored=0"
           }
         },
         "playlists_vod": {
           "default": {
             "name": "Default",
-            "url": "http://api.{DOMAIN_ID}/playlist/vod?login={LOGIN}&password={PASSWORD}"
+            "url": "{VOD_API}/playlist/vod?login={LOGIN}&password={PASSWORD}"
           }
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -791,6 +793,7 @@
         },
         "domains": {
           "see-tv.eu": "see-tv.eu",
+          "see24.eu": "see24.eu",
           "iptv.online": "iptv.online"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -1097,6 +1100,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_ottpub.png",
       "provider_url": "https://ott.pub/",
+      "api_url": "https://cassy.tv",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
         "url_subst": {
@@ -1113,13 +1117,13 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "https://cassy.tv/pls/{PASSWORD}/playlist.m3u8"
+            "url": "{API}/pls/{PASSWORD}/playlist.m3u8"
           }
         },
         "playlists_vod": {
           "default": {
             "name": "Default",
-            "url": "https://cassy.tv/md/{PASSWORD}/playlist.m3u8"
+            "url": "{API}/md/{PASSWORD}/playlist.m3u8"
           }
         },
         "streams": {
@@ -1400,7 +1404,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_sharaclub.png",
       "provider_url": "https://shara.club/",
-      "api_url": "http://list.playtv.pro/api/players.php",
+      "api_url": "http://list.sharatv.pro/api/players.php",
       "api_commands": {
         "account_info": "{API}?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
         "pay": "{API}?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor",
@@ -1441,6 +1445,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
       "provider_url": "https://sh365.org/",
+      "vod_api_url": "http://app.media24.cc",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
         "epg_presets": [
@@ -1459,7 +1464,7 @@
         "playlists_vod": {
           "default": {
             "name": "Default",
-            "url": "http://app.media24.cc/json/c"
+            "url": "{VOD_API}/json/c"
           }
         },
         "url_subst": {
@@ -1640,6 +1645,31 @@
     },
     {
       "enable": true,
+      "id": "tvboom",
+      "name": "TV Boom",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_tvboom.png",
+      "provider_url": "https://tvboom.vip/",
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
+        "epg_presets": [],
+        "playlists": {
+          "default": {
+            "name": "Default",
+            "url": "https://tvboom.vip/{LOGIN}/{PASSWORD}/hls{SERVER_ID}playlist.m3u8"
+          }
+        },
+        "servers": {
+          "/": "Germany",
+          "/rucdn/": "Russia 1",
+          "/rucdn2/": "Russia 2",
+          "/autocdn/": "Cloud"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "tvclub",
       "class": "tvclub",
       "name": "TV Club",
@@ -1712,7 +1742,8 @@
         },
         "domains": {
           "tv.team": "tv.team",
-          "tvteam.eu": "tvteam.eu"
+          "tvteam.eu": "tvteam.eu",
+          "tvteam.pro": "tvteam.pro"
         },
         "streams": {
           "mono.m3u8": "HLS",
@@ -1769,6 +1800,7 @@
         },
         "domains": {
           "see-tv.eu": "see-tv.eu",
+          "see24.eu": "see24.eu",
           "iptv.online": "iptv.online"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -1857,6 +1889,7 @@
       "logo": "http://iptv.esalecrm.net/res/logo_viplime.png",
       "provider_url": "http://viplime.fun/",
       "api_url": "http://cdntv.online",
+      "vod_api_url": "http://m.cdntv.online/f",
       "config": {
         "id_map": "tvg-id",
         "epg_presets": [
@@ -1874,7 +1907,7 @@
         "playlists_vod": {
           "default": {
             "name": "Default",
-            "url": "http://m.cdntv.online/f/{PASSWORD}/playlist.m3u8"
+            "url": "{VOD_API}/{PASSWORD}/playlist.m3u8"
           }
         },
         "vod_parser": "/^(?<title>[^\\(]*)\\s\\((?<year>\\d+)\\)$/",
@@ -1920,8 +1953,11 @@
       "id": "yosso",
       "name": "Yosso TV",
       "type": "login",
+      "vod": "yosso",
       "logo": "http://iptv.esalecrm.net/res/logo_yosso.png",
       "provider_url": "https://streaming-elbrus.su/",
+      "api_url": "https://streaming-elbrus.su",
+      "vod_api_url": "http://jeleyka.balelbrus.com",
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/balancer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
         "epg_presets": [
@@ -1933,7 +1969,13 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "https://streaming-elbrus.su/p12/{LOGIN}/{PASSWORD}/BL/playlist.m3u8"
+            "url": "{API}/p12/{LOGIN}/{PASSWORD}/BL/playlist.m3u8"
+          }
+        },
+        "playlists_vod": {
+          "default": {
+            "name": "Default",
+            "url": "{VOD_API}"
           }
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",

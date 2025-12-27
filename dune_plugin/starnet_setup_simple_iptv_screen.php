@@ -101,7 +101,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
         $opts[CONTROL_PLAYLIST_IPTV] = TR::t('edit_list_playlist_iptv');
         $opts[CONTROL_PLAYLIST_VOD] = TR::t('edit_list_playlist_vod');
         Control_Factory::add_combobox($defs, $this, CONTROL_EDIT_TYPE, TR::t('edit_list_playlist_type'),
-            $playlist_type, $opts, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+            $playlist_type, $opts, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////
         // ID Mapper
@@ -109,7 +109,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
         $id_mapper = safe_get_value($params, PARAM_ID_MAPPER, CONTROL_DETECT_ID);
         $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
         Control_Factory::add_combobox($defs, $this, CONTROL_DETECT_ID, TR::t('edit_list_playlist_detect_id'),
-            $id_mapper, $mapper_ops, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+            $id_mapper, $mapper_ops, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////
         // Cache time
@@ -126,13 +126,13 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
         $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME_IPTV, 1);
         Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_CACHE_TIME_IPTV,
             TR::t('setup_cache_time_iptv'), $cache_time,
-            $caching_range, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+            $caching_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         if ($playlist_type === CONTROL_PLAYLIST_VOD) {
             $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME_VOD, 1);
             Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_CACHE_TIME_VOD,
                 TR::t('setup_cache_time_vod'), $cache_time,
-                $caching_range, null, Control_Factory::SCR_CONTROLS_WIDTH, true);
+                $caching_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         }
 
         return $defs;

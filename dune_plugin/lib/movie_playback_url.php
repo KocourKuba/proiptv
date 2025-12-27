@@ -24,26 +24,25 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-class Named_Storage
+class Movie_Playback_Url
 {
     /**
      * @var string
      */
-    public $type = '';
-    /**
-     * @var string
-     */
-    public $name = '';
-    /**
-     * @var array
-     */
-    public $params = array();
+    public $url;
 
     /**
-     * @return string
+     * @var bool
      */
-    public function __toString()
+    public $is_stream_url = true;
+
+    /**
+     * @param $url
+     * @param bool $is_stream_url
+     */
+    public function __construct($url, $is_stream_url = true)
     {
-        return (string)json_format_unescaped($this);
+        $this->url = $url;
+        $this->is_stream_url = $is_stream_url;
     }
 }

@@ -356,13 +356,13 @@ class Control_Factory
      * @param string $title
      * @param string $initial_value
      * @param array $value_caption_pairs
-     * @param array|null $add_params
      * @param int $width
+     * @param array|null $add_params
      * @param bool $need_confirm
      * @param bool $need_apply
      */
     public static function add_combobox(&$defs, $handler, $name, $title, $initial_value, $value_caption_pairs,
-                                        $add_params, $width = Control_Factory::SCR_CONTROLS_WIDTH,
+                                        $width = Control_Factory::SCR_CONTROLS_WIDTH, &$add_params = array(),
                                         $need_confirm = false, $need_apply = false)
     {
         $apply_action = null;

@@ -12,44 +12,45 @@ class Vod_Category
     /**
      * @var string
      */
-    private $id;
+    public $id;
 
     /**
      * @var string
      */
-    private $caption;
+    public $caption;
 
     /**
      * @var string
      */
-    private $icon_url;
+    public $icon_url;
 
     /**
      * @var array
      */
-    private $sub_categories;
+    public $sub_categories;
 
     /**
      * @var Vod_Category|null
      */
-    private $parent;
+    public $parent;
 
     /**
      * @var string |null
      */
-    private $url;
+    public $url;
 
     /**
      * @param string $id
      * @param string $caption
      * @param Vod_Category|null $parent
+     * @param string $icon_url
      * @param string|null $url
      */
-    public function __construct($id, $caption, $parent = null, $url = null)
+    public function __construct($id, $caption, $parent = null, $icon_url = self::DEFAULT_ICON, $url = null)
     {
         $this->id = $id;
         $this->caption = $caption;
-        $this->icon_url = self::DEFAULT_ICON;
+        $this->icon_url = empty($icon_url) ? self::DEFAULT_ICON : $icon_url;
         $this->parent = $parent;
         $this->url = $url;
     }
