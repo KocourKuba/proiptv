@@ -791,6 +791,7 @@
         },
         "domains": {
           "see-tv.eu": "see-tv.eu",
+          "see24.eu": "see24.eu",
           "iptv.online": "iptv.online"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -1651,7 +1652,7 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "https://tvboom.vip/{LOGIN}/{PASSWORD}/{STREAM_ID}{SERVER_ID}playlist.m3u8"
+            "url": "https://tvboom.vip/{LOGIN}/{PASSWORD}/hls{SERVER_ID}playlist.m3u8"
           }
         },
         "servers": {
@@ -1659,10 +1660,6 @@
           "/rucdn/": "Russia 1",
           "/rucdn2/": "Russia 2",
           "/autocdn/": "Cloud"
-        },
-        "streams": {
-          "hls": "HLS",
-          "ts": "MPEG-TS"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
@@ -1799,6 +1796,7 @@
         },
         "domains": {
           "see-tv.eu": "see-tv.eu",
+          "see24.eu": "see24.eu",
           "iptv.online": "iptv.online"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
