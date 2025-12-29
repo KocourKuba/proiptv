@@ -48,19 +48,9 @@ class xtream_codes_api
     protected $password;
 
     /**
-     * @var array
+     * @var Default_Dune_Plugin
      */
-    protected $auth_info;
-
-    /**
-     * @var Curl_Wrapper
-     */
-    protected $curl_wrapper;
-
-    /**
-     * @var string
-     */
-    protected $user_cache;
+    private $plugin;
 
     ///////////////////////////////////////////////////////////////////////////////
 
@@ -70,24 +60,14 @@ class xtream_codes_api
      * @param string $password
      * @return void
      */
-    public function init($base_url, $username, $password)
+    public function init($plugin, $base_url, $username, $password)
     {
         hd_debug_print(null, true);
         hd_debug_print("Base url: $base_url", true);
+        $this->plugin = $plugin;
         $this->base_url = $base_url;
         $this->username = $username;
         $this->password = $password;
-        $this->user_cache = hash('md5', $username . $password);
-    }
-
-    /**
-     * Reset cache
-     * @return void
-     */
-    public function reset_cache()
-    {
-        $this->auth_info = null;
-        $this->curl_wrapper->clear_cache();
     }
 
     /**
@@ -105,7 +85,7 @@ class xtream_codes_api
      */
     public function get_categories($stream_type = self::VOD)
     {
-        return $this->curl_wrapper->download_content($this->get_categories_url($stream_type), Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+        return $this->json_request($this->get_categories_url($stream_type));
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -126,8 +106,7 @@ class xtream_codes_api
      */
     public function get_streams($stream_type = self::VOD, $category_id = null)
     {
-        $url = $this->get_streams_url($stream_type, $category_id);
-        return $this->curl_wrapper->download_content($url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+        return $this->json_request($this->get_streams_url($stream_type, $category_id));
     }
 
     /**
@@ -157,7 +136,7 @@ class xtream_codes_api
     public function get_stream_info($id, $stream_type = self::VOD)
     {
         $url = $this->get_stream_info_url($id, $stream_type);
-        return $this->curl_wrapper->download_content($url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+        return $this->json_request($url);
     }
 
     /**
@@ -182,5 +161,10 @@ class xtream_codes_api
             $stream_type,
             $this->username,
             $this->password);
+    }
+
+    protected function json_request($url)
+    {
+        return $this->plugin->setup_curl()->download_content($url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
     }
 }

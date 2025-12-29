@@ -168,12 +168,12 @@ class vod_korona extends vod_standard
     /**
      * @inheritDoc
      */
-    public function getFilterList($params)
+    public function getFilterList($query_id)
     {
         hd_debug_print(null, true);
-        hd_debug_print("getFilterList: $params");
+        hd_debug_print("getFilterList: $query_id");
 
-        $pairs = explode(",", $params);
+        $pairs = explode(",", $query_id);
         $filter_params = array();
         foreach ($pairs as $pair) {
             // country:USA

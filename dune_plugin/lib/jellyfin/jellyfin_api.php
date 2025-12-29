@@ -3,7 +3,7 @@ require_once "lib/curl_wrapper.php";
 
 class jellyfin_api
 {
-    const VOD = "Movie";
+    const MOVIES = "Movie";
     const SERIES = "Series";
     const TVSHOWS = "tvshows";
 
@@ -99,19 +99,13 @@ class jellyfin_api
      *
      * @return array
      */
-    public function getUserViews()
+    public function getUserViews($param = null)
     {
-        return $this->get('UserViews', array('userId' => $this->userId));
-    }
-
-    /**
-     * Get categories
-     *
-     * @return array
-     */
-    public function getCategories()
-    {
-        return $this->get('UserViews/GroupingOptions', array('userId' => $this->userId));
+        $query = 'UserViews';
+        if (!is_null($param)) {
+            $query .= "/$param";
+        }
+        return $this->get($query, array('userId' => $this->userId));
     }
 
     /**
@@ -139,49 +133,12 @@ class jellyfin_api
     }
 
     /**
-     * Extract data for selected index
-     *
-     * @param array $items
-     * @param string $index
-     * @return array
-     */
-    public static function stripIndex($items, $index = 'Items')
-    {
-        return isset($items[$index]) ? $items[$index] : $items;
-    }
-
-    // ---------------- Movies ----------------
-
-    /**
-     * @param array $query
-     * @return array
-     */
-    public function getMovies($query = array())
-    {
-        $query['IncludeItemTypes'] = 'Movie';
-        return self::stripIndex($this->getItems($query));
-    }
-
-    // ---------------- Series ----------------
-
-    /**
-     * @param array $query
-     * @return array
-     */
-    public function getSeries($query = array())
-    {
-        $query['IncludeItemTypes'] = 'Series';
-        return self::stripIndex($this->getItems($query));
-    }
-
-    /**
      * @param string $seriesId
      * @return array
      */
     public function getSeasons($seriesId)
     {
-        $items = $this->get('Shows/' . urlencode($seriesId) . '/Seasons');
-        return self::stripIndex($items);
+        return $this->get('Shows/' . urlencode($seriesId) . '/Seasons');
     }
 
     /**
@@ -193,8 +150,7 @@ class jellyfin_api
     {
         $query['SeasonId'] = urlencode($seasonId);
         $query['sortBy'] = 'IndexNumber';
-        $items = $this->get('Shows/' . urlencode($seriesId) . '/Episodes', $query);
-        return self::stripIndex($items);
+        return $this->get('Shows/' . urlencode($seriesId) . '/Episodes', $query);
     }
 
     // ---------------- Images ----------------
@@ -220,56 +176,7 @@ class jellyfin_api
         return $this->baseUrl . '/Items/' . urlencode($itemId) . '/Images/' . $imageType . $qs;
     }
 
-    /**
-     * @param string $itemId
-     * @return array
-     */
-    public function getAvailableImages($itemId)
-    {
-        $info  = $this->get('Items/' . urlencode($itemId));
-        $types = array();
-        if (isset($info['ImageTags'])) {
-            foreach ($info['ImageTags'] as $type => $tag) {
-                $types[] = $type;
-            }
-        }
-        if (!empty($info['BackdropImageTags'])) {
-            $types[] = 'Backdrop';
-        }
-        if (!empty($info['ScreenshotImageTags'])) {
-            $types[] = 'Screenshot';
-        }
-        return $types;
-    }
-
     // ---------------- Playback helpers ----------------
-
-    /**
-     * Query playback info (server determines direct vs transcode possibilities)
-     *
-     * @param string $itemId
-     * @param array $options
-     * @return array
-     */
-    public function getPlaybackInfo($itemId, $options = array())
-    {
-        $query['UserId'] = $this->userId;
-
-        if (isset($options['MaxStreamingBitrate'])) {
-            $query['MaxStreamingBitrate'] = $options['MaxStreamingBitrate'];
-        }
-
-        if (isset($options['StartTimeTicks'])) {
-            $query['StartTimeTicks'] = $options['StartTimeTicks'];
-        }
-
-        if (isset($options['Profile'])) {
-            // device profile if you have one
-            $query['Profile'] = $options['Profile'];
-        }
-
-        return $this->get('Items/' . urlencode($itemId) . '/PlaybackInfo', $query);
-    }
 
     /**
      * get play url
@@ -298,9 +205,6 @@ class jellyfin_api
      */
     public function getDownloadUrl($itemId)
     {
-        // http://jeleyka.balelbrus.com/Items/2749bdccd02b6853f544af497b4bc4fc/Download?api_key=c50bd0f08d3947dea02b7751ce5987ce
-        // http://jeleyka.balelbrus.com/Items/2be5791959d2026fae72704697f0215b/Download?api_key=c50bd0f08d3947dea02b7751ce5987ce
-
         $query['apiKey'] = $this->accessToken;
         return $this->baseUrl . '/Items/' . urlencode($itemId) . '/Download?' . http_build_query($query);
     }
@@ -313,43 +217,9 @@ class jellyfin_api
      * @param array $query
      * @return array
      */
-    public function getGenres($query = array())
+    public function getFilters($query = array())
     {
-        return $this->get('Genres', $query);
-    }
-
-    /**
-     * Get all distinct production years for Movies/Series
-     *
-     * @param array $options
-     * @return array
-     */
-    public function getYears($options = array())
-    {
-        $query = array(
-            'IncludeItemTypes' => isset($options['types']) ? $options['types'] : 'Movie,Series',
-            'Fields'           => 'ProductionYear',
-            'Recursive'        => 'true',
-        );
-
-        if (isset($options['limit'])) {
-            $query['Limit'] = $options['Limit'];
-        }
-
-        $items = $this->getItems($query);
-        $years = array();
-
-        if (isset($items['Items'])) {
-            foreach ($items['Items'] as $item) {
-                if (isset($item['ProductionYear'])) {
-                    $years[$item['ProductionYear']] = true;
-                }
-            }
-        }
-
-        $yearList = array_keys($years);
-        sort($yearList);
-        return $yearList;
+        return $this->get('Items/Filters2', $query);
     }
 
     /**

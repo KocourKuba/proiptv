@@ -576,13 +576,13 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param string $params
+     * @param string $query_id
      * @return array
      */
-    public function getFilterList($params)
+    public function getFilterList($query_id)
     {
         hd_debug_print(null, true);
-        hd_debug_print("getFilterList: $params");
+        hd_debug_print("getFilterList: $query_id");
         return array();
     }
 

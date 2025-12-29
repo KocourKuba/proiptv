@@ -525,7 +525,7 @@ class api_default
             return false;
         }
 
-        return is_null($file) ? Curl_Wrapper::decodeJsonResponse(false, $response, $decode) : true;
+        return is_null($file) ? $response : true;
     }
 
     /**

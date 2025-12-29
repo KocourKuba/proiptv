@@ -78,7 +78,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $season_id = safe_get_member($media_url, 'season_id');
         $qualities = $movie->collect_all_qualities($season_id);
-        //hd_debug_print("All Qualities: " . json_format_unescaped($qualities), true);
+        hd_debug_print("All Qualities: " . json_format_unescaped($qualities), true);
         $audios = $movie->collect_all_audios($season_id);
         //hd_debug_print("All Audios: " . json_format_unescaped($audios), true);
 
@@ -138,8 +138,10 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
                 if (is_null($movie) || !$movie->has_qualities($selected_media_url->episode_id)) break;
 
                 $cur_quality = $this->plugin->get_setting(PARAM_VOD_DEFAULT_QUALITY, 'auto');
+                hd_debug_print("Default Quality: $cur_quality");
                 $movie_quality = $movie->get_qualities($selected_media_url->episode_id);
                 unset($movie_quality['auto']);
+                hd_debug_print("All Qualities: " . json_format_unescaped($movie_quality), true);
                 $qualities = safe_merge_array(array('auto' => TR::t('by_default')), $movie_quality);
                 foreach ($qualities as $key => $quality_name) {
                     $menu_items[] = $this->plugin->create_menu_item($this,

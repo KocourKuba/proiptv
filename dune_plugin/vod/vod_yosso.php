@@ -44,6 +44,7 @@ class vod_yosso extends vod_standard
 
         $this->vod_quality = true;
         $this->vod_audio = true;
+        $this->vod_filters = array("source", "genre");
         $vod_url = $this->provider->replace_macros($this->provider->getRawApiCommand(API_COMMAND_GET_VOD));
         $this->jfc = new jellyfin_api();
         $this->jfc->init($this->plugin, $vod_url, $this->plugin->plugin_info['app_version']);
@@ -67,7 +68,7 @@ class vod_yosso extends vod_standard
             return null;
         }
 
-        list($real_id, $category_type) = explode('_', $movie_id) + array('', jellyfin_api::VOD);
+        list($real_id, $category_type) = explode('_', $movie_id) + array('', jellyfin_api::MOVIES);
         if (empty($real_id)) {
             hd_debug_print("Real movie ID is empty!");
             return null;
@@ -84,27 +85,27 @@ class vod_yosso extends vod_standard
         $qualities_str = '';
         $movie_type = safe_get_value($movie_item, 'Type');
         hd_debug_print("movie type: $movie_type", true);
-        if ($movie_type === jellyfin_api::VOD) {
+        if ($movie_type === jellyfin_api::MOVIES) {
             $name = safe_get_value($movie_item, 'Name', 'no name');
             $default_url = new Movie_Playback_Url($this->jfc->getPlayUrl($real_id));
             $movie_series = new Movie_Series($real_id, $name, $default_url);
             $movie->add_series_data($this->fill_series($movie_series, $real_id, safe_get_value($movie_item, 'MediaSources', array())));
             $qualities_str = implode(', ', $movie->get_qualities($real_id));
         } else if ($movie_type === jellyfin_api::SERIES) {
-            foreach ($this->jfc->getSeasons($real_id) as $season) {
-                $season_id = $season['Id'];
+            $seasons = $this->jfc->getSeasons($real_id);
+            $season_idx = 0;
+            foreach (safe_get_value($seasons, 'Items', array()) as $season) {
+                $season_id = safe_get_value($season, 'Id');
                 if (empty($season_id)) continue;
 
                 hd_debug_print("season id: $season_id", true);
-                $movie_season = new Movie_Season($season_id, $season['IndexNumber']);
+                $movie_season = new Movie_Season($season_id, safe_get_value($season, 'IndexNumber', $season_idx++));
                 $movie_season->name = safe_get_value($season, 'Name');
                 $movie_season->poster = $this->jfc->getItemImageUrl($season_id);
                 $movie->add_season_data($movie_season);
 
                 $episodes = $this->jfc->getEpisodes($real_id, $season_id);
-                if (empty($episodes)) continue;
-
-                foreach ($episodes as $episode) {
+                foreach (safe_get_value($episodes, 'Items', array()) as $episode) {
                     $episode_id = $episode['Id'];
                     if (empty($episode_id)) continue;
 
@@ -188,7 +189,7 @@ class vod_yosso extends vod_standard
                     if ($stream_id == $real_id) {
                         $movie_series->add_variant_data('auto', $quality);
                     }
-                    $movie_series->add_variant_data($stream_id, $quality);
+                    $movie_series->add_variant_data($name, $quality);
                     break;
                 }
             }
@@ -207,30 +208,56 @@ class vod_yosso extends vod_standard
         hd_debug_print(null, true);
 
         $collections = safe_get_value($this->jfc->getUserViews(), 'Items', array());
+        $exist_filters = array(
+            'source' => array(
+                'title' => TR::load('category'),
+                'values' => array()),
+            'genre' => array(
+                'title' => TR::load('genre'),
+                'values' => array(-1 => TR::t('no'))),
+        );
         foreach ($collections as $collection) {
             if (safe_get_value($collection, 'Type') != "CollectionFolder") continue;
 
             $sid = $id = safe_get_value($collection, 'Id');
-            hd_debug_print("Collection type: " . safe_get_value($collection, 'CollectionType'));
-            if (safe_get_value($collection, 'CollectionType') === jellyfin_api::TVSHOWS) {
-                $sid .= '_' . jellyfin_api::SERIES;
-            } else {
-                $sid .= '_' . jellyfin_api::VOD;
-            }
+            $name = safe_get_value($collection, 'Name', 'no name');
 
-            $query = array('ParentId' => $id, 'StartIndex' => 0, 'Limit' => 1);
-            $items = $this->jfc->getItems($query);
+            $query_params = array('ParentId' => $id, 'StartIndex' => 0, 'Limit' => 1);
+            $items = $this->jfc->getItems($query_params);
             $movie_count = safe_get_value($items, 'TotalRecordCount');
             if (empty($movie_count)) continue;
 
-            $name = safe_get_value($collection, 'Name', 'no name') . " ($movie_count)";
+            $collection_type = safe_get_value($collection, 'CollectionType');
+            hd_debug_print("Collection type: $collection_type");
+            if ($collection_type === jellyfin_api::TVSHOWS) {
+                $sid .= '_' . jellyfin_api::SERIES;
+            } else if (empty($collection_type) || $collection_type === jellyfin_api::MOVIES) {
+                $sid .= '_' . jellyfin_api::MOVIES;
+            }
+
+            $exist_filters['source']['values'][$id] = $name;
             $icon = $this->jfc->getItemImageUrl($id, 'Primary', 400, 0, 'Jpg');
-            $cat = new Vod_Category($sid, $name, null, $icon);
+            $cat = new Vod_Category($sid, $name . " ($movie_count)", null, $icon);
             $category_list[] = $cat;
             $category_index[$id] = $cat;
+
+            $query_params = array('ParentId' => $id, 'recursive' => 'true');
+            $jsonData = $this->jfc->getFilters($query_params);
+
+            $filters = safe_get_value($jsonData, 'Genres', array());
+            foreach ($filters as $filter) {
+                $key = safe_get_value($filter, 'Id');
+                $name = safe_get_value($filter, 'Name');
+                if (empty($key) || empty($name)) continue;
+
+                $exist_filters['genre']['values'][$key] = $name;
+            }
         }
 
+        $this->set_filters($exist_filters);
+
         hd_debug_print("Categories read: " . count($category_list));
+        hd_debug_print("Filters count: " . count($exist_filters));
 
         return true;
     }
@@ -249,15 +276,110 @@ class vod_yosso extends vod_standard
             return $movies;
         }
 
-        list($category_id, $category_type) = explode('_', $query_id) + array($query_id, jellyfin_api::VOD);
-        $query = array('ParentId' => $category_id, 'StartIndex' => $page_idx * self::PAGE_LIMIT, 'Limit' => self::PAGE_LIMIT);
-        if ($category_type === jellyfin_api::VOD) {
-            $vod_items = $this->jfc->getMovies($query);
-        } else {
-            $vod_items = $this->jfc->getSeries($query);
+        list($category_id, $category_type) = explode('_', $query_id) + array($query_id, jellyfin_api::MOVIES);
+        $query_params['ParentId'] = $category_id;
+        $query_params['StartIndex'] = $page_idx * self::PAGE_LIMIT;
+        $query_params['Limit'] = self::PAGE_LIMIT;
+        $query_params['IncludeItemTypes'] = $category_type === jellyfin_api::MOVIES ? jellyfin_api::MOVIES : jellyfin_api::SERIES;
+
+        $vod_items = $this->jfc->getItems($query_params);
+        foreach (safe_get_value($vod_items, 'Items') as $item) {
+            $movie = $this->CreateShortMovie($item);
+            if (!empty($movie)) {
+                $movies[] = $movie;
+            }
         }
 
-        foreach ($vod_items as $item) {
+        if (!empty($movies)) {
+            $this->get_next_page($query_id);
+        }
+
+        hd_debug_print("Movies read for query: $query_id: " . count($movies));
+        return $movies;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getSearchList($keyword)
+    {
+        hd_debug_print("getSearchList $keyword");
+
+        $query_id = mb_strtolower($keyword, 'UTF-8');
+
+        $movies = array();
+        $page_idx = $this->get_current_page($query_id);
+        if ($page_idx < 0) {
+            return $movies;
+        }
+
+        $query_params['SearchTerm'] = $keyword;
+        $query_params['includeItemTypes'] = jellyfin_api::MOVIES . ','. jellyfin_api::SERIES;
+        $query_params['recursive'] = 'true';
+        $query_params['imageTypeLimit'] = 1;
+        $query_params['StartIndex'] = $page_idx * self::PAGE_LIMIT;
+        $query_params['Limit'] = self::PAGE_LIMIT;
+
+        $vod_items = $this->jfc->getItems($query_params);
+        foreach (safe_get_value($vod_items, 'Items', array()) as $item) {
+            $movie = $this->CreateShortMovie($item);
+            if (!empty($movie)) {
+                $movies[] = $movie;
+            }
+        }
+
+        if (!empty($movies)) {
+            $this->get_next_page($query_id);
+        }
+
+        hd_debug_print("Movies found for query: $query_id: " . count($movies));
+        return $movies;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getFilterList($query_id)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("getFilterList: $query_id");
+
+        $movies = array();
+        $page_idx = $this->get_current_page($query_id);
+        if ($page_idx < 0) {
+            return $movies;
+        }
+
+        $pairs = explode(",", $query_id);
+        $query_params = array();
+        foreach ($pairs as $pair) {
+            /** @var array $m */
+            if (!preg_match("/^(.+):(.+)$/", $pair, $m)) continue;
+
+            $filter = $this->get_filter($m[1]);
+            if ($filter === null) continue;
+            if (!empty($filter['values'])) {
+                $item_idx = array_search($m[2], $filter['values']);
+                if ($item_idx !== false && $item_idx !== -1) {
+                    if ($m[1] === "source") {
+                        $query_params['ParentId'] = $item_idx;
+                    } else if ($m[1] === "genre") {
+                        $query_params['genreIds'] = $item_idx;
+                    }
+                }
+            }
+        }
+
+        if (empty($query_params)) {
+            return array();
+        }
+
+        $query_params['imageTypeLimit'] = 1;
+        $query_params['StartIndex'] = $page_idx * self::PAGE_LIMIT;
+        $query_params['Limit'] = self::PAGE_LIMIT;
+
+        $vod_items = $this->jfc->getItems($query_params);
+        foreach (safe_get_value($vod_items, 'Items', array()) as $item) {
             $movie = $this->CreateShortMovie($item);
             if (!empty($movie)) {
                 $movies[] = $movie;
@@ -283,47 +405,9 @@ class vod_yosso extends vod_standard
             return null;
         }
         $name = safe_get_value($movie_info, 'Name', 'no name');
-        $type = safe_get_value($movie_info, 'Type', jellyfin_api::VOD);
+        $type = safe_get_value($movie_info, 'Type', jellyfin_api::MOVIES);
         $rating = safe_get_value($movie_info, 'OfficialRating', 0);
         $icon = $this->jfc->getItemImageUrl($id);
         return new Short_Movie("{$id}_$type", $name, $icon, TR::t('vod_screen_movie_info__2', $name, $rating));
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getSearchList($keyword)
-    {
-        hd_debug_print("getSearchList $keyword");
-
-        $query_id = mb_strtolower($keyword, 'UTF-8');
-
-        $movies = array();
-        $page_idx = $this->get_current_page($query_id);
-        if ($page_idx < 0) {
-            return $movies;
-        }
-
-        $query['SearchTerm'] = $keyword;
-        $query['includeItemTypes'] = jellyfin_api::VOD . ','. jellyfin_api::SERIES;
-        $query['recursive'] = 'true';
-        $query['imageTypeLimit'] = 1;
-        $query['StartIndex'] = $page_idx * self::PAGE_LIMIT;
-        $query['Limit'] = self::PAGE_LIMIT;
-
-        $vod_items = $this->jfc->getItems($query);
-        foreach (safe_get_value($vod_items, 'Items', array()) as $item) {
-            $movie = $this->CreateShortMovie($item);
-            if (!empty($movie)) {
-                $movies[] = $movie;
-            }
-        }
-
-        if (!empty($movies)) {
-            $this->get_next_page($query_id);
-        }
-
-        hd_debug_print("Movies found for query: $query_id: " . count($movies));
-        return $movies;
     }
 }

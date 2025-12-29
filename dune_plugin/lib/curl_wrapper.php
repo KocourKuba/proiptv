@@ -165,7 +165,7 @@ class Curl_Wrapper
      *
      * @param string $url
      * @param int $opts options
-     * @return bool|string|array content of the downloaded file or result of operation or decoded json response
+     * @return bool|string|array|object content of the downloaded file or result of operation or decoded json response
      */
     public function download_content($url, $opts = self::RET_RAW)
     {

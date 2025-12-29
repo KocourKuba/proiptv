@@ -284,10 +284,10 @@ class vod_ipstream extends vod_standard
     /**
      * @inheritDoc
      */
-    public function getFilterList($params)
+    public function getFilterList($query_id)
     {
         hd_debug_print(null, true);
-        hd_debug_print("getFilterList: $params");
+        hd_debug_print("getFilterList: $query_id");
 
         if ($this->vod_items === false) {
             hd_debug_print("failed to load movies");
@@ -296,7 +296,7 @@ class vod_ipstream extends vod_standard
 
         $movies = array();
 
-        $pairs = explode(",", $params);
+        $pairs = explode(",", $query_id);
         $post_params = array();
         foreach ($pairs as $pair) {
             /** @var array $m */

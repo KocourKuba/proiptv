@@ -304,25 +304,24 @@ class vod_edem extends vod_standard
     /**
      * @inheritDoc
      */
-    public function getFilterList($params)
+    public function getFilterList($query_id)
     {
         hd_debug_print(null, true);
-        hd_debug_print("getFilterList: $params");
+        hd_debug_print("getFilterList: $query_id");
 
-        $pairs = explode(",", $params);
+        $pairs = explode(",", $query_id);
         $post_params = array();
         foreach ($pairs as $pair) {
             /** @var array $m */
-            if (preg_match("/^(.+):(.+)$/", $pair, $m)) {
-                $filter = $this->get_filter($m[1]);
-                if ($filter !== null && !empty($filter['values'])) {
-                    $item_idx = array_search($m[2], $filter['values']);
-                    if ($item_idx !== false && $item_idx !== -1) {
-                        if ($m[1] === 'years') {
-                            $post_params[$m[1]] = (string)$item_idx;
-                        } else {
-                            $post_params[$m[1]] = (int)$item_idx;
-                        }
+            if (!preg_match("/^(.+):(.+)$/", $pair, $m)) continue;
+            $filter = $this->get_filter($m[1]);
+            if ($filter !== null && !empty($filter['values'])) {
+                $item_idx = array_search($m[2], $filter['values']);
+                if ($item_idx !== false && $item_idx !== -1) {
+                    if ($m[1] === 'years') {
+                        $post_params[$m[1]] = (string)$item_idx;
+                    } else {
+                        $post_params[$m[1]] = (int)$item_idx;
                     }
                 }
             }
@@ -332,13 +331,13 @@ class vod_edem extends vod_standard
             return array();
         }
 
-        $page_idx = $this->get_next_page($params);
+        $page_idx = $this->get_next_page($query_id);
         if ($page_idx < 0)
             return array();
 
         $post_params['filter'] = 'on';
         $post_params['offset'] = $page_idx;
-        return $this->CollectSearchResult($params, $this->make_json_request($post_params, true));
+        return $this->CollectSearchResult($query_id, $this->make_json_request($post_params, true));
     }
 
     /**
