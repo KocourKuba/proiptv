@@ -75,17 +75,26 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // Curl connect timeout
         foreach (array(30, 60, 90, 120, 180, 240, 300) as $sec) {
-            $range[$sec] = $sec;
+            $time_range[$sec] = $sec;
         }
         Control_Factory::add_combobox($defs, $this, PARAM_CURL_CONNECT_TIMEOUT, TR::t('setup_connect_timeout'),
             $this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30),
-            $range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+            $time_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////
         // Curl download timeout
         Control_Factory::add_combobox($defs, $this, PARAM_CURL_DOWNLOAD_TIMEOUT, TR::t('setup_download_timeout'),
             $this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120),
-            $range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+            $time_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+
+        //////////////////////////////////////
+        // Curl cache time
+        foreach (array(1, 2, 3, 6, 12, 24) as $sec) {
+            $cache_range[$sec] = $sec;
+        }
+        Control_Factory::add_combobox($defs, $this, PARAM_CURL_FILE_CACHE_TIME, TR::t('setup_cache_time'),
+            $this->plugin->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 1),
+            $cache_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////
         // Settings full size remote
@@ -158,6 +167,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
 
             case PARAM_CURL_CONNECT_TIMEOUT:
             case PARAM_CURL_DOWNLOAD_TIMEOUT:
+            case PARAM_CURL_FILE_CACHE_TIME:
                 $this->plugin->set_parameter($control_id, $user_input->{$control_id});
                 break;
 

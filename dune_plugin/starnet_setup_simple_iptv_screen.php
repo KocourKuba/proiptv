@@ -210,10 +210,9 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
 
                         $tmp_file = get_temp_path(Hashed_Array::hash($uri));
                         $curl_wrapper = Curl_Wrapper::getInstance();
-                        $this->plugin->set_curl_timeouts($curl_wrapper);
                         $res = $curl_wrapper->download_file($uri, $tmp_file);
                         if (!$res) {
-                            $logfile = "Error code: " . $curl_wrapper->get_error_no() . "\n" . $curl_wrapper->get_error_desc();
+                            $logfile = "Error code: " . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc();
                             throw new Exception(TR::load('err_load_playlist') . " '$uri'\n$logfile");
                         }
                     }
@@ -227,7 +226,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                     $pl_type = safe_get_member($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
                     if ($pl_type === CONTROL_PLAYLIST_IPTV) {
                         if ($detect_id === CONTROL_DETECT_ID) {
-                            list($detect_id, $detect_info) = $this->plugin->collect_detect_info($tmp_file);
+                            $detect_info = $this->plugin->collect_detect_info($tmp_file);
                             $post_action = Action_Factory::show_title_dialog(TR::t('info'), $detect_info, $post_action);
                         }
                         $this->plugin->set_playlist_parameter($playlist_id, PARAM_ID_MAPPER, $detect_id);

@@ -37,7 +37,7 @@ class Short_Movie_Range
     public $total;
 
     /**
-     * @var array|mixed
+     * @var Short_Movie[]
      */
     public $short_movies;
 

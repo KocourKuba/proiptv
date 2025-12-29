@@ -87,8 +87,6 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
         }
 
         $movie_info = $movie->get_movie_info();
-        hd_debug_print("movie info: " . json_format_unescaped($movie_info), true);
-
         $fav_ids = $this->plugin->get_channels_order(VOD_FAV_GROUP_ID);
         $movie_id = $movie->get_id();
         $right_button_caption = in_array($movie_id, $fav_ids) ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');

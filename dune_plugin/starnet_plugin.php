@@ -145,8 +145,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
             $ver = $this->plugin_info['app_version'];
             $model = get_product_id();
             $firmware = get_raw_firmware_version();
-            $doc = Curl_Wrapper::getInstance()->download_content(self::CONFIG_URL . "?ver=$ver&model=$model&firmware=$firmware&serial=$serial");
-            $jsonArray = json_decode($doc, true);
+            $jsonArray = Curl_Wrapper::getInstance()->download_content(self::CONFIG_URL . "?ver=$ver&model=$model&firmware=$firmware&serial=$serial", Curl_Wrapper::RET_ARRAY);
             if (empty($jsonArray) || !isset($jsonArray['providers'])) {
                 if (file_exists($tmp_file)) {
                     hd_debug_print("Load actual providers configuration");

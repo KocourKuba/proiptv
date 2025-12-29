@@ -63,6 +63,11 @@ class vod_sharavoz extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
 
+        if (empty($movie_id)) {
+            hd_debug_print("Movie ID is empty!");
+            return null;
+        }
+
         $arr = explode("_", $movie_id);
         $stream_id = safe_get_value($arr, 0, $movie_id);
         $stream_type = safe_get_value($arr, 1, xtream_codes_api::VOD);
@@ -73,6 +78,8 @@ class vod_sharavoz extends vod_standard
             hd_debug_print("failed to load movie: $stream_id from: $stream_type");
             return null;
         }
+
+        $info = safe_get_value($item, 'info', array());
 
         // VOD response
         //
@@ -140,25 +147,25 @@ class vod_sharavoz extends vod_standard
         //    },
         //
 
-        $age = self::get_data_variant($item->info, "age");
+        $age = self::get_data_variant($info, "age");
         $age_limit = empty($age) ? array() : array(TR::t('vod_screen_age_limit') => $age);
 
         $movie = new Movie($movie_id, $this->plugin);
         $movie->set_data(
-            self::get_data_variant($item->info, "name"), // name,
-            self::get_data_variant($item->info, "o_name"), // name_original,
-            self::get_data_variant($item->info, array("plot", "description")),  // description,
-            self::get_data_variant($item->info, array("movie_image", "cover")),  // poster_url,
-            self::get_data_variant($item->info, array("duration", "episode_run_time")), // length_min,
-            self::get_data_variant($item->info, array("releasedate", "releaseDate", "release_date")), // year,
-            self::get_data_variant($item->info, "director"), // director_str,
+            self::get_data_variant($info, "name"), // name,
+            self::get_data_variant($info, "o_name"), // name_original,
+            self::get_data_variant($info, array("plot", "description")),  // description,
+            self::get_data_variant($info, array("movie_image", "cover")),  // poster_url,
+            self::get_data_variant($info, array("duration", "episode_run_time")), // length_min,
+            self::get_data_variant($info, array("releasedate", "releaseDate", "release_date")), // year,
+            self::get_data_variant($info, "director"), // director_str,
             '', // scenario_str,
-            self::get_data_variant($item->info, array("actors", "cast")), // actors_str,
-            self::get_data_variant($item->info, "genre"), // genres_str,
-            self::get_data_variant($item->info, "rating"), // rate_imdb,
-            self::get_data_variant($item->info, "rating_count_kinopoisk"), // rate_kinopoisk,
+            self::get_data_variant($info, array("actors", "cast")), // actors_str,
+            self::get_data_variant($info, "genre"), // genres_str,
+            self::get_data_variant($info, "rating"), // rate_imdb,
+            self::get_data_variant($info, "rating_count_kinopoisk"), // rate_kinopoisk,
             '', // rate_mpaa,
-            self::get_data_variant($item->info, "country"), // country,
+            self::get_data_variant($info, "country"), // country,
             '',
             array(),
             $age_limit // rate details
@@ -167,9 +174,11 @@ class vod_sharavoz extends vod_standard
         if ($stream_type === xtream_codes_api::VOD) {
             $url = $this->xtream->get_stream_url($stream_id);
             hd_debug_print("movie playback_url: $url", true);
-            $movie->add_series_data(new Movie_Series($movie_id, $item->info->name, new Movie_Playback_Url($url)));
+            $movie->add_series_data(new Movie_Series($movie_id, $info['name'], new Movie_Playback_Url($url)));
         } else if ($stream_type === xtream_codes_api::SERIES) {
-            foreach ($item->episodes as $season_id => $season) {
+            foreach ($item['episodes'] as $season_id => $season) {
+                if (empty($season_id)) continue;
+
                 $movie_season = new Movie_Season($season_id);
                 if (!empty($season->name)) {
                     $movie_season->description = $season->name;
@@ -266,11 +275,10 @@ class vod_sharavoz extends vod_standard
         $categories = $this->xtream->get_categories($stream_type);
         if ($categories !== false) {
             foreach ($categories as $item) {
-                //hd_debug_print("$item->category_id ($item->category_name)", true);
-                $pair = explode("|", $item->category_name);
+                $pair = explode("|", $item['category_name']);
 
                 $parent_id = trim($pair[0]);
-                $query_id = trim($pair[1]) . "_" . $item->category_id . "_" . $stream_type;
+                $query_id = trim($pair[1]) . "_" . $item['category_id'] . "_" . $stream_type;
                 $category_tree[$parent_id][] = $query_id;
             }
         }
@@ -342,8 +350,7 @@ class vod_sharavoz extends vod_standard
      */
     public function getSearchList($keyword)
     {
-        hd_debug_print(null, true);
-        hd_debug_print($keyword);
+        hd_debug_print("getSearchList $keyword");
 
         $movies = array();
 
@@ -359,11 +366,6 @@ class vod_sharavoz extends vod_standard
 
     protected function search($stream_type, $keyword, &$movies)
     {
-        $categories = $this->xtream->get_categories($stream_type);
-        if ($categories === false) {
-            return;
-        }
-
         $streams = $this->xtream->get_streams($stream_type);
         if ($streams === false) {
             return;

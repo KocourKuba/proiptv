@@ -2291,6 +2291,10 @@ function glob_dir($path, $pattern = null, $exclude_dir = true)
     return $list;
 }
 
+/**
+ * @param string $dir
+ * @return bool
+ */
 function delete_directory($dir)
 {
     if (!file_exists($dir)) {
@@ -2309,6 +2313,17 @@ function delete_directory($dir)
     }
 
     return rmdir($dir);
+}
+
+/**
+ * @param string $dir
+ */
+function clear_directory($dir)
+{
+    foreach (scandir($dir) as $item) {
+        if ($item === '.' || $item === '..') continue;
+        delete_directory($dir . '/' . $item);
+    }
 }
 
 /**
@@ -2393,7 +2408,7 @@ function safe_merge_array($ar1, $ar2)
  * Safe get value from array by key
  *
  * @param array $ar
- * @param string $param
+ * @param string|array $param
  * @param mixed|null $default
  * @return mixed
  */
@@ -2402,6 +2417,18 @@ function safe_get_value($ar, $param, $default = null)
     if (is_null($param)) {
         return $default;
     }
+
+    if (is_array($param)) {
+        $next = $ar;
+        foreach ($param as $val) {
+            if (!isset($next[$val])) {
+                return $default;
+            }
+            $next = $next[$val];
+        }
+        return $next;
+    }
+
     return isset($ar[$param]) ? $ar[$param] : $default;
 }
 

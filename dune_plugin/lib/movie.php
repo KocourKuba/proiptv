@@ -63,7 +63,6 @@ class Movie extends Json_Serializer implements User_Input_Handler
     /**
      * @param string $id
      * @param Default_Dune_Plugin $plugin
-     * @throws Exception
      */
     public function __construct($id, $plugin)
     {
@@ -306,7 +305,6 @@ class Movie extends Json_Serializer implements User_Input_Handler
 
     /**
      * @param Movie_Season $movie_season
-     * @throws Exception
      */
     public function add_season_data($movie_season)
     {
@@ -323,7 +321,6 @@ class Movie extends Json_Serializer implements User_Input_Handler
 
     /**
      * @param Movie_Series $movie_series
-     * @throws Exception
      */
     public function add_series_data($movie_series)
     {
@@ -416,6 +413,10 @@ class Movie extends Json_Serializer implements User_Input_Handler
         }
 
         $series = $this->get_series($series_id);
+        if (empty($series->variants)) {
+            return array();
+        }
+
         return array_map(function ($variant) {
             return $variant->name;
         }, $series->variants);
@@ -454,22 +455,17 @@ class Movie extends Json_Serializer implements User_Input_Handler
      */
     public function get_audios($series_id, $quality_id)
     {
-        hd_debug_print(null, true);
-        hd_debug_print("get_audios : series: $series_id, quality: $quality_id", true);
         if (!$this->has_series()) {
-            hd_debug_print("no series present", true);
             return null;
         }
 
         $q_variant = $this->get_quality($series_id, $quality_id);
         if (empty($q_variant)) {
-            hd_debug_print("no quality present", true);
             return null;
         }
 
         $a_variants = $q_variant->get_variants();
         if (empty($a_variants)) {
-            hd_debug_print("no audio present", true);
             return null;
         }
 
@@ -488,13 +484,11 @@ class Movie extends Json_Serializer implements User_Input_Handler
     {
         $q_variant = $this->get_quality($series_id, $quality_id);
         if (empty($q_variant)) {
-            hd_debug_print("no quality present", true);
             return null;
         }
 
         $a_variant = $q_variant->get_variant($id);
         if (is_null($a_variant)) {
-            hd_debug_print("no audio present for '$id", true);
             return null;
         }
 
@@ -537,6 +531,8 @@ class Movie extends Json_Serializer implements User_Input_Handler
             if (!is_null($season_id) && $season_id !== $episode->season_id) continue;
 
             $series_quality = $this->get_qualities($series_id);
+            if (empty($series_quality)) continue;
+
             foreach ($series_quality as $key => $quality) {
                 $quality_audios = $this->get_audios($series_id, $key);
                 if (!empty($quality_audios)) {

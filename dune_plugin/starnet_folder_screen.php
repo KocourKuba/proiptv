@@ -196,7 +196,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                 return Action_Factory::close_dialog_and_run(User_Input_Handler_Registry::create_action($this, self::ACTION_DO_MKDIR));
 
             case self::ACTION_DO_MKDIR:
-                return $this->do_mkdir($user_input, $plugin_cookies);
+                return $this->do_mkdir($user_input);
 
             case ACTION_OPEN_FOLDER:
                 return $this->do_open_folder($user_input);
@@ -731,10 +731,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
 
     /**
      * @param object $user_input
-     * @param object $plugin_cookies
      * @return array
      */
-    protected function do_mkdir($user_input, $plugin_cookies)
+    protected function do_mkdir($user_input)
     {
         hd_debug_print(null, true);
 
@@ -743,7 +742,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
         if (!create_path($parent_url->{PARAM_FILEPATH} . '/' . $user_input->{self::ACTION_CREATE_FOLDER})) {
             return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_cant_create_folder'));
         }
-        return Action_Factory::invalidate_all_folders($plugin_cookies, array($user_input->parent_media_url));
+        return Action_Factory::invalidate_folders(array($user_input->parent_media_url));
     }
 
     /**

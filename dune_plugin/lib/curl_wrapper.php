@@ -30,6 +30,12 @@ class Curl_Wrapper
 {
     const CACHE_TAG_FILE = "etag_cache.dat";
 
+    const RET_RAW = 1;
+    const RET_ARRAY = 2;
+    const RET_OBJECT = 4;
+    const USE_ETAG = 8;
+    const CACHE_RESPONSE = 16;
+
     /**
      * @var int
      */
@@ -43,7 +49,7 @@ class Curl_Wrapper
     /**
      * @var int
      */
-    private $http_code;
+    private static $http_code;
 
     /**
      * @var array
@@ -68,12 +74,12 @@ class Curl_Wrapper
     /**
      * @var int
      */
-    private $error_no;
+    private static $error_no;
 
     /**
      * @var string
      */
-    private $error_desc;
+    private static $error_desc;
 
     /**
      * @var array|null
@@ -85,26 +91,58 @@ class Curl_Wrapper
      */
     private static $cache_db = null;
 
-    public function __construct()
+    /**
+     * @var string
+     */
+    private $file_cache_time = 3600;
+
+    /**
+     * @var string
+     */
+    private $file_cache_path;
+
+    /**
+     * @var string
+     */
+    private $base_cache_path;
+
+    /**
+     * @param string $cache_subdir
+     */
+    protected function __construct($base_dir = '', $cache_subdir = 'common')
     {
+        if (empty($base_dir)) {
+            $base_dir = get_slash_trailed_path(get_temp_path(CURL_CACHE_SUBDIR));
+        }
+        create_path($base_dir);
+        $this->base_cache_path = $base_dir;
+        $this->file_cache_path = get_slash_trailed_path($cache_subdir);
+        $path = $this->base_cache_path . $this->file_cache_path;
+        create_path($path);
+        hd_debug_print("Base cache path: $this->base_cache_path", true);
+        hd_debug_print("File cache path: $this->file_cache_path", true);
+        hd_debug_print("Full cache path: $path", true);
         $this->reset();
     }
 
+    /**
+     * @return void
+     */
     public function reset()
     {
         hd_debug_print(null, true);
         self::$http_response_headers = null;
+        self::$error_no = 0;
+        self::$error_desc = '';
+        self::$http_code = 0;
         $this->send_headers = array();
         $this->is_post = false;
         $this->post_data = null;
-        $this->http_code = 0;
-        $this->error_no = 0;
-        $this->error_desc = '';
     }
 
-    public static function getInstance()
+    public static function getInstance($base_dir = '', $cache_subdir = 'common')
     {
-        return new self();
+        return new self($base_dir, $cache_subdir);
     }
 
     /**
@@ -112,28 +150,43 @@ class Curl_Wrapper
      *
      * @param string $url
      * @param string $save_file path to file
-     * @param bool $use_cache use ETag caching
+     * @param int $cache_opts caching parameters
      * @return bool result of operation
      */
-    public function download_file($url, $save_file, $use_cache = false)
+    public function download_file($url, $save_file, $cache_opts = 0)
     {
         hd_debug_print(null, true);
 
-        return $this->exec_php_curl($url, $save_file, $use_cache);
+        return $this->exec_php_curl($url, $save_file, $cache_opts);
     }
 
     /**
-     * download and return contents
+     * download and decode return contents
      *
      * @param string $url
-     * @param bool $use_cache use ETag caching
-     * @return string|bool content of the downloaded file or result of operation
+     * @param int $opts options
+     * @return bool|string|array content of the downloaded file or result of operation or decoded json response
      */
-    public function download_content($url, $use_cache = false)
+    public function download_content($url, $opts = self::RET_RAW)
     {
         hd_debug_print(null, true);
 
-        return $this->exec_php_curl($url, null, $use_cache);
+        $res = $this->exec_php_curl($url, null, $opts);
+
+        if ($opts & self::RET_RAW) {
+            hd_debug_print('Returns RAW response', true);
+            return $res;
+        }
+
+        $assoc = ($opts & self::RET_ARRAY) === self::RET_ARRAY;
+        $contents = json_decode($res, $assoc);
+        if ($contents === false) {
+            hd_debug_print("failed to decode json");
+            hd_debug_print("doc: $res", true);
+            return false;
+        }
+
+        return $contents;
     }
 
     /**
@@ -217,72 +270,68 @@ class Curl_Wrapper
     }
 
     /**
-     * Check if cached url is expired
-     *
-     * @param string $url
-     * @return bool result of operation
+     * @param int $time
      */
-    public function check_is_expired($url)
+    public function set_file_cache_time($time)
     {
-        hd_debug_print(null, true);
-
-        $etag = self::get_cached_etag($url);
-        if (empty($etag)) {
-            hd_debug_print("No ETag value");
-        } else {
-            if ($this->exec_php_curl($url, false, true)) {
-                $code = $this->get_http_code();
-                hd_debug_print("http code: $code", true);
-                return !($code === 304 || ($code === 200 && self::get_etag_header() === $etag));
-            }
-        }
-
-        return true;
+        $this->file_cache_time = $time;
     }
 
     /**
      * @return int
      */
-    public function get_http_code()
+    public static function get_http_code()
     {
-        return $this->http_code;
+        return self::$http_code;
     }
 
     /**
      * @return int
      */
-    public function get_error_no()
+    public static function get_error_no()
     {
-        return $this->error_no;
+        return self::$error_no;
     }
 
     /**
      * @return string
      */
-    public function get_error_desc()
+    public static function get_error_desc()
     {
-        return $this->error_desc;
+        return self::$error_desc;
     }
 
 
     /////////////////////////////////////////////////////////////
     /// static functions
 
+    public function clear_cache($all = false)
+    {
+        if ($all) {
+            $path = $this->base_cache_path;
+        } else {
+            $path = $this->base_cache_path . $this->file_cache_path;
+        }
+        if (file_exists($path)) {
+            clear_directory($path);
+        }
+    }
+
     /**
      * @param string $url
      */
     public static function get_url_hash($url)
     {
-        return hash('crc32', $url);
+        return hash('md5', $url);
     }
 
     /**
      * @param bool $is_file
      * @param string $source contains data or file name
-     * @param bool $assoc
+     * @param int $decode
      * @return mixed|false
      */
-    public static function decodeJsonResponse($is_file, $source, $assoc = false)
+    public static function decodeJsonResponse($is_file, $source, $decode = Curl_Wrapper::RET_OBJECT)
     {
         if ($source === false) {
             return false;
@@ -294,7 +343,11 @@ class Curl_Wrapper
             $data = $source;
         }
 
-        $contents = json_decode($data, $assoc);
+        if ($decode & Curl_Wrapper::RET_RAW) {
+            return $data;
+        }
+
+        $contents = json_decode($data, $decode & Curl_Wrapper::RET_ARRAY);
         if ($contents !== null && $contents !== false) {
             return $contents;
         }
@@ -356,13 +409,16 @@ class Curl_Wrapper
         }
     }
 
-    /**
-     * @return void
-     */
-    public static function clear_all_cached_etags()
+    /** @noinspection PhpUnusedParameterInspection */
+    public static function http_header_function($curl, $header)
     {
-        self::$cache_db = null;
-        self::save_cached_etag();
+        $len = strlen($header);
+        $header = explode(':', $header, 2);
+        if (count($header) == 2) {
+            $key = strtolower(trim($header[0]));
+            self::$http_response_headers[$key] = trim($header[1]);
+        }
+        return $len;
     }
 
     /**
@@ -391,16 +447,14 @@ class Curl_Wrapper
         file_put_contents(get_data_path(self::CACHE_TAG_FILE), json_encode(self::$cache_db));
     }
 
-    /** @noinspection PhpUnusedParameterInspection */
-    public static function http_header_function($curl, $header)
+    /**
+     * @return string
+     */
+    protected function create_cache_path()
     {
-        $len = strlen($header);
-        $header = explode(':', $header, 2);
-        if (count($header) == 2) {
-            $key = strtolower(trim($header[0]));
-            self::$http_response_headers[$key] = trim($header[1]);
-        }
-        return $len;
+        $path = $this->base_cache_path . $this->file_cache_path;
+        create_path($path);
+        return $path;
     }
 
     /////////////////////////////////////////////////////////////
@@ -413,14 +467,21 @@ class Curl_Wrapper
      *
      * @param string $url
      * @param string|null|bool $save_file
-     * @param bool $use_cache
+     * @param int $cache_opts
      * @return bool|string
      */
-    private function exec_php_curl($url, $save_file, $use_cache = false)
+    private function exec_php_curl($url, $save_file, $cache_opts = 0)
     {
-        hd_debug_print("curl: '$url' saved to '$save_file' use cache: " . var_export($use_cache, true), true);
+        hd_debug_print("exec_php_curl: '$url' saved to '$save_file'", true);
+        if ($cache_opts & self::USE_ETAG) {
+            hd_debug_print("cache opts: Use ETag capability", true);
+        }
 
-        $this->http_code = 0;
+        if ($cache_opts & self::CACHE_RESPONSE) {
+            hd_debug_print("cache opts: Cache response", true);
+        }
+
+        self::$http_code = 0;
         self::$http_response_headers = null;
 
         $opts[CURLOPT_URL] = $url;
@@ -451,7 +512,7 @@ class Curl_Wrapper
             $opts[CURLOPT_FILE] = $fp;
         }
 
-        if ($use_cache) {
+        if ($cache_opts & self::USE_ETAG) {
             $etag = self::get_cached_etag($url);
             if (!empty($etag)) {
                 $this->send_headers[] = "If-None-Match: $etag";
@@ -481,6 +542,27 @@ class Curl_Wrapper
             }
         }
 
+        if (isset($opts[CURLOPT_POSTFIELDS])) {
+            $hash = hash('md5', $url . $opts[CURLOPT_POSTFIELDS]);
+        } else {
+            $hash = hash('md5', $url);
+        }
+
+        if ($cache_opts & self::CACHE_RESPONSE) {
+            $path = $this->base_cache_path . $this->file_cache_path . $hash;
+            if (file_exists($path)) {
+                $now = time();
+                $mtime = filemtime($path);
+                $cache_expired = $mtime + $this->file_cache_time * 3600;
+                if ($cache_expired > $now) {
+                    hd_debug_print("Response read from cache $path", true);
+                    return file_get_contents($path);
+                }
+                hd_debug_print("Cache expired: $path", true);
+                unlink($path);
+            }
+        }
+
         $ch = curl_init();
 
         foreach ($opts as $k => $v) {
@@ -499,36 +581,43 @@ class Curl_Wrapper
         $start_tm = microtime(true);
         $content = curl_exec($ch);
         $execution_tm = microtime(true) - $start_tm;
-        $this->error_no = curl_errno($ch);
-        $this->error_desc = curl_error($ch);
-        $this->http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        self::$error_no = curl_errno($ch);
+        self::$error_desc = curl_error($ch);
+        self::$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         if (!is_null($fp)) {
             fclose($fp);
         }
 
-        if ($this->error_no !== 0) {
-            hd_debug_print("CURL errno: $this->error_no ($this->error_desc); HTTP error: $this->http_code;");
+        if (self::$error_no !== 0) {
+            hd_debug_print(sprintf("CURL errno: %s (%s; HTTP error: %s;", self::$error_no, self::$error_desc, self::$http_code));
             return false;
         }
 
-        if ($this->http_code < 200 || ($this->http_code >= 300 && $this->http_code != 304)) {
-            hd_debug_print("HTTP request failed ($this->http_code)");
+        if (self::$http_code < 200 || (self::$http_code >= 300 && self::$http_code != 304)) {
+            hd_debug_print("HTTP request failed (" . self::$http_code . ")");
             return false;
         }
 
-        if ($use_cache) {
+        if ($cache_opts & self::USE_ETAG) {
             $new_etag = self::get_etag_header();
-            if ($etag !== $new_etag) {
+            if (!isset($etag) || $etag !== $new_etag) {
                 hd_debug_print("Save new ETag ($new_etag) for: $url", true);
                 self::set_cached_etag($url, $new_etag);
             }
         }
 
+        if ($cache_opts & self::CACHE_RESPONSE && $save_file === null && !empty($content)) {
+            $cache_path = $this->create_cache_path();
+            $path = $cache_path . $hash;
+            hd_debug_print("Save response to $path", true);
+            file_put_contents($path, $content);
+        }
+
         if (empty($save_file)) {
-            hd_debug_print(sprintf("HTTP OK (%d) in %.3fs", $this->http_code, $execution_tm), true);
+            hd_debug_print(sprintf("HTTP OK (%d) in %.3fs", self::$http_code, $execution_tm), true);
         } else {
-            hd_debug_print(sprintf("HTTP OK (%d, %d bytes) in %.3fs", $this->http_code, filesize($save_file), $execution_tm), true);
+            hd_debug_print(sprintf("HTTP OK (%d, %d bytes) in %.3fs", self::$http_code, filesize($save_file), $execution_tm), true);
         }
 
         if (!empty(self::$http_response_headers) && LogSeverity::$is_debug) {

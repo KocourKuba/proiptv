@@ -91,7 +91,7 @@ class api_iptvonline extends api_default
         $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
         $curl_opt[CURLOPT_POSTFIELDS] = $pairs;
 
-        $data = $this->execApiCommand($cmd, null, 1, $curl_opt);
+        $data = $this->execApiCommand($cmd, null, $curl_opt);
         if (isset($data->access_token)) {
             hd_debug_print("token requested", true);
             $this->plugin->set_cookie(PARAM_TOKEN, $data->access_token, $data->expires_time);
@@ -132,8 +132,7 @@ class api_iptvonline extends api_default
 
                 if (!isset($response->success, $response->data)) break;
 
-                $curl_wrapper = Curl_Wrapper::getInstance();
-                $this->plugin->set_curl_timeouts($curl_wrapper);
+                $curl_wrapper = $this->plugin->setup_curl();
                 return $curl_wrapper->download_file($response->data, $file);
 
             case API_COMMAND_GET_DEVICE:
@@ -229,7 +228,7 @@ class api_iptvonline extends api_default
         $cmd = API_COMMAND_GET_DEVICE;
         if (empty($this->device)) {
             $curl_opts = $this->getCurlOpts($cmd);
-            $response = $this->execApiCommand($cmd, null, 1, $curl_opts);
+            $response = $this->execApiCommand($cmd, null, $curl_opts, Curl_Wrapper::RET_RAW);
             if ($this->postExecAction($cmd, $response) === false) {
                 return array();
             }
@@ -268,7 +267,7 @@ class api_iptvonline extends api_default
         $curl_params[CURLOPT_POSTFIELDS] = array("server_location" => $server);
         $cmd = API_COMMAND_SET_DEVICE;
         $curl_opts = $this->getCurlOpts($cmd, $curl_params);
-        $response = $this->execApiCommand($cmd, null, 1, $curl_opts);
+        $response = $this->execApiCommand($cmd, null, $curl_opts, Curl_Wrapper::RET_RAW);
         return $this->postExecAction($cmd, $response, $error_msg);
     }
 

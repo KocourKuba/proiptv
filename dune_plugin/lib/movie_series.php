@@ -68,15 +68,9 @@ class Movie_Series
      * @param string $name
      * @param Movie_Playback_Url|null $default_playback_url
      * @param string $season_id
-     * @throws Exception
      */
     public function __construct($id, $name, $default_playback_url, $season_id = '')
     {
-        if (is_null($id)) {
-            print_backtrace();
-            throw new Exception("Movie_Series::id is null");
-        }
-
         $this->id = (string)$id;
         $this->name = $name;
         $this->default_playback_url = $default_playback_url;

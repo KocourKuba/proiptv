@@ -64,6 +64,11 @@ class vod_edem extends vod_standard
     {
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
+        if (empty($movie_id)) {
+            hd_debug_print("Movie ID is empty!");
+            return null;
+        }
+
         $post_params = array('cmd' => "flick", 'fid' => (int)$movie_id, 'offset' => 0, 'limit' => 0);
         $jsonData = $this->make_json_request($post_params, true);
 
@@ -146,7 +151,6 @@ class vod_edem extends vod_standard
      * @param string $movie_id
      * @param array $movieData
      * @return Movie_Series
-     * @throws Exception
      */
     protected static function fill_variants($movie_id, $movieData)
     {
@@ -183,7 +187,7 @@ class vod_edem extends vod_standard
         $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
         $curl_opt[CURLOPT_POSTFIELDS] = $pairs;
 
-        return $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, $assoc ? 2 : 1, $curl_opt);
+        return $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, $curl_opt, $assoc ? Curl_Wrapper::RET_ARRAY : Curl_Wrapper::RET_OBJECT);
     }
 
     /**

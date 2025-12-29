@@ -15,17 +15,7 @@ class jellyfin_api
     /**
      * @var string
      */
-    private $appVersion;
-
-    /**
-     * @var string
-     */
-    private $deviceName = 'dunehd';
-
-    /**
-     * @var string
-     */
-    private $clientName = 'ProIPTV';
+    private $deviceId;
 
     /**
      * @var string
@@ -43,27 +33,21 @@ class jellyfin_api
     private $base_auth_string;
 
     /**
-     * @param Curl_Wrapper $curl_wrapper
+     * @var Default_Dune_Plugin
      */
-    private $curl_wrapper;
+    private $plugin;
 
     /**
-     * @param $plugin
-     * @param $baseUrl
-     * @param $appVersion
+     * @param Default_Dune_Plugin $plugin
+     * @param string $baseUrl
+     * @param string $appVersion
      */
-    public function __construct($plugin, $baseUrl, $appVersion = '1.0.0')
+    public function init($plugin, $baseUrl, $appVersion = '1.0.0')
     {
+        $this->plugin = $plugin;
+        $this->deviceId = get_serial_number();
         $this->baseUrl = rtrim($baseUrl, '/');
-        $this->appVersion = $appVersion;
-
-        $this->base_auth_string = sprintf('MediaBrowser Client="%s", Device="%s", DeviceId="%s", Version="%s"',
-            $this->clientName, $this->deviceName, $this->deviceName, $this->appVersion);
-
-        $this->curl_wrapper = Curl_Wrapper::getInstance();
-        if ($plugin) {
-            $plugin->set_curl_timeouts($this->curl_wrapper);
-        }
+        $this->base_auth_string = sprintf('MediaBrowser Client="ProIPTV", Device="dunehd", DeviceId="%s", Version="%s"', $this->deviceId, $appVersion);
     }
 
     /**
@@ -75,37 +59,39 @@ class jellyfin_api
      */
     public function login($username, $password)
     {
-        $this->curl_wrapper->reset();
-        $this->curl_wrapper->set_post();
-        $this->curl_wrapper->set_post_data(array('Username' => $username, 'Pw' => $password));
+        $curl_wrapper = $this->plugin->setup_curl();
+        $curl_wrapper->set_post();
+        $curl_wrapper->set_post_data(array('Username' => $username, 'Pw' => $password));
         $headers = $this->buildHeaders(false);
         $headers[] = CONTENT_TYPE_JSON;
-        $this->curl_wrapper->set_send_headers($headers);
+        $curl_wrapper->set_send_headers($headers);
 
         $command_url = $this->baseUrl . '/Users/AuthenticateByName';
-        $response = $this->curl_wrapper->download_content($command_url);
+        $response = $curl_wrapper->download_content($command_url, Curl_Wrapper::RET_ARRAY);
         if ($response === false) {
             hd_debug_print("Can't get response on request: $command_url");
             return false;
         }
 
-        $data = json_decode($response, true);
-        if (!isset($data['AccessToken']) || !isset($data['User']['Id'])) {
-            hd_debug_print('Login failed.');
-            return false;
+        $this->userId = safe_get_value($response, array('User', 'Id'));
+        $this->accessToken = safe_get_value($response, 'AccessToken');
+        if (!empty($this->accessToken) && !empty($this->userId)) {
+            return true;
         }
 
-        $this->accessToken = $data['AccessToken'];
-        $this->userId      = $data['User']['Id'];
-        return true;
+        hd_debug_print("Login failed.");
+        return false;
     }
 
+    /**
+     * @return void
+     */
     public function logout()
     {
-        $this->curl_wrapper->reset();
-        $this->curl_wrapper->set_post();
-        $this->curl_wrapper->set_send_headers($this->buildHeaders(true));
-        $this->curl_wrapper->download_content($this->baseUrl . '/Sessions/Logout');
+        $curl_wrapper = $this->plugin->setup_curl();
+        $curl_wrapper->set_post();
+        $curl_wrapper->set_send_headers($this->buildHeaders(true));
+        $curl_wrapper->download_content($this->baseUrl . '/Sessions/Logout');
     }
 
     /**
@@ -157,7 +143,7 @@ class jellyfin_api
      *
      * @param array $items
      * @param string $index
-     * @return mixed
+     * @return array
      */
     public static function stripIndex($items, $index = 'Items')
     {
@@ -295,13 +281,28 @@ class jellyfin_api
      */
     public function getPlayUrl($itemId, $media_source = array(), $audioIndex = -1)
     {
-        $query['DeviceId'] = $this->deviceName;
+        $query['DeviceId'] = $this->deviceId;
         $query['apiKey'] = $this->accessToken;
         $query['MediaSourceId'] = isset($media_source['Id']) ? $media_source['Id'] : $itemId;
         if ($audioIndex !== -1) {
             $query['AudioStreamIndex'] = $audioIndex;
         }
         return $this->baseUrl . '/Videos/' . urlencode($itemId) . '/master.m3u8?' . http_build_query($query);
+    }
+
+    /**
+     * get play url
+     *
+     * @param string $itemId
+     * @return string
+     */
+    public function getDownloadUrl($itemId)
+    {
+        // http://jeleyka.balelbrus.com/Items/2749bdccd02b6853f544af497b4bc4fc/Download?api_key=c50bd0f08d3947dea02b7751ce5987ce
+        // http://jeleyka.balelbrus.com/Items/2be5791959d2026fae72704697f0215b/Download?api_key=c50bd0f08d3947dea02b7751ce5987ce
+
+        $query['apiKey'] = $this->accessToken;
+        return $this->baseUrl . '/Items/' . urlencode($itemId) . '/Download?' . http_build_query($query);
     }
 
     // ---------------- Internal ----------------
@@ -362,23 +363,24 @@ class jellyfin_api
             return array();
         }
 
-        $this->curl_wrapper->reset();
+        $curl_wrapper = $this->plugin->setup_curl();
         $headers = $this->buildHeaders(true);
         $headers[] = CONTENT_TYPE_JSON;
-        $this->curl_wrapper->set_send_headers($headers);
+        $curl_wrapper->set_send_headers($headers);
 
         $command_url = $this->baseUrl . '/' . ltrim($path, '/');
         if (!empty($query)) {
             $command_url .= '?' . http_build_query($query);
         }
 
-        $response = $this->curl_wrapper->download_content($command_url, true);
-        if ($response === false) {
-            hd_debug_print("Can't get response on request: $command_url");
-            return array();
+        $response = $curl_wrapper->download_content($command_url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+        if ($response !== false) {
+            return $response;
         }
 
-        return json_decode($response, true);
+        print_backtrace();
+        hd_debug_print("Can't get response on request: $command_url");
+        return array();
     }
 
     /**

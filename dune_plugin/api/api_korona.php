@@ -68,7 +68,7 @@ class api_korona extends api_default
         $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_WWW_FORM_URLENCODED;
         $curl_opt[CURLOPT_POSTFIELDS] = $pairs;
 
-        $data = $this->execApiCommand($cmd, null, 1, $curl_opt);
+        $data = $this->execApiCommand($cmd, null, $curl_opt);
         if (isset($data->access_token)) {
             hd_debug_print("token requested: " . json_format_unescaped($data), true);
             $this->plugin->set_cookie(PARAM_TOKEN, $data->access_token, time() + $data->expires_in);

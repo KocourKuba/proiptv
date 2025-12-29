@@ -104,7 +104,7 @@ class Default_Archive implements Archive
         $version_by_name = array();
         $total_size = 0;
 
-        $doc = Curl_Wrapper::getInstance()->download_content($version_url);
+        $doc = Curl_Wrapper::getInstance('archive')->download_content($version_url);
         if ($doc === false) {
             hd_debug_print("Failed to fetch archive versions.txt from $version_url.");
         } else {
@@ -123,7 +123,7 @@ class Default_Archive implements Archive
             hd_debug_print("Archive $id: " . count($version_by_name) . " files.");
 
             $size_url = "$url_prefix/size.txt";
-            $doc = Curl_Wrapper::getInstance()->download_content($size_url);
+            $doc = Curl_Wrapper::getInstance('archive')->download_content($size_url);
             if ($doc === false) {
                 hd_debug_print("Failed to fetch archive size.txt from $size_url.");
                 $version_by_name = array();

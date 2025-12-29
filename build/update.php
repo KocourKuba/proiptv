@@ -133,6 +133,7 @@ if (!empty($firmware) && preg_match('/.+_[rb](\d{2})/', $firmware, $m)) {
 
 $url_params = parse_url(getenv("REQUEST_URI"));
 if (isset($url_params['query'])) {
+    /** @noinspection PhpUndefinedVariableInspection */
     parse_str($url_params['query'], $params);
     if (isset($params['dune_auth'])) {
         $values = explode(' ', $params['dune_auth']);

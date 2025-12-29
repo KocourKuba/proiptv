@@ -78,9 +78,9 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $season_id = safe_get_member($media_url, 'season_id');
         $qualities = $movie->collect_all_qualities($season_id);
-        hd_debug_print("All Qualities: " . json_format_unescaped($qualities), true);
+        //hd_debug_print("All Qualities: " . json_format_unescaped($qualities), true);
         $audios = $movie->collect_all_audios($season_id);
-        hd_debug_print("All Audios: " . json_format_unescaped($audios), true);
+        //hd_debug_print("All Audios: " . json_format_unescaped($audios), true);
 
         if (count($qualities) > 1) {
             if ($q_variant == 'auto') {
@@ -274,6 +274,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
         foreach ($movie->get_series_list() as $series_id => $episode) {
             if (isset($media_url->season_id) && $media_url->season_id !== $episode->season_id) continue;
 
+            hd_debug_print("series_id: $series_id episode_name: $episode->name", true);
             $viewed_params = $this->plugin->get_vod_history_params($media_url->movie_id, $series_id);
             $color = 15;
             $info = $episode->name;

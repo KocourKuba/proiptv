@@ -141,15 +141,9 @@ class api_default
      */
     protected $packages = array();
 
-    /**
-     * @var Curl_Wrapper
-     */
-    protected $curl_wrapper;
-
     public function __construct(DunePlugin $plugin)
     {
         $this->plugin = $plugin;
-        $this->curl_wrapper = Curl_Wrapper::getInstance();
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -338,14 +332,6 @@ class api_default
     }
 
     /**
-     * @return  Curl_Wrapper
-     */
-    public function getCurlWrapper()
-    {
-        return $this->curl_wrapper;
-    }
-
-    /**
      * @return string
      */
     public function get_provider_playlist_id()
@@ -482,16 +468,14 @@ class api_default
     /**
      * @param string $command
      * @param string $file
-     * @param int $decode
      * @param array $curl_opt
+     * @param int $decode
      * @return bool|object|array
      */
-    public function execApiCommand($command, $file = null, $decode = 1, $curl_opt = array())
+    public function execApiCommand($command, $file = null, $curl_opt = array(), $decode = Curl_Wrapper::RET_OBJECT)
     {
         hd_debug_print(null, true);
         hd_debug_print("execApiCommand: $command", true);
-
-        $this->curl_wrapper->reset();
 
         $command_url = $this->getApiCommand($command);
         if (empty($command_url)) {
@@ -506,7 +490,7 @@ class api_default
         }
 
         hd_debug_print("ApiCommandUrl: $command_url", true);
-        $this->plugin->set_curl_timeouts($this->curl_wrapper);
+        $curl_wrapper = $this->plugin->setup_curl();
 
         $add_headers = $this->get_additional_headers($command);
 
@@ -519,21 +503,21 @@ class api_default
         }
 
         if (!empty($curl_opt[CURLOPT_HTTPHEADER])) {
-            $this->curl_wrapper->set_send_headers($curl_opt[CURLOPT_HTTPHEADER]);
+            $curl_wrapper->set_send_headers($curl_opt[CURLOPT_HTTPHEADER]);
         }
 
         if (isset($curl_opt[CURLOPT_POST])) {
-            $this->curl_wrapper->set_post($curl_opt[CURLOPT_POST]);
+            $curl_wrapper->set_post($curl_opt[CURLOPT_POST]);
         }
 
         if (isset($curl_opt[CURLOPT_POSTFIELDS])) {
-            $this->curl_wrapper->set_post_data($curl_opt[CURLOPT_POSTFIELDS]);
+            $curl_wrapper->set_post_data($curl_opt[CURLOPT_POSTFIELDS]);
         }
 
         if (is_null($file)) {
-            $response = $this->curl_wrapper->download_content($command_url);
+            $response = $curl_wrapper->download_content($command_url, $decode | Curl_Wrapper::CACHE_RESPONSE);
         } else {
-            $response = $this->curl_wrapper->download_file($command_url, $file);
+            $response = $curl_wrapper->download_file($command_url, $file);
         }
 
         if ($response === false) {
@@ -541,20 +525,7 @@ class api_default
             return false;
         }
 
-        if (!is_null($file)) {
-            return true;
-        }
-
-        if (!$decode) {
-            return $response;
-        }
-
-        $data = Curl_Wrapper::decodeJsonResponse(false, $response, $decode === 2);
-        if ($data === false || $data === null) {
-            hd_debug_print("Can't decode response on request: " . $command_url);
-        }
-
-        return $data;
+        return is_null($file) ? Curl_Wrapper::decodeJsonResponse(false, $response, $decode) : true;
     }
 
     /**

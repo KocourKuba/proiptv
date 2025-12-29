@@ -316,26 +316,18 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @inheritDoc
-     * @throws Exception
-     */
-    public function try_load_movie($movie_id)
-    {
-        $movie = $this->TryLoadMovie($movie_id);
-        if (!is_null($movie)) {
-            $this->set_cached_movie($movie);
-        }
-    }
-
-    /**
      * @param string $movie_id
      * @return Movie
-     * @throws Exception
      */
     public function TryLoadMovie($movie_id)
     {
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
+
+        if (empty($movie_id)) {
+            hd_debug_print("Movie ID is empty!");
+            return null;
+        }
 
         if ($movie_id === VOD_LIST_GROUP_ID) {
             $movie = new Movie($movie_id, $this->plugin);
@@ -413,6 +405,7 @@ class vod_standard extends Abstract_Vod
      * @param string $quality
      * @param string $audio
      * @return null
+     * @noinspection PhpUnusedParameterInspection
      */
     public function get_vod_playback_url($series_id, $quality = 'auto', $audio = 'auto')
     {
@@ -548,8 +541,7 @@ class vod_standard extends Abstract_Vod
      */
     public function getSearchList($keyword)
     {
-        hd_debug_print(null, true);
-        hd_debug_print($keyword);
+        hd_debug_print("getSearchList $keyword");
 
         $perf = new Perf_Collector();
         $perf->reset('start');
@@ -813,18 +805,14 @@ class vod_standard extends Abstract_Vod
         if (!$need_load) {
             $this->vod_items = parse_json_file($tmp_file, $assoc);
         } else {
-            $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
-            if ($response === false) {
+            $opts = $assoc ? Curl_Wrapper::RET_ARRAY : Curl_Wrapper::RET_OBJECT;
+            $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file, array(), $opts);
+            if ($response !== false) {
+                $this->vod_items = $response;
+            } else {
                 $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
                 Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
                 safe_unlink($tmp_file);
-            } else {
-                $this->vod_items = Curl_Wrapper::decodeJsonResponse(true, $tmp_file, $assoc);
-                if ($this->vod_items === false) {
-                    $exception_msg = TR::load('err_decoding_vod');
-                    Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
-                    safe_unlink($tmp_file);
-                }
             }
         }
 
@@ -961,11 +949,9 @@ class vod_standard extends Abstract_Vod
                 $uri = safe_get_value($params, PARAM_URI);
                 if ($type === PARAM_PROVIDER) {
                     hd_debug_print("download provider vod");
-                    $res = $provider->execApiCommand(API_COMMAND_GET_VOD, $m3u_file);
-                    if ($res === false) {
-                        $curl_wrapper = $provider->getCurlWrapper();
+                    if ($provider->execApiCommand(API_COMMAND_GET_VOD, $m3u_file) === false) {
                         $msg = sprintf("%s\nError code: %s\n%s",
-                            TR::load('err_load_vod'), $curl_wrapper->get_error_no(), $curl_wrapper->get_error_desc());
+                            TR::load('err_load_vod'), Curl_Wrapper::get_error_no(), Curl_Wrapper::get_error_desc());
                         throw new Exception($msg);
                     }
                 } else if ($type === PARAM_FILE) {
@@ -986,12 +972,11 @@ class vod_standard extends Abstract_Vod
                     if (empty($uri)) {
                         throw new Exception("Empty playlist url");
                     }
-                    $curl_wrapper = Curl_Wrapper::getInstance();
-                    $this->plugin->set_curl_timeouts($curl_wrapper);
+                    $curl_wrapper = $this->plugin->setup_curl();
                     $res = $curl_wrapper->download_file($uri, $m3u_file);
                     if ($res === false) {
                         $msg = sprintf("%s\nError code: %s\n%s",
-                            TR::load('err_load_vod'), $curl_wrapper->get_error_no(), $curl_wrapper->get_error_desc());
+                            TR::load('err_load_vod'), Curl_Wrapper::get_error_no(), Curl_Wrapper::get_error_desc());
                         throw new Exception($msg);
                     }
                 } else {

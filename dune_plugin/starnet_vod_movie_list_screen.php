@@ -155,12 +155,8 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
             $key = $media_url->category_id . "_" . $media_url->genre_id;
         }
 
-        $movies = array();
-
         if ($media_url->category_id === Vod_Category::FLAG_SEARCH) {
-            if ($from_ndx === 0) {
-                $movies = $this->plugin->vod->getSearchList($media_url->genre_id);
-            }
+            $movies = $this->plugin->vod->getSearchList($media_url->genre_id);
         } else if ($media_url->category_id === Vod_Category::FLAG_FILTER) {
             $movies = $this->plugin->vod->getFilterList($media_url->genre_id);
         } else {
@@ -185,7 +181,6 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
         $list_ids = $this->plugin->is_m3u_vod() ? $this->plugin->get_channels_order(VOD_LIST_GROUP_ID) : array();
         $items = array();
         if (isset($movie_range->short_movies)) {
-            /** @var Short_Movie $movie */
             foreach ($movie_range->short_movies as $movie) {
                 $items[] = array(
                     PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::make_vod_media_url_str($movie->id, $movie->name, $movie->poster_url, $movie->info),
@@ -227,13 +222,15 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
             array_splice($items, $total - $from_ndx);
         }
 
-        return array(
+        $range =  array(
             PluginRegularFolderRange::total => (int)$total,
             PluginRegularFolderRange::more_items_available => $more_items_available,
             PluginRegularFolderRange::from_ndx => (int)$from_ndx,
             PluginRegularFolderRange::count => count($items),
             PluginRegularFolderRange::items => $items
         );
+        hd_debug_print("create_regular_folder_range $from_ndx to $total: " . json_format_unescaped($range));
+        return $range;
     }
 
     /**

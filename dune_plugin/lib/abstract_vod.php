@@ -177,13 +177,16 @@ abstract class Abstract_Vod
             return;
         }
 
-        $movie = $this->get_cached_movie($movie_id);
-        if ($movie === null) {
-            hd_debug_print("Movie $movie_id not in cache. Load info...", true);
-            $this->try_load_movie($movie_id);
-            hd_debug_print("Movie $movie_id loaded", true);
-        } else {
+        if ($this->has_cached_movie($movie_id)) {
             hd_debug_print("Movie $movie_id is in cache.", true);
+        } else {
+            hd_debug_print("Movie $movie_id not in cache. Load info...", true);
+            $movie = $this->TryLoadMovie($movie_id);
+            if (!is_null($movie)) {
+                $this->set_cached_movie($movie);
+            }
+
+            hd_debug_print("Movie $movie_id loaded", true);
         }
     }
 
@@ -206,12 +209,6 @@ abstract class Abstract_Vod
     {
         return isset($this->movie_by_id[$movie_id]) ? $this->movie_by_id[$movie_id] : null;
     }
-
-    /**
-     * @param string $movie_id
-     * @return mixed
-     */
-    abstract public function try_load_movie($movie_id);
 
     ///////////////////////////////////////////////////////////////////////
     // Genres.

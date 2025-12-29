@@ -49,7 +49,7 @@ class api_cbilling extends api_default
 
     /**
      * @param bool $force
-     * @return bool|object
+     * @return bool|array
      */
     public function get_provider_info($force = false)
     {

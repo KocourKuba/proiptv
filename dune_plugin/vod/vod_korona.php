@@ -46,6 +46,11 @@ class vod_korona extends vod_standard
     public function TryLoadMovie($movie_id)
     {
         hd_debug_print(null, true);
+        if (empty($movie_id)) {
+            hd_debug_print("Movie ID is empty!");
+            return null;
+        }
+
         // movies_84636 or serials_84636
         hd_debug_print("TryLoadMovie: $movie_id");
         $arr = explode("_", $movie_id);
@@ -63,6 +68,8 @@ class vod_korona extends vod_standard
         if (isset($movieData->seasons)) {
             // collect series
             foreach ($movieData->seasons as $season) {
+                if (empty($season->id)) continue;
+
                 $movie_season = new Movie_Season($season->id, $season->number);
                 if (!empty($season->name)) {
                     $movie_season->description = $season->name;
@@ -151,6 +158,7 @@ class vod_korona extends vod_standard
     public function getSearchList($keyword)
     {
         hd_debug_print("getSearchList $keyword");
+
         $keyword = urlencode($keyword);
         $searchRes = $this->make_json_request("/filter/by_name?name=$keyword&page=1&per_page=999999999");
 
@@ -304,7 +312,7 @@ class vod_korona extends vod_standard
         }
 
         $curl_opt[CURLOPT_CUSTOMREQUEST] = $params;
-        $jsonItems = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, 1, $curl_opt);
+        $jsonItems = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, $curl_opt);
         if ($jsonItems === false) {
             $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
             hd_debug_print($exception_msg);

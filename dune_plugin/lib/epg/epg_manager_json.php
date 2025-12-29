@@ -268,11 +268,8 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             if (isset($preset[EPG_JSON_AUTH])) {
                 $opts[CURLOPT_HTTPHEADER] = array($provider->replace_macros($preset[EPG_JSON_AUTH]));
             }
-            $doc = Curl_Wrapper::getInstance()->download_content($url);
-            $ch_data = json_decode($doc, true);
-            if ($ch_data === null || $ch_data === false) {
-                hd_debug_print("failed to decode json");
-                hd_debug_print("doc: $doc", true);
+            $ch_data = Curl_Wrapper::getInstance()->download_content($url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+            if ($ch_data === false) {
                 return $channel_epg;
             }
 

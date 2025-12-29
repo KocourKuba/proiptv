@@ -203,7 +203,7 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
 
         array_map('unlink', glob(get_data_path('*.prev')));
         array_map('unlink', glob(get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*')));
-        rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
+        delete_directory(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
         // force plugin to fully reinit
         $this->plugin->init_plugin(true);

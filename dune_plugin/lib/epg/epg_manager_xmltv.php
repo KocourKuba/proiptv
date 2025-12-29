@@ -84,7 +84,7 @@ class Epg_Manager_Xmltv
         self::$ext_epg_enabled = is_ext_epg_supported() && $plugin->get_bool_setting(PARAM_SHOW_EXT_EPG);
         self::$flags = $plugin->get_bool_setting(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
         self::$xmltv_sources = $plugin->get_active_sources();
-        self::set_cache_dir($plugin->get_cache_dir());
+        self::set_cache_dir($plugin->get_cache_dir(PARAM_XMLTV_CACHE_PATH, EPG_CACHE_SUBDIR));
         self::clear_epg_memory_cache();
     }
 
@@ -388,12 +388,11 @@ class Epg_Manager_Xmltv
     /**
      * check xmltv source and return required flags for indexing
      *
-     * @param Default_Dune_Plugin $plugin
      * @param array $params
      * @param int $index_flag
      * @return int
      */
-    public static function check_xmltv_source($plugin, $params, $index_flag)
+    public static function check_xmltv_source($params, $index_flag)
     {
         hd_debug_print(null, true);
 
@@ -424,10 +423,20 @@ class Epg_Manager_Xmltv
 
             if ($cache_ttl === XMLTV_CACHE_AUTO) {
                 $curl_wrapper = Curl_Wrapper::getInstance();
-                $plugin->set_curl_timeouts($curl_wrapper);
-                if (!$curl_wrapper->check_is_expired($url)) {
-                    $expired = false;
-                } else if (Curl_Wrapper::is_cached_etag($url)) {
+
+                $etag = Curl_Wrapper::get_cached_etag($url);
+                $expired = false;
+                if (empty($etag)) {
+                    hd_debug_print("No ETag value");
+                } else {
+                    if ($curl_wrapper->download_content($url, Curl_Wrapper::USE_ETAG)) {
+                        $code = Curl_Wrapper::get_http_code();
+                        hd_debug_print("http code: $code", true);
+                        $expired = !($code === 304 || ($code === 200 && Curl_Wrapper::get_etag_header() === $etag));
+                    }
+                }
+
+                if ($expired) {
                     Curl_Wrapper::clear_cached_etag($url);
                 }
             } else if (filesize($cached_file) !== 0) {
@@ -540,7 +549,7 @@ class Epg_Manager_Xmltv
         $perf->reset('start');
 
         $cached_file = self::$cache_dir . $url_hash . ".xmltv";
-        $params[PARAM_CACHE_PATH] = $cached_file;
+        $params[PARAM_XMLTV_CACHE_PATH] = $cached_file;
 
         /// download source
         if ($indexing_flag & INDEXING_DOWNLOAD) {
@@ -785,6 +794,7 @@ class Epg_Manager_Xmltv
                         // check if end
                         $end_tv = strpos($line, "</tv>");
                         if ($end_tv !== false) {
+                            /** @noinspection PhpUnusedLocalVariableInspection */
                             $tag_end_pos = $end_tv + $tag_start_pos;
                             $stm->execute();
                             break;
@@ -1018,7 +1028,7 @@ class Epg_Manager_Xmltv
                     send_process_signal($pid, -9);
                 }
                 hd_debug_print("Remove lock: $lock");
-                rmdir($lock);
+                delete_directory($lock);
             }
         }
 
@@ -1091,7 +1101,7 @@ class Epg_Manager_Xmltv
             }
         } else if (is_dir($name)) {
             hd_debug_print("Unlock $name");
-            rmdir($name);
+            delete_directory($name);
             clearstatcache();
         }
     }
@@ -1332,7 +1342,7 @@ class Epg_Manager_Xmltv
     protected static function download_xmltv($params)
     {
         $url = $params[PARAM_URI];
-        $cached_file = $params[PARAM_CACHE_PATH];
+        $cached_file = $params[PARAM_XMLTV_CACHE_PATH];
 
         hd_debug_print("Download xmltv source: $url");
         hd_debug_print("Storage space:  " . HD::get_storage_size(self::$cache_dir));
@@ -1352,9 +1362,9 @@ class Epg_Manager_Xmltv
         $curl_wrapper->set_connection_timeout($params[PARAM_CURL_CONNECT_TIMEOUT]);
         $curl_wrapper->set_download_timeout($params[PARAM_CURL_DOWNLOAD_TIMEOUT]);
         if (!$curl_wrapper->download_file($url, $tmp_filename, true)) {
-            $http_code = $curl_wrapper->get_http_code();
-            if ($curl_wrapper->get_error_no() !== 0) {
-                $msg = "CURL errno: {$curl_wrapper->get_error_no()}\n{$curl_wrapper->get_error_desc()}\nHTTP code: $http_code";
+            $http_code = Curl_Wrapper::get_http_code();
+            if (Curl_Wrapper::get_error_no() !== 0) {
+                $msg = "CURL errno: " . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc() . "\nHTTP code: $http_code";
             } else {
                 $msg = "HTTP request failed ($http_code)\n\n" . Curl_Wrapper::get_raw_response_headers();
             }
@@ -1362,7 +1372,7 @@ class Epg_Manager_Xmltv
             throw new Exception("Can't download file\n$msg");
         }
 
-        $http_code = $curl_wrapper->get_http_code();
+        $http_code = Curl_Wrapper::get_http_code();
         if ($http_code !== 200) {
             throw new Exception("Download error ($http_code) $url\n\n" . Curl_Wrapper::get_raw_response_headers());
         }
@@ -1393,7 +1403,7 @@ class Epg_Manager_Xmltv
      */
     protected static function unpack_xmltv($params)
     {
-        $cached_file = $params[PARAM_CACHE_PATH];
+        $cached_file = $params[PARAM_XMLTV_CACHE_PATH];
         hd_debug_print("Remove cached file: $cached_file");
         safe_unlink($cached_file);
 

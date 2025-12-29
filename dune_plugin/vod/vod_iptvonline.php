@@ -53,6 +53,10 @@ class vod_iptvonline extends vod_standard
         hd_debug_print(null, true);
         // movies_84636 or serials_84636
         $arr = explode("_", $movie_id);
+        if (empty($arr[1])) {
+            hd_debug_print("Movie ID is empty!");
+            return null;
+        }
         hd_debug_print("TryLoadMovie: category: movies, id: $arr[1]");
 
         $params[CURLOPT_CUSTOMREQUEST] = "/movies/$arr[1]";
@@ -63,7 +67,6 @@ class vod_iptvonline extends vod_standard
             return null;
         }
 
-        hd_debug_print("Movie response for ($arr[1]): " . json_format_unescaped($json), true);
         $movie = new Movie($movie_id, $this->plugin);
         $movieData = safe_get_value($json, 'data', array());
         if ($arr[0] === API_ACTION_MOVIE) {
@@ -87,7 +90,10 @@ class vod_iptvonline extends vod_standard
         } else if ($arr[0] === API_ACTION_SERIAL) {
             // collect series
             foreach (safe_get_value($movieData, 'seasons', array()) as $season) {
-                $movie_season = new Movie_Season($season['season']);
+                $season_id = safe_get_value($season, 'season');
+                if (empty($season_id)) continue;
+
+                $movie_season = new Movie_Season($season_id);
                 $movie_season->description = safe_get_value($season, 'title');
                 $movie->add_season_data($movie_season);
 
@@ -251,8 +257,8 @@ class vod_iptvonline extends vod_standard
         if ($current_idx < 0)
             return $movies;
 
-        $data = safe_get_value($json, 'data', array());
-        foreach (safe_get_value($data, 'items', array()) as $entry) {
+        $items = safe_get_value($json, array('data', 'items'), array());
+        foreach ($items as $entry) {
             $ru_title = safe_get_value($entry, 'ru_title');
             $posters = safe_get_value($entry, 'posters', array());
             $movie = new Short_Movie(
@@ -271,7 +277,7 @@ class vod_iptvonline extends vod_standard
             $movies[] = $movie;
         }
 
-        $page = $data['pagination']['pages'];
+        $page = safe_get_value($json, array('data', 'pagination', 'pages'));
         if ($page === $current_idx) {
             hd_debug_print("Last page: $page");
             $this->set_next_page($page_id, -1);
@@ -386,7 +392,7 @@ class vod_iptvonline extends vod_standard
             $curl_opt[CURLOPT_POSTFIELDS] = $params[CURLOPT_POSTFIELDS];
         }
 
-        $data = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, 2, $curl_opt);
+        $data = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, $curl_opt, Curl_Wrapper::RET_ARRAY);
         if (!isset($data['success'], $data['status']) || !$data['success'] || $data['status'] !== 200) {
             hd_debug_print("Wrong response: " . json_format_unescaped($data));
             return false;

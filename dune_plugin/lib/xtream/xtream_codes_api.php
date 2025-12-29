@@ -53,9 +53,14 @@ class xtream_codes_api
     protected $auth_info;
 
     /**
-     * @var array
+     * @var Curl_Wrapper
      */
-    protected $cache;
+    protected $curl_wrapper;
+
+    /**
+     * @var string
+     */
+    protected $user_cache;
 
     ///////////////////////////////////////////////////////////////////////////////
 
@@ -72,6 +77,7 @@ class xtream_codes_api
         $this->base_url = $base_url;
         $this->username = $username;
         $this->password = $password;
+        $this->user_cache = hash('md5', $username . $password);
     }
 
     /**
@@ -81,70 +87,7 @@ class xtream_codes_api
     public function reset_cache()
     {
         $this->auth_info = null;
-        $this->cache = null;
-    }
-
-    /**
-     * Get authentication info
-     * @return false|mixed
-     */
-    public function get_auth()
-    {
-        if (is_null($this->auth_info)) {
-            $this->auth_info = $this->get_cached_response($this->get_auth_url());
-        }
-
-        return $this->auth_info;
-    }
-
-    /**
-     * Get response if it already requested return cached value
-     * @param string $url
-     * @return mixed|false
-     */
-    protected function get_cached_response($url)
-    {
-        hd_debug_print(null, true);
-
-        $url_hash = hash('crc32', $url);
-        if (!is_null($this->cache) && isset($this->cache[$url_hash])) {
-            return $this->cache[$url_hash];
-        }
-
-        $tmp_file = get_temp_path("$url_hash.json");
-        if (file_exists($tmp_file)) {
-            $mtime = filemtime($tmp_file);
-            $diff = time() - $mtime;
-            if ($diff <= 3600) {
-                $cached_data = parse_json_file($tmp_file, false);
-                return $this->update_cache($url_hash, $cached_data);
-            }
-
-            hd_debug_print("xtream response cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
-        }
-        safe_unlink($tmp_file);
-
-        $cached_data = Curl_Wrapper::decodeJsonResponse(false, Curl_Wrapper::getInstance()->download_content($url));
-        if ($cached_data !== false) {
-            store_to_json_file($tmp_file, $cached_data);
-        }
-
-        return $this->update_cache($url_hash, $cached_data);
-    }
-
-    /**
-     * Update cache
-     * @param string $url_hash
-     * @param mixed $cached_data
-     * @return mixed
-     */
-    protected function update_cache($url_hash, $cached_data)
-    {
-        if ($cached_data !== false) {
-            $this->cache[$url_hash] = $cached_data;
-        }
-
-        return $cached_data;
+        $this->curl_wrapper->clear_cache();
     }
 
     /**
@@ -162,7 +105,7 @@ class xtream_codes_api
      */
     public function get_categories($stream_type = self::VOD)
     {
-        return $this->get_cached_response($this->get_categories_url($stream_type));
+        return $this->curl_wrapper->download_content($this->get_categories_url($stream_type), Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -179,11 +122,12 @@ class xtream_codes_api
     /**
      * Get streams
      * @param string|null $category_id
-     * @return mixed|false
+     * @return bool|array
      */
     public function get_streams($stream_type = self::VOD, $category_id = null)
     {
-        return $this->get_cached_response($this->get_streams_url($stream_type, $category_id));
+        $url = $this->get_streams_url($stream_type, $category_id);
+        return $this->curl_wrapper->download_content($url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
     }
 
     /**
@@ -208,11 +152,12 @@ class xtream_codes_api
     /**
      * Get stream info
      * @param string $id
-     * @return mixed|false
+     * @return bool|string|array
      */
     public function get_stream_info($id, $stream_type = self::VOD)
     {
-        return $this->get_cached_response($this->get_stream_info_url($id, $stream_type));
+        $url = $this->get_stream_info_url($id, $stream_type);
+        return $this->curl_wrapper->download_content($url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
     }
 
     /**

@@ -794,11 +794,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         throw new Exception("Unable to get provider info to download: " . json_encode($params));
                     }
                     $cmd = API_COMMAND_GET_PLAYLIST;
-                    $curl_opts = $provider->getCurlOpts($cmd);
-                    $exec_result = $provider->execApiCommand($cmd, $m3u_file, 0, $curl_opts);
+                    $exec_result = $provider->execApiCommand($cmd, $m3u_file, $provider->getCurlOpts($cmd), Curl_Wrapper::RET_RAW);
                     $res = $provider->postExecAction($cmd, $exec_result, $m3u_file);
                     if ($res === false) {
-                        $logfile = "Error code: " . $provider->getCurlWrapper()->get_error_no() . "\n" . $provider->getCurlWrapper()->get_error_desc();
+                        $logfile = "Error code: " . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc();
                     }
                 }
             } else {
@@ -819,10 +818,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         throw new Exception("Incorrect playlist url: $uri");
                     }
 
-                    $curl_wrapper = Curl_Wrapper::getInstance();
-                    $this->set_curl_timeouts($curl_wrapper);
-                    $res = $curl_wrapper->download_file($uri, $m3u_file);
-                    $logfile = "Error code: " . $curl_wrapper->get_error_no() . "\n" . $curl_wrapper->get_error_desc();
+                    $curl_wrapper = $this->setup_curl();
+                    $res = $curl_wrapper->download_file($uri, $m3u_file, Curl_Wrapper::CACHE_RESPONSE);
+                    $logfile = "Error code: " . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc();
                 } else {
                     throw new Exception("Unknown playlist type");
                 }
@@ -1290,7 +1288,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $bg_indexing_runs |= $this->check_and_run_bg_indexing($all_sources, INDEXING_CHANNELS | INDEXING_ENTRIES, $plugin_cookies);
             } else {
                 foreach ($all_sources as $params) {
-                    $flag = Epg_Manager_Xmltv::check_xmltv_source($this, $params, INDEXING_CHANNELS);
+                    $flag = Epg_Manager_Xmltv::check_xmltv_source($params, INDEXING_CHANNELS);
                     if ($flag !== 0) {
                         $params[PARAM_CURL_CONNECT_TIMEOUT] = $this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30);
                         $params[PARAM_CURL_DOWNLOAD_TIMEOUT] = $this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
@@ -1557,6 +1555,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * Clear vod information
+     * @return void
+     */
+    public function reset_vod()
+    {
+        $this->setup_curl()->clear_cache();
+        if (isset($this->vod)) {
+            $this->vod->clear_movie_cache();
+            safe_unlink($this->vod->get_vod_cache_file());
+            $this->get_sql_playlist()->detachDatabase('vod');
+            $this->vod = null;
+        }
+    }
+
+    /**
      * @return void
      */
     public function init_user_agent()
@@ -1569,13 +1582,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @param Curl_Wrapper $curl_wrapper
-     * @return void
+     * @return Curl_Wrapper
      */
-    public function set_curl_timeouts(&$curl_wrapper)
+    public function setup_curl()
     {
+        $curl_wrapper = Curl_Wrapper::getInstance(
+            get_slash_trailed_path($this->get_cache_dir(PARAM_CURL_CACHE_PATH, CURL_CACHE_SUBDIR)),
+            $this->get_active_playlist_id()
+        );
         $curl_wrapper->set_connection_timeout($this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
         $curl_wrapper->set_download_timeout($this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
+        $curl_wrapper->set_file_cache_time($this->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 1));
+        return $curl_wrapper;
     }
 
     /**
@@ -1588,7 +1606,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         $to_index = array();
         foreach ($sources as $source_id => $params) {
-            $indexing_flag = Epg_Manager_Xmltv::check_xmltv_source($this, $params, $indexing_flag);
+            $indexing_flag = Epg_Manager_Xmltv::check_xmltv_source($params, $indexing_flag);
             if ($indexing_flag !== 0) {
                 $to_index[$source_id] = array('flag' => $indexing_flag, 'params' => $params);
             }
@@ -1641,7 +1659,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $config = array(
             PARAM_COOKIE_ENABLE_DEBUG => LogSeverity::$is_debug,
-            PARAM_CACHE_DIR => $this->get_cache_dir(),
+            PARAM_CACHE_DIR => $this->get_cache_dir(PARAM_XMLTV_CACHE_PATH, EPG_CACHE_SUBDIR),
             PARAMS_XMLTV => $item,
             PARAM_INDEXING_FLAG => $indexing_flag,
         );
@@ -2343,18 +2361,20 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * @param string $dir_type
+     * @param string $subdir
      * @return string
      */
-    public function get_cache_dir()
+    public function get_cache_dir($dir_type, $subdir)
     {
-        $cache_dir = smb_tree::get_folder_info($this->get_parameter(PARAM_CACHE_PATH));
-        if (!is_null($cache_dir) && rtrim($cache_dir, '/') === get_data_path(EPG_CACHE_SUBDIR)) {
-            $this->set_parameter(PARAM_CACHE_PATH, '');
+        $cache_dir = smb_tree::get_folder_info($this->get_parameter($dir_type));
+        if (!is_null($cache_dir) && rtrim($cache_dir, '/') === get_data_path($subdir)) {
+            $this->set_parameter($dir_type, '');
             $cache_dir = null;
         }
 
         if (is_null($cache_dir)) {
-            $cache_dir = get_data_path(EPG_CACHE_SUBDIR);
+            $cache_dir = get_data_path($subdir);
         }
 
         return str_replace("//", "/", $cache_dir);
@@ -2408,7 +2428,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
         if ($playlist_id === null) {
-            delete_directory(self::get_playlist_cache_path());
+            clear_directory(self::get_playlist_cache_path());
             return;
         }
 
@@ -3092,7 +3112,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             if ($pid !== 0 && !send_process_signal($pid, 0)) {
                 hd_debug_print("Remove stalled lock: $lock");
-                shell_exec("rmdir {$this->get_cache_dir()}" . '/' . $lock);
+                delete_directory($this->get_cache_dir(PARAM_XMLTV_CACHE_PATH, EPG_CACHE_SUBDIR) . '/' . $lock);
             }
         }
     }
@@ -3360,7 +3380,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     /**
      * @param string $filename
-     * @return array
+     * @return string
      * @throws Exception
      */
     public function collect_detect_info($filename)
@@ -3409,7 +3429,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Best ID: $minkey");
         $detect_info .= PHP_EOL . TR::load('selected__1', $mapper_ops[$minkey]) . PHP_EOL;
 
-        return array($minkey, $detect_info);
+        return $detect_info;
     }
 
     public static function make_epg_ids($channel_row)
@@ -3619,14 +3639,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $url = base64_decode("aHR0cDovL2lwdHYuZXNhbGVjcm0ubmV0L3VwbG9hZC8", true) . $zip_file_name;
             $handle = fopen($zip_file, 'rb');
             if (is_resource($handle)) {
-                $wrapper = Curl_Wrapper::getInstance();
-                $wrapper->set_options(array(CURLOPT_INFILE => $handle, CURLOPT_INFILESIZE => filesize($zip_file)));
-                $wrapper->set_send_headers(array("accept: */*", "Expect: 100-continue", "Content-Type: application/zip"));
-                $content = $wrapper->download_content($url);
+                $curl_wrapper = Curl_Wrapper::getInstance();
+                $curl_wrapper->set_options(array(CURLOPT_INFILE => $handle, CURLOPT_INFILESIZE => filesize($zip_file)));
+                $curl_wrapper->set_send_headers(array("accept: */*", "Expect: 100-continue", "Content-Type: application/zip"));
+                $content = $curl_wrapper->download_content($url);
 
-                $http_code = $wrapper->get_http_code();
+                $http_code = Curl_Wrapper::get_http_code();
                 if ($content === false) {
-                    $err_msg = "Fetch $url failed. HTTP error: $http_code ({$wrapper->get_error_no()})";
+                    $err_msg = "Fetch $url failed. HTTP error: $http_code (" . Curl_Wrapper::get_error_no() . ")";
                     throw new Exception($err_msg);
                 }
 

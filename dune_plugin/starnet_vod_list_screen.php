@@ -97,7 +97,8 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
                     $list_movie->clear_series_data();
                     foreach ($this->plugin->get_channels_order(VOD_LIST_GROUP_ID) as $movie_id) {
                         $movie = $this->plugin->vod->get_loaded_movie($movie_id);
-                        if (is_null($movie)) continue;
+                        if (empty($movie)) continue;
+
                         $movie_info = $movie->get_movie_info();
 
                         $series = new Movie_Series($movie_id, $movie_info[PluginMovie::name], $movie->get_series($movie_id)->default_playback_url);

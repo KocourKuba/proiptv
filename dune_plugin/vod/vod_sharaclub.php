@@ -54,6 +54,11 @@ class vod_sharaclub extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
 
+        if (empty($movie_id)) {
+            hd_debug_print("Movie ID is empty!");
+            return null;
+        }
+
         if ($this->vod_items === false) {
             hd_debug_print("failed to load movie: $movie_id");
             return null;
@@ -106,6 +111,8 @@ class vod_sharaclub extends vod_standard
             // case for serials
             if (isset($item->seasons)) {
                 foreach ($item->seasons as $season) {
+                    if (empty($season->season)) continue;
+
                     $movie_season = new Movie_Season($season->season);
 
                     if (!empty($season->info->overview)) {
@@ -213,7 +220,8 @@ class vod_sharaclub extends vod_standard
      */
     public function getSearchList($keyword)
     {
-        hd_debug_print($keyword);
+        hd_debug_print("getSearchList $keyword");
+
         if ($this->vod_items === false) {
             hd_debug_print("failed to load movies");
             return array();
