@@ -222,15 +222,13 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
             array_splice($items, $total - $from_ndx);
         }
 
-        $range =  array(
+        return array(
             PluginRegularFolderRange::total => (int)$total,
             PluginRegularFolderRange::more_items_available => $more_items_available,
             PluginRegularFolderRange::from_ndx => (int)$from_ndx,
             PluginRegularFolderRange::count => count($items),
             PluginRegularFolderRange::items => $items
         );
-        hd_debug_print("create_regular_folder_range $from_ndx to $total: " . json_format_unescaped($range));
-        return $range;
     }
 
     /**

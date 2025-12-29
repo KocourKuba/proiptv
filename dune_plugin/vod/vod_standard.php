@@ -684,7 +684,7 @@ class vod_standard extends Abstract_Vod
 
         foreach ($this->vod_filters as $name) {
             $filter = $this->get_filter($name);
-            hd_debug_print("filter: $name : " . json_format_unescaped($filter));
+            hd_debug_print("filter: $name : " . json_format_unescaped($filter), true);
             if ($filter === null) {
                 hd_debug_print("no filters with '$name'");
                 continue;

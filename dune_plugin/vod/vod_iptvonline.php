@@ -168,7 +168,7 @@ class vod_iptvonline extends vod_standard
         $params[CURLOPT_CUSTOMREQUEST] = '/' . API_ACTION_FILTERS;
         $data = $this->make_json_request($params);
         if ($data === false || !isset($data['data']['filter_by'])) {
-            hd_debug_print("Wrong response on filter request: " . json_format_unescaped($data), true);
+            hd_debug_print("Wrong response on filter request: " . json_format_unescaped($data));
             return false;
         }
 

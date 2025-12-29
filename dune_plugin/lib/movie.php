@@ -142,7 +142,6 @@ class Movie extends Json_Serializer implements User_Input_Handler
                 }
 
                 $series_list = array_values($this->series_list);
-                hd_debug_print("Series list: " . json_format_unescaped($series_list), true);
                 $episode = $series_list[$user_input->plugin_vod_series_ndx];
 
                 $watched = (isset($user_input->playback_end_of_stream) && (int)$user_input->playback_end_of_stream !== 0)
@@ -679,7 +678,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
         }
         hd_debug_print("starting vod index $initial_series_ndx at position $initial_start", true);
 
-        $info = array(
+        return array(
             PluginVodInfo::id => $this->id,
             PluginVodInfo::name => $this->movie_info[PluginMovie::name],
             PluginVodInfo::description => $this->movie_info[PluginMovie::description],
@@ -690,8 +689,5 @@ class Movie extends Json_Serializer implements User_Input_Handler
             PluginVodInfo::actions => $this->do_get_action_map(),
             PluginVodInfo::initial_position_ms => $initial_start,
         );
-
-        hd_debug_print("movie_info: " . json_format_unescaped($info), true);
-        return $info;
     }
 }

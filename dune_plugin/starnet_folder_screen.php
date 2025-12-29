@@ -431,13 +431,13 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                 }
 
                 $s[self::SELECTED_TYPE_SMB] = $smb_shares->get_mount_all_smb($info);
-                hd_debug_print("smb: " . json_format_unescaped($s));
+                hd_debug_print("smb: " . json_format_unescaped($s), true);
                 return $s;
             }
 
             if ($dir === self::NETWORK_MOUNT_PATH) {
                 $s[self::SELECTED_TYPE_NFS] = smb_tree::get_mount_nfs();
-                hd_debug_print("nfs: " . json_format_unescaped($s));
+                hd_debug_print("nfs: " . json_format_unescaped($s), true);
                 return $s;
             }
 

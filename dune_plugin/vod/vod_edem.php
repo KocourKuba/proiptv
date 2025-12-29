@@ -77,7 +77,6 @@ class vod_edem extends vod_standard
             return null;
         }
 
-        hd_debug_print(json_format_unescaped($jsonData), true);
         $movie = new Movie($movie_id, $this->plugin);
         $type = safe_get_value($jsonData, 'type');
         if ($type === 'stream') {

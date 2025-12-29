@@ -1176,7 +1176,7 @@ class Epg_Manager_Xmltv
             return $channel_positions;
         }
 
-        hd_debug_print("Found EPG id's: " . json_format_unescaped($channel_ids));
+        hd_debug_print("Found EPG id's: " . json_format_unescaped($channel_ids), true);
         hd_debug_print("Load position indexes for: $channel_id ($channel_title)", true);
         $db_entries = self::open_sqlite_db($params[PARAM_HASH], self::TABLE_ENTRIES, true);
         if ($db_entries === false) {

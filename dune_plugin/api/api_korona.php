@@ -83,7 +83,7 @@ class api_korona extends api_default
             return $this->request_provider_token(true);
         }
 
-        hd_debug_print("token not received: " . json_format_unescaped($data), true);
+        hd_debug_print("token not received: " . json_format_unescaped($data));
         Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token') . "\n\n" . json_format_unescaped($data));
         return false;
     }
