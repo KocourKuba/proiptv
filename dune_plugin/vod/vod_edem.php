@@ -212,10 +212,11 @@ class vod_edem extends vod_standard
 
         foreach (safe_get_value($jsonData, 'items', array()) as $node) {
             $request = safe_get_value($node, 'request', array());
-            if (!isset($request['fid'])) continue;
+            $fid = safe_get_value($request, 'fid');
+            if (is_null($fid) || isset($request['vc'])) continue;
 
             $title = safe_get_value($node, 'title', 'no title');
-            $cat = new Vod_Category((string)$request['fid'], $title);
+            $cat = new Vod_Category((string)$fid, $title);
             $category_list[] = $cat;
             $category_index[$cat->get_id()] = $cat;
         }
