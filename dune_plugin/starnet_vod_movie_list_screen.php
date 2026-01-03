@@ -194,8 +194,6 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
                         ViewItemParams::item_caption_color => DEF_LABEL_TEXT_COLOR_WHITE,
                     ),
                 );
-
-                $this->plugin->vod->set_cached_short_movie(new Short_Movie($movie->id, $movie->name, $movie->poster_url, $movie->info));
             }
         }
 

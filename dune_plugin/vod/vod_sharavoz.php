@@ -235,7 +235,7 @@ class vod_sharavoz extends vod_standard
     /**
      * @inheritDoc
      */
-    public function fetchVodCategories(&$category_list, &$category_index)
+    public function fetchVodCategories()
     {
         hd_debug_print(null, true);
 
@@ -244,6 +244,7 @@ class vod_sharavoz extends vod_standard
         $this->parse_categories(xtream_codes_api::SERIES, $category_tree);
 
         $category_count = 0;
+        $this->category_index = array();
         foreach ($category_tree as $key => $value) {
             $category = new Vod_Category($key, $key);
             $gen_arr = array();
@@ -256,8 +257,7 @@ class vod_sharavoz extends vod_standard
             $category->set_sub_categories($gen_arr);
             $category_count += count($gen_arr);
 
-            $category_list[] = $category;
-            $category_index[$category->get_id()] = $category;
+            $this->category_index[$category->get_id()] = $category;
         }
 
         hd_debug_print("Categories read: $category_count");
@@ -302,16 +302,16 @@ class vod_sharavoz extends vod_standard
         $vod_items = $this->xtream->get_streams($arr[2], $category_id);
         $pos = 0;
         $movies = array();
-        foreach ($vod_items as $movie) {
+        foreach ($vod_items as $json_movie) {
             if ($pos++ < $page_idx) continue;
 
-            $category = (string)$movie->category_id;
+            $category = (string)$json_movie->category_id;
             if (empty($category)) {
                 $category = TR::load('no_category');
             }
 
             if ($category_id === Vod_Category::FLAG_ALL_MOVIES || $category_id === $category) {
-                $movies[] = self::CreateShortMovie($movie);
+                $movies[] = $this->CreateShortMovie($json_movie);
             }
         }
         $this->get_next_page($query_id, $pos - $page_idx);
@@ -324,7 +324,7 @@ class vod_sharavoz extends vod_standard
      * @param object $movie_obj
      * @return Short_Movie
      */
-    protected static function CreateShortMovie($movie_obj)
+    protected function CreateShortMovie($movie_obj)
     {
         $id = '-1';
         $icon = '';
@@ -336,12 +336,16 @@ class vod_sharavoz extends vod_standard
             $icon = (string)$movie_obj->cover;
         }
 
-        return new Short_Movie(
+        $movie = new Short_Movie(
             $id,
             $movie_obj->name,
             $icon,
             TR::t('vod_screen_movie_info__2', $movie_obj->name, $movie_obj->rating)
         );
+
+        $this->plugin->vod->set_cached_short_movie($movie);
+
+        return $movie;
     }
 
     /**
@@ -373,8 +377,7 @@ class vod_sharavoz extends vod_standard
         foreach ($streams as $stream) {
             $search = utf8_encode(mb_strtolower($stream->name, 'UTF-8'));
             if (strpos($search, $keyword) !== false) {
-                $id = $stream_type === xtream_codes_api::SERIES ? $stream->series_id : $stream->stream_id;
-                $movies[$id] = self::CreateShortMovie($stream);
+                $movies[] = $this->CreateShortMovie($stream);
             }
         }
     }

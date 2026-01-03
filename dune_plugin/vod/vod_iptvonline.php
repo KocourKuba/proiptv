@@ -152,17 +152,12 @@ class vod_iptvonline extends vod_standard
     /**
      * @inheritDoc
      */
-    public function fetchVodCategories(&$category_list, &$category_index)
+    public function fetchVodCategories()
     {
-        $category_list = array();
-        $category_index = array();
+        $this->category_index = array();
 
-        $cat = new Vod_Category(API_ACTION_MOVIE, TR::t('vod_screen_all_movies'));
-        $category_list[] = $cat;
-        $category_index[$cat->get_id()] = $cat;
-        $cat = new Vod_Category(API_ACTION_SERIAL, TR::t('vod_screen_all_serials'));
-        $category_list[] = $cat;
-        $category_index[$cat->get_id()] = $cat;
+        $this->category_index[API_ACTION_MOVIE] = new Vod_Category(API_ACTION_MOVIE, TR::t('vod_screen_all_movies'));
+        $this->category_index[API_ACTION_SERIAL] = new Vod_Category(API_ACTION_SERIAL, TR::t('vod_screen_all_serials'));
 
         $exist_filters = array();
         $params[CURLOPT_CUSTOMREQUEST] = '/' . API_ACTION_FILTERS;
@@ -199,7 +194,7 @@ class vod_iptvonline extends vod_standard
 
         $this->set_filters($exist_filters);
 
-        hd_debug_print("Categories read: " . count($category_list));
+        hd_debug_print("Categories read: " . count($this->category_index));
         hd_debug_print("Filters count: " . count($exist_filters));
         return true;
     }
@@ -234,57 +229,6 @@ class vod_iptvonline extends vod_standard
         $serials = ($searchRes === false) ? array() : $this->CollectSearchResult(API_ACTION_SERIAL, $searchRes, API_ACTION_SEARCH);
 
         return array_merge($movies, $serials);
-    }
-
-    /**
-     * @param string $query_id
-     * @param array $json
-     * @param string|null $search
-     * @return array
-     */
-    protected function CollectSearchResult($query_id, $json, $search = null)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("query_id: $query_id");
-
-        $movies = array();
-        if (!isset($json['data']['items'])) {
-            return $movies;
-        }
-
-        $page_id = is_null($search) ? $query_id : "{$query_id}_$search";
-        $current_idx = $this->get_current_page($page_id);
-        if ($current_idx < 0)
-            return $movies;
-
-        $items = safe_get_value($json, array('data', 'items'), array());
-        foreach ($items as $entry) {
-            $ru_title = safe_get_value($entry, 'ru_title');
-            $posters = safe_get_value($entry, 'posters', array());
-            $movie = new Short_Movie(
-                "{$query_id}_{$entry['id']}",
-                $ru_title,
-                safe_get_value($posters, 'medium'),
-                TR::t('vod_screen_movie_info__4',
-                    $ru_title,
-                    $entry['year'],
-                    implode(',', safe_get_value($entry, 'countries', array())),
-                    implode(',', safe_get_value($entry, 'genres', array()))
-                )
-            );
-
-            $movie->big_poster_url = safe_get_value($posters, 'big');
-            $movies[] = $movie;
-        }
-
-        $page = safe_get_value($json, array('data', 'pagination', 'pages'));
-        if ($page === $current_idx) {
-            hd_debug_print("Last page: $page");
-            $this->set_next_page($page_id, -1);
-        }
-
-        hd_debug_print("Movies found: " . count($movies));
-        return $movies;
     }
 
     /**
@@ -399,5 +343,57 @@ class vod_iptvonline extends vod_standard
         }
 
         return $data;
+    }
+
+    /**
+     * @param string $query_id
+     * @param array $json
+     * @param string|null $search
+     * @return array
+     */
+    protected function CollectSearchResult($query_id, $json, $search = null)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("query_id: $query_id");
+
+        $movies = array();
+        if (!isset($json['data']['items'])) {
+            return $movies;
+        }
+
+        $page_id = is_null($search) ? $query_id : "{$query_id}_$search";
+        $current_idx = $this->get_current_page($page_id);
+        if ($current_idx < 0)
+            return $movies;
+
+        $items = safe_get_value($json, array('data', 'items'), array());
+        foreach ($items as $entry) {
+            $ru_title = safe_get_value($entry, 'ru_title');
+            $posters = safe_get_value($entry, 'posters', array());
+            $movie = new Short_Movie(
+                "{$query_id}_{$entry['id']}",
+                $ru_title,
+                safe_get_value($posters, 'medium'),
+                TR::t('vod_screen_movie_info__4',
+                    $ru_title,
+                    $entry['year'],
+                    implode(',', safe_get_value($entry, 'countries', array())),
+                    implode(',', safe_get_value($entry, 'genres', array()))
+                )
+            );
+
+            $movie->big_poster_url = safe_get_value($posters, 'big');
+            $this->plugin->vod->set_cached_short_movie($movie);
+            $movies[] = $movie;
+        }
+
+        $page = safe_get_value($json, array('data', 'pagination', 'pages'));
+        if ($page === $current_idx) {
+            hd_debug_print("Last page: $page");
+            $this->set_next_page($page_id, -1);
+        }
+
+        hd_debug_print("Movies found: " . count($movies));
+        return $movies;
     }
 }

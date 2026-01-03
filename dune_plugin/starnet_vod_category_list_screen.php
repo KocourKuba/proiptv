@@ -34,16 +34,6 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
     const ID = 'vod_category_list';
 
     /**
-     * @var Vod_Category[]
-     */
-    private $category_list;
-
-    /**
-     * @var array
-     */
-    private $category_index;
-
-    /**
      * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
@@ -146,25 +136,24 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
-        if (!isset($this->category_index, $this->category_list)) {
-            if (!$this->plugin->vod->fetchVodCategories($this->category_list, $this->category_index)) {
-                hd_debug_print("Error: Fetch categories");
-                return array();
-            }
+        if (!$this->plugin->vod->fetchVodCategories()) {
+            hd_debug_print("Error: Fetch categories");
+            return array();
         }
 
-        $category_list = $this->category_list;
+        $category_list = array_values($this->plugin->vod->getCategoryIndex());
+        $category_index = $this->plugin->vod->getCategoryIndex();
 
         $items = array();
 
         if (isset($media_url->category_id)) {
             if ($media_url->category_id !== VOD_GROUP_ID) {
-                if (!isset($this->category_index[$media_url->category_id])) {
+                if (!isset($category_index[$media_url->category_id])) {
                     hd_debug_print("Error: parent category (id: $media_url->category_id) not found.");
                     return array();
                 }
 
-                $parent_category = $this->category_index[$media_url->category_id];
+                $parent_category = $category_index[$media_url->category_id];
                 $category_list = $parent_category->get_sub_categories();
             } else {
                 foreach ($this->plugin->vod->get_special_groups() as $group) {

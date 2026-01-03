@@ -203,7 +203,7 @@ class vod_yosso extends vod_standard
     /**
      * @inheritDoc
      */
-    public function fetchVodCategories(&$category_list, &$category_index)
+    public function fetchVodCategories()
     {
         hd_debug_print(null, true);
 
@@ -216,6 +216,8 @@ class vod_yosso extends vod_standard
                 'title' => TR::load('genre'),
                 'values' => array(-1 => TR::t('no'))),
         );
+
+        $this->category_index = array();
         foreach ($collections as $collection) {
             if (safe_get_value($collection, 'Type') != "CollectionFolder") continue;
 
@@ -237,9 +239,7 @@ class vod_yosso extends vod_standard
 
             $exist_filters['source']['values'][$id] = $name;
             $icon = $this->jfc->getItemImageUrl($id, 'Primary', 400, 0, 'Jpg');
-            $cat = new Vod_Category($sid, $name . " ($movie_count)", null, $icon);
-            $category_list[] = $cat;
-            $category_index[$id] = $cat;
+            $this->category_index[$id] = new Vod_Category($sid, $name . " ($movie_count)", null, $icon);
 
             $query_params = array('ParentId' => $id, 'recursive' => 'true');
             $jsonData = $this->jfc->getFilters($query_params);
@@ -256,7 +256,7 @@ class vod_yosso extends vod_standard
 
         $this->set_filters($exist_filters);
 
-        hd_debug_print("Categories read: " . count($category_list));
+        hd_debug_print("Categories read: " . count($this->category_index));
         hd_debug_print("Filters count: " . count($exist_filters));
 
         return true;
@@ -284,10 +284,7 @@ class vod_yosso extends vod_standard
 
         $vod_items = $this->jfc->getItems($query_params);
         foreach (safe_get_value($vod_items, 'Items') as $item) {
-            $movie = $this->CreateShortMovie($item);
-            if (!empty($movie)) {
-                $movies[] = $movie;
-            }
+            $this->CreateShortMovie($item, $movies);
         }
 
         if (!empty($movies)) {
@@ -322,10 +319,7 @@ class vod_yosso extends vod_standard
 
         $vod_items = $this->jfc->getItems($query_params);
         foreach (safe_get_value($vod_items, 'Items', array()) as $item) {
-            $movie = $this->CreateShortMovie($item);
-            if (!empty($movie)) {
-                $movies[] = $movie;
-            }
+            $this->CreateShortMovie($item, $movies);
         }
 
         if (!empty($movies)) {
@@ -380,10 +374,7 @@ class vod_yosso extends vod_standard
 
         $vod_items = $this->jfc->getItems($query_params);
         foreach (safe_get_value($vod_items, 'Items', array()) as $item) {
-            $movie = $this->CreateShortMovie($item);
-            if (!empty($movie)) {
-                $movies[] = $movie;
-            }
+            $this->CreateShortMovie($item, $movies);
         }
 
         if (!empty($movies)) {
@@ -396,9 +387,9 @@ class vod_yosso extends vod_standard
 
     /**
      * @param array $movie_info
-     * @return Short_Movie
+     * @param array $movies
      */
-    protected function CreateShortMovie($movie_info)
+    protected function CreateShortMovie($movie_info, &$movies)
     {
         $id = safe_get_value($movie_info, 'Id');
         if (empty($id)) {
@@ -408,6 +399,10 @@ class vod_yosso extends vod_standard
         $type = safe_get_value($movie_info, 'Type', jellyfin_api::MOVIES);
         $rating = safe_get_value($movie_info, 'OfficialRating', 0);
         $icon = $this->jfc->getItemImageUrl($id);
-        return new Short_Movie("{$id}_$type", $name, $icon, TR::t('vod_screen_movie_info__2', $name, $rating));
+        $movie = new Short_Movie("{$id}_$type", $name, $icon, TR::t('vod_screen_movie_info__2', $name, $rating));
+
+        $this->plugin->vod->set_cached_short_movie($movie);
+
+        $movies[] = $movie;
     }
 }

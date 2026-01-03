@@ -108,7 +108,7 @@ class vod_glanz extends vod_standard
     /**
      * @inheritDoc
      */
-    public function fetchVodCategories(&$category_list, &$category_index)
+    public function fetchVodCategories()
     {
         $perf = new Perf_Collector();
         $perf->reset('start');
@@ -118,8 +118,7 @@ class vod_glanz extends vod_standard
         }
 
         $count = count($this->vod_items);
-        $category_list = array();
-        $category_index = array();
+        $this->category_index = array();
         $cat_info = array();
 
         // all movies
@@ -152,8 +151,7 @@ class vod_glanz extends vod_standard
         foreach ($cat_info as $category => $movie_count) {
             $cat = new Vod_Category($category,
                 ($category === Vod_Category::FLAG_ALL_MOVIES) ? TR::t('vod_screen_all_movies__1', "($movie_count)") : "$category ($movie_count)");
-            $category_list[] = $cat;
-            $category_index[$category] = $cat;
+            $this->category_index[$category] = $cat;
         }
 
         ksort($genres);
@@ -173,7 +171,7 @@ class vod_glanz extends vod_standard
         $perf->setLabel('end');
         $report = $perf->getFullReport();
 
-        hd_debug_print("Categories read: " . count($category_list));
+        hd_debug_print("Categories read: " . count($this->category_index));
         hd_debug_print("Total items loaded: " . count($this->vod_items));
         hd_debug_print("Load time: {$report[Perf_Collector::TIME]} secs");
         hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
@@ -200,7 +198,7 @@ class vod_glanz extends vod_standard
             $item = (object)$item;
             $search = utf8_encode(mb_strtolower($item->name, 'UTF-8'));
             if (strpos($search, $keyword) !== false) {
-                $movies[] = self::CreateShortMovie($item);
+                $movies[] = $this->CreateShortMovie($item);
             }
         }
 
@@ -212,7 +210,7 @@ class vod_glanz extends vod_standard
      * @param object $movie_obj
      * @return Short_Movie
      */
-    protected static function CreateShortMovie($movie_obj)
+    protected function CreateShortMovie($movie_obj)
     {
         if (isset($movie_obj->id)) {
             $id = (string)$movie_obj->id;
@@ -229,12 +227,16 @@ class vod_glanz extends vod_standard
         }
         $genres_str = implode(", ", $genres);
 
-        return new Short_Movie(
+        $movie = new Short_Movie(
             $id,
             $movie_obj->name,
             $movie_obj->cover,
             TR::t('vod_screen_movie_info__4', $movie_obj->name, $movie_obj->year, $movie_obj->country, $genres_str)
         );
+
+        $this->plugin->vod->set_cached_short_movie($movie);
+
+        return $movie;
     }
 
     /**
@@ -267,7 +269,7 @@ class vod_glanz extends vod_standard
             }
 
             if ($category_id === Vod_Category::FLAG_ALL_MOVIES || $category_id === $category) {
-                $movies[] = self::CreateShortMovie($movie);
+                $movies[] = $this->CreateShortMovie($movie);
             }
         }
         $this->get_next_page($query_id, $pos - $page_idx);
@@ -327,7 +329,7 @@ class vod_glanz extends vod_standard
             }
 
             if ($match_year && $match_genre) {
-                $movies[] = self::CreateShortMovie($movie);
+                $movies[] = $this->CreateShortMovie($movie);
             }
         }
 

@@ -192,7 +192,7 @@ class vod_edem extends vod_standard
     /**
      * @inheritDoc
      */
-    public function fetchVodCategories(&$category_list, &$category_index)
+    public function fetchVodCategories()
     {
         hd_debug_print(null, true);
 
@@ -206,8 +206,7 @@ class vod_edem extends vod_standard
             hd_debug_print("Error response: " . json_format_unescaped($jsonData), true);
         }
 
-        $category_list = array();
-        $category_index = array();
+        $this->category_index = array();
 
         foreach (safe_get_value($jsonData, 'items', array()) as $node) {
             $request = safe_get_value($node, 'request', array());
@@ -216,8 +215,7 @@ class vod_edem extends vod_standard
 
             $title = safe_get_value($node, 'title', 'no title');
             $cat = new Vod_Category((string)$fid, $title);
-            $category_list[] = $cat;
-            $category_index[$cat->get_id()] = $cat;
+            $this->category_index[$cat->get_id()] = $cat;
         }
 
         $exist_filters = array();
@@ -235,7 +233,7 @@ class vod_edem extends vod_standard
 
         $this->set_filters($exist_filters);
 
-        hd_debug_print("Categories read: " . count($category_list));
+        hd_debug_print("Categories read: " . count($this->category_index));
         hd_debug_print("Filters count: " . count($exist_filters));
         return true;
     }
@@ -248,57 +246,6 @@ class vod_edem extends vod_standard
         hd_debug_print("getSearchList $keyword");
         $post_params = array('cmd' => "search", 'query' => $keyword);
         return $this->CollectSearchResult($keyword, $this->make_json_request($post_params, true));
-    }
-
-    /**
-     * @param string $query_id
-     * @param array $requestData
-     * @return array
-     */
-    protected function CollectSearchResult($query_id, $requestData)
-    {
-        hd_debug_print("query_id: $query_id", true);
-        $movies = array();
-        if ($requestData === false) {
-            return $movies;
-        }
-
-        $current_offset = $this->get_current_page($query_id);
-        if ($current_offset < 0) {
-            return $movies;
-        }
-
-        if (!isset($requestData['items'])) {
-            hd_debug_print("No items in query! " . json_format_unescaped($requestData), true);
-            return $movies;
-        }
-
-        foreach ($requestData['items'] as $entry) {
-            $request = safe_get_value($entry, 'request');
-            $type = safe_get_value($entry, 'type');
-            if (empty($type)) continue;
-
-            if ($type === 'next') {
-                $this->get_next_page($query_id, safe_get_value($request, 'offset', $current_offset) - $current_offset);
-            } else {
-                $title = safe_get_value($entry, 'title');
-                $movie = new Short_Movie(
-                    safe_get_value($request, 'fid'),
-                    $title,
-                    safe_get_value($entry, 'imglr'),
-                    TR::t('vod_screen_movie_info__3', $title, safe_get_value($entry, 'year'))
-                );
-                $movie->big_poster_url = safe_get_value($entry, 'img');
-                $movies[] = $movie;
-            }
-        }
-
-        if ($current_offset === $this->get_current_page($query_id)) {
-            $this->set_next_page($query_id, -1);
-        }
-
-        hd_debug_print("Movies found: " . count($movies));
-        return $movies;
     }
 
     /**
@@ -352,5 +299,57 @@ class vod_edem extends vod_standard
 
         $post_params = array('cmd' => "flicks", 'fid' => (int)$query_id, 'offset' => $page_idx, 'limit' => 50);
         return $this->CollectSearchResult($query_id, $this->make_json_request($post_params, true));
+    }
+
+    /**
+     * @param string $query_id
+     * @param array $requestData
+     * @return array
+     */
+    protected function CollectSearchResult($query_id, $requestData)
+    {
+        hd_debug_print("query_id: $query_id", true);
+        $movies = array();
+        if ($requestData === false) {
+            return $movies;
+        }
+
+        $current_offset = $this->get_current_page($query_id);
+        if ($current_offset < 0) {
+            return $movies;
+        }
+
+        if (!isset($requestData['items'])) {
+            hd_debug_print("No items in query! " . json_format_unescaped($requestData), true);
+            return $movies;
+        }
+
+        foreach ($requestData['items'] as $entry) {
+            $request = safe_get_value($entry, 'request');
+            $type = safe_get_value($entry, 'type');
+            if (empty($type)) continue;
+
+            if ($type === 'next') {
+                $this->get_next_page($query_id, safe_get_value($request, 'offset', $current_offset) - $current_offset);
+            } else {
+                $title = safe_get_value($entry, 'title');
+                $movie = new Short_Movie(
+                    safe_get_value($request, 'fid'),
+                    $title,
+                    safe_get_value($entry, 'imglr'),
+                    TR::t('vod_screen_movie_info__3', $title, safe_get_value($entry, 'year'))
+                );
+                $movie->big_poster_url = safe_get_value($entry, 'img');
+                $this->plugin->vod->set_cached_short_movie($movie);
+                $movies[] = $movie;
+            }
+        }
+
+        if ($current_offset === $this->get_current_page($query_id)) {
+            $this->set_next_page($query_id, -1);
+        }
+
+        hd_debug_print("Movies found: " . count($movies));
+        return $movies;
     }
 }

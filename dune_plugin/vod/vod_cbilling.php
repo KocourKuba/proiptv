@@ -153,7 +153,7 @@ class vod_cbilling extends vod_standard
     /**
      * @inheritDoc
      */
-    public function fetchVodCategories(&$category_list, &$category_index)
+    public function fetchVodCategories()
     {
         $jsonItems = $this->provider->execApiCommand(API_COMMAND_GET_VOD);
         if ($jsonItems === false) {
@@ -163,8 +163,7 @@ class vod_cbilling extends vod_standard
             return false;
         }
 
-        $category_list = array();
-        $category_index = array();
+        $this->category_index = array();
 
         $total = 0;
         foreach ($jsonItems->data as $node) {
@@ -188,16 +187,15 @@ class vod_cbilling extends vod_standard
 
             $category->set_sub_categories($gen_arr);
 
-            $category_list[] = $category;
-            $category_index[$category->get_id()] = $category;
+            $this->category_index[$category->get_id()] = $category;
         }
 
         // all movies
         $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, TR::t('vod_screen_all_movies__1', " ($total)"));
-        array_unshift($category_list, $category);
-        $category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
+        array_unshift($this->category_index, $category);
+        $this->category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
 
-        hd_debug_print("Categories read: " . count($category_list));
+        hd_debug_print("Categories read: " . count($this->category_index));
         return true;
     }
 
@@ -215,36 +213,6 @@ class vod_cbilling extends vod_standard
         $params[CURLOPT_CUSTOMREQUEST] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx";
         $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, $params);
         return $response === false ? array() : $this->CollectSearchResult($response);
-    }
-
-    /**
-     * @param object $json
-     * @return array
-     */
-    protected function CollectSearchResult($json)
-    {
-        $movies = array();
-
-        foreach ($json->data as $entry) {
-            $genresArray = array();
-            if (isset($entry->genres)) {
-                foreach ($entry->genres as $genre) {
-                    $genresArray[] = $genre->title;
-                }
-            }
-            if (isset($entry->name)) {
-                $genre_str = implode(", ", $genresArray);
-                $movies[] = new Short_Movie(
-                    $entry->id,
-                    $entry->name,
-                    $entry->poster,
-                    TR::t('vod_screen_movie_info__5', $entry->name, $entry->year, $entry->country, $genre_str, $entry->rating)
-                );
-            }
-        }
-
-        hd_debug_print("Movies found: " . count($movies));
-        return $movies;
     }
 
     /**
@@ -267,5 +235,37 @@ class vod_cbilling extends vod_standard
 
         $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, $params);
         return $response === false ? array() : $this->CollectSearchResult($response);
+    }
+
+    /**
+     * @param object $json
+     * @return array
+     */
+    protected function CollectSearchResult($json)
+    {
+        $movies = array();
+
+        foreach ($json->data as $entry) {
+            $genresArray = array();
+            if (isset($entry->genres)) {
+                foreach ($entry->genres as $genre) {
+                    $genresArray[] = $genre->title;
+                }
+            }
+            if (isset($entry->name)) {
+                $genre_str = implode(", ", $genresArray);
+                $movie = new Short_Movie(
+                    $entry->id,
+                    $entry->name,
+                    $entry->poster,
+                    TR::t('vod_screen_movie_info__5', $entry->name, $entry->year, $entry->country, $genre_str, $entry->rating)
+                );
+                $this->plugin->vod->set_cached_short_movie($movie);
+                $movies[] = $movie;
+            }
+        }
+
+        hd_debug_print("Movies found: " . count($movies));
+        return $movies;
     }
 }

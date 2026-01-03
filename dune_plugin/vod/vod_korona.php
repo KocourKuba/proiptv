@@ -116,15 +116,14 @@ class vod_korona extends vod_standard
     /**
      * @inheritDoc
      */
-    public function fetchVodCategories(&$category_list, &$category_index)
+    public function fetchVodCategories()
     {
         $jsonItems = $this->make_json_request("/cat");
         if ($jsonItems === false || empty($jsonItems->data)) {
             return false;
         }
 
-        $category_list = array();
-        $category_index = array();
+        $this->category_index = array();
 
         foreach ($jsonItems->data as $node) {
             $id = (string)$node->id;
@@ -145,11 +144,10 @@ class vod_korona extends vod_standard
 
             $category->set_sub_categories($gen_arr);
 
-            $category_list[] = $category;
-            $category_index[$category->get_id()] = $category;
+            $this->category_index[$category->get_id()] = $category;
         }
 
-        hd_debug_print("Categories read: " . count($category_list));
+        hd_debug_print("Categories read: " . count($this->category_index));
         return true;
     }
     /**
@@ -257,12 +255,14 @@ class vod_korona extends vod_standard
             }
             if (isset($entry->name)) {
                 $genre_str = implode(", ", $genresArray);
-                $movies[] = new Short_Movie(
+                $movie = new Short_Movie(
                     $entry->id,
                     $entry->name,
                     $entry->poster,
                     TR::t('vod_screen_movie_info__5', $entry->name, $entry->year, $entry->country, $genre_str, $entry->rating)
                 );
+                $this->plugin->vod->set_cached_short_movie($movie);
+                $movies[] = $movie;
             }
         }
 

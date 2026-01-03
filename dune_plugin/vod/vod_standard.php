@@ -102,6 +102,16 @@ class vod_standard extends Abstract_Vod
     protected $filters = array();
 
     /**
+     * @var Vod_Category[]
+     */
+    protected $category_list;
+
+    /**
+     * @var Vod_Category[]
+     */
+    protected $category_index;
+
+    /**
      * @var string
      */
     protected $vod_parser;
@@ -143,6 +153,7 @@ class vod_standard extends Abstract_Vod
         }
 
         $this->wrapper = $this->plugin->get_sql_playlist();
+        $this->category_index = null;
 
         return true;
     }
@@ -256,6 +267,14 @@ class vod_standard extends Abstract_Vod
         $group = $this->special_groups->get($id);
         $group[ACTION_DISABLED] = $disable;
         $this->special_groups->set($id, $group);
+    }
+
+    /**
+     * @return Vod_Category[]
+     */
+    public function getCategoryIndex()
+    {
+        return $this->category_index;
     }
 
     /**
@@ -460,13 +479,15 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param Vod_Category[] &$category_list
-     * @param array &$category_index
      * @return bool
      */
-    public function fetchVodCategories(&$category_list, &$category_index)
+    public function fetchVodCategories()
     {
         hd_debug_print(null, true);
+        if (isset($this->category_index)) {
+            return true;
+        }
+
         if (!$this->init_vod_m3u_playlist()) {
             hd_debug_print("VOD not available");
             return false;
@@ -493,12 +514,12 @@ class vod_standard extends Abstract_Vod
         $perf = new Perf_Collector();
         $perf->reset('start');
 
-        $category_index = array();
+        $this->category_index = array();
 
         // all movies must be first
         $all_count = $this->getVodCount('');
         $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, TR::t('vod_screen_all_movies__1', " ($all_count)"));
-        $category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
+        $this->category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
 
         $category_count = 0;
         foreach ($this->getVodGroups() as $group) {
@@ -506,13 +527,7 @@ class vod_standard extends Abstract_Vod
             if ($count === 0) continue;
 
             $category_count++;
-            $cat = new Vod_Category($group, "$group ($count)");
-            $category_index[$group] = $cat;
-        }
-
-        $category_list = array();
-        foreach ($category_index as $cat) {
-            $category_list[] = $cat;
+            $this->category_index[$group] = new Vod_Category($group, "$group ($count)");
         }
 
         // Cleanup VOD play list if movie not exist

@@ -133,14 +133,13 @@ class vod_ipstream extends vod_standard
     /**
      * @inheritDoc
      */
-    public function fetchVodCategories(&$category_list, &$category_index)
+    public function fetchVodCategories()
     {
         if ($this->load_vod_json_full() === false) {
             return false;
         }
 
-        $category_list = array();
-        $category_index = array();
+        $this->category_index = array();
         $cat_info = array();
 
         // all movies
@@ -170,8 +169,7 @@ class vod_ipstream extends vod_standard
         foreach ($cat_info as $category => $movie_count) {
             $cat = new Vod_Category($category,
                 ($category === Vod_Category::FLAG_ALL_MOVIES) ? TR::t('vod_screen_all_movies__1', " ($movie_count)") : "$category ($movie_count)");
-            $category_list[] = $cat;
-            $category_index[$category] = $cat;
+            $this->category_index[$category] = $cat;
         }
 
         ksort($genres);
@@ -188,7 +186,7 @@ class vod_ipstream extends vod_standard
 
         $this->set_filters($filters);
 
-        hd_debug_print("Categories read: " . count($category_list));
+        hd_debug_print("Categories read: " . count($this->category_index));
         return true;
     }
 
@@ -211,7 +209,7 @@ class vod_ipstream extends vod_standard
         foreach ($this->vod_items as $item) {
             $search = utf8_encode(mb_strtolower($item->name, 'UTF-8'));
             if (strpos($search, $keyword) !== false) {
-                $movies[] = self::CreateShortMovie($item);
+                $movies[] = $this->CreateShortMovie($item);
             }
         }
 
@@ -223,7 +221,7 @@ class vod_ipstream extends vod_standard
      * @param object $movie_obj
      * @return Short_Movie
      */
-    protected static function CreateShortMovie($movie_obj)
+    protected function CreateShortMovie($movie_obj)
     {
         if (isset($movie_obj->id)) {
             $id = (string)$movie_obj->id;
@@ -236,12 +234,16 @@ class vod_ipstream extends vod_standard
         $genres = HD::ArrayToStr($movie_obj->info->genre);
         $country = HD::ArrayToStr($movie_obj->info->country);
 
-        return new Short_Movie(
+        $movie = new Short_Movie(
             $id,
             $movie_obj->name,
             $movie_obj->info->poster,
             TR::t('vod_screen_movie_info__5', $movie_obj->name, $movie_obj->info->year, $country, $genres, $movie_obj->info->rating)
         );
+
+        $this->plugin->vod->set_cached_short_movie($movie);
+
+        return $movie;
     }
 
     /**
@@ -272,7 +274,7 @@ class vod_ipstream extends vod_standard
             }
 
             if ($category_id === Vod_Category::FLAG_ALL_MOVIES || $category_id === $category) {
-                $movies[] = self::CreateShortMovie($movie);
+                $movies[] = $this->CreateShortMovie($movie);
             }
         }
         $this->get_next_page($query_id, $pos - $page_idx);
@@ -327,7 +329,7 @@ class vod_ipstream extends vod_standard
             }
 
             if ($match_year && $match_genre) {
-                $movies[] = self::CreateShortMovie($movie);
+                $movies[] = $this->CreateShortMovie($movie);
             }
         }
 
