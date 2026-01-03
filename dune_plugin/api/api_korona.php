@@ -68,15 +68,18 @@ class api_korona extends api_default
         $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_WWW_FORM_URLENCODED;
         $curl_opt[CURLOPT_POSTFIELDS] = $pairs;
 
-        $data = $this->execApiCommand($cmd, null, $curl_opt);
-        if (isset($data->access_token)) {
+        $data = $this->execApiCommandResponse($cmd, $curl_opt);
+        $access_token = safe_get_value($data, 'access_token');
+        $refresh_token = safe_get_value($data, 'refresh_token');
+        if (!empty($access_token) && !empty($refresh_token)) {
             hd_debug_print("token requested: " . json_format_unescaped($data), true);
-            $this->plugin->set_cookie(PARAM_TOKEN, $data->access_token, time() + $data->expires_in);
-            $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $data->access_token, PHP_INT_MAX);
+            $this->plugin->set_cookie(PARAM_TOKEN, $access_token, time() + $data->expires_in);
+            $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $refresh_token, PHP_INT_MAX);
             return true;
         }
 
-        if ($can_refresh && isset($data->error)) {
+        $error = safe_get_value($data, 'error');
+        if ($can_refresh && !empty($error)) {
             // refresh token failed. Need to make complete auth
             $this->plugin->remove_cookie(PARAM_TOKEN);
             $this->plugin->remove_cookie(PARAM_REFRESH_TOKEN);
@@ -123,7 +126,7 @@ class api_korona extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_OBJECT);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             if (isset($response->data)) {
                 foreach ($response->data as $server) {

@@ -628,6 +628,9 @@ class Curl_Wrapper
             hd_debug_print("---------   Response headers end  ---------");
         }
 
+        if ($save_file === null) {
+            hd_debug_print("CURL response: $content", true);
+        }
         return $save_file === null ? $content : true;
     }
 }

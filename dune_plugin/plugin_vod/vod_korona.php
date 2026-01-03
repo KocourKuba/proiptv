@@ -24,7 +24,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'vod_standard.php';
+require_once 'lib/vod/vod_standard.php';
 
 class vod_korona extends vod_standard
 {
@@ -54,9 +54,9 @@ class vod_korona extends vod_standard
         // movies_84636 or serials_84636
         hd_debug_print("TryLoadMovie: $movie_id");
         $arr = explode("_", $movie_id);
-        $id = safe_get_value($arr, 1, $movie_id);
+        $season_id = safe_get_value($arr, 1, $movie_id);
 
-        $json = $this->make_json_request("/video/$id");
+        $json = $this->make_json_request("/video/$season_id");
 
         if ($json === false || $json === null) {
             hd_debug_print("failed to load movie: $movie_id");
@@ -64,50 +64,54 @@ class vod_korona extends vod_standard
         }
 
         $movie = new Movie($movie_id, $this->plugin);
-        $movieData = $json->data;
-        if (isset($movieData->seasons)) {
+        $movieData = safe_get_value($json, 'data');
+        if (isset($movieData['seasons'])) {
             // collect series
-            foreach ($movieData->seasons as $season) {
-                if (empty($season->id)) continue;
+            foreach (safe_get_value($movieData, 'seasons', array()) as $season) {
+                $season_id = safe_get_value($season, 'id');
+                if (empty($season_id)) continue;
 
-                $movie_season = new Movie_Season($season->id, $season->number);
-                if (!empty($season->name)) {
-                    $movie_season->description = $season->name;
+                $season_number = safe_get_value($season, 'number');
+                $season_name = safe_get_value($season, 'name');
+                $movie_season = new Movie_Season($season_id, $season_number);
+                if (!empty($season_name)) {
+                    $movie_season->description = $season_name;
                 }
                 $movie->add_season_data($movie_season);
 
-                foreach ($season->series as $episode) {
-                    hd_debug_print("episode playback_url: {$episode->files['url']}");
-                    $movie_serie = new Movie_Series($episode->id,
-                        TR::t('vod_screen_series__1', $episode->number),
-                        new Movie_Playback_Url($episode->files[0]->url),
-                        $season->id
-                    );
-                    $movie_serie->description = $episode->name;
+                foreach (safe_get_value($season, 'series', array()) as $episode) {
+                    $episode_id = safe_get_value($episode, 'id');
+                    $episode_number = safe_get_value($episode, 'number');
+                    $url = safe_get_value($episode, array('files', 0, 'url'));
+                    hd_debug_print("episode playback_url: $url", true);
+                    $playback_url = new Movie_Playback_Url($url);
+                    $movie_serie = new Movie_Series($episode_id, TR::t('vod_screen_series__1', $episode_number), $playback_url, $season_id);
+                    $movie_serie->description = safe_get_value($episode, 'name');
                     $movie->add_series_data($movie_serie);
                 }
             }
         } else {
-            hd_debug_print("movie playback_url: {$movieData->files[0]->url}");
-            $movie_serie = new Movie_Series($movie_id, $movieData->name, new Movie_Playback_Url($movieData->files[0]->url));
+            $url = safe_get_value($movieData, array('files', 0, 'url'));
+            hd_debug_print("movie playback_url: $url");
+            $movie_serie = new Movie_Series($movie_id, safe_get_value($movieData, 'name'), new Movie_Playback_Url($url));
             $movie->add_series_data($movie_serie);
         }
 
         $movie->set_data(
-            $movieData->name,
-            $movieData->original_name,
-            $movieData->description,
-            $movieData->poster,
-            $movieData->time,
-            $movieData->year,
-            $movieData->director,
+            safe_get_value($movieData, 'name'),
+            safe_get_value($movieData, 'original_name'),
+            safe_get_value($movieData, 'description'),
+            safe_get_value($movieData, 'poster'),
+            safe_get_value($movieData, 'time'),
+            safe_get_value($movieData, 'year'),
+            safe_get_value($movieData, 'director'),
             '',
-            $movieData->actors,
+            safe_get_value($movieData, 'actors'),
             self::collect_genres($movieData),
-            $movieData->rating,
+            safe_get_value($movieData, 'rating'),
             '',
             '',
-            $movieData->country
+            safe_get_value($movieData, 'country')
         );
 
         return $movie;
@@ -157,10 +161,8 @@ class vod_korona extends vod_standard
     {
         hd_debug_print("getSearchList $keyword");
 
-        $keyword = urlencode($keyword);
-        $searchRes = $this->make_json_request("/filter/by_name?name=$keyword&page=1&per_page=999999999");
-
-        return ($searchRes === false) ? array() : $this->CollectSearchResult($searchRes, $searchRes);
+        $enc_keyword = urlencode($keyword);
+        return $this->CollectQueryResult($keyword, $this->make_json_request("/filter/by_name?name=$enc_keyword&page=1&per_page=999999999"));
     }
 
     /**
@@ -226,19 +228,20 @@ class vod_korona extends vod_standard
         }
 
         hd_debug_print("filter page_idx:  $page_idx");
-
-        $jsonItems = $this->make_json_request("/filter");
-
-        return $jsonItems === false ? array() : $this->CollectSearchResult($query_id, $jsonItems);
+        return $this->CollectQueryResult($query_id, $this->make_json_request("/filter"));
     }
 
     /**
      * @param string $query_id
-     * @param object $json
+     * @param array $json
      * @return array
      */
-    protected function CollectSearchResult($query_id, $json)
+    protected function CollectQueryResult($query_id, $json)
     {
+        if (empty($json)) {
+            return array();
+        }
+
         $movies = array();
 
         $page_id = $query_id;
@@ -246,20 +249,24 @@ class vod_korona extends vod_standard
         if ($current_idx < 0)
             return $movies;
 
-        foreach ($json->data as $entry) {
+        foreach (safe_get_value($json, 'data', array()) as $entry) {
             $genresArray = array();
-            if (isset($entry->genres)) {
-                foreach ($entry->genres as $genre) {
-                    $genresArray[] = $genre->title;
-                }
+            foreach (safe_get_value($entry, 'genres', array()) as $genre) {
+                $genresArray[] = safe_get_value($genre, 'title');
             }
-            if (isset($entry->name)) {
+            $name = safe_get_value($entry, 'name');
+            if (!empty($name)) {
                 $genre_str = implode(", ", $genresArray);
                 $movie = new Short_Movie(
-                    $entry->id,
-                    $entry->name,
-                    $entry->poster,
-                    TR::t('vod_screen_movie_info__5', $entry->name, $entry->year, $entry->country, $genre_str, $entry->rating)
+                    safe_get_value($entry, 'id'),
+                    $name,
+                    safe_get_value($entry, 'poster'),
+                    TR::t('vod_screen_movie_info__5',
+                        $name,
+                        safe_get_value($entry, 'year'),
+                        safe_get_value($entry, 'country'),
+                        $genre_str,
+                        safe_get_value($entry, 'rating'))
                 );
                 $this->plugin->vod->set_cached_short_movie($movie);
                 $movies[] = $movie;
@@ -281,29 +288,23 @@ class vod_korona extends vod_standard
         $this->get_next_page($query_id);
         $arr = explode("_", $query_id);
         $genre_id = safe_get_value($arr, 1, $query_id);
-        $response = $this->make_json_request("/genres/$genre_id?page=1&per_page=999999999");
-        return $response === false ? array() : $this->CollectSearchResult($query_id, $response);
+        return $this->CollectQueryResult($query_id, $this->make_json_request("/genres/$genre_id?page=1&per_page=999999999"));
     }
 
     protected static function collect_genres($entry)
     {
-        $genres_str = '';
-        if (isset($entry->genres)) {
-            $genres = array();
-            foreach ($entry->genres as $genre) {
-                if (!empty($genre)) {
-                    $genres[] = $genre->title;
-                }
+        $genres = array();
+        foreach (safe_get_value($entry, 'genres', array()) as $genre) {
+            if (!empty($genre)) {
+                $genres[] = safe_get_value($genre, 'title');
             }
-            $genres_str = implode(", ", $genres);
         }
-
-        return $genres_str;
+        return implode(", ", $genres);
     }
 
     /**
      * @param string|null $params
-     * @return bool|object
+     * @return bool|array
      */
     protected function make_json_request($params)
     {
@@ -312,7 +313,7 @@ class vod_korona extends vod_standard
         }
 
         $curl_opt[CURLOPT_CUSTOMREQUEST] = $params;
-        $jsonItems = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, $curl_opt);
+        $jsonItems = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt);
         if ($jsonItems === false) {
             $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
             hd_debug_print($exception_msg);

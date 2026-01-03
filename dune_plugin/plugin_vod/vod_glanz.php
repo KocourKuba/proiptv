@@ -24,9 +24,9 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'vod_standard.php';
+require_once 'lib/vod/vod_standard.php';
 
-class vod_ipstream extends vod_standard
+class vod_glanz extends vod_standard
 {
     /**
      * @inheritDoc
@@ -52,78 +52,53 @@ class vod_ipstream extends vod_standard
             return null;
         }
 
-        $jsonItems = parse_json_file($this->get_vod_cache_file(), false);
-
-        if ($jsonItems === false) {
+        if ($this->vod_items === false) {
             hd_debug_print("failed to load movie: $movie_id");
             return null;
         }
 
         $movie = null;
-        foreach ($jsonItems as $item) {
+        foreach ($this->vod_items as $item) {
+            $item = (object)$item;
             if (isset($item->id)) {
                 $id = (string)$item->id;
-            } else if (isset($item->series_id)) {
-                $id = $item->series_id . "_serial";
             } else {
-                $id = Hashed_Array::hash($item->name);
+                $id = '-1';
             }
 
             if ($id !== $movie_id) {
                 continue;
             }
 
-            $duration = "";
-            if (isset($item->info->duration_secs)) {
-                $duration = (int)$item->info->duration_secs / 60;
-            } else if (isset($item->info->episode_run_time)) {
-                $duration = (int)$item->info->episode_run_time;
+            $genres = array();
+            foreach ($item->genres as $genre) {
+                $genre = (object)$genre;
+                if (!empty($genre->title)) {
+                    $genres[] = $genre->title;
+                }
             }
+            $genres_str = implode(", ", $genres);
 
             $movie = new Movie($movie_id, $this->plugin);
             $movie->set_data(
-                $item->name,                           // name,
-                '',                        // name_original,
-                $item->info->plot,                     // description,
-                $item->info->poster,                   // poster_url,
-                $duration,                             // length_min,
-                $item->info->year,                     // year,
-                HD::ArrayToStr($item->info->director), // director_str,
-                '',                        // scenario_str,
-                HD::ArrayToStr($item->info->cast),     // actors_str,
-                HD::ArrayToStr($item->info->genre),    // genres_str,
-                $item->info->rating,                   // rate_imdb,
-                '',                       // rate_kinopoisk,
-                '',                          // rate_mpaa,
-                HD::ArrayToStr($item->info->country)   // country,
+                $item->name,            // name,
+                $item->o_name,          // name_original,
+                $item->description,     // description,
+                $item->cover,           // poster_url,
+                '',           // length_min,
+                $item->year,            // year,
+                $item->director,        // director_str,
+                '',         // scenario_str,
+                $item->actors,          // actors_str,
+                $genres_str,            // genres_str,
+                '',           // rate_imdb,
+                '',        // rate_kinopoisk,
+                '',           // rate_mpaa,
+                $item->country          // country,
             );
 
-            // case for serials
-            if (isset($item->seasons)) {
-                foreach ($item->seasons as $season) {
-                    if (empty($season->season)) continue;
-
-                    $movie_season = new Movie_Season($season->season);
-                    if (!empty($season->info->plot)) {
-                        $movie_season->description = $season->info->plot;
-                    }
-                    $movie->add_season_data($movie_season);
-
-                    foreach ($season->episodes as $episode) {
-                        hd_debug_print("episode playback_url: $episode->video");
-                        $movie_serie = new Movie_Series("$season->season:$episode->episode",
-                            TR::t('vod_screen_series__1', $episode->episode),
-                            new Movie_Playback_Url($episode->video),
-                            $season->season
-                        );
-                        $movie->add_series_data($movie_serie);
-                    }
-                }
-            } else {
-                hd_debug_print("movie playback_url: $item->video");
-                $movie->add_series_data(new Movie_Series($movie_id, $item->name, new Movie_Playback_Url($item->video)));
-            }
-
+            hd_debug_print("movie playback_url: $item->url");
+            $movie->add_series_data(new Movie_Series($movie_id, $item->name, new Movie_Playback_Url($item->url)));
             break;
         }
 
@@ -135,20 +110,29 @@ class vod_ipstream extends vod_standard
      */
     public function fetchVodCategories()
     {
-        if ($this->load_vod_json_full() === false) {
+        $perf = new Perf_Collector();
+        $perf->reset('start');
+
+        $response = $this->provider->execApiCommandResponseNoOpt(API_COMMAND_GET_VOD);
+        if ($response !== false) {
+            $this->vod_items = $response;
+        } else {
+            $this->vod_items = false;
+            $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
+            Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
             return false;
         }
 
+        $count = count($this->vod_items);
         $this->category_index = array();
         $cat_info = array();
 
         // all movies
-        $count = count($this->vod_items);
         $cat_info[Vod_Category::FLAG_ALL_MOVIES] = $count;
         $genres = array();
         $years = array();
         foreach ($this->vod_items as $movie) {
-            $category = (string)$movie->category;
+            $category = safe_get_value($movie, 'category');
             if (empty($category)) {
                 $category = TR::load('no_category');
             }
@@ -160,16 +144,20 @@ class vod_ipstream extends vod_standard
             ++$cat_info[$category];
 
             // collect filters information
-            $years[(int)$movie->info->year] = $movie->info->year;
-            foreach ($movie->info->genre as $genre) {
-                $genres[$genre] = $genre;
+            $year = (int)safe_get_value($movie, 'year');
+            $years[$year] = $year;
+            foreach (safe_get_value($movie, 'genres', array()) as $genre) {
+                $id = (int)safe_get_value($movie, 'id');
+                $title = safe_get_value($movie, 'title');
+                if (!empty($title) && !empty($id)) {
+                    $genres[$id] = $title;
+                }
             }
         }
 
         foreach ($cat_info as $category => $movie_count) {
-            $cat = new Vod_Category($category,
-                ($category === Vod_Category::FLAG_ALL_MOVIES) ? TR::t('vod_screen_all_movies__1', " ($movie_count)") : "$category ($movie_count)");
-            $this->category_index[$category] = $cat;
+            $this->category_index[$category] = new Vod_Category($category,
+                ($category === Vod_Category::FLAG_ALL_MOVIES) ? TR::t('vod_screen_all_movies__1', "($movie_count)") : "$category ($movie_count)");
         }
 
         ksort($genres);
@@ -186,11 +174,17 @@ class vod_ipstream extends vod_standard
 
         $this->set_filters($filters);
 
+        $perf->setLabel('end');
+        $report = $perf->getFullReport();
+
         hd_debug_print("Categories read: " . count($this->category_index));
+        hd_debug_print("Total items loaded: " . count($this->vod_items));
+        hd_debug_print("Load time: {$report[Perf_Collector::TIME]} secs");
+        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+        hd_debug_print_separator();
+
         return true;
     }
-
-    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @inheritDoc
@@ -199,15 +193,18 @@ class vod_ipstream extends vod_standard
     {
         hd_debug_print("getSearchList $keyword");
 
+        $movies = array();
         if ($this->vod_items === false) {
             hd_debug_print("failed to load movies");
-            return array();
+            return $movies;
         }
 
-        $movies = array();
         $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
         foreach ($this->vod_items as $item) {
-            $search = utf8_encode(mb_strtolower($item->name, 'UTF-8'));
+            $name = safe_get_value($item, 'name');
+            if (empty($name)) continue;
+
+            $search = utf8_encode(mb_strtolower($name, 'UTF-8'));
             if (strpos($search, $keyword) !== false) {
                 $movies[] = $this->CreateShortMovie($item);
             }
@@ -218,27 +215,36 @@ class vod_ipstream extends vod_standard
     }
 
     /**
-     * @param object $movie_obj
+     * @param array $movieData
      * @return Short_Movie
      */
-    protected function CreateShortMovie($movie_obj)
+    protected function CreateShortMovie($movieData)
     {
-        if (isset($movie_obj->id)) {
-            $id = (string)$movie_obj->id;
-        } else if (isset($movie_obj->series_id)) {
-            $id = $movie_obj->series_id . "_serial";
+        if (isset($movieData['id'])) {
+            $id = (string)$movieData['id'];
         } else {
-            $id = Hashed_Array::hash($movie_obj->name);
+            $id = '-1';
         }
 
-        $genres = HD::ArrayToStr($movie_obj->info->genre);
-        $country = HD::ArrayToStr($movie_obj->info->country);
+        $genres = array();
+        foreach (safe_get_value($movieData, 'genres', array()) as $genre) {
+            $title = safe_get_value($movieData, 'title');
+            if (!empty($title)) {
+                $genres[] = $title;
+            }
+        }
+        $genres_str = implode(", ", $genres);
 
+        $name = safe_get_value($movieData, 'name');
         $movie = new Short_Movie(
             $id,
-            $movie_obj->name,
-            $movie_obj->info->poster,
-            TR::t('vod_screen_movie_info__5', $movie_obj->name, $movie_obj->info->year, $country, $genres, $movie_obj->info->rating)
+            safe_get_value($movieData, 'name'),
+            safe_get_value($movieData, 'cover'),
+            TR::t('vod_screen_movie_info__4',
+                $name,
+                safe_get_value($movieData, 'year'),
+                safe_get_value($movieData, 'country'),
+                $genres_str)
         );
 
         $this->plugin->vod->set_cached_short_movie($movie);
@@ -251,24 +257,25 @@ class vod_ipstream extends vod_standard
      */
     public function getMovieList($query_id)
     {
+        $movies = array();
+
         if ($this->vod_items === false) {
             hd_debug_print("failed to load movies");
-            return array();
+            return $movies;
         }
+
+        $arr = explode('_', $query_id);
+        $category_id = isset($arr[1]) ? $arr[0] : $query_id;
 
         $page_idx = $this->get_current_page($query_id);
         if ($page_idx < 0)
             return array();
 
-        $movies = array();
-        $arr = explode("_", $query_id);
-        $category_id = isset($arr[1]) ? $arr[0] : $query_id;
-
         $pos = 0;
         foreach ($this->vod_items as $movie) {
             if ($pos++ < $page_idx) continue;
 
-            $category = $movie->category;
+            $category = safe_get_value($movie, 'category');
             if (empty($category)) {
                 $category = TR::load('no_category');
             }
@@ -307,24 +314,29 @@ class vod_ipstream extends vod_standard
                 if ($filter !== null && !empty($filter['values'])) {
                     $item_idx = array_search($m[2], $filter['values']);
                     if ($item_idx !== false && $item_idx !== -1) {
-                        $post_params[$m[1]] = $filter['values'][$item_idx];
+                        $post_params[$m[1]] = (int)$item_idx;
                     }
                 }
             }
         }
 
         foreach ($this->vod_items as $movie) {
-            if (isset($post_params['genre'])) {
-                $match_genre = in_array($post_params['genre'], $movie->info->genre);
-            } else {
-                $match_genre = true;
+            $match_genre = !isset($post_params['genre']);
+            if (!$match_genre) {
+                foreach (safe_get_value($movie, 'genres', array()) as $genre) {
+                    if (!isset($post_params['genre']) || (int)$genre['id'] === $post_params['genre']) {
+                        $match_genre = true;
+                        break;
+                    }
+                }
             }
 
             $match_year = false;
             $year_from = safe_get_value($post_params, 'from', ~PHP_INT_MAX);
             $year_to = safe_get_value($post_params, 'to', PHP_INT_MAX);
 
-            if ((int)$movie->info->year >= $year_from && (int)$movie->info->year <= $year_to) {
+            $year = (int)safe_get_value($movie, 'year');
+            if ($year >= $year_from && $year <= $year_to) {
                 $match_year = true;
             }
 

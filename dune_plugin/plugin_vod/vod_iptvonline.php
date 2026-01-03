@@ -24,7 +24,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'vod_standard.php';
+require_once 'lib/vod/vod_standard.php';
 
 class vod_iptvonline extends vod_standard
 {
@@ -217,7 +217,7 @@ class vod_iptvonline extends vod_standard
 
         $params[CURLOPT_CUSTOMREQUEST] = sprintf(self::REQUEST_TEMPLATE, $page_idx, API_ACTION_MOVIE);
         $searchRes = $this->make_json_request($params);
-        $movies = ($searchRes === false) ? array() : $this->CollectSearchResult(API_ACTION_MOVIE, $searchRes, API_ACTION_SEARCH);
+        $movies = $this->CollectQueryResult(API_ACTION_MOVIE, $searchRes, API_ACTION_SEARCH);
 
         $page_id = API_ACTION_SERIAL . "_" . API_ACTION_SEARCH;
         $page_idx = $this->get_next_page($page_id);
@@ -226,7 +226,7 @@ class vod_iptvonline extends vod_standard
 
         $params[CURLOPT_CUSTOMREQUEST] = sprintf(self::REQUEST_TEMPLATE, $page_idx, API_ACTION_SERIAL);
         $searchRes = $this->make_json_request($params);
-        $serials = ($searchRes === false) ? array() : $this->CollectSearchResult(API_ACTION_SERIAL, $searchRes, API_ACTION_SEARCH);
+        $serials = $this->CollectQueryResult(API_ACTION_SERIAL, $searchRes, API_ACTION_SEARCH);
 
         return array_merge($movies, $serials);
     }
@@ -300,7 +300,7 @@ class vod_iptvonline extends vod_standard
         $post_params[CURLOPT_POSTFIELDS]['features_hash'] = $param_str;
         $json = $this->make_json_request($post_params);
 
-        return $json === false ? array() : $this->CollectSearchResult($query_id, $json, API_ACTION_FILTER);
+        return $this->CollectQueryResult($query_id, $json, API_ACTION_FILTER);
     }
 
     /**
@@ -312,7 +312,7 @@ class vod_iptvonline extends vod_standard
         $params[CURLOPT_CUSTOMREQUEST] = sprintf(self::REQUEST_TEMPLATE, $page_idx, $query_id);
         $json = $this->make_json_request($params);
 
-        return ($json === false || $json === null) ? array() : $this->CollectSearchResult($query_id, $json);
+        return $this->CollectQueryResult($query_id, $json);
     }
 
     /**
@@ -336,7 +336,7 @@ class vod_iptvonline extends vod_standard
             $curl_opt[CURLOPT_POSTFIELDS] = $params[CURLOPT_POSTFIELDS];
         }
 
-        $data = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, $curl_opt, Curl_Wrapper::RET_ARRAY);
+        $data = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt);
         if (!isset($data['success'], $data['status']) || !$data['success'] || $data['status'] !== 200) {
             hd_debug_print("Wrong response: " . json_format_unescaped($data));
             return false;
@@ -351,10 +351,14 @@ class vod_iptvonline extends vod_standard
      * @param string|null $search
      * @return array
      */
-    protected function CollectSearchResult($query_id, $json, $search = null)
+    protected function CollectQueryResult($query_id, $json, $search = null)
     {
         hd_debug_print(null, true);
         hd_debug_print("query_id: $query_id");
+
+        if (empty($json)) {
+            return array();
+        }
 
         $movies = array();
         if (!isset($json['data']['items'])) {

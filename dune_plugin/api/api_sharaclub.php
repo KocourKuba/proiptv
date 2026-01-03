@@ -122,7 +122,7 @@ class api_sharaclub extends api_default
     {
         try {
             $img = tempnam(get_temp_path() . '.png', '');
-            if ($this->execApiCommand(API_COMMAND_PAY, $img) === false) {
+            if ($this->execApiCommandFile(API_COMMAND_PAY, $img) === false) {
                 return null;
             }
 
@@ -152,7 +152,7 @@ class api_sharaclub extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_OBJECT);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             if (isset($response->status)) {
                 foreach ($response->allow_nums as $server) {
@@ -173,7 +173,7 @@ class api_sharaclub extends api_default
     {
         parent::SetServer($server, $error_msg);
 
-        $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
+        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_SET_SERVER, Curl_Wrapper::RET_OBJECT);
         if (isset($response->status) && (int)$response->status === 1) {
             $this->servers = array();
             return true;

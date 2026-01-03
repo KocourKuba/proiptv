@@ -24,10 +24,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'lib/abstract_preloaded_regular_screen.php';
-require_once 'lib/vod_category.php';
-require_once 'lib/user_input_handler_registry.php';
 require_once 'starnet_vod_list_screen.php';
+require_once 'lib/abstract_preloaded_regular_screen.php';
+require_once 'lib/user_input_handler_registry.php';
+require_once 'lib/vod/vod_category.php';
 
 class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 {

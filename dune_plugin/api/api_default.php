@@ -421,7 +421,7 @@ class api_default
         if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
-            $account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
+            $account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_OBJECT);
             if ($account_info === false || isset($account_info->error)) {
                 hd_debug_print("Failed to get provider info", true);
             } else {
@@ -472,7 +472,7 @@ class api_default
      * @param int $decode
      * @return bool|object|array
      */
-    public function execApiCommand($command, $file = null, $curl_opt = array(), $decode = Curl_Wrapper::RET_OBJECT)
+    public function execApiCommand($command, $file, $curl_opt, $decode)
     {
         hd_debug_print(null, true);
         hd_debug_print("execApiCommand: $command", true);
@@ -526,6 +526,49 @@ class api_default
         }
 
         return is_null($file) ? $response : true;
+    }
+
+    /**
+     * @param string $command
+     * @param array $curl_opt
+     * @param int $decode
+     * @return array|bool|object
+     */
+    public function execApiCommandResponse($command, $curl_opt, $decode = Curl_Wrapper::RET_ARRAY)
+    {
+        return $this->execApiCommand($command, null, $curl_opt, $decode);
+    }
+
+    /**
+     * @param string $command
+     * @param array $curl_opt
+     * @param null $error_msg
+     * @return bool|object
+     */
+    public function execApiCommandWithPostResponse($command, $curl_opt, &$error_msg = null)
+    {
+        return $this->postExecAction($command, $this->execApiCommandResponse($command, $curl_opt, Curl_Wrapper::RET_RAW), null,  $error_msg);
+    }
+
+    /**
+     * @param string $command
+     * @param int $decode
+     * @return array|bool|object
+     */
+    public function execApiCommandResponseNoOpt($command, $decode = Curl_Wrapper::RET_ARRAY)
+    {
+        return $this->execApiCommandResponse($command, array(), $decode);
+    }
+
+    /**
+     * @param string $command
+     * * @param string $file
+     * * @param array $curl_opt
+     * @return array|bool|object
+     */
+    public function execApiCommandFile($command, $file, $curl_opt = array())
+    {
+        return $this->execApiCommand($command, $file, $curl_opt, Curl_Wrapper::RET_RAW);
     }
 
     /**

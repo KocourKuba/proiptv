@@ -390,7 +390,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
         }
 
         if (!$this->plugin->init_playlist_parser() || !$this->plugin->load_and_parse_m3u_iptv_playlist(true)) {
-            return $this->open_playlist_screen($plugin_cookies);
+            return Action_Factory::show_title_dialog(
+                TR::t('err_load_playlist'),
+                Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST),
+                $this->open_playlist_screen($plugin_cookies)
+            );
         }
 
         if (!$this->plugin->load_channels($plugin_cookies)) {

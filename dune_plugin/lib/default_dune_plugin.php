@@ -794,7 +794,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         throw new Exception("Unable to get provider info to download: " . json_encode($params));
                     }
                     $cmd = API_COMMAND_GET_PLAYLIST;
-                    $exec_result = $provider->execApiCommand($cmd, $m3u_file, $provider->getCurlOpts($cmd), Curl_Wrapper::RET_RAW);
+                    $exec_result = $provider->execApiCommandFile($cmd, $m3u_file, $provider->getCurlOpts($cmd));
                     $res = $provider->postExecAction($cmd, $exec_result, $m3u_file);
                     if ($res === false) {
                         $logfile = "Error code: " . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc();
@@ -930,13 +930,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $err = $ex->getMessage();
             $rq_err = Dune_Last_Error::get_last_error(LAST_ERROR_REQUEST);
             if (!empty($rq_err)) {
-                $err .= "\n\n" . $rq_err;
+                $err .= "\n\n";
             }
+            $err .= $rq_err;
 
             $pl_err = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
             if (!empty($pl_err)) {
-                $err .= "\n\n" . $pl_err;
+                $err .= "\n\n";
             }
+            $err .=  $pl_err;
 
             Dune_Last_Error::set_last_error(LAST_ERROR_PLAYLIST, $err);
             hd_debug_print("Clear playlist: $m3u_file");
@@ -1062,7 +1064,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 VOD_SEARCH_LIST => 'item',
                 VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID,
             );
-            if ($this->get_vod_class() === 'vod_standard') {
+            if ($this->get_vod_class() === 'vod\vod_standard') {
                 $tables[VOD_LIST_GROUP_ID] = COLUMN_CHANNEL_ID;
             }
 
@@ -4105,7 +4107,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         if ($this->is_vod_playlist()) {
-            return 'vod_standard';
+            return 'vod\vod_standard';
         }
 
         return null;

@@ -40,9 +40,10 @@ class api_1ott extends api_default
             return true;
         }
 
-        $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
-        if (isset($response->token)) {
-            $this->plugin->set_cookie(PARAM_SESSION_ID, $response->token,time() + 86400);
+        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_REQUEST_TOKEN);
+        $token = safe_get_value($response, 'token');
+        if (!empty($token)) {
+            $this->plugin->set_cookie(PARAM_SESSION_ID, $token,time() + 86400);
             Dune_Last_Error::clear_last_error(LAST_ERROR_REQUEST);
             return true;
         }

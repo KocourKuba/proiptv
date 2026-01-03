@@ -64,7 +64,7 @@ class api_cbilling extends api_default
         if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
-            $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
+            $this->account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_OBJECT);
             hd_debug_print("get_provider_info: " . json_format_unescaped($this->account_info), true);
         }
 
@@ -119,7 +119,7 @@ class api_cbilling extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_OBJECT);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             if (isset($response->data)) {
                 foreach ($response->data as $server) {

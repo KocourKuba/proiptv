@@ -40,7 +40,7 @@ class api_shurik extends api_default
         if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
-            $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
+            $this->account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_OBJECT);
             hd_debug_print("get_provider_info: " . json_format_unescaped($this->account_info), true);
         }
 

@@ -33,6 +33,7 @@ spl_autoload_register(function ($className) {
         __DIR__,
         __DIR__ . '/lib',
         __DIR__ . '/vod',
+        __DIR__ . '/plugin_vod',
         __DIR__ . '/api',
     );
 

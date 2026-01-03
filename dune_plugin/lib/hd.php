@@ -227,6 +227,11 @@ class HD
      */
     public static function get_storage_size($path, $arg = null)
     {
+        $path = get_noslash_trailed_path($path);
+        if (!is_dir($path)) {
+            return 'Unknown';
+        }
+
         $d[0] = disk_free_space($path);
         $d[1] = disk_total_space($path);
         foreach ($d as $bytes) {

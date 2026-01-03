@@ -154,7 +154,7 @@ class api_tvclub extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_OBJECT);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             if (isset($response->servers)) {
                 foreach ($response->servers as $server) {
@@ -177,7 +177,7 @@ class api_tvclub extends api_default
     {
         parent::SetServer($server, $error_msg);
 
-        $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
+        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_SET_SERVER, Curl_Wrapper::RET_OBJECT);
         if (isset($response->settings->current->server->id)) {
             $this->servers = array();
             $this->account_info = null;

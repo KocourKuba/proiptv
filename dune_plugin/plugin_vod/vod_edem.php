@@ -24,7 +24,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'vod_standard.php';
+require_once 'lib/vod/vod_standard.php';
 
 class vod_edem extends vod_standard
 {
@@ -70,7 +70,7 @@ class vod_edem extends vod_standard
         }
 
         $post_params = array('cmd' => "flick", 'fid' => (int)$movie_id, 'offset' => 0, 'limit' => 0);
-        $jsonData = $this->make_json_request($post_params, true);
+        $jsonData = $this->make_json_request($post_params);
 
         if ($jsonData === false) {
             hd_debug_print("failed to load movie: $movie_id");
@@ -88,7 +88,7 @@ class vod_edem extends vod_standard
                 if ($fid === -1) continue;
 
                 $post_params['fid'] = $fid;
-                $episodeData = $this->make_json_request($post_params, true);
+                $episodeData = $this->make_json_request($post_params);
                 if ($episodeData !== false) {
                     $movie->add_series_data(self::fill_variants($fid, $episodeData));
                 }
@@ -168,9 +168,9 @@ class vod_edem extends vod_standard
 
     /**
      * @param array|null $params
-     * @return bool|object|array
+     * @return bool|array
      */
-    protected function make_json_request($params = null, $assoc = false)
+    protected function make_json_request($params)
     {
         $pairs = array();
         if ($params !== null) {
@@ -186,7 +186,7 @@ class vod_edem extends vod_standard
         $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
         $curl_opt[CURLOPT_POSTFIELDS] = $pairs;
 
-        return $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, $curl_opt, $assoc ? Curl_Wrapper::RET_ARRAY : Curl_Wrapper::RET_OBJECT);
+        return $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt);
     }
 
     /**
@@ -196,7 +196,7 @@ class vod_edem extends vod_standard
     {
         hd_debug_print(null, true);
 
-        $jsonData = $this->make_json_request(null, true);
+        $jsonData = $this->make_json_request(null);
         if ($jsonData === false) {
             hd_debug_print("Broken response");
             return false;
@@ -245,7 +245,7 @@ class vod_edem extends vod_standard
     {
         hd_debug_print("getSearchList $keyword");
         $post_params = array('cmd' => "search", 'query' => $keyword);
-        return $this->CollectSearchResult($keyword, $this->make_json_request($post_params, true));
+        return $this->CollectQueryResult($keyword, $this->make_json_request($post_params));
     }
 
     /**
@@ -284,7 +284,7 @@ class vod_edem extends vod_standard
 
         $post_params['filter'] = 'on';
         $post_params['offset'] = $page_idx;
-        return $this->CollectSearchResult($query_id, $this->make_json_request($post_params, true));
+        return $this->CollectQueryResult($query_id, $this->make_json_request($post_params));
     }
 
     /**
@@ -298,7 +298,7 @@ class vod_edem extends vod_standard
         }
 
         $post_params = array('cmd' => "flicks", 'fid' => (int)$query_id, 'offset' => $page_idx, 'limit' => 50);
-        return $this->CollectSearchResult($query_id, $this->make_json_request($post_params, true));
+        return $this->CollectQueryResult($query_id, $this->make_json_request($post_params));
     }
 
     /**
@@ -306,11 +306,11 @@ class vod_edem extends vod_standard
      * @param array $requestData
      * @return array
      */
-    protected function CollectSearchResult($query_id, $requestData)
+    protected function CollectQueryResult($query_id, $requestData)
     {
         hd_debug_print("query_id: $query_id", true);
         $movies = array();
-        if ($requestData === false) {
+        if ($requestData === false || $requestData === null) {
             return $movies;
         }
 

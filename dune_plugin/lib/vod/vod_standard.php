@@ -24,8 +24,9 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'lib/abstract_vod.php';
-require_once 'lib/movie.php';
+require_once 'abstract_vod.php';
+require_once 'movie.php';
+
 require_once 'lib/default_dune_plugin.php';
 require_once 'lib/history_item.php';
 require_once 'lib/perf_collector.php';
@@ -799,42 +800,6 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @return bool
-     */
-    protected function load_vod_json_full($assoc = false)
-    {
-        $this->vod_items = false;
-        $tmp_file = $this->get_vod_cache_file();
-        $need_load = true;
-        if (file_exists($tmp_file)) {
-            $mtime = filemtime($tmp_file);
-            $diff = time() - $mtime;
-            if ($diff > 3600) {
-                hd_debug_print("Vod playlist cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
-                safe_unlink($tmp_file);
-            } else {
-                $need_load = false;
-            }
-        }
-
-        if (!$need_load) {
-            $this->vod_items = parse_json_file($tmp_file, $assoc);
-        } else {
-            $opts = $assoc ? Curl_Wrapper::RET_ARRAY : Curl_Wrapper::RET_OBJECT;
-            $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file, array(), $opts);
-            if ($response !== false) {
-                $this->vod_items = $response;
-            } else {
-                $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
-                Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
-                safe_unlink($tmp_file);
-            }
-        }
-
-        return $this->vod_items !== false;
-    }
-
-    /**
      * @return string
      */
     public function get_vod_cache_file()
@@ -964,7 +929,7 @@ class vod_standard extends Abstract_Vod
                 $uri = safe_get_value($params, PARAM_URI);
                 if ($type === PARAM_PROVIDER) {
                     hd_debug_print("download provider vod");
-                    if ($provider->execApiCommand(API_COMMAND_GET_VOD, $m3u_file) === false) {
+                    if ($provider->execApiCommandFile(API_COMMAND_GET_VOD, $m3u_file) === false) {
                         $msg = sprintf("%s\nError code: %s\n%s",
                             TR::load('err_load_vod'), Curl_Wrapper::get_error_no(), Curl_Wrapper::get_error_desc());
                         throw new Exception($msg);

@@ -30,7 +30,7 @@ require_once 'lib/sleep_timer.php';
 require_once 'lib/user_input_handler_registry.php';
 require_once 'lib/epg/default_epg_item.php';
 require_once 'lib/m3u/KnownCatchupSourceTags.php';
-require_once 'vod/vod_standard.php';
+require_once 'lib/vod/vod_standard.php';
 
 class Starnet_Tv implements User_Input_Handler
 {

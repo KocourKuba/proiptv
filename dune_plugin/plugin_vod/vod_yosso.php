@@ -23,7 +23,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'vod_standard.php';
+require_once 'lib/vod/vod_standard.php';
 require_once 'lib/jellyfin/jellyfin_api.php';
 
 class vod_yosso extends vod_standard
@@ -113,7 +113,7 @@ class vod_yosso extends vod_standard
                     $episode_item = $this->jfc->getItemInfo($episode_id);
 
                     $default_url = $this->jfc->getPlayUrl($episode_id);
-                    hd_debug_print("episode playback_url: $default_url");
+                    hd_debug_print("episode playback_url: $default_url", true);
                     $movie_series = new Movie_Series($episode_id,
                         TR::t('vod_screen_series__1', safe_get_value($episode, 'Name', 'no name')),
                         new Movie_Playback_Url($default_url), $season_id

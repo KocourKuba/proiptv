@@ -118,7 +118,7 @@ class api_tvteam extends api_default
         if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
-            $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
+            $this->account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_OBJECT);
             hd_debug_print("get provider info response: " . json_format_unescaped($this->account_info), true);
 
             if (isset($this->account_info->data->userData->userToken)) {
@@ -161,13 +161,21 @@ class api_tvteam extends api_default
             hd_debug_print($info_msg);
             Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "$info_msg\n\n$error_msg");
         } else {
-            $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_REQUEST_TOKEN);
             hd_debug_print("request provider token response: " . json_format_unescaped($response), true);
-            if (!$response) {
+            if ($response === false) {
                 Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "Bad provider response");
-            } else if ($response->status === 0 || !empty($response->error)) {
-                Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, $response->error);
-            } else if (isset($response->data->sessionId)) {
+                return false;
+            }
+            $status = safe_get_value($response, 'status');
+            $error = safe_get_value($response, 'error');
+            if (empty($status) || !empty($error)) {
+                Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, $error);
+                return false;
+            }
+
+            $session_id = safe_get_value($response, array('data', 'sessionId'));
+            if (!empty($session_id)) {
                 $this->plugin->set_cookie(PARAM_SESSION_ID, $response->data->sessionId, time() + 86400 * 7);
                 return true;
             }
@@ -184,7 +192,7 @@ class api_tvteam extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_OBJECT);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             if (((int)$response->status === 1) && isset($response->status, $response->data->serversGroupsList)) {
                 foreach ($response->data->serversGroupsList as $server) {
@@ -207,7 +215,7 @@ class api_tvteam extends api_default
     {
         parent::SetServer($server, $error_msg);
 
-        $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
+        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_SET_SERVER, Curl_Wrapper::RET_OBJECT);
         hd_debug_print("SetServer: " . json_format_unescaped($response), true);
         if (isset($response->status) && (int)$response->status === 1) {
             $this->account_info = null;

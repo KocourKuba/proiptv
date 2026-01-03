@@ -23,7 +23,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'vod_standard.php';
+require_once 'lib/vod/vod_standard.php';
 require_once 'lib/xtream/xtream_codes_api.php';
 
 class vod_sharavoz extends vod_standard
@@ -146,7 +146,7 @@ class vod_sharavoz extends vod_standard
         //    },
         //
 
-        $age = self::get_data_variant($info, "age");
+        $age = self::get_data_variant($info, 'age');
         $age_limit = empty($age) ? array() : array(TR::t('vod_screen_age_limit') => $age);
 
         $movie = new Movie($movie_id, $this->plugin);
@@ -175,31 +175,30 @@ class vod_sharavoz extends vod_standard
             hd_debug_print("movie playback_url: $url", true);
             $movie->add_series_data(new Movie_Series($movie_id, $info['name'], new Movie_Playback_Url($url)));
         } else if ($stream_type === xtream_codes_api::SERIES) {
-            foreach ($item['episodes'] as $season_id => $season) {
+            foreach (safe_get_value($item, 'episodes', array()) as $season_id => $season) {
                 if (empty($season_id)) continue;
 
                 $movie_season = new Movie_Season($season_id);
-                if (!empty($season->name)) {
-                    $movie_season->description = $season->name;
+                $season_name = safe_get_value($season, 'name');
+                if (!empty($season_name)) {
+                    $movie_season->description = $season_name;
                 }
                 $movie->add_season_data($movie_season);
 
                 foreach ($season as $episode) {
-                    $id = $episode->id;
-                    if (!empty($episode->container_extension)) {
-                        $id .= ".$episode->container_extension";
+                    $id = safe_get_value($episode, 'id');
+                    $ext = safe_get_value($episode, 'container_extension');
+                    if (!empty($ext)) {
+                        $id .= ".$ext";
                     }
-                    $url = $this->xtream->get_stream_url($id);
-                    hd_debug_print("episode playback_url: $url", true);
-                    $movie_serie = new Movie_Series($episode->id,
-                        TR::t('vod_screen_series__1', $episode->episode_num),
-                        new Movie_Playback_Url($url),
-                        $season_id
-                    );
-                    $movie_serie->poster = $episode->movie_image;
-                    if (!empty($episode->title)) {
-                        $movie_serie->description = $episode->title;
-                    }
+
+                    $playback_url = new Movie_Playback_Url($this->xtream->get_stream_url($id));
+                    hd_debug_print("episode playback_url: $playback_url->url", true);
+
+                    $episode_num = safe_get_value($episode, 'episode_num');
+                    $movie_serie = new Movie_Series($id, TR::t('vod_screen_series__1', $episode_num), $playback_url, $season_id );
+                    $movie_serie->poster = safe_get_value($episode, 'movie_image');
+                    $movie_serie->description = safe_get_value($episode, 'title');
                     $movie->add_series_data($movie_serie);
                 }
             }
@@ -209,7 +208,7 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
-     * @param object $data
+     * @param array $data
      * @param array|string $names
      * @return string
      */
@@ -218,13 +217,13 @@ class vod_sharavoz extends vod_standard
         $ret_val = '';
         if (is_array($names)) {
             foreach ($names as $name) {
-                if (!empty($data->{$name})) {
-                    $ret_val = $data->{$name};
+                if (!empty($data[$name])) {
+                    $ret_val = safe_get_value($data, $name);
                     break;
                 }
             }
-        } else if (!empty($data->{$names})) {
-            $ret_val = $data->{$names};
+        } else {
+            $ret_val = safe_get_value($data, $names);
         }
 
         return $ret_val;
@@ -305,7 +304,7 @@ class vod_sharavoz extends vod_standard
         foreach ($vod_items as $json_movie) {
             if ($pos++ < $page_idx) continue;
 
-            $category = (string)$json_movie->category_id;
+            $category = (string)safe_get_value($json_movie, 'category_id');
             if (empty($category)) {
                 $category = TR::load('no_category');
             }
@@ -321,26 +320,24 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
-     * @param object $movie_obj
+     * @param array $movieData
      * @return Short_Movie
      */
-    protected function CreateShortMovie($movie_obj)
+    protected function CreateShortMovie($movieData)
     {
         $id = '-1';
         $icon = '';
-        if (isset($movie_obj->stream_id)) {
-            $id = $movie_obj->stream_id . "_" . xtream_codes_api::VOD;
-            $icon = (string)$movie_obj->stream_icon;
-        } else if (isset($movie_obj->series_id)) {
-            $id = $movie_obj->series_id . "_" . xtream_codes_api::SERIES;
-            $icon = (string)$movie_obj->cover;
+        if (isset($movieData['stream_id'])) {
+            $id = $movieData['stream_id'] . "_" . xtream_codes_api::VOD;
+            $icon = (string)safe_get_value($movieData, 'stream_icon');
+        } else if (isset($movieData['series_id'])) {
+            $id = safe_get_value($movieData, 'series_id') . "_" . xtream_codes_api::SERIES;
+            $icon = safe_get_value($movieData, 'cover');
         }
 
-        $movie = new Short_Movie(
-            $id,
-            $movie_obj->name,
-            $icon,
-            TR::t('vod_screen_movie_info__2', $movie_obj->name, $movie_obj->rating)
+        $name = safe_get_value($movieData, 'name');
+        $movie = new Short_Movie($id, $name, $icon,
+            TR::t('vod_screen_movie_info__2', $name, safe_get_value($movieData, 'rating'))
         );
 
         $this->plugin->vod->set_cached_short_movie($movie);
@@ -375,7 +372,10 @@ class vod_sharavoz extends vod_standard
         }
 
         foreach ($streams as $stream) {
-            $search = utf8_encode(mb_strtolower($stream->name, 'UTF-8'));
+            $name = safe_get_value($stream, 'name');
+            if (empty($name)) continue;
+
+            $search = utf8_encode(mb_strtolower($name, 'UTF-8'));
             if (strpos($search, $keyword) !== false) {
                 $movies[] = $this->CreateShortMovie($stream);
             }
