@@ -739,11 +739,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function load_and_parse_m3u_iptv_playlist($only_headers, $force = false)
     {
+        hd_debug_print(null, true);
+
+        hd_debug_print("Force playlist reload: " . var_export($force, true));
         $base_name = $this->get_playlist_cache_filepath(true);
         $m3u_file = $base_name . '.m3u8';
         $db_file = $base_name . '.db';
         try {
-            if (!$force || !$this->sql_playlist->is_database_attached($db_file, M3uParser::IPTV_DB)) {
+            if (!$force) {
                 $is_expired = $this->is_playlist_cache_expired(true);
                 if (!$is_expired) {
                     $database_attached = $this->sql_playlist->attachDatabase($db_file, M3uParser::IPTV_DB);
@@ -769,7 +772,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $playlist_id = $this->get_active_playlist_id();
             $params = $this->get_playlist_parameters($playlist_id);
-            hd_debug_print("Using playlist " . json_format_unescaped($params));
+            hd_debug_print("Using playlist " . json_format_unescaped($params), true);
             $type = safe_get_value($params, PARAM_TYPE);
 
             hd_debug_print("m3u playlist: {$params[PARAM_NAME]} ($playlist_id)");
@@ -885,11 +888,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $item[PARAM_CACHE] = XMLTV_CACHE_AUTO;
                 }
 
-                $saved_source->put($hash, $item);
+                $this->set_xmltv_source($playlist_id, $item);
+                $saved_source->erase($hash);
                 hd_debug_print("playlist source: ($hash) $url", true);
             }
 
-            $this->set_playlist_xmltv_sources($playlist_id, $saved_source);
+            if (!empty($saved_source)) {
+                foreach ($saved_source as $key => $source) {
+                    hd_debug_print("Found removed playlist xmltv source: {$source[PARAM_URI]}" , true);
+                    $this->remove_xmltv_source($key, $playlist_id);
+                }
+            }
 
             if ($only_headers) {
                 $info = "Total sources: " . $sources->size();
@@ -1204,7 +1213,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function load_channels(&$plugin_cookies, $reload_playlist = false)
     {
         hd_debug_print(null, true);
-        hd_debug_print("Force reload: " . var_export($reload_playlist, true));
+        hd_debug_print("Force playlist reload: " . var_export($reload_playlist, true));
 
         $plugin_cookies->toggle_move = false;
 
@@ -1258,7 +1267,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         safe_unlink($ext_epg_channels);
 
         // init playlist parser
-        if (false === $this->init_playlist_parser($reload_playlist)) {
+        if (!$this->init_playlist_parser($reload_playlist)) {
             return false;
         }
 

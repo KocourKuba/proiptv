@@ -648,13 +648,19 @@ class Dune_Default_Sqlite_Engine
      * remove xmltv sources
      *
      * @param string|array $hash
+     * @param string|null $playlist_id
      * @return void
      */
-    public function remove_external_xmltv_source($hash)
+    public function remove_xmltv_source($hash, $playlist_id = null)
     {
         hd_debug_print(null, true);
 
-        $table_name = self::XMLTV_TABLE;
+        if ($playlist_id === null) {
+            $table_name = self::XMLTV_TABLE;
+        } else {
+            $table_name = self::PLAYLIST_XMLTV_TABLE;
+        }
+
         $where = Sql_Wrapper::sql_make_where_clause($hash, COLUMN_HASH);
         $query = "DELETE FROM $table_name WHERE $where;";
         $this->sql_params->exec($query);
