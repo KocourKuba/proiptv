@@ -321,12 +321,6 @@ class vod_korona extends vod_standard
             return false;
         }
 
-        if (LogSeverity::$is_debug) {
-            $command_url = $this->provider->getApiCommand(API_COMMAND_GET_VOD) . $params;
-            file_put_contents(get_temp_path(Hashed_Array::hash($command_url) . '.json'),
-                json_format_readable($jsonItems));
-        }
-
         return $jsonItems;
     }
 }

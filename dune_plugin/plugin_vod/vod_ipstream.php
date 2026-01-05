@@ -52,21 +52,19 @@ class vod_ipstream extends vod_standard
             return null;
         }
 
-        $jsonItems = parse_json_file($this->get_vod_cache_file(), false);
-
-        if ($jsonItems === false) {
+        if ($this->vod_items === false) {
             hd_debug_print("failed to load movie: $movie_id");
             return null;
         }
 
         $movie = null;
-        foreach ($jsonItems as $item) {
-            if (isset($item->id)) {
-                $id = (string)$item->id;
-            } else if (isset($item->series_id)) {
-                $id = $item->series_id . "_serial";
+        foreach ($this->vod_items as $item) {
+            if (isset($item['id'])) {
+                $id = (string)$item['id'];
+            } else if (isset($item['series_id'])) {
+                $id = $item['series_id'] . "_serial";
             } else {
-                $id = Hashed_Array::hash($item->name);
+                $id = Hashed_Array::hash($item['name']);
             }
 
             if ($id !== $movie_id) {
@@ -74,54 +72,58 @@ class vod_ipstream extends vod_standard
             }
 
             $duration = "";
-            if (isset($item->info->duration_secs)) {
-                $duration = (int)$item->info->duration_secs / 60;
-            } else if (isset($item->info->episode_run_time)) {
-                $duration = (int)$item->info->episode_run_time;
+            $info = safe_get_value($item, 'info', array());
+            if (isset($info['duration_secs'])) {
+                $duration = (int)$info['duration_secs'] / 60;
+            } else if (isset($info['episode_run_time'])) {
+                $duration = (int)$info['episode_run_time'];
             }
 
             $movie = new Movie($movie_id, $this->plugin);
+            $name = safe_get_value($item, 'name');
             $movie->set_data(
-                $item->name,                           // name,
+                $name,                           // name,
                 '',                        // name_original,
-                $item->info->plot,                     // description,
-                $item->info->poster,                   // poster_url,
+                safe_get_value($info, 'plot'),                     // description,
+                safe_get_value($info, 'poster'),                   // poster_url,
                 $duration,                             // length_min,
-                $item->info->year,                     // year,
-                HD::ArrayToStr($item->info->director), // director_str,
+                safe_get_value($info, 'year'),                     // year,
+                HD::ArrayToStr(safe_get_value($info, 'director', array())), // director_str,
                 '',                        // scenario_str,
-                HD::ArrayToStr($item->info->cast),     // actors_str,
-                HD::ArrayToStr($item->info->genre),    // genres_str,
-                $item->info->rating,                   // rate_imdb,
+                HD::ArrayToStr(safe_get_value($info, 'cast', array())),     // actors_str,
+                HD::ArrayToStr(safe_get_value($info, 'genre', array())),    // genres_str,
+                safe_get_value($info, 'rating'),                   // rate_imdb,
                 '',                       // rate_kinopoisk,
                 '',                          // rate_mpaa,
-                HD::ArrayToStr($item->info->country)   // country,
+                HD::ArrayToStr(safe_get_value($info, 'country', array()))   // country,
             );
 
             // case for serials
-            if (isset($item->seasons)) {
-                foreach ($item->seasons as $season) {
-                    if (empty($season->season)) continue;
+            if (isset($item['seasons'])) {
+                foreach (safe_get_value($item, 'seasons', array()) as $season) {
+                    $season_name = safe_get_value($season, 'season');
+                    if (empty($season_name)) continue;
 
-                    $movie_season = new Movie_Season($season->season);
-                    if (!empty($season->info->plot)) {
-                        $movie_season->description = $season->info->plot;
-                    }
+                    $movie_season = new Movie_Season($season_name);
+                    $movie_season->description = safe_get_value($season, array('info', 'plot'), '');
                     $movie->add_season_data($movie_season);
 
-                    foreach ($season->episodes as $episode) {
-                        hd_debug_print("episode playback_url: $episode->video", true);
-                        $movie_serie = new Movie_Series("$season->season:$episode->episode",
-                            TR::t('vod_screen_series__1', $episode->episode),
-                            new Movie_Playback_Url($episode->video),
-                            $season->season
+                    foreach (safe_get_value($season, 'episodes', array()) as $episode) {
+                        $episode_name = safe_get_value($episode, 'episode');
+                        $url = safe_get_value($episode, 'video');
+                        hd_debug_print("episode playback_url: $url", true);
+                        $movie_serie = new Movie_Series("$season_name:$episode_name",
+                            TR::t('vod_screen_series__1', $episode_name),
+                            new Movie_Playback_Url($url),
+                            $season_name
                         );
                         $movie->add_series_data($movie_serie);
                     }
                 }
             } else {
-                hd_debug_print("movie playback_url: $item->video");
-                $movie->add_series_data(new Movie_Series($movie_id, $item->name, new Movie_Playback_Url($item->video)));
+                $url = safe_get_value($item, 'video');
+                hd_debug_print("movie playback_url: $url");
+                $movie->add_series_data(new Movie_Series($movie_id, $name, new Movie_Playback_Url($url)));
             }
 
             break;

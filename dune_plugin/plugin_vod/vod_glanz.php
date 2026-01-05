@@ -59,9 +59,8 @@ class vod_glanz extends vod_standard
 
         $movie = null;
         foreach ($this->vod_items as $item) {
-            $item = (object)$item;
-            if (isset($item->id)) {
-                $id = (string)$item->id;
+            if (isset($item['id'])) {
+                $id = (string)$item['id'];
             } else {
                 $id = '-1';
             }
@@ -71,34 +70,36 @@ class vod_glanz extends vod_standard
             }
 
             $genres = array();
-            foreach ($item->genres as $genre) {
-                $genre = (object)$genre;
-                if (!empty($genre->title)) {
-                    $genres[] = $genre->title;
+            foreach (safe_get_value($item, 'genres', array()) as $genre) {
+                $title = safe_get_value($genre, 'title');
+                if (!empty($title)) {
+                    $genres[] = $title;
                 }
             }
             $genres_str = implode(", ", $genres);
 
             $movie = new Movie($movie_id, $this->plugin);
+            $name = safe_get_value($item, 'name');
             $movie->set_data(
-                $item->name,            // name,
-                $item->o_name,          // name_original,
-                $item->description,     // description,
-                $item->cover,           // poster_url,
+                $name,            // name,
+                safe_get_value($item, 'o_name'),          // name_original,
+                safe_get_value($item, 'description'),     // description,
+                safe_get_value($item, 'cover'),           // poster_url,
                 '',           // length_min,
-                $item->year,            // year,
-                $item->director,        // director_str,
+                safe_get_value($item, 'year'),            // year,
+                safe_get_value($item, 'director'),        // director_str,
                 '',         // scenario_str,
-                $item->actors,          // actors_str,
+                safe_get_value($item, 'actors'),          // actors_str,
                 $genres_str,            // genres_str,
                 '',           // rate_imdb,
                 '',        // rate_kinopoisk,
                 '',           // rate_mpaa,
-                $item->country          // country,
+                safe_get_value($item, 'country')          // country,
             );
 
-            hd_debug_print("movie playback_url: $item->url");
-            $movie->add_series_data(new Movie_Series($movie_id, $item->name, new Movie_Playback_Url($item->url)));
+            $url = safe_get_value($item, 'url');
+            hd_debug_print("movie playback_url: $url");
+            $movie->add_series_data(new Movie_Series($movie_id, $name, new Movie_Playback_Url($url)));
             break;
         }
 
@@ -147,8 +148,8 @@ class vod_glanz extends vod_standard
             $year = (int)safe_get_value($movie, 'year');
             $years[$year] = $year;
             foreach (safe_get_value($movie, 'genres', array()) as $genre) {
-                $id = (int)safe_get_value($movie, 'id');
-                $title = safe_get_value($movie, 'title');
+                $id = (int)safe_get_value($genre, 'id');
+                $title = safe_get_value($genre, 'title');
                 if (!empty($title) && !empty($id)) {
                     $genres[$id] = $title;
                 }
@@ -228,7 +229,7 @@ class vod_glanz extends vod_standard
 
         $genres = array();
         foreach (safe_get_value($movieData, 'genres', array()) as $genre) {
-            $title = safe_get_value($movieData, 'title');
+            $title = safe_get_value($genre, 'title');
             if (!empty($title)) {
                 $genres[] = $title;
             }

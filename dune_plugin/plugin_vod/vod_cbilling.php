@@ -118,7 +118,7 @@ class vod_cbilling extends vod_standard
                 }
 
                 if (!empty($season_original_name)) {
-                    $movie_season->description .= empty($season_name) ? $season_original_name : " ($season_original_name)";
+                    $movie_season->description .= (empty($season_name) ? $season_original_name : " ($season_original_name)");
                 }
                 $movie->add_season_data($movie_season);
 

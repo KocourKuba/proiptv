@@ -73,16 +73,6 @@ class vod_standard extends Abstract_Vod
     protected $vod_filters = array();
 
     /**
-     * @var bool
-     */
-    protected $vod_quality = false;
-
-    /**
-     * @var bool
-     */
-    protected $vod_audio = false;
-
-    /**
      * @var array
      */
     protected $pages = array();
@@ -276,22 +266,6 @@ class vod_standard extends Abstract_Vod
     public function getCategoryIndex()
     {
         return $this->category_index;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getVodQuality()
-    {
-        return $this->vod_quality;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getVodAudio()
-    {
-        return $this->vod_audio;
     }
 
     public function try_reset_pages()

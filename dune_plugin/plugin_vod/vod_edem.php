@@ -41,7 +41,6 @@ class vod_edem extends vod_standard
         parent::init_vod($provider);
 
         $this->vod_filters = array("years", "genre");
-        $this->vod_quality = true;
         $vportal = $this->provider->GetProviderParameter(MACRO_VPORTAL);
         /** @var array $matches */
         if (empty($vportal) || !preg_match(VPORTAL_PATTERN, $vportal, $matches)) {
@@ -72,7 +71,7 @@ class vod_edem extends vod_standard
         $post_params = array('cmd' => "flick", 'fid' => (int)$movie_id, 'offset' => 0, 'limit' => 0);
         $jsonData = $this->make_json_request($post_params);
 
-        if ($jsonData === false) {
+        if (empty($jsonData)) {
             hd_debug_print("failed to load movie: $movie_id");
             return null;
         }
@@ -81,6 +80,7 @@ class vod_edem extends vod_standard
         $type = safe_get_value($jsonData, 'type');
         if ($type === 'stream') {
             $movie->add_series_data(self::fill_variants($movie_id, $jsonData));
+            $qualities_str = implode(', ', $movie->get_qualities($movie_id));
         } else if ($type === 'multistream') {
             // collect series
             foreach (safe_get_value($jsonData, 'items', array()) as $item) {
@@ -89,8 +89,12 @@ class vod_edem extends vod_standard
 
                 $post_params['fid'] = $fid;
                 $episodeData = $this->make_json_request($post_params);
-                if ($episodeData !== false) {
+                hd_debug_print("Episode data: " . json_format_unescaped($episodeData));
+                if (!empty($episodeData)) {
                     $movie->add_series_data(self::fill_variants($fid, $episodeData));
+                    if (empty($quality_str)) {
+                        $qualities_str = implode(', ', $movie->get_qualities($fid));
+                    }
                 }
             }
         } else {
@@ -118,9 +122,8 @@ class vod_edem extends vod_standard
         }
 
         $details = array();
-        if (!empty($qualities)) {
-            sort($qualities);
-            $details[TR::t('vod_screen_quality')] = implode(',', array_unique($qualities));
+        if (!empty($qualities_str)) {
+            $details[TR::t('vod_screen_quality')] = $qualities_str;
         }
 
         $movie->set_data(
@@ -197,13 +200,15 @@ class vod_edem extends vod_standard
         hd_debug_print(null, true);
 
         $jsonData = $this->make_json_request(null);
-        if ($jsonData === false) {
+        if (empty($jsonData)) {
             hd_debug_print("Broken response");
+            Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, "Unknown response from server!");
             return false;
         }
 
         if (safe_get_value($jsonData, 'type') === 'error') {
             hd_debug_print("Error response: " . json_format_unescaped($jsonData), true);
+            Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, safe_get_value($jsonData, 'description'));
         }
 
         $this->category_index = array();

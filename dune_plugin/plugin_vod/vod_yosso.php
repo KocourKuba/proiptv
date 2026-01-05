@@ -42,8 +42,6 @@ class vod_yosso extends vod_standard
     {
         parent::init_vod($provider);
 
-        $this->vod_quality = true;
-        $this->vod_audio = true;
         $this->vod_filters = array("source", "genre");
         $vod_url = $this->provider->replace_macros($this->provider->getRawApiCommand(API_COMMAND_GET_VOD));
         $this->jfc = new jellyfin_api();
