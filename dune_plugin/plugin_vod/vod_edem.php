@@ -232,6 +232,10 @@ class vod_edem extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getSearchList: $keyword");
 
+        if ($this->is_page_index_stopped($keyword)) {
+            return array();
+        }
+
         $post_params = array('cmd' => "search", 'query' => $keyword);
         $movies = $this->CollectQueryResult($keyword, $this->make_json_request($post_params));
         // Search request return all found data without limit
