@@ -45,13 +45,14 @@ class vod_sharavoz extends vod_standard
      */
     public function init_vod($provider)
     {
-        parent::init_vod($provider);
+        if (parent::init_vod($provider)) {
+            $pass = $this->provider->GetProviderParameter(MACRO_PASSWORD);
+            $vod_url = $this->provider->replace_macros($this->provider->getRawApiCommand(API_COMMAND_GET_VOD));
+            $this->xtream->init($this->plugin, $vod_url, $pass, $pass);
+            return true;
+        }
 
-        $pass = $this->provider->GetProviderParameter(MACRO_PASSWORD);
-        $vod_url = $this->provider->replace_macros($this->provider->getRawApiCommand(API_COMMAND_GET_VOD));
-        $this->xtream->init($this->plugin, $vod_url, $pass, $pass);
-
-        return true;
+        return false;
     }
 
     /**
@@ -208,30 +209,6 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
-     * @param array $data
-     * @param array|string $names
-     * @return string
-     */
-    protected static function get_data_variant($data, $names)
-    {
-        $ret_val = '';
-        if (is_array($names)) {
-            foreach ($names as $name) {
-                if (!empty($data[$name])) {
-                    $ret_val = safe_get_value($data, $name);
-                    break;
-                }
-            }
-        } else {
-            $ret_val = safe_get_value($data, $names);
-        }
-
-        return $ret_val;
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
      * @inheritDoc
      */
     public function fetchVodCategories()
@@ -265,6 +242,94 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
+     * @inheritDoc
+     */
+    public function getMovieList($query_id)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("getMovieList: $query_id");
+
+        // Фильмы_1_vod
+        $arr = explode("_", $query_id);
+        $category_id = safe_get_value($arr, 1, $query_id);
+
+        $vod_items = $this->xtream->get_streams($arr[2], $category_id);
+        $movies = array();
+
+        // pagination is not used. This is a guard to process only one request
+        if ($this->is_page_index_stopped($query_id)) {
+            return $movies;
+        }
+
+        foreach ($vod_items as $json_movie) {
+            $category = (string)safe_get_value($json_movie, 'category_id');
+            if (empty($category)) {
+                $category = TR::load('no_category');
+            }
+
+            if ($category_id === Vod_Category::FLAG_ALL_MOVIES || $category_id === $category) {
+                $movies[] = $this->CreateShortMovie($json_movie);
+            }
+        }
+
+        $this->stop_page_index($query_id);
+
+        hd_debug_print("Movies read for query: $query_id: " . count($movies));
+        return $movies;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getSearchList($keyword)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("getSearchList: $keyword");
+
+        $movies = array();
+
+        // pagination is not used. This is a guard to process only one request
+        if ($this->is_page_index_stopped($keyword)) {
+            return $movies;
+        }
+
+        $enc_keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
+
+        $this->search(xtream_codes_api::VOD, $enc_keyword, $movies);
+        $this->search(xtream_codes_api::SERIES, $enc_keyword, $movies);
+
+        $this->stop_page_index($keyword);
+
+        hd_debug_print("Movies found: " . count($movies));
+
+        return array_values($movies);
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param array $data
+     * @param array|string $names
+     * @return string
+     */
+    protected static function get_data_variant($data, $names)
+    {
+        $ret_val = '';
+        if (is_array($names)) {
+            foreach ($names as $name) {
+                if (!empty($data[$name])) {
+                    $ret_val = safe_get_value($data, $name);
+                    break;
+                }
+            }
+        } else {
+            $ret_val = safe_get_value($data, $names);
+        }
+
+        return $ret_val;
+    }
+
+    /**
      * @param string $stream_type
      * @param array &$category_tree
      */
@@ -280,43 +345,6 @@ class vod_sharavoz extends vod_standard
                 $category_tree[$parent_id][] = $query_id;
             }
         }
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getMovieList($query_id)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print($query_id);
-
-        $page_idx = $this->get_current_page($query_id);
-        if ($page_idx < 0)
-            return array();
-
-        // Фильмы_1_vod
-        $arr = explode("_", $query_id);
-        $category_id = safe_get_value($arr, 1, $query_id);
-
-        $vod_items = $this->xtream->get_streams($arr[2], $category_id);
-        $pos = 0;
-        $movies = array();
-        foreach ($vod_items as $json_movie) {
-            if ($pos++ < $page_idx) continue;
-
-            $category = (string)safe_get_value($json_movie, 'category_id');
-            if (empty($category)) {
-                $category = TR::load('no_category');
-            }
-
-            if ($category_id === Vod_Category::FLAG_ALL_MOVIES || $category_id === $category) {
-                $movies[] = $this->CreateShortMovie($json_movie);
-            }
-        }
-        $this->get_next_page($query_id, $pos - $page_idx);
-
-        hd_debug_print("Movies read for query: $query_id: " . count($movies));
-        return $movies;
     }
 
     /**
@@ -345,25 +373,6 @@ class vod_sharavoz extends vod_standard
         return $movie;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function getSearchList($keyword)
-    {
-        hd_debug_print("getSearchList $keyword");
-
-        $movies = array();
-
-        $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
-
-        $this->search(xtream_codes_api::VOD, $keyword, $movies);
-        $this->search(xtream_codes_api::SERIES, $keyword, $movies);
-
-        hd_debug_print("Movies found: " . count($movies));
-
-        return array_values($movies);
-    }
-
     protected function search($stream_type, $keyword, &$movies)
     {
         $streams = $this->xtream->get_streams($stream_type);
@@ -377,7 +386,8 @@ class vod_sharavoz extends vod_standard
 
             $search = utf8_encode(mb_strtolower($name, 'UTF-8'));
             if (strpos($search, $keyword) !== false) {
-                $movies[] = $this->CreateShortMovie($stream);
+                $movie = $this->CreateShortMovie($stream);
+                $movies[$movie->id] = $movie;
             }
         }
     }

@@ -25,8 +25,9 @@
  */
 
 require_once 'short_movie.php';
+require_once 'vod_pagination.php';
 
-abstract class Abstract_Vod
+abstract class Abstract_Vod extends vod_pagination
 {
     /**
      * @var array|Short_Movie[]

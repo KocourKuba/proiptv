@@ -39,6 +39,7 @@ clear_history = Verlauf klären
 clear_changed = Klar Geändert (CLEAR)
 clear_list = Übersichtliche Wiedergabeliste
 no_category = Keine Kategorie
+no_title = Kein Titel
 group = Kategorie:
 category = Kategorie
 by_default = standartmäßig

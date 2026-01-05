@@ -43,26 +43,25 @@ class vod_cbilling extends vod_standard
      */
     public function init_vod($provider)
     {
-        parent::init_vod($provider);
-
-        $acc_data = $provider->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO);
-        if (!isset($acc_data['data'])) {
-            return false;
+        if (parent::init_vod($provider)) {
+            $acc_data = $provider->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO);
+            if (isset($acc_data['data'])) {
+                $info_data = safe_get_value($acc_data, 'data');
+                if (!empty($info_data)) {
+                    $this->token = safe_get_value($info_data, 'private_token');
+                    $scheme = safe_get_value($acc_data, 'ssl', "http://");
+                    $server = safe_get_value($acc_data, 'server');
+                    if (empty($server)) {
+                        $server = $provider->getApiCommand(API_COMMAND_GET_VOD);
+                    }
+                    $this->server = $scheme .$server;
+                    return true;
+                }
+            }
         }
 
-        $info_data = safe_get_value($acc_data, 'data');
-        if (empty($info_data)) {
-            return false;
-        }
+        return false;
 
-        $this->token = safe_get_value($info_data, 'private_token');
-        $scheme = safe_get_value($acc_data, 'ssl', "http://");
-        $server = safe_get_value($acc_data, 'server');
-        if (empty($server)) {
-            $server = $provider->getApiCommand(API_COMMAND_GET_VOD);
-        }
-        $this->server = $scheme .$server;
-        return true;
     }
 
     /**
@@ -71,7 +70,8 @@ class vod_cbilling extends vod_standard
     public function TryLoadMovie($movie_id)
     {
         hd_debug_print(null, true);
-        hd_debug_print($movie_id);
+        hd_debug_print("Try Load Movie: $movie_id");
+
         $params[CURLOPT_CUSTOMREQUEST] = "/video/$movie_id";
         $response = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params);
         $movieData = safe_get_value($response, 'data');
@@ -161,6 +161,8 @@ class vod_cbilling extends vod_standard
      */
     public function fetchVodCategories()
     {
+        hd_debug_print(null, true);
+
         $jsonItems = $this->provider->execApiCommandResponseNoOpt(API_COMMAND_GET_VOD);
         if ($jsonItems === false) {
             $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
@@ -207,28 +209,16 @@ class vod_cbilling extends vod_standard
     /**
      * @inheritDoc
      */
-    public function getSearchList($keyword)
-    {
-        hd_debug_print("getSearchList $keyword");
-
-        $page_idx = $this->get_next_page($keyword);
-        if ($page_idx < 0)
-            return array();
-
-        $params[CURLOPT_CUSTOMREQUEST] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx";
-        $response = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params);
-        return $this->CollectQueryResult($response);
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function getMovieList($query_id)
     {
-        hd_debug_print($query_id);
-        $page_idx = $this->get_next_page($query_id);
-        if ($page_idx < 0)
+        hd_debug_print(null, true);
+        hd_debug_print("getMovieList: $query_id");
+
+        // page index start from 0
+        $page_idx = $this->get_current_page_index($query_id);
+        if ($page_idx < 0) {
             return array();
+        }
 
         if ($query_id === Vod_Category::FLAG_ALL_MOVIES) {
             $params[CURLOPT_CUSTOMREQUEST] = "/filter/new?page=$page_idx";
@@ -238,22 +228,37 @@ class vod_cbilling extends vod_standard
             $params[CURLOPT_CUSTOMREQUEST] = "/genres/$genre_id?page=$page_idx";
         }
 
-        $response = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params);
-        return $this->CollectQueryResult($response);
+        return $this->CollectQueryResult($query_id, $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params));
     }
 
     /**
-     * @param array $json
-     * @return array
+     * @inheritDoc
      */
-    protected function CollectQueryResult($json)
+    public function getSearchList($keyword)
     {
-        if (empty($json)) {
+        hd_debug_print(null, true);
+        hd_debug_print("getSearchList: $keyword");
+
+        // page index start from 0
+        $page_idx = $this->get_current_page_index($keyword);
+        if ($page_idx < 0) {
             return array();
         }
 
-        $movies = array();
+        $params[CURLOPT_CUSTOMREQUEST] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx";
+        return $this->CollectQueryResult($keyword, $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params));
+    }
 
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param string $query_id
+     * @param array $json
+     * @return array
+     */
+    protected function CollectQueryResult($query_id, $json)
+    {
+        $movies = array();
         foreach (safe_get_value($json, 'data', array()) as $entry) {
             $genresArray = array();
             foreach (safe_get_value($entry, 'genres', array()) as $genre) {
@@ -277,6 +282,12 @@ class vod_cbilling extends vod_standard
                 $this->plugin->vod->set_cached_short_movie($movie);
                 $movies[] = $movie;
             }
+        }
+
+        if (empty($movie)) {
+            $this->stop_page_index($query_id);
+        } else {
+            $this->shift_next_page_index($query_id);
         }
 
         hd_debug_print("Movies found: " . count($movies));

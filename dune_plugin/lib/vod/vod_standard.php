@@ -75,27 +75,7 @@ class vod_standard extends Abstract_Vod
     /**
      * @var array
      */
-    protected $pages = array();
-
-    /**
-     * @var bool
-     */
-    protected $is_entered = false;
-
-    /**
-     * @var array
-     */
-    protected $movie_counter = array();
-
-    /**
-     * @var array
-     */
-    protected $filters = array();
-
-    /**
-     * @var Vod_Category[]
-     */
-    protected $category_list;
+    protected $filter_types = array();
 
     /**
      * @var Vod_Category[]
@@ -268,47 +248,6 @@ class vod_standard extends Abstract_Vod
         return $this->category_index;
     }
 
-    public function try_reset_pages()
-    {
-        if ($this->is_entered) {
-            $this->is_entered = false;
-            $this->pages = array();
-        }
-    }
-
-    public function reset_movie_counter()
-    {
-        $this->is_entered = true;
-        $this->movie_counter = array();
-    }
-
-    /**
-     * @param mixed $key
-     * @return int
-     */
-    public function get_movie_counter($key)
-    {
-        if (!array_key_exists($key, $this->movie_counter)) {
-            $this->movie_counter[$key] = 0;
-        }
-
-        return $this->movie_counter[$key];
-    }
-
-    /**
-     * @param string $key
-     * @param int $val
-     */
-    public function add_movie_counter($key, $val)
-    {
-        // repeated count data
-        if (!array_key_exists($key, $this->movie_counter)) {
-            $this->movie_counter[$key] = 0;
-        }
-
-        $this->movie_counter[$key] += $val;
-    }
-
     /**
      * @param string $movie_id
      * @return Movie
@@ -407,25 +346,6 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param string $page_id
-     * @param int $value
-     */
-    public function set_next_page($page_id, $value)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("set_next_page page_id: $page_id idx: $value", true);
-        $this->pages[$page_id] = $value;
-    }
-
-    /**
-     * @param array $filters
-     */
-    public function set_filters($filters)
-    {
-        $this->filters = $filters;
-    }
-
-    /**
      * @param array $vod_info
      * @param bool $is_external
      * @return array|null
@@ -459,6 +379,7 @@ class vod_standard extends Abstract_Vod
     public function fetchVodCategories()
     {
         hd_debug_print(null, true);
+
         if (isset($this->category_index)) {
             return true;
         }
@@ -526,12 +447,56 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
+     * @param string $query_id
+     * @return array
+     */
+    public function getMovieList($query_id)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("getMovieList: $query_id");
+
+        $movies = array();
+        $arr = explode("_", $query_id);
+        $category_id = ($arr === false) ? $query_id : $arr[0];
+
+        $page_idx = $this->get_current_page_index($query_id);
+        if ($page_idx < 0) {
+            return $movies;
+        }
+
+        $group_id = $category_id === Vod_Category::FLAG_ALL_MOVIES ? '' : $category_id;
+        $max = $this->getVodCount($group_id);
+        $ubound = min($max, $page_idx + 50);
+
+        hd_debug_print("Read from: $page_idx to $ubound");
+        $entries = $this->getVodEntries($group_id, $page_idx, $ubound);
+
+        $pos = $page_idx;
+        foreach ($entries as $entry) {
+            $pos++;
+
+            $title = $entry[COLUMN_TITLE];
+            /** @var array $m */
+            if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $m)) {
+                $title = safe_get_value($m, COLUMN_TITLE, $title);
+            }
+
+            $movies[] = new Short_Movie($entry[COLUMN_HASH], trim($title), $entry[COLUMN_ICON], $title);
+        }
+
+        $this->shift_next_page_index($query_id, $pos - $page_idx);
+
+        return $movies;
+    }
+
+    /**
      * @param string $keyword
      * @return array
      */
     public function getSearchList($keyword)
     {
-        hd_debug_print("getSearchList $keyword");
+        hd_debug_print(null, true);
+        hd_debug_print("getSearchList: $keyword");
 
         $perf = new Perf_Collector();
         $perf->reset('start');
@@ -577,80 +542,6 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param string $query_id
-     * @return array
-     */
-    public function getMovieList($query_id)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print($query_id);
-
-        $movies = array();
-        $arr = explode("_", $query_id);
-        $category_id = ($arr === false) ? $query_id : $arr[0];
-
-        $page_idx = $this->get_current_page($query_id);
-        if ($page_idx < 0)
-            return array();
-
-        $group_id = $category_id === Vod_Category::FLAG_ALL_MOVIES ? '' : $category_id;
-        $max = $this->getVodCount($group_id);
-        $ubound = min($max, $page_idx + 500);
-
-        hd_debug_print("Read from: $page_idx to $ubound");
-        $entries = $this->getVodEntries($group_id, $page_idx, $ubound);
-
-        $pos = $page_idx;
-        foreach ($entries as $entry) {
-            $pos++;
-
-            $title = $entry[COLUMN_TITLE];
-            /** @var array $m */
-            if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $m)) {
-                $title = safe_get_value($m, COLUMN_TITLE, $title);
-            }
-
-            $movies[] = new Short_Movie($entry[COLUMN_HASH], trim($title), $entry[COLUMN_ICON], $title);
-        }
-
-        $this->get_next_page($query_id, $pos - $page_idx);
-
-        return $movies;
-    }
-
-    /**
-     * @param string $page_id
-     * @return int
-     */
-    public function get_current_page($page_id)
-    {
-        hd_debug_print(null, true);
-        $current_idx = array_key_exists($page_id, $this->pages) ? $this->pages[$page_id] : 0;
-        hd_debug_print("get_current_page page_id: $page_id current_idx: $current_idx", true);
-        return $current_idx;
-    }
-
-    /**
-     * @param string $page_id
-     * @param int $increment
-     * @return int
-     */
-    public function get_next_page($page_id, $increment = 1)
-    {
-        hd_debug_print(null, true);
-        if (!array_key_exists($page_id, $this->pages)) {
-            $this->pages[$page_id] = 0;
-        }
-
-        if ($this->pages[$page_id] !== -1) {
-            $this->pages[$page_id] += $increment;
-        }
-
-        hd_debug_print("get_next_page page_id: $page_id next_idx: {$this->pages[$page_id]}", true);
-        return $this->pages[$page_id];
-    }
-
-    /**
      * @param Starnet_Vod_Filter_Screen $parent
      * @param int $initial
      * @return array|null
@@ -673,7 +564,7 @@ class vod_standard extends Abstract_Vod
         Control_Factory::add_vgap($defs, 20);
 
         foreach ($this->vod_filters as $name) {
-            $filter = $this->get_filter($name);
+            $filter = $this->get_filter_type($name);
             hd_debug_print("filter: $name : " . json_format_unescaped($filter), true);
             if ($filter === null) {
                 hd_debug_print("no filters with '$name'");
@@ -726,12 +617,20 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
+     * @param array $filter_types
+     */
+    public function set_filter_types($filter_types)
+    {
+        $this->filter_types = $filter_types;
+    }
+
+    /**
      * @param string $name
      * @return mixed|null
      */
-    public function get_filter($name)
+    public function get_filter_type($name)
     {
-        return isset($this->filters[$name]) ? $this->filters[$name] : null;
+        return isset($this->filter_types[$name]) ? $this->filter_types[$name] : null;
     }
 
     /**
@@ -749,7 +648,7 @@ class vod_standard extends Abstract_Vod
 
         $compiled_string = "";
         foreach ($this->vod_filters as $name) {
-            $filter = $this->get_filter($name);
+            $filter = $this->get_filter_type($name);
             if ($filter === null) continue;
 
             $add_text = '';
@@ -771,14 +670,6 @@ class vod_standard extends Abstract_Vod
         }
 
         return $compiled_string;
-    }
-
-    /**
-     * @return string
-     */
-    public function get_vod_cache_file()
-    {
-        return get_temp_path($this->plugin->get_active_playlist_id() . "_playlist_vod.json");
     }
 
     /**

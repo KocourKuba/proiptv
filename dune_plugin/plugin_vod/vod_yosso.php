@@ -40,17 +40,20 @@ class vod_yosso extends vod_standard
      */
     public function init_vod($provider)
     {
-        parent::init_vod($provider);
+        if (parent::init_vod($provider)) {
+            $this->vod_filters = array("source", "genre");
+            $vod_url = $this->provider->replace_macros($this->provider->getRawApiCommand(API_COMMAND_GET_VOD));
 
-        $this->vod_filters = array("source", "genre");
-        $vod_url = $this->provider->replace_macros($this->provider->getRawApiCommand(API_COMMAND_GET_VOD));
-        $this->jfc = new jellyfin_api();
-        $this->jfc->init($this->plugin, $vod_url, $this->plugin->plugin_info['app_version']);
+            $this->jfc = new jellyfin_api();
+            $this->jfc->init($this->plugin, $vod_url, $this->plugin->plugin_info['app_version']);
 
-        $login = $this->provider->GetProviderParameter(MACRO_LOGIN);
-        $pass = $this->provider->GetProviderParameter(MACRO_PASSWORD);
+            $login = $this->provider->GetProviderParameter(MACRO_LOGIN);
+            $pass = $this->provider->GetProviderParameter(MACRO_PASSWORD);
 
-        return $this->jfc->login($login, $pass);
+            return $this->jfc->login($login, $pass);
+        }
+
+        return false;
     }
 
     /**
@@ -168,37 +171,6 @@ class vod_yosso extends vod_standard
     }
 
     /**
-     * @param Movie_Series $movie_series
-     * @param string $real_id
-     * @param array $media_sources
-     * @return Movie_Series
-     */
-    protected function fill_series($movie_series, $real_id, $media_sources)
-    {
-        foreach ($media_sources as $source) {
-            $stream_id = safe_get_value($source, 'Id');
-            if (empty($stream_id)) continue;
-
-            foreach (safe_get_value($source, 'MediaStreams', array()) as $stream) {
-                if (strcasecmp(safe_get_value($stream, 'Type'), 'Video') === 0) {
-                    $name = safe_get_value($stream, 'DisplayTitle');
-                    $quality = new Movie_Variant($name, new Movie_Playback_Url($this->jfc->getDownloadUrl($stream_id)));
-                    // default playback url for quality
-                    if ($stream_id == $real_id) {
-                        $movie_series->add_variant_data('auto', $quality);
-                    }
-                    $movie_series->add_variant_data($name, $quality);
-                    break;
-                }
-            }
-        }
-
-        return $movie_series;
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
      * @inheritDoc
      */
     public function fetchVodCategories()
@@ -252,7 +224,7 @@ class vod_yosso extends vod_standard
             }
         }
 
-        $this->set_filters($exist_filters);
+        $this->set_filter_types($exist_filters);
 
         hd_debug_print("Categories read: " . count($this->category_index));
         hd_debug_print("Filters count: " . count($exist_filters));
@@ -266,10 +238,11 @@ class vod_yosso extends vod_standard
     public function getMovieList($query_id)
     {
         hd_debug_print(null, true);
-        hd_debug_print($query_id);
+        hd_debug_print("getMovieList: $query_id");
 
         $movies = array();
-        $page_idx = $this->get_current_page($query_id);
+
+        $page_idx = $this->get_current_page_index($query_id);
         if ($page_idx < 0) {
             return $movies;
         }
@@ -285,8 +258,10 @@ class vod_yosso extends vod_standard
             $this->CreateShortMovie($item, $movies);
         }
 
-        if (!empty($movies)) {
-            $this->get_next_page($query_id);
+        if (empty($movies)) {
+            $this->stop_page_index($query_id);
+        } else {
+            $this->shift_next_page_index($query_id);
         }
 
         hd_debug_print("Movies read for query: $query_id: " . count($movies));
@@ -298,12 +273,13 @@ class vod_yosso extends vod_standard
      */
     public function getSearchList($keyword)
     {
-        hd_debug_print("getSearchList $keyword");
+        hd_debug_print(null, true);
+        hd_debug_print("getSearchList: $keyword");
 
         $query_id = mb_strtolower($keyword, 'UTF-8');
 
         $movies = array();
-        $page_idx = $this->get_current_page($query_id);
+        $page_idx = $this->get_current_page_index($query_id);
         if ($page_idx < 0) {
             return $movies;
         }
@@ -320,8 +296,10 @@ class vod_yosso extends vod_standard
             $this->CreateShortMovie($item, $movies);
         }
 
-        if (!empty($movies)) {
-            $this->get_next_page($query_id);
+        if (empty($movies)) {
+            $this->stop_page_index($query_id);
+        } else {
+            $this->shift_next_page_index($query_id);
         }
 
         hd_debug_print("Movies found for query: $query_id: " . count($movies));
@@ -337,7 +315,8 @@ class vod_yosso extends vod_standard
         hd_debug_print("getFilterList: $query_id");
 
         $movies = array();
-        $page_idx = $this->get_current_page($query_id);
+
+        $page_idx = $this->get_current_page_index($query_id);
         if ($page_idx < 0) {
             return $movies;
         }
@@ -348,7 +327,7 @@ class vod_yosso extends vod_standard
             /** @var array $m */
             if (!preg_match("/^(.+):(.+)$/", $pair, $m)) continue;
 
-            $filter = $this->get_filter($m[1]);
+            $filter = $this->get_filter_type($m[1]);
             if ($filter === null) continue;
             if (!empty($filter['values'])) {
                 $item_idx = array_search($m[2], $filter['values']);
@@ -363,7 +342,7 @@ class vod_yosso extends vod_standard
         }
 
         if (empty($query_params)) {
-            return array();
+            return $movies;
         }
 
         $query_params['imageTypeLimit'] = 1;
@@ -376,11 +355,42 @@ class vod_yosso extends vod_standard
         }
 
         if (!empty($movies)) {
-            $this->get_next_page($query_id);
+            $this->shift_next_page_index($query_id);
         }
 
         hd_debug_print("Movies read for query: $query_id: " . count($movies));
         return $movies;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param Movie_Series $movie_series
+     * @param string $real_id
+     * @param array $media_sources
+     * @return Movie_Series
+     */
+    protected function fill_series($movie_series, $real_id, $media_sources)
+    {
+        foreach ($media_sources as $source) {
+            $stream_id = safe_get_value($source, 'Id');
+            if (empty($stream_id)) continue;
+
+            foreach (safe_get_value($source, 'MediaStreams', array()) as $stream) {
+                if (strcasecmp(safe_get_value($stream, 'Type'), 'Video') === 0) {
+                    $name = safe_get_value($stream, 'DisplayTitle');
+                    $quality = new Movie_Variant($name, new Movie_Playback_Url($this->jfc->getDownloadUrl($stream_id)));
+                    // default playback url for quality
+                    if ($stream_id == $real_id) {
+                        $movie_series->add_variant_data('auto', $quality);
+                    }
+                    $movie_series->add_variant_data($name, $quality);
+                    break;
+                }
+            }
+        }
+
+        return $movie_series;
     }
 
     /**

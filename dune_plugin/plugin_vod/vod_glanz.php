@@ -33,11 +33,12 @@ class vod_glanz extends vod_standard
      */
     public function init_vod($provider)
     {
-        parent::init_vod($provider);
+        if (parent::init_vod($provider)) {
+            $this->vod_filters = array("genre", "from", "to");
+            return true;
+        }
 
-        $this->vod_filters = array("genre", "from", "to");
-
-        return true;
+        return false;
     }
 
     /**
@@ -46,13 +47,14 @@ class vod_glanz extends vod_standard
     public function TryLoadMovie($movie_id)
     {
         hd_debug_print(null, true);
-        hd_debug_print($movie_id);
+        hd_debug_print("Try Load Movie: $movie_id");
+
         if (empty($movie_id)) {
             hd_debug_print("Movie ID is empty!");
             return null;
         }
 
-        if ($this->vod_items === false) {
+        if (empty($this->vod_items)) {
             hd_debug_print("failed to load movie: $movie_id");
             return null;
         }
@@ -111,19 +113,20 @@ class vod_glanz extends vod_standard
      */
     public function fetchVodCategories()
     {
+        hd_debug_print(null, true);
+
         $perf = new Perf_Collector();
         $perf->reset('start');
 
         $response = $this->provider->execApiCommandResponseNoOpt(API_COMMAND_GET_VOD);
-        if ($response !== false) {
-            $this->vod_items = $response;
-        } else {
+        if (empty($response)) {
             $this->vod_items = false;
             $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
             Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
             return false;
         }
 
+        $this->vod_items = $response;
         $count = count($this->vod_items);
         $this->category_index = array();
         $cat_info = array();
@@ -164,16 +167,16 @@ class vod_glanz extends vod_standard
         ksort($genres);
         krsort($years);
 
-        $filters = array();
-        $filters['genre'] = array('title' => TR::t('genre'), 'values' => array(-1 => TR::t('no')));
-        $filters['from'] = array('title' => TR::t('year_from'), 'values' => array(-1 => TR::t('no')));
-        $filters['to'] = array('title' => TR::t('year_to'), 'values' => array(-1 => TR::t('no')));
+        $exist_filters = array();
+        $exist_filters['genre'] = array('title' => TR::t('genre'), 'values' => array(-1 => TR::t('no')));
+        $exist_filters['from'] = array('title' => TR::t('year_from'), 'values' => array(-1 => TR::t('no')));
+        $exist_filters['to'] = array('title' => TR::t('year_to'), 'values' => array(-1 => TR::t('no')));
 
-        $filters['genre']['values'] += $genres;
-        $filters['from']['values'] += $years;
-        $filters['to']['values'] += $years;
+        $exist_filters['genre']['values'] += $genres;
+        $exist_filters['from']['values'] += $years;
+        $exist_filters['to']['values'] += $years;
 
-        $this->set_filters($filters);
+        $this->set_filter_types($exist_filters);
 
         $perf->setLabel('end');
         $report = $perf->getFullReport();
@@ -190,30 +193,147 @@ class vod_glanz extends vod_standard
     /**
      * @inheritDoc
      */
-    public function getSearchList($keyword)
+    public function getMovieList($query_id)
     {
-        hd_debug_print("getSearchList $keyword");
+        hd_debug_print(null, true);
+        hd_debug_print("getMovieList: $query_id");
 
         $movies = array();
-        if ($this->vod_items === false) {
+
+        if (empty($this->vod_items)) {
             hd_debug_print("failed to load movies");
             return $movies;
         }
 
-        $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
+        // pagination is not used. This is a guard to process only one request
+        if ($this->is_page_index_stopped($query_id)) {
+            return $movies;
+        }
+
+        $arr = explode('_', $query_id);
+        $category_id = isset($arr[1]) ? $arr[0] : $query_id;
+
+        foreach ($this->vod_items as $item) {
+            $category = safe_get_value($item, 'category');
+            if (empty($category)) {
+                $category = TR::load('no_category');
+            }
+
+            if ($category_id === Vod_Category::FLAG_ALL_MOVIES || $category_id === $category) {
+                $movie = $this->CreateShortMovie($item);
+                $movies[$movie->id] = $movie;
+            }
+        }
+
+        $this->stop_page_index($query_id);
+
+        hd_debug_print("Movies read for query: $query_id - " . count($movies));
+        return array_values($movies);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getSearchList($keyword)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("getSearchList: $keyword");
+
+        $movies = array();
+        if (empty($this->vod_items)) {
+            hd_debug_print("failed to load movies");
+            return $movies;
+        }
+
+        // pagination is not used. This is a guard to process only one request
+        if ($this->is_page_index_stopped($keyword)) {
+            return $movies;
+        }
+
+        $enc_keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
         foreach ($this->vod_items as $item) {
             $name = safe_get_value($item, 'name');
             if (empty($name)) continue;
 
             $search = utf8_encode(mb_strtolower($name, 'UTF-8'));
-            if (strpos($search, $keyword) !== false) {
+            if (strpos($search, $enc_keyword) !== false) {
                 $movies[] = $this->CreateShortMovie($item);
             }
         }
 
+        $this->stop_page_index($keyword);
+
         hd_debug_print("Movies found: " . count($movies));
         return $movies;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getFilterList($query_id)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("getFilterList: $query_id");
+
+        $movies = array();
+
+        if (empty($this->vod_items)) {
+            hd_debug_print("failed to load movies");
+            return $movies;
+        }
+
+        // pagination is not used. This is a guard to process only one request
+        if ($this->is_page_index_stopped($query_id)) {
+            return $movies;
+        }
+
+        $pairs = explode(",", $query_id);
+        $post_params = array();
+        foreach ($pairs as $pair) {
+            /** @var array $m */
+            if (preg_match("/^(.+):(.+)$/", $pair, $m)) {
+                $filter = $this->get_filter_type($m[1]);
+                if ($filter !== null && !empty($filter['values'])) {
+                    $item_idx = array_search($m[2], $filter['values']);
+                    if ($item_idx !== false && $item_idx !== -1) {
+                        $post_params[$m[1]] = (int)$item_idx;
+                    }
+                }
+            }
+        }
+
+        foreach ($this->vod_items as $movie) {
+            $match_genre = !isset($post_params['genre']);
+            if (!$match_genre) {
+                foreach (safe_get_value($movie, 'genres', array()) as $genre) {
+                    if (!isset($post_params['genre']) || (int)$genre['id'] === $post_params['genre']) {
+                        $match_genre = true;
+                        break;
+                    }
+                }
+            }
+
+            $match_year = false;
+            $year_from = safe_get_value($post_params, 'from', ~PHP_INT_MAX);
+            $year_to = safe_get_value($post_params, 'to', PHP_INT_MAX);
+
+            $year = (int)safe_get_value($movie, 'year');
+            if ($year >= $year_from && $year <= $year_to) {
+                $match_year = true;
+            }
+
+            if ($match_year && $match_genre) {
+                $movies[] = $this->CreateShortMovie($movie);
+            }
+        }
+
+        $this->stop_page_index($query_id);
+
+        hd_debug_print("Movies found: " . count($movies));
+        return $movies;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @param array $movieData
@@ -251,102 +371,5 @@ class vod_glanz extends vod_standard
         $this->plugin->vod->set_cached_short_movie($movie);
 
         return $movie;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getMovieList($query_id)
-    {
-        $movies = array();
-
-        if ($this->vod_items === false) {
-            hd_debug_print("failed to load movies");
-            return $movies;
-        }
-
-        $arr = explode('_', $query_id);
-        $category_id = isset($arr[1]) ? $arr[0] : $query_id;
-
-        $page_idx = $this->get_current_page($query_id);
-        if ($page_idx < 0)
-            return array();
-
-        $pos = 0;
-        foreach ($this->vod_items as $movie) {
-            if ($pos++ < $page_idx) continue;
-
-            $category = safe_get_value($movie, 'category');
-            if (empty($category)) {
-                $category = TR::load('no_category');
-            }
-
-            if ($category_id === Vod_Category::FLAG_ALL_MOVIES || $category_id === $category) {
-                $movies[] = $this->CreateShortMovie($movie);
-            }
-        }
-        $this->get_next_page($query_id, $pos - $page_idx);
-
-        hd_debug_print("Movies read for query: $query_id - " . count($movies));
-        return $movies;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getFilterList($query_id)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("getFilterList: $query_id");
-
-        if ($this->vod_items === false) {
-            hd_debug_print("failed to load movies");
-            return array();
-        }
-
-        $movies = array();
-
-        $pairs = explode(",", $query_id);
-        $post_params = array();
-        foreach ($pairs as $pair) {
-            /** @var array $m */
-            if (preg_match("/^(.+):(.+)$/", $pair, $m)) {
-                $filter = $this->get_filter($m[1]);
-                if ($filter !== null && !empty($filter['values'])) {
-                    $item_idx = array_search($m[2], $filter['values']);
-                    if ($item_idx !== false && $item_idx !== -1) {
-                        $post_params[$m[1]] = (int)$item_idx;
-                    }
-                }
-            }
-        }
-
-        foreach ($this->vod_items as $movie) {
-            $match_genre = !isset($post_params['genre']);
-            if (!$match_genre) {
-                foreach (safe_get_value($movie, 'genres', array()) as $genre) {
-                    if (!isset($post_params['genre']) || (int)$genre['id'] === $post_params['genre']) {
-                        $match_genre = true;
-                        break;
-                    }
-                }
-            }
-
-            $match_year = false;
-            $year_from = safe_get_value($post_params, 'from', ~PHP_INT_MAX);
-            $year_to = safe_get_value($post_params, 'to', PHP_INT_MAX);
-
-            $year = (int)safe_get_value($movie, 'year');
-            if ($year >= $year_from && $year <= $year_to) {
-                $match_year = true;
-            }
-
-            if ($match_year && $match_genre) {
-                $movies[] = $this->CreateShortMovie($movie);
-            }
-        }
-
-        hd_debug_print("Movies found: " . count($movies));
-        return $movies;
     }
 }

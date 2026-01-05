@@ -31,21 +31,11 @@ class vod_korona extends vod_standard
     /**
      * @inheritDoc
      */
-    public function init_vod($provider)
-    {
-        parent::init_vod($provider);
-
-        //$this->vod_filters = array("source", "year", "country", "genre");
-
-        return true;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function TryLoadMovie($movie_id)
     {
         hd_debug_print(null, true);
+        hd_debug_print("Try Load Movie: $movie_id");
+
         if (empty($movie_id)) {
             hd_debug_print("Movie ID is empty!");
             return null;
@@ -122,6 +112,8 @@ class vod_korona extends vod_standard
      */
     public function fetchVodCategories()
     {
+        hd_debug_print(null, true);
+
         $jsonItems = $this->make_json_request("/cat");
         if ($jsonItems === false || empty($jsonItems->data)) {
             return false;
@@ -154,12 +146,27 @@ class vod_korona extends vod_standard
         hd_debug_print("Categories read: " . count($this->category_index));
         return true;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getMovieList($query_id)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("getMovieList: $query_id");
+
+        $arr = explode("_", $query_id);
+        $genre_id = safe_get_value($arr, 1, $query_id);
+        return $this->CollectQueryResult($query_id, $this->make_json_request("/genres/$genre_id?page=1&per_page=999999999"));
+    }
+
     /**
      * @inheritDoc
      */
     public function getSearchList($keyword)
     {
-        hd_debug_print("getSearchList $keyword");
+        hd_debug_print(null, true);
+        hd_debug_print("getSearchList: $keyword");
 
         $enc_keyword = urlencode($keyword);
         return $this->CollectQueryResult($keyword, $this->make_json_request("/filter/by_name?name=$enc_keyword&page=1&per_page=999999999"));
@@ -182,7 +189,7 @@ class vod_korona extends vod_standard
             /** @var array $m */
             if (!preg_match("/^(.+):(.+)$/", $pair, $m)) continue;
 
-            $filter = $this->get_filter($m[1]);
+            $filter = $this->get_filter_type($m[1]);
             if ($filter === null) continue;
 
             if (isset($filter['text'])) {
@@ -222,14 +229,10 @@ class vod_korona extends vod_standard
         }
 
         $page_id = $query_id . "_" . API_ACTION_FILTER;
-        $page_idx = $this->get_next_page($page_id);
-        if ($page_idx < 0) {
-            return array();
-        }
-
-        hd_debug_print("filter page_idx:  $page_idx");
-        return $this->CollectQueryResult($query_id, $this->make_json_request("/filter"));
+        return $this->CollectQueryResult($page_id, $this->make_json_request("/filter"));
     }
+
+    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @param string $query_id
@@ -244,10 +247,10 @@ class vod_korona extends vod_standard
 
         $movies = array();
 
-        $page_id = $query_id;
-        $current_idx = $this->get_current_page($page_id);
-        if ($current_idx < 0)
+        // pagination is not used. This is a guard to process only one request
+        if ($this->is_page_index_stopped($query_id)) {
             return $movies;
+        }
 
         foreach (safe_get_value($json, 'data', array()) as $entry) {
             $genresArray = array();
@@ -274,21 +277,9 @@ class vod_korona extends vod_standard
         }
 
         hd_debug_print("Movies found: " . count($movies));
-        $this->set_next_page($page_id, -1);
+        $this->stop_page_index($query_id);
 
         return $movies;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getMovieList($query_id)
-    {
-        hd_debug_print($query_id);
-        $this->get_next_page($query_id);
-        $arr = explode("_", $query_id);
-        $genre_id = safe_get_value($arr, 1, $query_id);
-        return $this->CollectQueryResult($query_id, $this->make_json_request("/genres/$genre_id?page=1&per_page=999999999"));
     }
 
     protected static function collect_genres($entry)

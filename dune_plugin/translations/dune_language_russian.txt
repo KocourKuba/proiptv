@@ -39,6 +39,7 @@ clear_history = Очистить Историю
 clear_changed = Очистить Измененные (CLEAR)
 clear_list = Очистить Список воспроизведения
 no_category = Без категории
+no_title = Без названия
 group = Категория:
 category = Категория
 by_default = По умолчанию

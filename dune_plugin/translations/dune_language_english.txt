@@ -39,6 +39,7 @@ clear_history = Clear History
 clear_changed = Clear Changed (CLEAR)
 clear_list = Clear playing list
 no_category = No Category
+no_title = No Title
 group = Category:
 category = Category
 by_default = By default

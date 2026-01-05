@@ -1574,7 +1574,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->setup_curl()->clear_cache();
         if (isset($this->vod)) {
             $this->vod->clear_movie_cache();
-            safe_unlink($this->vod->get_vod_cache_file());
             $this->get_sql_playlist()->detachDatabase('vod');
             $this->vod = null;
         }
