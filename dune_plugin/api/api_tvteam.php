@@ -194,7 +194,7 @@ class api_tvteam extends api_default
         if (empty($this->servers)) {
             $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_OBJECT);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
-            if (((int)$response->status === 1) && isset($response->status, $response->data->serversGroupsList)) {
+            if (isset($response->status, $response->data->serversGroupsList) && (int)$response->status === 1) {
                 foreach ($response->data->serversGroupsList as $server) {
                     $this->servers[$server->groupId] = "$server->portalDomainName ($server->streamDomainName)";
                 }
