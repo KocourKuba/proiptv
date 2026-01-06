@@ -113,13 +113,22 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // Domains settings
 
-        $domains = $provider->GetDomains();
-        if (!empty($domains) && count($domains) > 1) {
-            $idx = $provider->GetProviderParameter(MACRO_DOMAIN_ID);
-            hd_debug_print("domains ($idx): " . json_format_unescaped($domains), true);
+        $pl_domains = $provider->GetPlDomains();
+        if (!empty($pl_domains) && count($pl_domains) > 1) {
+            $idx = $provider->GetProviderParameter(MACRO_PL_DOMAIN_ID);
+            hd_debug_print("domains ($idx): " . json_format_unescaped($pl_domains), true);
 
-            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_DOMAIN, TR::t('domain'),
-                $idx, $domains, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_PL_DOMAIN, TR::t('pl_domain'),
+                $idx, $pl_domains, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+        }
+
+        $api_domains = $provider->GetApiDomains();
+        if (!empty($api_domains) && count($api_domains) > 1) {
+            $idx = $provider->GetProviderParameter(MACRO_API_DOMAIN_ID);
+            hd_debug_print("domains ($idx): " . json_format_unescaped($api_domains), true);
+
+            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_API_DOMAIN, TR::t('api_domain'),
+                $idx, $api_domains, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         }
 
         //////////////////////////////////////
@@ -307,8 +316,13 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                 $this->force_parent_reload = true;
                 break;
 
-            case api_default::CONTROL_DOMAIN:
-                $provider->SetDomain($user_input->{$control_id});
+            case api_default::CONTROL_PL_DOMAIN:
+                $provider->SetPlDomain($user_input->{$control_id});
+                $this->force_parent_reload = true;
+                break;
+
+            case api_default::CONTROL_API_DOMAIN:
+                $provider->SetApiDomain($user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
 

@@ -29,7 +29,7 @@ require_once 'api_default.php';
 class api_tvteam extends api_default
 {
     /**
-     * @var array
+     * @var array|false
      */
     protected $servers = array();
 
@@ -194,7 +194,8 @@ class api_tvteam extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_OBJECT);
+            $curl_opt[CURLOPT_TIMEOUT] = 30;
+            $response = $this->execApiCommandResponse(API_COMMAND_GET_SERVERS, $curl_opt, Curl_Wrapper::RET_OBJECT);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             if (isset($response->status, $response->data->serversGroupsList) && (int)$response->status === 1) {
                 foreach ($response->data->serversGroupsList as $server) {
@@ -217,7 +218,8 @@ class api_tvteam extends api_default
     {
         parent::SetServer($server, $error_msg);
 
-        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_SET_SERVER, Curl_Wrapper::RET_OBJECT);
+        $curl_opt[CURLOPT_TIMEOUT] = 30;
+        $response = $this->execApiCommandResponse(API_COMMAND_SET_SERVER, $curl_opt, Curl_Wrapper::RET_OBJECT);
         hd_debug_print("SetServer: " . json_format_unescaped($response), true);
         if (isset($response->status) && (int)$response->status === 1) {
             $this->account_info = null;

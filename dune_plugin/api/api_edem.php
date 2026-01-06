@@ -136,7 +136,7 @@ class api_edem extends api_default
         $subdomain = $this->GetProviderParameter(MACRO_SUBDOMAIN);
         if (!empty($subdomain) && $subdomain !== $this->getConfigValue(CONFIG_SUBDOMAIN)) {
             Control_Factory::add_text_field($defs, $handler, self::CONTROL_OTT_SUBDOMAIN,
-                TR::t('domain'), $this->GetProviderParameter(MACRO_SUBDOMAIN), false,
+                TR::t('pl_domain'), $this->GetProviderParameter(MACRO_SUBDOMAIN), false,
                 false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
         }
 

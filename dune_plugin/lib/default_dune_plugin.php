@@ -797,7 +797,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         throw new Exception("Unable to get provider info to download: " . json_encode($params));
                     }
                     $cmd = API_COMMAND_GET_PLAYLIST;
-                    $exec_result = $provider->execApiCommandFile($cmd, $m3u_file, $provider->getCurlOpts($cmd));
+                    $opts = $provider->getCurlOpts($cmd);
+                    $opts[CURLOPT_TIMEOUT] = 30;
+                    $exec_result = $provider->execApiCommandFile($cmd, $m3u_file, $opts);
                     $res = $provider->postExecAction($cmd, $exec_result, $m3u_file);
                     if ($res === false) {
                         $logfile = "Error code: " . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc();

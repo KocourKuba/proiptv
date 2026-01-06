@@ -56,7 +56,8 @@ class api_default
     const CONTROL_LOGIN = 'login';
     const CONTROL_PASSWORD = 'password';
     const CONTROL_SERVER = 'server';
-    const CONTROL_DOMAIN = 'domain';
+    const CONTROL_PL_DOMAIN = 'pl_domain';
+    const CONTROL_API_DOMAIN = 'api_domain';
     const CONTROL_QUALITY = 'quality';
     const CONTROL_STREAM = 'stream';
     const CONTROL_DEVICE = 'device';
@@ -387,7 +388,8 @@ class api_default
     {
         static $config_items = array(
             CONFIG_STREAMS => MACRO_STREAM_ID,
-            CONFIG_DOMAINS => MACRO_DOMAIN_ID,
+            CONFIG_API_DOMAINS => MACRO_API_DOMAIN_ID,
+            CONFIG_PL_DOMAINS => MACRO_PL_DOMAIN_ID,
             CONFIG_SERVERS => MACRO_SERVER_ID,
             CONFIG_DEVICES => MACRO_DEVICE_ID,
             CONFIG_QUALITIES => MACRO_QUALITY_ID,
@@ -632,7 +634,8 @@ class api_default
             MACRO_LOGIN => '',
             MACRO_PASSWORD => '',
             MACRO_STREAM_ID => '',
-            MACRO_DOMAIN_ID => '',
+            MACRO_API_DOMAIN_ID => '',
+            MACRO_PL_DOMAIN_ID => '',
             MACRO_DEVICE_ID => '',
             MACRO_SERVER_ID => '',
             MACRO_QUALITY_ID => '',
@@ -758,11 +761,22 @@ class api_default
      * returns list of provider domains
      * @return array|null
      */
-    public function GetDomains()
+    public function GetPlDomains()
     {
         hd_debug_print(null, true);
 
-        return $this->getConfigValue(CONFIG_DOMAINS);
+        return $this->getConfigValue(CONFIG_PL_DOMAINS);
+    }
+
+    /**
+     * returns list of provider API domains
+     * @return array|null
+     */
+    public function GetApiDomains()
+    {
+        hd_debug_print(null, true);
+
+        return $this->getConfigValue(CONFIG_API_DOMAINS);
     }
 
     /**
@@ -989,14 +1003,25 @@ class api_default
     }
 
     /**
-     * set domain
+     * set playlist domain
      * @param string $domain
      * @return void
      */
-    public function SetDomain($domain)
+    public function SetPlDomain($domain)
     {
         hd_debug_print(null, true);
-        $this->SetProviderParameter(MACRO_DOMAIN_ID, $domain);
+        $this->SetProviderParameter(MACRO_PL_DOMAIN_ID, $domain);
+    }
+
+    /**
+     * set api domain
+     * @param string $domain
+     * @return void
+     */
+    public function SetApiDomain($domain)
+    {
+        hd_debug_print(null, true);
+        $this->SetProviderParameter(MACRO_API_DOMAIN_ID, $domain);
     }
 
     /**
@@ -1110,14 +1135,24 @@ class api_default
             $command_url = $this->replace_by_func($command_url);
             hd_debug_print("command_url: $command_url", true);
 
-            $config_domains = $this->getConfigValue(CONFIG_DOMAINS);
-            if (!empty($config_domains) && count($config_domains) > 1 && strpos($command_url, MACRO_DOMAIN_ID) !== false) {
-                $idx = key($config_domains);
-                Control_Factory::add_combobox($defs, $handler, self::CONTROL_DOMAIN, TR::t('domain'),
-                    $idx, $config_domains, Control_Factory::DLG_CONTROLS_WIDTH);
+            $config_pl_domains = $this->getConfigValue(CONFIG_PL_DOMAINS);
+            hd_debug_print("pl_domains: " . json_format_unescaped($config_pl_domains), true);
+            if (!empty($config_pl_domains) && count($config_pl_domains) > 1 && strpos($command_url, MACRO_PL_DOMAIN_ID) !== false) {
+                $idx = key($config_pl_domains);
+                Control_Factory::add_combobox($defs, $handler, self::CONTROL_PL_DOMAIN, TR::t('pl_domain'),
+                    $idx, $config_pl_domains, Control_Factory::DLG_CONTROLS_WIDTH);
+            }
+
+            $config_api_domains = $this->getConfigValue(CONFIG_API_DOMAINS);
+            hd_debug_print("api_domains: " . json_format_unescaped($config_pl_domains), true);
+            if (!empty($config_api_domains) && count($config_api_domains) > 1) {
+                $idx = key($config_api_domains);
+                Control_Factory::add_combobox($defs, $handler, self::CONTROL_API_DOMAIN, TR::t('api_domain'),
+                    $idx, $config_api_domains, Control_Factory::DLG_CONTROLS_WIDTH);
             }
 
             $config_servers = $this->getConfigValue(CONFIG_SERVERS);
+            hd_debug_print("servers: " . json_format_unescaped($config_servers), true);
             if (!empty($config_servers) && count($config_servers) > 1 && strpos($command_url, MACRO_SERVER_ID) !== false) {
                 $idx = key($config_servers);
                 Control_Factory::add_combobox($defs, $handler, self::CONTROL_SERVER, TR::t('server'),
@@ -1125,6 +1160,7 @@ class api_default
             }
 
             $config_qialities = $this->getConfigValue(CONFIG_QUALITIES);
+            hd_debug_print("qualities: " . json_format_unescaped($config_qialities), true);
             if (!empty($config_qialities) && count($config_qialities) > 1 && strpos($command_url, MACRO_QUALITY_ID) !== false) {
                 $idx = key($config_qialities);
                 Control_Factory::add_combobox($defs, $handler, self::CONTROL_QUALITY, TR::t('quality'),
@@ -1204,7 +1240,8 @@ class api_default
         if ($is_new) {
             $this->apply_config_defaults();
             $this->apply_user_input_parameter($user_input, self::CONTROL_SERVER, MACRO_SERVER_ID);
-            $this->apply_user_input_parameter($user_input, self::CONTROL_DOMAIN, MACRO_DOMAIN_ID);
+            $this->apply_user_input_parameter($user_input, self::CONTROL_PL_DOMAIN, MACRO_PL_DOMAIN_ID);
+            $this->apply_user_input_parameter($user_input, self::CONTROL_API_DOMAIN, MACRO_API_DOMAIN_ID);
             $this->apply_user_input_parameter($user_input, self::CONTROL_QUALITY, MACRO_QUALITY_ID);
         }
 
@@ -1285,7 +1322,7 @@ class api_default
             $has_ext_params |= true;
         }
 
-        $domains = $this->GetDomains();
+        $domains = $this->GetPlDomains();
         if (!empty($domains) && count($domains) > 1) {
             $has_ext_params |= true;
         }
