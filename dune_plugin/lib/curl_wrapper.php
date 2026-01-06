@@ -256,7 +256,7 @@ class Curl_Wrapper
     /**
      * @param  int $timeout
      */
-    public function set_connection_timeout($timeout)
+    public function set_connect_timeout($timeout)
     {
         $this->connect_timeout = $timeout;
     }
@@ -540,6 +540,7 @@ class Curl_Wrapper
                 }
                 $opts[CURLOPT_POSTFIELDS] = $data;
             }
+            $opts[CURLOPT_HTTPHEADER][] = "Content-Length: " . strlen($opts[CURLOPT_POSTFIELDS]);
         }
 
         if (isset($opts[CURLOPT_POSTFIELDS])) {
@@ -596,6 +597,7 @@ class Curl_Wrapper
 
         if (self::$http_code < 200 || (self::$http_code >= 300 && self::$http_code != 304)) {
             hd_debug_print("HTTP request failed (" . self::$http_code . ")");
+            hd_debug_print("HTTP response " . $content);
             return false;
         }
 

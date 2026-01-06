@@ -1600,7 +1600,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             get_slash_trailed_path($this->get_cache_dir(PARAM_CURL_CACHE_PATH, CURL_CACHE_SUBDIR)),
             $this->get_active_playlist_id()
         );
-        $curl_wrapper->set_connection_timeout($this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
+        $curl_wrapper->set_connect_timeout($this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
         $curl_wrapper->set_download_timeout($this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
         $curl_wrapper->set_file_cache_time($this->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 1));
         return $curl_wrapper;

@@ -498,7 +498,7 @@ class api_default
             if (empty($curl_opt[CURLOPT_HTTPHEADER])) {
                 $curl_opt[CURLOPT_HTTPHEADER] = $add_headers;
             } else {
-                $curl_opt[CURLOPT_HTTPHEADER] = safe_merge_array($curl_opt[CURLOPT_HTTPHEADER], $add_headers);
+                $curl_opt[CURLOPT_HTTPHEADER] = array_merge($curl_opt[CURLOPT_HTTPHEADER], $add_headers);
             }
         }
 
@@ -512,6 +512,14 @@ class api_default
 
         if (isset($curl_opt[CURLOPT_POSTFIELDS])) {
             $curl_wrapper->set_post_data($curl_opt[CURLOPT_POSTFIELDS]);
+        }
+
+        if (isset($curl_opt[CURLOPT_TIMEOUT])) {
+            $curl_wrapper->set_download_timeout($curl_opt[CURLOPT_TIMEOUT]);
+        }
+
+        if (isset($curl_opt[CURLOPT_CONNECTTIMEOUT])) {
+            $curl_wrapper->set_connect_timeout($curl_opt[CURLOPT_CONNECTTIMEOUT]);
         }
 
         if (is_null($file)) {

@@ -1359,7 +1359,7 @@ class Epg_Manager_Xmltv
         Curl_Wrapper::clear_cached_etag($url);
 
         $curl_wrapper = Curl_Wrapper::getInstance();
-        $curl_wrapper->set_connection_timeout($params[PARAM_CURL_CONNECT_TIMEOUT]);
+        $curl_wrapper->set_connect_timeout($params[PARAM_CURL_CONNECT_TIMEOUT]);
         $curl_wrapper->set_download_timeout($params[PARAM_CURL_DOWNLOAD_TIMEOUT]);
         if (!$curl_wrapper->download_file($url, $tmp_filename, true)) {
             $http_code = Curl_Wrapper::get_http_code();

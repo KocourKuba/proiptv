@@ -555,7 +555,7 @@ function backtrace_exception($ex, $as_string = false, $seen = null)
             $result .= PHP_EOL . backtrace_exception($prev, $as_string, $seen);
         }
     } else if ($prev) {
-        $result = safe_merge_array($result, backtrace_exception($prev, $as_string, $seen));
+        $result = array_merge($result, backtrace_exception($prev, $as_string, $seen));
     }
 
     return $result;
@@ -2388,6 +2388,7 @@ function replace_https($url)
 
 /**
  * This is more efficient then merge_array in the loops
+ * Do not use with indexed arrays!
  *
  * @param array $ar1
  * @param array|null $ar2

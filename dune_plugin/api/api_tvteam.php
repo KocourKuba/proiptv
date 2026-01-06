@@ -118,7 +118,8 @@ class api_tvteam extends api_default
         if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
-            $this->account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_OBJECT);
+            $curl_opt[CURLOPT_TIMEOUT] = 30;
+            $this->account_info = $this->execApiCommandResponse(API_COMMAND_ACCOUNT_INFO, $curl_opt, Curl_Wrapper::RET_OBJECT);
             hd_debug_print("get provider info response: " . json_format_unescaped($this->account_info), true);
 
             if (isset($this->account_info->data->userData->userToken)) {
@@ -161,7 +162,8 @@ class api_tvteam extends api_default
             hd_debug_print($info_msg);
             Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "$info_msg\n\n$error_msg");
         } else {
-            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_REQUEST_TOKEN);
+            $curl_opt[CURLOPT_TIMEOUT] = 30;
+            $response = $this->execApiCommandResponse(API_COMMAND_REQUEST_TOKEN, $curl_opt);
             hd_debug_print("request provider token response: " . json_format_unescaped($response), true);
             if ($response === false) {
                 Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "Bad provider response");
