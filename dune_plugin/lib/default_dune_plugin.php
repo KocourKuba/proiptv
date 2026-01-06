@@ -1219,6 +1219,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $this->init_plugin();
         if ($reload_playlist) {
+            $curl_wrapper = $this->setup_curl();
+            $curl_wrapper->clear_cache();
             $this->reset_channels();
         }
 

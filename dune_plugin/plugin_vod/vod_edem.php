@@ -237,7 +237,7 @@ class vod_edem extends vod_standard
         }
 
         $post_params = array('cmd' => "search", 'query' => $keyword);
-        $movies = $this->CollectQueryResult($keyword, $this->make_json_request($post_params));
+        $movies = $this->CollectQueryResult($keyword, $this->make_json_request($post_params, false));
         // Search request return all found data without limit
         $this->stop_page_index($keyword);
         return $movies;
@@ -282,7 +282,7 @@ class vod_edem extends vod_standard
         $post_params['filter'] = 'on';
         $post_params['limit'] = 50;
         $post_params['offset'] = $current_offset;
-        $movies = $this->CollectQueryResult($query_id, $this->make_json_request($post_params));
+        $movies = $this->CollectQueryResult($query_id, $this->make_json_request($post_params, false));
         if ($current_offset === $this->get_current_page_index($query_id)) {
             $this->stop_page_index($query_id);
         }
@@ -358,9 +358,10 @@ class vod_edem extends vod_standard
 
     /**
      * @param array|null $params
+     * @param bool $cache_response
      * @return bool|array
      */
-    protected function make_json_request($params)
+    protected function make_json_request($params, $cache_response = true)
     {
         $pairs = array();
         if ($params !== null) {
@@ -376,6 +377,10 @@ class vod_edem extends vod_standard
         $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
         $curl_opt[CURLOPT_POSTFIELDS] = $pairs;
 
-        return $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt);
+        $decode = Curl_Wrapper::RET_ARRAY;
+        if ($cache_response) {
+            $decode |= Curl_Wrapper::CACHE_RESPONSE;
+        }
+        return $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, $decode);
     }
 }

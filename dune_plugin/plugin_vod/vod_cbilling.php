@@ -163,7 +163,7 @@ class vod_cbilling extends vod_standard
     {
         hd_debug_print(null, true);
 
-        $jsonItems = $this->provider->execApiCommandResponseNoOpt(API_COMMAND_GET_VOD);
+        $jsonItems = $this->provider->execApiCommandResponseNoOpt(API_COMMAND_GET_VOD, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
         if ($jsonItems === false) {
             $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
             hd_debug_print($exception_msg);
@@ -228,7 +228,8 @@ class vod_cbilling extends vod_standard
             $params[CURLOPT_CUSTOMREQUEST] = "/genres/$genre_id?page=$page_idx";
         }
 
-        return $this->CollectQueryResult($query_id, $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params));
+        return $this->CollectQueryResult($query_id,
+            $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE));
     }
 
     /**

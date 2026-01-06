@@ -523,7 +523,7 @@ class api_default
         }
 
         if (is_null($file)) {
-            $response = $curl_wrapper->download_content($command_url, $decode | Curl_Wrapper::CACHE_RESPONSE);
+            $response = $curl_wrapper->download_content($command_url, $decode);
         } else {
             $response = $curl_wrapper->download_file($command_url, $file);
         }

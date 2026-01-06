@@ -141,7 +141,7 @@ class vod_ipstream extends vod_standard
     {
         hd_debug_print(null, true);
 
-        $response = $this->provider->execApiCommandResponseNoOpt(API_COMMAND_GET_VOD);
+        $response = $this->provider->execApiCommandResponseNoOpt(API_COMMAND_GET_VOD, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
         if ($response !== false) {
             $this->vod_items = $response;
         } else {

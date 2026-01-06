@@ -169,7 +169,7 @@ class vod_korona extends vod_standard
         hd_debug_print("getSearchList: $keyword");
 
         $enc_keyword = urlencode($keyword);
-        return $this->CollectQueryResult($keyword, $this->make_json_request("/filter/by_name?name=$enc_keyword&page=1&per_page=999999999"));
+        return $this->CollectQueryResult($keyword, $this->make_json_request("/filter/by_name?name=$enc_keyword&page=1&per_page=999999999", false));
     }
 
     /**
@@ -229,7 +229,7 @@ class vod_korona extends vod_standard
         }
 
         $page_id = $query_id . "_" . API_ACTION_FILTER;
-        return $this->CollectQueryResult($page_id, $this->make_json_request("/filter"));
+        return $this->CollectQueryResult($page_id, $this->make_json_request("/filter", false));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -294,17 +294,22 @@ class vod_korona extends vod_standard
     }
 
     /**
-     * @param string|null $params
+     * @param string $url
+     * @param bool $cache_response
      * @return bool|array
      */
-    protected function make_json_request($params)
+    protected function make_json_request($url, $cache_response = true)
     {
         if (!$this->provider->request_provider_token()) {
             return false;
         }
 
-        $curl_opt[CURLOPT_CUSTOMREQUEST] = $params;
-        $jsonItems = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt);
+        $curl_opt[CURLOPT_CUSTOMREQUEST] = $url;
+        $decode = Curl_Wrapper::RET_ARRAY;
+        if ($cache_response) {
+            $decode |= Curl_Wrapper::CACHE_RESPONSE;
+        }
+        $jsonItems = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, $decode);
         if ($jsonItems === false) {
             $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
             hd_debug_print($exception_msg);

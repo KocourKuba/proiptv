@@ -96,7 +96,7 @@ class api_iptvonline extends api_default
         $refresh_token = safe_get_value($data, 'refresh_token');
         if (!empty($access_token) && !empty($refresh_token)) {
             hd_debug_print("token requested", true);
-            $this->plugin->set_cookie(PARAM_TOKEN, $access_token, $data->expires_time);
+            $this->plugin->set_cookie(PARAM_TOKEN, $access_token, safe_get_value($data, 'expires_time', time() + 86400));
             $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $refresh_token, PHP_INT_MAX);
             return true;
         }
