@@ -472,13 +472,9 @@ class Curl_Wrapper
      */
     private function exec_php_curl($url, $save_file, $cache_opts = 0)
     {
-        hd_debug_print("exec_php_curl: '$url' saved to '$save_file'", true);
-        if ($cache_opts & self::USE_ETAG) {
-            hd_debug_print("cache opts: Use ETag capability", true);
-        }
-
-        if ($cache_opts & self::CACHE_RESPONSE) {
-            hd_debug_print("cache opts: Cache response", true);
+        hd_debug_print("exec_php_curl: url: '$url'", true);
+        if ($save_file === false) {
+            hd_debug_print("exec_php_curl: request only headers", true);
         }
 
         self::$http_code = 0;
@@ -512,19 +508,23 @@ class Curl_Wrapper
             $opts[CURLOPT_FILE] = $fp;
         }
 
+        $opts[CURLOPT_HTTPHEADER][] = "Accept: */*";
+        $opts[CURLOPT_HTTPHEADER][] = "Cache-Control: no-cache";
+        $parsed_url = parse_url($url);
+        if (isset($parsed_url['host'])) {
+            $opts[CURLOPT_HTTPHEADER][] = "Host: {$parsed_url['host']}";
+        }
+
         if ($cache_opts & self::USE_ETAG) {
+            hd_debug_print("cache opts: Use ETag capability", true);
             $etag = self::get_cached_etag($url);
             if (!empty($etag)) {
-                $this->send_headers[] = "If-None-Match: $etag";
+                $opts[CURLOPT_HTTPHEADER][] = "If-None-Match: $etag";
             }
         }
 
         if (!empty($this->send_headers)) {
-            $opts[CURLOPT_HTTPHEADER] = $this->send_headers;
-        }
-
-        if ($this->is_post) {
-            $opts[CURLOPT_POST] = $this->is_post;
+            $opts[CURLOPT_HTTPHEADER] = array_merge($opts[CURLOPT_HTTPHEADER], $this->send_headers);
         }
 
         if (!empty($this->post_data)) {
@@ -536,13 +536,11 @@ class Curl_Wrapper
             $opts[CURLOPT_HTTPHEADER][] = "Content-Length: " . strlen($opts[CURLOPT_POSTFIELDS]);
         }
 
-        $opts[CURLOPT_HTTPHEADER][] = "Accept: */*";
-        $opts[CURLOPT_HTTPHEADER][] = "Cache-Control: no-cache";
-        $parsed_url = parse_url($url);
-        if (isset($parsed_url['host'])) {
-            $opts[CURLOPT_HTTPHEADER][] = "Host: {$parsed_url['host']}";
+        if ($this->is_post) {
+            $opts[CURLOPT_POST] = $this->is_post;
+        } else if (empty($opts[CURLOPT_NOBODY]) && empty($opts[CURLOPT_PUT])) {
+            $opts[CURLOPT_CUSTOMREQUEST] = "GET";
         }
-
 
         if (isset($opts[CURLOPT_POSTFIELDS])) {
             $hash = hash('md5', $url . $opts[CURLOPT_POSTFIELDS]);
@@ -551,12 +549,14 @@ class Curl_Wrapper
         }
 
         if ($cache_opts & self::CACHE_RESPONSE) {
+            hd_debug_print("cache opts: Use cache response. Cache time: {$this->file_cache_time}h", true);
             $path = $this->base_cache_path . $this->file_cache_path . $hash;
             if (file_exists($path)) {
                 $now = time();
                 $mtime = filemtime($path);
-                $cache_expired = $mtime + $this->file_cache_time * 3600;
-                if ($cache_expired > $now) {
+                $cache_expired_in = $mtime + $this->file_cache_time * 3600;
+                hd_debug_print("Cache expiration time: " . format_datetime("Y-m-d H:i", $cache_expired_in), true);
+                if ($now < $cache_expired_in) {
                     hd_debug_print("Response read from cache $path", true);
                     return file_get_contents($path);
                 }
@@ -570,11 +570,11 @@ class Curl_Wrapper
         foreach ($opts as $k => $v) {
             if (LogSeverity::$is_debug) {
                 if (is_bool($v)) {
-                    hd_debug_print(HD::curlopt_to_string($k) . " ($k) = " . var_export($v, true));
+                    hd_debug_print(HD::curlopt_to_string($k) . " = " . var_export($v, true));
                 } else if (is_array($v)) {
-                    hd_debug_print(HD::curlopt_to_string($k) . " ($k) = " . json_format_unescaped($v));
+                    hd_debug_print(HD::curlopt_to_string($k) . " = " . json_format_unescaped($v));
                 } else {
-                    hd_debug_print(HD::curlopt_to_string($k) . " ($k) = $v");
+                    hd_debug_print(HD::curlopt_to_string($k) . " = $v");
                 }
             }
             curl_setopt($ch, $k, $v);
@@ -599,14 +599,14 @@ class Curl_Wrapper
             hd_debug_print("---------   Response headers end  ---------");
         }
 
-        if (self::$error_no !== 0) {
-            hd_debug_print(sprintf("CURL errno: %s (%s; HTTP error: %s;", self::$error_no, self::$error_desc, self::$http_code));
+        if (self::$http_code < 200 || (self::$http_code >= 300 && self::$http_code != 301 && self::$http_code != 304)) {
+            hd_debug_print("HTTP request failed (" . self::$http_code . ")");
+            hd_debug_print("HTTP response " . $content);
             return false;
         }
 
-        if (self::$http_code < 200 || (self::$http_code >= 300 && self::$http_code != 304)) {
-            hd_debug_print("HTTP request failed (" . self::$http_code . ")");
-            hd_debug_print("HTTP response " . $content);
+        if (self::$error_no !== 0) {
+            hd_debug_print(sprintf("CURL errno: %s (%s; HTTP error: %s;", self::$error_no, self::$error_desc, self::$http_code));
             return false;
         }
 
