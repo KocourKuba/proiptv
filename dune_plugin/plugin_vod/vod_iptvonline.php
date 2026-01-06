@@ -330,7 +330,7 @@ class vod_iptvonline extends vod_standard
         $curl_opt = array();
 
         if (!empty($url)) {
-            $curl_opt[CURLOPT_CUSTOMREQUEST] = $url;
+            $curl_opt[API_COMMAND_ADD_PARAMS] = $url;
         }
 
         if (!empty($payload)) {

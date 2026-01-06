@@ -466,6 +466,7 @@ const API_COMMAND_SET_DEVICE = 'set_device';
 const API_COMMAND_GET_PACKAGES = 'get_packages';
 const API_COMMAND_REQUEST_TOKEN = 'request_token';
 const API_COMMAND_REFRESH_TOKEN = 'refresh_token';
+const API_COMMAND_ADD_PARAMS = 'add_params';
 
 const API_ACTION_MOVIE = 'movie';
 const API_ACTION_SERIAL = 'serial';

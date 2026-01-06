@@ -483,10 +483,9 @@ class api_default
             return false;
         }
 
-        if (isset($curl_opt[CURLOPT_CUSTOMREQUEST])) {
-            $command_url .= $curl_opt[CURLOPT_CUSTOMREQUEST];
+        if (isset($curl_opt[API_COMMAND_ADD_PARAMS])) {
+            $command_url .= $curl_opt[API_COMMAND_ADD_PARAMS];
             $command_url = $this->replace_macros($command_url);
-            unset($curl_opt[CURLOPT_CUSTOMREQUEST]);
         }
 
         hd_debug_print("ApiCommandUrl: $command_url", true);

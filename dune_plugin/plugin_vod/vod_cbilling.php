@@ -72,7 +72,7 @@ class vod_cbilling extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("Try Load Movie: $movie_id");
 
-        $params[CURLOPT_CUSTOMREQUEST] = "/video/$movie_id";
+        $params[API_COMMAND_ADD_PARAMS] = "/video/$movie_id";
         $response = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params);
         $movieData = safe_get_value($response, 'data');
         if (empty($movieData)) {
@@ -181,7 +181,7 @@ class vod_cbilling extends vod_standard
             $total += $count;
 
             // fetch genres for category
-            $params[CURLOPT_CUSTOMREQUEST] = "/cat/$id/genres";
+            $params[API_COMMAND_ADD_PARAMS] = "/cat/$id/genres";
             $jsonData = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params);
             if ($jsonData === false) {
                 continue;
@@ -221,11 +221,11 @@ class vod_cbilling extends vod_standard
         }
 
         if ($query_id === Vod_Category::FLAG_ALL_MOVIES) {
-            $params[CURLOPT_CUSTOMREQUEST] = "/filter/new?page=$page_idx";
+            $params[API_COMMAND_ADD_PARAMS] = "/filter/new?page=$page_idx";
         } else {
             $arr = explode("_", $query_id);
             $genre_id = safe_get_value($arr, 1, $query_id);
-            $params[CURLOPT_CUSTOMREQUEST] = "/genres/$genre_id?page=$page_idx";
+            $params[API_COMMAND_ADD_PARAMS] = "/genres/$genre_id?page=$page_idx";
         }
 
         return $this->CollectQueryResult($query_id,
@@ -246,7 +246,7 @@ class vod_cbilling extends vod_standard
             return array();
         }
 
-        $params[CURLOPT_CUSTOMREQUEST] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx";
+        $params[API_COMMAND_ADD_PARAMS] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx";
         return $this->CollectQueryResult($keyword, $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params));
     }
 

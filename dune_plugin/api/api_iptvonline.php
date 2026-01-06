@@ -277,8 +277,8 @@ class api_iptvonline extends api_default
     {
         $curl_opt = array();
 
-        if (isset($params[CURLOPT_CUSTOMREQUEST])) {
-            $curl_opt[CURLOPT_CUSTOMREQUEST] = $params[CURLOPT_CUSTOMREQUEST];
+        if (isset($params[API_COMMAND_ADD_PARAMS])) {
+            $curl_opt[API_COMMAND_ADD_PARAMS] = $params[API_COMMAND_ADD_PARAMS];
         }
 
         if (isset($params[CURLOPT_POSTFIELDS])) {

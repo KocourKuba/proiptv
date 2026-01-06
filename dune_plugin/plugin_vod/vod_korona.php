@@ -304,7 +304,7 @@ class vod_korona extends vod_standard
             return false;
         }
 
-        $curl_opt[CURLOPT_CUSTOMREQUEST] = $url;
+        $curl_opt[API_COMMAND_ADD_PARAMS] = $url;
         $decode = Curl_Wrapper::RET_ARRAY;
         if ($cache_response) {
             $decode |= Curl_Wrapper::CACHE_RESPONSE;
