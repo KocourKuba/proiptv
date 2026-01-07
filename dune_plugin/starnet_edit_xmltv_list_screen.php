@@ -172,7 +172,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case ACTION_CLEAR_CACHE:
-                Epg_Manager_Xmltv::clear_epg_files($selected_id);
+            case ACTION_CALL_CLEAR_ALL_EPG:
+                Epg_Manager_Xmltv::clear_epg_files($user_input->control_id === ACTION_CLEAR_CACHE ? $selected_id : null);
                 $selected_sources = $this->plugin->get_selected_xmltv_ids();
                 if (in_array($selected_id, $selected_sources)) {
                     $this->force_parent_reload = true;
@@ -282,6 +283,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_INDEX_EPG, TR::t('entry_index_epg'), 'settings.png');
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CLEAR_CACHE, TR::t('entry_epg_cache_clear'), 'brush.png');
+        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CALL_CLEAR_ALL_EPG, TR::t('entry_epg_cache_clear_all'), 'brush.png');
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 
         // Add URL

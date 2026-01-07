@@ -46,7 +46,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_CALL_XMLTV_SOURCES_SCREEN = 'call_xmltv_setup'; // this action coded in manifest
     const ACTION_CALL_REBOOT = 'call_reboot'; // this action coded in manifest
     const ACTION_CALL_SEND_LOG = 'call_send_log'; // this action coded in manifest
-    const ACTION_CALL_CLEAR_ALL_EPG = 'call_clear_all_epg'; // this action coded in manifest
     const ACTION_CONFIRM_BACKUP_DLG = 'create_backup';
     const ACTION_RUN_PLAYLIST_SCREEN = 'playlist_screen';
     const OLD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0di9yZWxlYXNlcy9kb3dubG9hZC81LjEuOTYyL2R1bmVfcGx1Z2luX3Byb2lwdHYuNS4xLjk2Mi56aXA=";
@@ -164,7 +163,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     : TR::t('entry_log_not_sent');
                 return Action_Factory::show_title_dialog(TR::t('entry_send_log'), $msg);
 
-            case self::ACTION_CALL_CLEAR_ALL_EPG:
+            case ACTION_CALL_CLEAR_ALL_EPG:
                 $this->plugin->init_plugin();
                 if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) break;
 

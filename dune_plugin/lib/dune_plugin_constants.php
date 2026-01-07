@@ -90,6 +90,7 @@ const ACTION_ADD_URL_DLG = 'add_url_dialog';
 const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
 const ACTION_PL_TYPE_DLG_APPLY = 'pl_type_dlg_apply';
 const ACTION_CLEAR_CACHE = 'clear_cache';
+const ACTION_CALL_CLEAR_ALL_EPG = 'call_clear_all_epg'; // this action coded in manifest
 const ACTION_INDEX_EPG = 'index_epg';
 const ACTION_CHOOSE_FILE = 'choose_file';
 const ACTION_ADD_TO_EXTERNAL_SOURCE = 'add_external_source';
