@@ -35,7 +35,7 @@ class vod_sharaclub extends vod_standard
     {
         if (parent::init_vod($provider)) {
             $this->vod_filters = array("genre", "from", "to");
-            $json_data = $provider->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_ARRAY);
+            $json_data = $provider->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO);
             $data = safe_get_value($json_data, array('data', 'vod'));
             return !empty($data);
         }

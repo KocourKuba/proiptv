@@ -112,6 +112,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                     $this->plugin->remove_selected_xmltv_id($selected_id);
                 } else {
                     $this->plugin->add_selected_xmltv_id($selected_id);
+                    $cached_xmltv_file = $this->plugin->get_cache_dir(PARAM_XMLTV_CACHE_PATH, EPG_CACHE_SUBDIR) . '/' . "$selected_id.xmltv";
+                    if (!file_exists($cached_xmltv_file)) {
+                        return User_Input_Handler_Registry::create_action($this, ACTION_INDEX_EPG);
+                    }
                 }
 
                 $this->force_parent_reload = true;
