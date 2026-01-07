@@ -313,8 +313,8 @@ edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Drücken Sie auf der 
 edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Drücken Sie lange OK auf der Fernbedienung, um das „Popup-Menü“ aufzurufen}
 edit_list_edit_item = Bearbeiten
 edit_list_add_provider = IPTV-Anbieter hinzufügen
-edit_list_detail_info__2 = URL:|%s||Cache-Zeit|%s
-edit_list_detail_info__4 = URL:|%s||Heruntergeladen:|%s||Abgelaufen:|%s|%s
+edit_list_detail_info__2 = URL:|%s||Cache-Zeit|%s (Tage)
+edit_list_detail_info__4 = URL:|%s||Heruntergeladen:|%s||Abgelaufen:|%s||%s
 edit_list_title_info__1 = %s|Bearbeitung...
 edit_list_title_info__2 = %s|Heruntergeladen: %s
 edit_list_title_info_download__1 = %s|Nachlad...
@@ -323,8 +323,9 @@ edit_list_playlist_type = Typ der Wiedergabeliste
 edit_list_playlist_iptv = IPTV
 edit_list_playlist_vod = Video-on-Demand (VOD)
 edit_list_playlist_detect_id = Kanal-ID-Quelle erkennen (IPTV)
-edit_list_cache_suport__1 = |Unterstützung von Server-Cache:|%s
+edit_list_cache_support__1 = Unterstützung von Server-Cache:|%s
 edit_list_xmltv_not_ready = XMLTV-Quelle noch nicht verarbeitet!
+edit_list_wrong_cache_type = Warnung:|Der Server unterstützt kein Caching! Bitte stelle die Cache-Zeit manuell ein!
 
 folder_screen_open_folder = Ordner öffnen
 folder_screen_create_folder = Ordner erstellen

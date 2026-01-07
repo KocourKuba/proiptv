@@ -557,7 +557,11 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $title = TR::t('edit_list_title_info__2', $title, $dl_date);
 
                 $etag = Curl_Wrapper::get_cached_etag($item[PARAM_URI]);
-                $info = TR::load('edit_list_cache_suport__1', TR::load(empty($etag) ? 'no' : 'yes'));
+                if (empty($etag) && $item[PARAM_CACHE] === XMLTV_CACHE_AUTO) {
+                    $info = TR::load('edit_list_wrong_cache_type');
+                } else {
+                    $info = TR::load('edit_list_cache_support__1', TR::load(empty($etag) ? 'no' : 'yes'));
+                }
 
                 if ($item[PARAM_CACHE] === XMLTV_CACHE_AUTO) {
                     $expired = TR::load('setup_epg_cache_type_auto');

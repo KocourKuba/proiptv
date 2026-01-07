@@ -313,8 +313,8 @@ edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Нажмите Popup 
 edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Долгое нажатие OK на пульте для вызова меню}
 edit_list_edit_item = Редактировать
 edit_list_add_provider = Добавить провайдера IPTV
-edit_list_detail_info__2 = Ссылка:|%s||Время кэширования|%s
-edit_list_detail_info__4 = Ссылка:|%s||Скачан:|%s||Действителен до:|%s|%s
+edit_list_detail_info__2 = Ссылка:|%s||Время кэширования|%s (дней)
+edit_list_detail_info__4 = Ссылка:|%s||Скачан:|%s||Действителен до:|%s||%s
 edit_list_title_info__1 = %s|Обработка...
 edit_list_title_info__2 = %s|Скачан: %s
 edit_list_title_info_download__1 = %s|Cкачивание...
@@ -323,8 +323,9 @@ edit_list_playlist_type = Тип плейлиста
 edit_list_playlist_iptv = IPTV
 edit_list_playlist_vod = Meдиатека
 edit_list_playlist_detect_id = Определение ID Канала (IPTV)
-edit_list_cache_suport__1 = |Кэширование сервером:|%s
+edit_list_cache_support__1 = Кэширование сервером:|%s
 edit_list_xmltv_not_ready = Источник не обработан!
+edit_list_wrong_cache_type = Предупреждение:|Сервер не поддерживает автоматическое кэширование! Пожалуйста, установите время кэширования вручную!
 
 folder_screen_open_folder = Открыть папку
 folder_screen_create_folder = Создать папку

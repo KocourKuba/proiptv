@@ -313,8 +313,8 @@ edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Press Popup Menu on R
 edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Long press OK on Remote to call Popup Menu}
 edit_list_edit_item = Edit
 edit_list_add_provider = Add IPTV provider
-edit_list_detail_info__2 = URL:|%s||Cache time|%s
-edit_list_detail_info__4 = URL:|%s||Downloaded:|%s||Expired:|%s|%s
+edit_list_detail_info__2 = URL:|%s||Cache time|%s (days)
+edit_list_detail_info__4 = URL:|%s||Downloaded:|%s||Expired:|%s||%s
 edit_list_title_info__1 = %s|Processing...
 edit_list_title_info__2 = %s|Downloaded: %s
 edit_list_title_info_download__1 = %s|Downloading...
@@ -323,8 +323,9 @@ edit_list_playlist_type = Playlist type
 edit_list_playlist_iptv = IPTV
 edit_list_playlist_vod = Video on demand (VOD)
 edit_list_playlist_detect_id = Detect Channel ID source (IPTV)
-edit_list_cache_suport__1 = |Server cache support:|%s
-edit_list_xmltv_not_ready = XMLTV source not yet processed!
+edit_list_cache_support__1 = Server cache support:|%s
+edit_list_xmltv_not_ready = |XMLTV source not yet processed!
+edit_list_wrong_cache_type = Warning:|Server does not support caching! Please set the cache time manually!
 
 folder_screen_open_folder = Open folder
 folder_screen_create_folder = Create folder
