@@ -588,16 +588,17 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 }
             }
 
-            $pl_source = $this->plugin->get_xmltv_source($this->plugin->get_active_playlist_id(), $key);
-            if (!empty($pl_source)) {
+            $pl_id = $this->plugin->get_active_playlist_id();
+            $pl_source = $this->plugin->get_xmltv_source($pl_id, $key);
+            if (empty($pl_source)) {
+                $icon_file = get_image_path("link.png");
+            } else {
                 if (safe_get_value($item, PARAM_TYPE) === PARAM_CONF) {
                     $icon_file = get_image_path("config.png");
                 } else {
                     $ext_source = $this->plugin->get_xmltv_source(null, $key);
                     $icon_file = get_image_path(empty($ext_source) ? "m3u_file.png" : "both_file.png");
                 }
-            } else {
-                $icon_file = get_image_path("link.png");
             }
 
             $icon_detailed = $icon_file;

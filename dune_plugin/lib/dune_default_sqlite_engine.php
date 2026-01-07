@@ -562,11 +562,13 @@ class Dune_Default_Sqlite_Engine
     {
         if ($playlist_id === null) {
             $table_name = self::XMLTV_TABLE;
+            $pl_where = '';
         } else {
             $table_name = self::PLAYLIST_XMLTV_TABLE;
+            $pl_where = "playlist_id = '$playlist_id' AND ";
         }
 
-        return $this->sql_params->query_value("SELECT * FROM $table_name WHERE hash = '$hash' AND type != '';", true);
+        return $this->sql_params->query_value("SELECT * FROM $table_name WHERE $pl_where hash = '$hash' AND type != '';", true);
     }
 
     /**
