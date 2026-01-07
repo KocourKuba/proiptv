@@ -540,14 +540,14 @@
             "title": "epg.drm-play"
           }
         ],
-        "pl_domains": {
+        "domains": {
           "fm7.pp.ru": "fm7.pp.ru",
           "filmax-tv.ru": "filmax-tv.ru"
         },
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "http://{PL_DOMAIN_ID}/playlist/p{SERVER_ID}/hls/{PASSWORD}.m3u"
+            "url": "http://{DOMAIN_ID}/playlist/p{SERVER_ID}/hls/{PASSWORD}.m3u"
           }
         },
         "servers": {
@@ -1083,10 +1083,10 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "http://{PL_DOMAIN_ID}/playlist/{PASSWORD}/m3u"
+            "url": "http://{DOMAIN_ID}/playlist/{PASSWORD}/m3u"
           }
         },
-        "pl_domains": {
+        "domains": {
           "myott.tv": "myott.tv",
           "myott.top": "myott.top"
         },
@@ -1421,13 +1421,13 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "http://{PL_DOMAIN_ID}/tv_live-{STREAM_ID}/{LOGIN}-{PASSWORD}"
+            "url": "http://{DOMAIN_ID}/tv_live-{STREAM_ID}/{LOGIN}-{PASSWORD}"
           }
         },
         "playlists_vod": {
           "default": {
             "name": "Default",
-            "url": "http://{PL_DOMAIN_ID}/kino-full/{LOGIN}-{PASSWORD}"
+            "url": "http://{DOMAIN_ID}/kino-full/{LOGIN}-{PASSWORD}"
           }
         },
         "streams": {
@@ -1458,7 +1458,7 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "http://{PL_DOMAIN_ID}/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u"
+            "url": "http://{DOMAIN_ID}/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u"
           }
         },
         "playlists_vod": {
@@ -1471,7 +1471,7 @@
           "regex": "/^(.+\\/\\/).+(\\/.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
           "replace": "$1{SERVER_ID}$2{STREAM_ID}$3"
         },
-        "pl_domains": {
+        "domains": {
           "www.spr24.net": "spr24.net",
           "sh24.xyz": "sh24.xyz",
           "sh24.one": "sh24.one",
@@ -1574,10 +1574,10 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "https://{PL_DOMAIN_ID}/play/{PASSWORD}"
+            "url": "https://{DOMAIN_ID}/play/{PASSWORD}"
           }
         },
-        "pl_domains": {
+        "domains": {
           "skaztv.online": "skaztv.online",
           "skaz.tv": "skaz.tv"
         },
@@ -1729,7 +1729,7 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "http://{PL_DOMAIN_ID}/pl/11/{TOKEN}/playlist.m3u8"
+            "url": "http://{DOMAIN_ID}/pl/11/{TOKEN}/playlist.m3u8"
           }
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
@@ -1742,7 +1742,7 @@
           "tvteam.pro": "tvteam.pro",
           "tv.team": "tv.team"
         },
-        "pl_domains": {
+        "domains": {
           "team.ga": "team.ga",
           "tvtm.one": "tvtm.one"
         },
@@ -1830,7 +1830,6 @@
             "url": "{API}/hls/token={PASSWORD}"
           }
         },
-        "vod_parser": "/^(?<title>[^(]+)\\s\\((?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },

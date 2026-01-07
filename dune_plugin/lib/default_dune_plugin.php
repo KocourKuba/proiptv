@@ -1075,7 +1075,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 VOD_SEARCH_LIST => 'item',
                 VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID,
             );
-            if ($this->get_vod_class() === 'vod\vod_standard') {
+            if ($this->get_vod_class() === 'vod_standard') {
                 $tables[VOD_LIST_GROUP_ID] = COLUMN_CHANNEL_ID;
             }
 
@@ -4119,7 +4119,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         if ($this->is_vod_playlist()) {
-            return 'vod\vod_standard';
+            return 'vod_standard';
         }
 
         return null;
