@@ -87,11 +87,6 @@ class Curl_Wrapper
     private static $http_response_headers = null;
 
     /**
-     * @var array
-     */
-    private static $cache_db = null;
-
-    /**
      * @var string
      */
     private $file_cache_time = 3600;
@@ -187,14 +182,6 @@ class Curl_Wrapper
         }
 
         return $contents;
-    }
-
-    /**
-     * @return string
-     */
-    public static function get_etag_header()
-    {
-        return self::get_response_header('etag');
     }
 
     /**
@@ -322,7 +309,7 @@ class Curl_Wrapper
      */
     public static function get_url_hash($url)
     {
-        return hash('md5', $url);
+        return hash('crc32', $url);
     }
 
     /**
@@ -360,13 +347,14 @@ class Curl_Wrapper
 
     /**
      * @param string $url
+     * @param bool $by_hash
      * @return string
      */
-    public static function get_cached_etag($url)
+    public static function get_cached_etag($url, $by_hash = false)
     {
-        self::load_cached_etags();
-        $hash = self::get_url_hash($url);
-        return empty($url) ? '' : safe_get_value(self::$cache_db, $hash, '');
+        $cache_db = self::load_cached_etags();
+        $hash = $by_hash ? $url : self::get_url_hash($url);
+        return empty($hash) ? '' : safe_get_value($cache_db, $hash, '');
     }
 
     /**
@@ -376,36 +364,26 @@ class Curl_Wrapper
      */
     public static function set_cached_etag($url, $etag)
     {
-        self::load_cached_etags();
         if (!empty($url) && !empty($etag)) {
+            $cache_db = self::load_cached_etags();
             $hash = self::get_url_hash($url);
-            self::$cache_db[$hash] = $etag;
-            self::save_cached_etag();
+            $cache_db[$hash] = $etag;
+            self::save_cached_etags($cache_db);
         }
     }
 
     /**
      * @param string $url
-     * @return bool
-     */
-    public static function is_cached_etag($url)
-    {
-        $etag = self::get_cached_etag($url);
-        return !empty($etag);
-    }
-
-    /**
-     * @param string $url
+     * @param bool $by_hash
      * @return void
      */
-    public static function clear_cached_etag($url)
+    public static function clear_cached_etag($url, $by_hash = false)
     {
-        $hash = self::get_url_hash($url);
-        $etag = self::get_cached_etag($hash);
-        if (!empty($etag)) {
-            hd_debug_print("Clear cached ETag '$etag' for: $url", true);
-            unset(self::$cache_db[$hash]);
-            self::save_cached_etag();
+        if (!empty($url)) {
+            $cache_db = self::load_cached_etags();
+            $hash = $by_hash ? $url : self::get_url_hash($url);
+            unset($cache_db[$hash]);
+            self::save_cached_etags($cache_db);
         }
     }
 
@@ -422,29 +400,29 @@ class Curl_Wrapper
     }
 
     /**
-     * @return void
+     * @return array
      */
     protected static function load_cached_etags()
     {
-        if (is_null(self::$cache_db)) {
-            $etag_cache_file = get_data_path(self::CACHE_TAG_FILE);
-            if (file_exists($etag_cache_file)) {
-                self::$cache_db = json_decode(file_get_contents($etag_cache_file), true);
-            } else {
-                self::$cache_db = array();
-            }
+        $etag_cache_file = get_data_path(self::CACHE_TAG_FILE);
+        if (file_exists($etag_cache_file)) {
+            $cache_db = json_decode(file_get_contents($etag_cache_file), true);
         }
+
+        if (!isset($cache_db) ||$cache_db === false) {
+            $cache_db = array();
+        }
+
+        return $cache_db;
     }
 
     /**
+     * @param array $cache_db
      * @return void
      */
-    protected static function save_cached_etag()
+    protected static function save_cached_etags($cache_db)
     {
-        if (is_null(self::$cache_db)) {
-            self::$cache_db = array();
-        }
-        file_put_contents(get_data_path(self::CACHE_TAG_FILE), json_encode(self::$cache_db));
+        file_put_contents(get_data_path(self::CACHE_TAG_FILE), json_encode($cache_db));
     }
 
     /**
@@ -611,7 +589,7 @@ class Curl_Wrapper
         }
 
         if ($cache_opts & self::USE_ETAG) {
-            $new_etag = self::get_etag_header();
+            $new_etag = self::get_response_header('etag');
             if (!isset($etag) || $etag !== $new_etag) {
                 hd_debug_print("Save new ETag ($new_etag) for: $url", true);
                 self::set_cached_etag($url, $new_etag);

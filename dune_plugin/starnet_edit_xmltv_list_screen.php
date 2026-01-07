@@ -421,9 +421,12 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             }
         }
 
-        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        return Action_Factory::change_behaviour($this->do_get_action_map(), 0,
-            $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
+        $all_sources = $this->plugin->get_all_xmltv_sources($this->plugin->get_active_playlist_id());
+        $idx = $all_sources->get_idx($item[PARAM_HASH]);
+        $actions[] = Action_Factory::change_behaviour($this->do_get_action_map());
+        $actions[] = $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $idx);
+        $actions[] = User_Input_Handler_Registry::create_action($this, ACTION_INDEX_EPG);
+        return Action_Factory::composite($actions);
     }
 
     protected function selected_text_file($user_input)
@@ -526,11 +529,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         }
 
         $sticker = Control_Factory::create_sticker(get_image_path('star_small.png'), -55, -2);
-        $all_sources = new Hashed_Array();
-        $pl_sources = $this->plugin->get_xmltv_sources(XMLTV_SOURCE_PLAYLIST, $this->plugin->get_active_playlist_id());
-        $all_sources->add_items($pl_sources);
-        $ext_sources = $this->plugin->get_xmltv_sources(XMLTV_SOURCE_EXTERNAL, null);
-        $all_sources->add_items($ext_sources);
+        $all_sources = $this->plugin->get_all_xmltv_sources($this->plugin->get_active_playlist_id());
         hd_debug_print("All XMLTV sources: " . $all_sources, true);
 
         $selected_sources = $this->plugin->get_selected_xmltv_ids();
@@ -583,11 +582,13 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 }
             }
 
-            if ($pl_sources->has($key)) {
+            $pl_source = $this->plugin->get_xmltv_source($this->plugin->get_active_playlist_id(), $key);
+            if (!empty($pl_source)) {
                 if (safe_get_value($item, PARAM_TYPE) === PARAM_CONF) {
                     $icon_file = get_image_path("config.png");
                 } else {
-                    $icon_file = get_image_path($ext_sources->has($key) ? "both_file.png" : "m3u_file.png");
+                    $ext_source = $this->plugin->get_xmltv_source(null, $key);
+                    $icon_file = get_image_path(empty($ext_source) ? "m3u_file.png" : "both_file.png");
                 }
             } else {
                 $icon_file = get_image_path("link.png");

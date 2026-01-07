@@ -428,12 +428,11 @@ class Epg_Manager_Xmltv
                 $expired = false;
                 if (empty($etag)) {
                     hd_debug_print("No ETag value");
-                } else {
-                    if ($curl_wrapper->download_content($url, Curl_Wrapper::USE_ETAG)) {
-                        $code = Curl_Wrapper::get_http_code();
-                        hd_debug_print("http code: $code", true);
-                        $expired = !($code === 304 || ($code === 200 && Curl_Wrapper::get_etag_header() === $etag));
-                    }
+                    $expired = true;
+                } else if ($curl_wrapper->download_file($url, false, Curl_Wrapper::USE_ETAG)) {
+                    $code = Curl_Wrapper::get_http_code();
+                    hd_debug_print("http code: $code", true);
+                    $expired = !($code === 304 || ($code === 200 && Curl_Wrapper::get_response_header('etag') === $etag));
                 }
 
                 if ($expired) {
@@ -1009,7 +1008,7 @@ class Epg_Manager_Xmltv
             unset(self::$epg_db[$hash]);
         }
 
-        Curl_Wrapper::clear_cached_etag($hash);
+        Curl_Wrapper::clear_cached_etag($hash, true);
 
         $dirs = glob(self::get_lock_name($hash, 0, '*'), GLOB_ONLYDIR);
         $locks = array();
@@ -1361,7 +1360,7 @@ class Epg_Manager_Xmltv
         $curl_wrapper = Curl_Wrapper::getInstance();
         $curl_wrapper->set_connect_timeout($params[PARAM_CURL_CONNECT_TIMEOUT]);
         $curl_wrapper->set_download_timeout($params[PARAM_CURL_DOWNLOAD_TIMEOUT]);
-        if (!$curl_wrapper->download_file($url, $tmp_filename, true)) {
+        if (!$curl_wrapper->download_file($url, $tmp_filename, Curl_Wrapper::USE_ETAG)) {
             $http_code = Curl_Wrapper::get_http_code();
             if (Curl_Wrapper::get_error_no() !== 0) {
                 $msg = "CURL errno: " . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc() . "\nHTTP code: $http_code";

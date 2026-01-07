@@ -493,6 +493,20 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * @param string $playlist_id
+     * @return Hashed_Array
+     */
+    public function get_all_xmltv_sources($playlist_id)
+    {
+        $all_sources = new Hashed_Array();
+        $pl_sources = $this->get_xmltv_sources(XMLTV_SOURCE_PLAYLIST, $playlist_id);
+        $all_sources->add_items($pl_sources);
+        $ext_sources = $this->get_xmltv_sources(XMLTV_SOURCE_EXTERNAL, null);
+        $all_sources->add_items($ext_sources);
+        return $all_sources;
+    }
+
+    /**
      * get xmltv sources hashes
      *
      * @param string $type
@@ -546,8 +560,6 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_xmltv_source($playlist_id, $hash)
     {
-        hd_debug_print(null, true);
-
         if ($playlist_id === null) {
             $table_name = self::XMLTV_TABLE;
         } else {
