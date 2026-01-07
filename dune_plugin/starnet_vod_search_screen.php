@@ -62,7 +62,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen
 
         $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
         $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
-        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
+        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_EDIT, TR::t('edit'));
 
         return $actions;
     }
@@ -119,13 +119,16 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen
                 if (isset($user_input->selected_media_url)
                     && MediaURL::decode($user_input->selected_media_url)->genre_id !== Vod_Category::FLAG_SEARCH) {
 
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_EDIT, TR::t('edit'), "edit.png");
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete'), "brush.png");
                     return Action_Factory::show_popup_menu($menu_items);
                 }
 
                 break;
 
             case ACTION_ITEMS_EDIT:
+                $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+                if ($selected_media_url->category_id === VOD_SEARCH_GROUP_ID) break;
+
                 return User_Input_Handler_Registry::create_action($this,
                     ACTION_SHOW_SEARCH_DLG,
                     null,
