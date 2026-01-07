@@ -3476,6 +3476,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $res = Epg_Manager_Xmltv::import_indexing_log($xmltv_ids);
+        hd_debug_print("Import log result: $res", true);
         switch ($res) {
             case -1: // if no locks and no imports but has error
             case -2: // if import successful and no other active locks but some error occurred

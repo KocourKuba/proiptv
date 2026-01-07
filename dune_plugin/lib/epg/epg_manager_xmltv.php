@@ -363,8 +363,9 @@ class Epg_Manager_Xmltv
             hd_print("XMLTV param: " . json_encode($config[PARAMS_XMLTV]));
 
             self::reindex_xmltv($config[PARAMS_XMLTV], $config[PARAM_INDEXING_FLAG]);
-        } catch (Exception $exception) {
-            hd_debug_print($exception);
+        } catch (Exception $ex) {
+            hd_debug_print($ex);
+            Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $ex->getMessage());
         }
 
         if (is_limited_apk()) {
@@ -576,8 +577,8 @@ class Epg_Manager_Xmltv
                 self::unpack_xmltv($params);
                 $success = true;
             } catch (Exception $ex) {
+                hd_debug_print($ex->getMessage());
                 Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $ex->getMessage());
-                print_backtrace_exception($ex);
                 $tmp_filename = $cached_file . ".tmp";
                 safe_unlink($tmp_filename);
                 safe_unlink($cached_file);
@@ -724,6 +725,7 @@ class Epg_Manager_Xmltv
                 $success = true;
             } catch (Exception $ex) {
                 hd_debug_print($ex->getMessage());
+                Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $ex->getMessage());
             }
 
             if ($file) {
@@ -854,6 +856,7 @@ class Epg_Manager_Xmltv
                 self::update_stat($cached_file, 'entries', $report[Perf_Collector::TIME]);
             } catch (Exception $ex) {
                 hd_debug_print($ex->getMessage());
+                Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $ex->getMessage());
             }
 
             if ($file) {

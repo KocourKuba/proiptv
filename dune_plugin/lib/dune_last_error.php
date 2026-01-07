@@ -29,11 +29,7 @@ class Dune_Last_Error
         $value = trim($value);
         if ($entity === LAST_ERROR_XMLTV) {
             $error_file = get_temp_path($entity);
-            if (empty($error)) {
-                safe_unlink($error_file);
-            } else {
-                file_put_contents($error_file, $value);
-            }
+            file_put_contents($error_file, $value);
         } else {
             self::$last_error[$entity] = $value;
         }
