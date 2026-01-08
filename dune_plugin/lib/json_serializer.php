@@ -30,7 +30,7 @@ class Json_Serializer
 {
     public function __toString()
     {
-        return json_format_unescaped($this->_toStdClass());
+        return json_encode($this->_toStdClass());
     }
 
     public function _toStdClass()

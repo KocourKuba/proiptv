@@ -40,7 +40,7 @@ class api_1ott extends api_default
             return true;
         }
 
-        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_REQUEST_TOKEN);
+        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_REQUEST_TOKEN, Curl_Wrapper::RET_ARRAY);
         $token = safe_get_value($response, 'token');
         if (!empty($token)) {
             $this->plugin->set_cookie(PARAM_SESSION_ID, $token,time() + 86400);

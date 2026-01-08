@@ -1602,7 +1602,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function setup_curl()
     {
-        $curl_wrapper = Curl_Wrapper::getInstance(get_data_path($this->get_active_playlist_id()));
+        $curl_wrapper = Curl_Wrapper::getInstance($this->get_active_playlist_id());
         $curl_wrapper->set_connect_timeout($this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
         $curl_wrapper->set_download_timeout($this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
         $curl_wrapper->set_file_cache_time($this->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 1));

@@ -30,11 +30,10 @@ class Curl_Wrapper
 {
     const CACHE_TAG_FILE = "etag_cache.dat";
 
-    const RET_RAW = 1;
-    const RET_ARRAY = 2;
-    const RET_OBJECT = 4;
-    const USE_ETAG = 8;
-    const CACHE_RESPONSE = 16;
+    const RET_ARRAY = 1;
+    const RET_OBJECT = 2;
+    const USE_ETAG = 4;
+    const CACHE_RESPONSE = 8;
 
     /**
      * @var int
@@ -149,19 +148,21 @@ class Curl_Wrapper
      * @param int $opts options
      * @return bool|string|array|object content of the downloaded file or result of operation or decoded json response
      */
-    public function download_content($url, $opts = self::RET_RAW)
+    public function download_content($url, $opts = 0)
     {
         hd_debug_print(null, true);
 
         $res = $this->exec_php_curl($url, null, $opts);
 
-        if ($opts & self::RET_RAW) {
+        if (($opts & self::RET_ARRAY) === self::RET_ARRAY) {
+            $contents = json_decode($res, true);
+        } else if (($opts & self::RET_OBJECT) === self::RET_OBJECT) {
+            $contents = json_decode($res, false);
+        } else {
             hd_debug_print('Returns RAW response', true);
             return $res;
         }
 
-        $assoc = ($opts & self::RET_ARRAY) === self::RET_ARRAY;
-        $contents = json_decode($res, $assoc);
         if ($contents === false) {
             hd_debug_print("failed to decode json");
             hd_debug_print("doc: $res", true);
@@ -318,11 +319,15 @@ class Curl_Wrapper
             $data = $source;
         }
 
-        if ($decode & Curl_Wrapper::RET_RAW) {
+        if (($decode & self::RET_ARRAY) === self::RET_ARRAY) {
+            $contents = json_decode($data, true);
+        } else if (($decode & self::RET_OBJECT) === self::RET_OBJECT) {
+            $contents = json_decode($data, false);
+        } else {
+            hd_debug_print('Returns RAW response', true);
             return $data;
         }
 
-        $contents = json_decode($data, $decode & Curl_Wrapper::RET_ARRAY);
         if ($contents !== null && $contents !== false) {
             return $contents;
         }

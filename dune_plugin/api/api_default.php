@@ -471,10 +471,10 @@ class api_default
      * @param string $command
      * @param string $file
      * @param array $curl_opt
-     * @param int $decode
+     * @param int $cache_opt
      * @return bool|object|array
      */
-    public function execApiCommand($command, $file, $curl_opt, $decode)
+    public function execApiCommand($command, $file, $curl_opt, $cache_opt)
     {
         hd_debug_print(null, true);
         hd_debug_print("execApiCommand: $command", true);
@@ -524,7 +524,7 @@ class api_default
         }
 
         if (is_null($file)) {
-            $response = $curl_wrapper->download_content($command_url, $decode);
+            $response = $curl_wrapper->download_content($command_url, $cache_opt);
         } else {
             $response = $curl_wrapper->download_file($command_url, $file);
         }
@@ -543,7 +543,7 @@ class api_default
      * @param int $decode
      * @return array|bool|object
      */
-    public function execApiCommandResponse($command, $curl_opt, $decode = Curl_Wrapper::RET_ARRAY)
+    public function execApiCommandResponse($command, $curl_opt, $decode)
     {
         return $this->execApiCommand($command, null, $curl_opt, $decode);
     }
@@ -556,7 +556,7 @@ class api_default
      */
     public function execApiCommandWithPostResponse($command, $curl_opt, &$error_msg = null)
     {
-        return $this->postExecAction($command, $this->execApiCommandResponse($command, $curl_opt, Curl_Wrapper::RET_RAW), null,  $error_msg);
+        return $this->postExecAction($command, $this->execApiCommandResponse($command, $curl_opt, 0), null,  $error_msg);
     }
 
     /**
@@ -564,7 +564,7 @@ class api_default
      * @param int $decode
      * @return array|bool|object
      */
-    public function execApiCommandResponseNoOpt($command, $decode = Curl_Wrapper::RET_ARRAY)
+    public function execApiCommandResponseNoOpt($command, $decode)
     {
         return $this->execApiCommandResponse($command, array(), $decode);
     }
@@ -577,7 +577,7 @@ class api_default
      */
     public function execApiCommandFile($command, $file, $curl_opt = array())
     {
-        return $this->execApiCommand($command, $file, $curl_opt, Curl_Wrapper::RET_RAW);
+        return $this->execApiCommand($command, $file, $curl_opt, 0);
     }
 
     /**

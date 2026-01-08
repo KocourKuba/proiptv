@@ -44,7 +44,7 @@ class vod_cbilling extends vod_standard
     public function init_vod($provider)
     {
         if (parent::init_vod($provider)) {
-            $acc_data = $provider->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO);
+            $acc_data = $provider->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_ARRAY);
             if (isset($acc_data['data'])) {
                 $info_data = safe_get_value($acc_data, 'data');
                 if (!empty($info_data)) {
@@ -73,7 +73,7 @@ class vod_cbilling extends vod_standard
         hd_debug_print("Try Load Movie: $movie_id");
 
         $params[API_COMMAND_ADD_PARAMS] = "/video/$movie_id";
-        $response = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params);
+        $response = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
         $movieData = safe_get_value($response, 'data');
         if (empty($movieData)) {
             return null;
@@ -173,24 +173,26 @@ class vod_cbilling extends vod_standard
 
         $this->category_index = array();
 
+        $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, '');
+        $this->category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
         $total = 0;
         foreach (safe_get_value($jsonItems, 'data', array()) as $node) {
-            $id = safe_get_value($node, 'id');
+            $id = (string)safe_get_value($node, 'id');
             $count = safe_get_value($node, 'count');
             $category = new Vod_Category($id, safe_get_value($node, 'name') . " ($count)");
             $total += $count;
 
             // fetch genres for category
             $params[API_COMMAND_ADD_PARAMS] = "/cat/$id/genres";
-            $jsonData = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params);
-            if ($jsonData === false) {
+            $genreData = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+            if ($genreData === false) {
                 continue;
             }
 
             $gen_arr = array();
-            foreach (safe_get_value($jsonData, 'data', array()) as $genre) {
-                $id = (string)safe_get_value($genre, 'id');
-                $gen_arr[] = new Vod_Category($id, safe_get_value($genre, 'title'), $category);
+            foreach (safe_get_value($genreData, 'data', array()) as $genre) {
+                $genre_id = (string)safe_get_value($genre, 'id');
+                $gen_arr[] = new Vod_Category($genre_id, safe_get_value($genre, 'title'), $category);
             }
 
             $category->set_sub_categories($gen_arr);
@@ -199,7 +201,6 @@ class vod_cbilling extends vod_standard
 
         // all movies
         $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, TR::t('vod_screen_all_movies__1', " ($total)"));
-        array_unshift($this->category_index, $category);
         $this->category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
 
         hd_debug_print("Categories read: " . count($this->category_index));
@@ -214,18 +215,18 @@ class vod_cbilling extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getMovieList: $query_id");
 
-        // page index start from 0
-        $page_idx = $this->get_current_page_index($query_id);
+        // page index start from 1
+        $page_idx = $this->get_current_page_index($query_id, 1);
         if ($page_idx < 0) {
             return array();
         }
 
         if ($query_id === Vod_Category::FLAG_ALL_MOVIES) {
-            $params[API_COMMAND_ADD_PARAMS] = "/filter/new?page=$page_idx";
+            $params[API_COMMAND_ADD_PARAMS] = "/filter/new?page=$page_idx&per_page=50";
         } else {
             $arr = explode("_", $query_id);
             $genre_id = safe_get_value($arr, 1, $query_id);
-            $params[API_COMMAND_ADD_PARAMS] = "/genres/$genre_id?page=$page_idx";
+            $params[API_COMMAND_ADD_PARAMS] = "/genres/$genre_id?page=$page_idx&per_page=50";
         }
 
         return $this->CollectQueryResult($query_id,
@@ -240,14 +241,14 @@ class vod_cbilling extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getSearchList: $keyword");
 
-        // page index start from 0
-        $page_idx = $this->get_current_page_index($keyword);
+        // page index start from 1
+        $page_idx = $this->get_current_page_index($keyword, 1);
         if ($page_idx < 0) {
             return array();
         }
 
-        $params[API_COMMAND_ADD_PARAMS] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx";
-        return $this->CollectQueryResult($keyword, $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params));
+        $params[API_COMMAND_ADD_PARAMS] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx&per_page=50";
+        return $this->CollectQueryResult($keyword, $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params, Curl_Wrapper::RET_ARRAY));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -285,10 +286,12 @@ class vod_cbilling extends vod_standard
             }
         }
 
-        if (empty($movie)) {
-            $this->stop_page_index($query_id);
-        } else {
+        $cur_page = safe_get_value($json, array('meta', 'current_page'), 1);
+        $last_page = safe_get_value($json, array('meta', 'last_page'), 1);
+        if ($cur_page < $last_page && !empty($movies)) {
             $this->shift_next_page_index($query_id);
+        } else {
+            $this->stop_page_index($query_id);
         }
 
         hd_debug_print("Movies found: " . count($movies));
