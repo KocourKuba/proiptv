@@ -97,26 +97,13 @@ class Curl_Wrapper
     private $file_cache_path;
 
     /**
-     * @var string
-     */
-    private $base_cache_path;
-
-    /**
      * @param string $cache_subdir
      */
-    protected function __construct($base_dir = '', $cache_subdir = 'common')
+    protected function __construct($cache_subdir = 'common')
     {
-        if (empty($base_dir)) {
-            $base_dir = get_slash_trailed_path(get_temp_path(CURL_CACHE_SUBDIR));
-        }
-        create_path($base_dir);
-        $this->base_cache_path = $base_dir;
-        $this->file_cache_path = get_slash_trailed_path($cache_subdir);
-        $path = $this->base_cache_path . $this->file_cache_path;
-        create_path($path);
-        hd_debug_print("Base cache path: $this->base_cache_path", true);
+        $this->file_cache_path = get_slash_trailed_path(get_data_path(CURL_CACHE_SUBDIR . '/' . $cache_subdir));
+        create_path($this->file_cache_path);
         hd_debug_print("File cache path: $this->file_cache_path", true);
-        hd_debug_print("Full cache path: $path", true);
         $this->reset();
     }
 
@@ -135,9 +122,9 @@ class Curl_Wrapper
         $this->post_data = null;
     }
 
-    public static function getInstance($base_dir = '', $cache_subdir = 'common')
+    public static function getInstance($cache_subdir = 'common')
     {
-        return new self($base_dir, $cache_subdir);
+        return new self($cache_subdir);
     }
 
     /**
@@ -295,10 +282,11 @@ class Curl_Wrapper
     public function clear_cache($all = false)
     {
         if ($all) {
-            $path = $this->base_cache_path;
+            $path = get_slash_trailed_path(get_data_path(CURL_CACHE_SUBDIR));
         } else {
-            $path = $this->base_cache_path . $this->file_cache_path;
+            $path = $this->file_cache_path;
         }
+
         if (file_exists($path)) {
             clear_directory($path);
         }
@@ -430,9 +418,8 @@ class Curl_Wrapper
      */
     protected function create_cache_path()
     {
-        $path = $this->base_cache_path . $this->file_cache_path;
-        create_path($path);
-        return $path;
+        create_path($this->file_cache_path);
+        return $this->file_cache_path;
     }
 
     /////////////////////////////////////////////////////////////
@@ -528,7 +515,7 @@ class Curl_Wrapper
 
         if ($cache_opts & self::CACHE_RESPONSE) {
             hd_debug_print("cache opts: Use cache response. Cache time: {$this->file_cache_time}h", true);
-            $path = $this->base_cache_path . $this->file_cache_path . $hash;
+            $path = $this->file_cache_path . $hash;
             if (file_exists($path)) {
                 $now = time();
                 $mtime = filemtime($path);

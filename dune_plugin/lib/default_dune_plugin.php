@@ -568,6 +568,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         LogSeverity::$is_debug = true;
         $this->init_parameters();
+        $this->init_epg_cache_dir();
 
         hd_debug_print("Init plugin done!");
         hd_debug_print_separator();
@@ -1226,6 +1227,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->reset_channels();
         }
 
+        Default_Dune_Plugin::cleanup_stalled_locks();
+
         // Init playlist db
         if (!$this->init_playlist_db()) {
             return false;
@@ -1285,7 +1288,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $this->init_epg_manager();
-        $this->cleanup_stalled_locks();
         $this->cleanup_active_xmltv_source();
 
         if ($this->use_xmltv || $this->picons_source !== PLAYLIST_PICONS) {
@@ -1600,10 +1602,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function setup_curl()
     {
-        $curl_wrapper = Curl_Wrapper::getInstance(
-            get_slash_trailed_path($this->get_cache_dir(PARAM_CURL_CACHE_PATH, CURL_CACHE_SUBDIR)),
-            $this->get_active_playlist_id()
-        );
+        $curl_wrapper = Curl_Wrapper::getInstance(get_data_path($this->get_active_playlist_id()));
         $curl_wrapper->set_connect_timeout($this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
         $curl_wrapper->set_download_timeout($this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
         $curl_wrapper->set_file_cache_time($this->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 1));
@@ -1673,7 +1672,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $config = array(
             PARAM_COOKIE_ENABLE_DEBUG => LogSeverity::$is_debug,
-            PARAM_CACHE_DIR => $this->get_cache_dir(PARAM_XMLTV_CACHE_PATH, EPG_CACHE_SUBDIR),
+            PARAM_CACHE_DIR => Epg_Manager_Xmltv::get_cache_dir(),
             PARAMS_XMLTV => $item,
             PARAM_INDEXING_FLAG => $indexing_flag,
         );
@@ -2337,61 +2336,61 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function get_history_path()
     {
         $path = smb_tree::get_folder_info($this->get_parameter(PARAM_HISTORY_PATH));
-        if (is_null($path)) {
+        if (empty($path)) {
             $path = get_data_path(HISTORY_SUBDIR);
-        } else {
-            $path = get_slash_trailed_path($path);
-            if ($path === get_data_path() || $path === get_slash_trailed_path(get_data_path(HISTORY_SUBDIR))) {
-                // reset old settings to new
-                $this->set_parameter(PARAM_HISTORY_PATH, '');
-                $path = get_data_path(HISTORY_SUBDIR);
-            }
         }
 
-        if (substr($path, -1, 1) !== '/') {
-            $path .= '/';
-        }
+        $path = get_slash_trailed_path($path);
 
-        if (!file_exists($path)) {
-            create_path($path);
-        }
+        create_path($path);
 
         return $path;
     }
 
     /**
-     * @param string|null $path
+     * History path can be local or network share
+     *
+     * @param string|null $path plain or smb json encoded path
      * @return void
      */
     public function set_history_path($path = null)
     {
-        if (is_null($path) || $path === get_data_path(HISTORY_SUBDIR)) {
-            $this->set_parameter(PARAM_HISTORY_PATH, '');
-            return;
+        if (empty($path)) {
+            $this->set_parameter(PARAM_HISTORY_PATH, get_data_path(HISTORY_SUBDIR));
+        } else if ($path !== get_data_path(HISTORY_SUBDIR)) {
+            $this->set_parameter(PARAM_HISTORY_PATH, $path);
+            create_path(smb_tree::get_folder_info($path));
         }
-
-        create_path($path);
-        $this->set_parameter(PARAM_HISTORY_PATH, $path);
     }
 
     /**
-     * @param string $dir_type
-     * @param string $subdir
-     * @return string
+     * Set new cache dir or init default and set Epg_Manager cache path
+     * Cache dir can be only local, no network path
+     *
+     * @param string $new_cache_dir
+     * @return string slash trailed path
      */
-    public function get_cache_dir($dir_type, $subdir)
+    public function init_epg_cache_dir($new_cache_dir = null)
     {
-        $cache_dir = smb_tree::get_folder_info($this->get_parameter($dir_type));
-        if (!is_null($cache_dir) && rtrim($cache_dir, '/') === get_data_path($subdir)) {
-            $this->set_parameter($dir_type, '');
-            $cache_dir = null;
+        $new_cache_dir = get_slash_trailed_path(str_replace('//', '/', $new_cache_dir));
+        $cur_cache_dir = $this->get_parameter(PARAM_XMLTV_CACHE_PATH);
+        if (empty($new_cache_dir)) {
+            // just init current settings
+            if (empty($cur_cache_dir)) {
+                // set to default
+                $new_cache_dir = get_slash_trailed_path(get_data_path(EPG_CACHE_SUBDIR));
+                $this->set_parameter(PARAM_XMLTV_CACHE_PATH, $new_cache_dir);
+            } else {
+                $new_cache_dir = $cur_cache_dir;
+            }
+        } else if ($new_cache_dir !== $cur_cache_dir) {
+            // set to new value
+            Epg_Manager_Xmltv::clear_epg_files(null);
+            $this->set_parameter(PARAM_XMLTV_CACHE_PATH, $new_cache_dir);
         }
 
-        if (is_null($cache_dir)) {
-            $cache_dir = get_data_path($subdir);
-        }
-
-        return str_replace("//", "/", $cache_dir);
+        Epg_Manager_Xmltv::set_cache_dir($new_cache_dir);
+        return $new_cache_dir;
     }
 
     /**
@@ -3110,7 +3109,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $active_sources;
     }
 
-    public function cleanup_stalled_locks()
+    public static function cleanup_stalled_locks()
     {
         hd_debug_print(null, true);
         $locks = Epg_Manager_Xmltv::get_any_index_locked();
@@ -3126,7 +3125,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             if ($pid !== 0 && !send_process_signal($pid, 0)) {
                 hd_debug_print("Remove stalled lock: $lock");
-                delete_directory($this->get_cache_dir(PARAM_XMLTV_CACHE_PATH, EPG_CACHE_SUBDIR) . '/' . $lock);
+                delete_directory(Epg_Manager_Xmltv::get_cache_dir() . $lock);
             }
         }
     }

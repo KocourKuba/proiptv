@@ -82,7 +82,7 @@ class smb_tree
     }
 
     /**
-     * @param string $encoded_data
+     * @param string $encoded_data smb json encoded or plain path
      * @param string|null $default
      * @return string
      */
@@ -92,8 +92,9 @@ class smb_tree
             return $default;
         }
 
+        // if data not encoded json_decode returns NULL
         $settings = @json_decode($encoded_data, true);
-        if ($settings === null) {
+        if (empty($settings)) {
             $select_folder = $encoded_data;
         } else if (isset($settings[PARAM_FILEPATH])) {
             $select_folder = $settings[PARAM_FILEPATH];

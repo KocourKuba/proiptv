@@ -112,7 +112,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                     $this->plugin->remove_selected_xmltv_id($selected_id);
                 } else {
                     $this->plugin->add_selected_xmltv_id($selected_id);
-                    $cached_xmltv_file = $this->plugin->get_cache_dir(PARAM_XMLTV_CACHE_PATH, EPG_CACHE_SUBDIR) . '/' . "$selected_id.xmltv";
+                    $cached_xmltv_file = Epg_Manager_Xmltv::get_cache_dir() . "$selected_id.xmltv";
                     if (!file_exists($cached_xmltv_file)) {
                         return User_Input_Handler_Registry::create_action($this, ACTION_INDEX_EPG);
                     }
@@ -552,7 +552,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $title = $order_key !== false ? "(" . ($order_key + 1) .  ") - $title" : $title;
             }
 
-            $cached_xmltv_file = $this->plugin->get_cache_dir(PARAM_XMLTV_CACHE_PATH, EPG_CACHE_SUBDIR) . '/' . "$key.xmltv";
+            $cached_xmltv_file = Epg_Manager_Xmltv::get_cache_dir() . "$key.xmltv";
             $locked = Epg_Manager_Xmltv::is_index_locked($key, INDEXING_ALL);
             if ($locked) {
                 $has_locks = true;
@@ -682,7 +682,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function do_show_xmltv_info($id)
     {
-        $cached_xmltv_file = $this->plugin->get_cache_dir(PARAM_XMLTV_CACHE_PATH, EPG_CACHE_SUBDIR) . '/' . "$id.xmltv";
+        $cached_xmltv_file = Epg_Manager_Xmltv::get_cache_dir() . "$id.xmltv";
         $locked = Epg_Manager_Xmltv::is_index_locked($id, INDEXING_ALL);
         if ($locked || !file_exists($cached_xmltv_file)) {
             return Action_Factory::show_error(false, TR::t('edit_list_xmltv_not_ready'));

@@ -84,7 +84,6 @@ class Epg_Manager_Xmltv
         self::$ext_epg_enabled = is_ext_epg_supported() && $plugin->get_bool_setting(PARAM_SHOW_EXT_EPG);
         self::$flags = $plugin->get_bool_setting(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
         self::$xmltv_sources = $plugin->get_active_sources();
-        self::set_cache_dir($plugin->get_cache_dir(PARAM_XMLTV_CACHE_PATH, EPG_CACHE_SUBDIR));
         self::clear_epg_memory_cache();
     }
 
@@ -1049,7 +1048,7 @@ class Epg_Manager_Xmltv
      *
      * @param string $cache_dir
      */
-    protected static function set_cache_dir($cache_dir)
+    public static function set_cache_dir($cache_dir)
     {
         self::$cache_dir = get_slash_trailed_path($cache_dir);
         create_path(self::$cache_dir);
@@ -1058,6 +1057,13 @@ class Epg_Manager_Xmltv
         hd_debug_print("Storage space:  " . HD::get_storage_size(self::$cache_dir));
     }
 
+    /**
+     * @return string
+     */
+    public static function get_cache_dir()
+    {
+        return self::$cache_dir;
+    }
     /**
      * Clear memory cache
      * @return void
