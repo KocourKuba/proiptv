@@ -76,6 +76,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
+        hd_debug_print();
         dump_input_handler($user_input, true);
 
         if (!isset($user_input->control_id)) {
@@ -121,16 +122,15 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_XMLTV_SOURCES_SCREEN:
                 $this->plugin->init_plugin();
+                $this->plugin->init_user_agent();
                 if (!$this->plugin->init_playlist_db()) {
+                    $pl_error = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
+                    if (!empty($pl_error)) {
+                        return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
+                    }
                     return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_init_database'));
                 }
 
-                $this->plugin->init_user_agent();
-
-                if (!$this->plugin->is_vod_playlist()
-                    && (!$this->plugin->init_playlist_parser() || !$this->plugin->load_and_parse_m3u_iptv_playlist(true))) {
-                    return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
-                }
 
                 $this->plugin->init_epg_manager();
 
@@ -167,7 +167,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 $this->plugin->init_plugin();
                 if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) break;
 
-                hd_debug_print(null, true);
                 $this->plugin->init_epg_manager();
                 Epg_Manager_Json::clear_epg_files();
                 Epg_Manager_Xmltv::clear_epg_files();
@@ -181,19 +180,14 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 hd_debug_print("FORCE LANUCH PLUGIN");
                 hd_debug_print_separator();
 
-                $this->plugin->init_plugin(true);
-                if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) {
-                    return $this->open_playlist_screen($plugin_cookies);
-                }
-
-                if (!$this->plugin->init_playlist_parser() || !$this->plugin->load_and_parse_m3u_iptv_playlist(true)) {
+                if (!$this->plugin->load_channels($plugin_cookies, true)) {
                     return $this->open_playlist_screen($plugin_cookies);
                 }
 
                 hd_debug_print("action: launch open", true);
+                $actions[] = Action_Factory::refresh_entry_points();
                 $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                 $actions[] = Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
-                $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD);
                 return Action_Factory::composite($actions);
 
             case self::ACTION_CONFIRM_BACKUP_DLG:
@@ -226,7 +220,14 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case ACTION_RELOAD:
                 $first_run = isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep);
-                $this->plugin->load_channels($plugin_cookies, true);
+                if (!$this->plugin->load_channels($plugin_cookies, $first_run)) {
+                    hd_debug_print("Failed to load channels!");
+                    return Action_Factory::show_title_dialog(
+                        TR::t('err_load_playlist'),
+                        Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST),
+                        $this->open_playlist_screen($plugin_cookies)
+                    );
+                }
                 $actions[] = Action_Factory::refresh_entry_points();
                 $actions[] = Starnet_Epfs_Handler::update_epfs_file($plugin_cookies, $first_run);
                 return Action_Factory::composite($actions);
@@ -261,14 +262,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         hd_debug_print_separator();
 
                         $this->plugin->init_plugin(true);
-                        if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) {
+                        if ($this->plugin->get_all_playlists_count() === 0) {
                             return $this->open_playlist_screen($plugin_cookies);
                         }
-
-                        if (!$this->plugin->init_playlist_parser() || !$this->plugin->load_and_parse_m3u_iptv_playlist(true)) {
-                            return $this->open_playlist_screen($plugin_cookies);
-                        }
-
                         if ($this->plugin->load_channels($plugin_cookies)
                             && $this->plugin->is_vod_enabled()
                             && SwitchOnOff::to_bool($plugin_cookies->{PARAM_SHOW_VOD_ICON})) {
@@ -285,6 +281,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         $actions[] = Action_Factory::refresh_entry_points();
                         $actions[] = Starnet_Epfs_Handler::update_epfs_file($plugin_cookies, $first_run);
                         return Action_Factory::composite($actions);
+
+                    case self::ACTION_INSTALL:
+                        hd_debug_print("Install not handling");
+                        break;
 
                     case self::ACTION_UNINSTALL:
                         Default_Archive::clear_cache();
@@ -386,14 +386,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         if (!$this->plugin->init_playlist_db()) {
             return $this->open_playlist_screen($plugin_cookies);
-        }
-
-        if (!$this->plugin->init_playlist_parser() || !$this->plugin->load_and_parse_m3u_iptv_playlist(true)) {
-            return Action_Factory::show_title_dialog(
-                TR::t('err_load_playlist'),
-                Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST),
-                $this->open_playlist_screen($plugin_cookies)
-            );
         }
 
         if (!$this->plugin->load_channels($plugin_cookies)) {

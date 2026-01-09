@@ -182,12 +182,11 @@ class Starnet_Tv implements User_Input_Handler
 
     /**
      * @param MediaURL $media_url
-     * @param object $plugin_cookies
      * @return array
      */
-    public function get_tv_info(MediaURL $media_url, &$plugin_cookies)
+    public function get_tv_info(MediaURL $media_url)
     {
-        if (!$this->plugin->is_channels_loaded() && !$this->plugin->load_channels($plugin_cookies)) {
+        if (!$this->plugin->is_channels_loaded()) {
             hd_debug_print("Channels not loaded!");
             return array();
         }

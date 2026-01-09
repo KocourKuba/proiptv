@@ -1036,6 +1036,33 @@ class api_default
     }
 
     /**
+     * @return array|false
+     */
+    public function GetSelectedPreset()
+    {
+        $preset_idx = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
+        $provider_presets = $this->getConfigValue(EPG_JSON_PRESETS);
+        if (!isset($provider_presets[$preset_idx])) {
+            hd_debug_print("No preset for selected provider");
+            return false;
+        }
+
+        $selected_preset = $provider_presets[$preset_idx];
+        hd_debug_print("selected preset: {$selected_preset[EPG_JSON_PRESET_NAME]}", true);
+        $preset = $this->plugin->get_epg_presets()->get($selected_preset[EPG_JSON_PRESET_NAME]);
+        if (empty($preset)) {
+            hd_debug_print("{$selected_preset[EPG_JSON_PRESET_NAME]} not exist in plugin configuration");
+            return false;
+        }
+
+        if (isset($selected_preset[EPG_JSON_PRESET_ALIAS])) {
+            $preset[EPG_JSON_PRESET_ALIAS] = $selected_preset[EPG_JSON_PRESET_ALIAS];
+        }
+
+        return $preset;
+    }
+
+    /**
      * @param array $matches
      * @param string $playlist_id
      * @return bool|array

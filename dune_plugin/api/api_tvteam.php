@@ -163,7 +163,7 @@ class api_tvteam extends api_default
             Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "$info_msg\n\n$error_msg");
         } else {
             $curl_opt[CURLOPT_TIMEOUT] = 30;
-            $response = $this->execApiCommandResponse(API_COMMAND_REQUEST_TOKEN, $curl_opt);
+            $response = $this->execApiCommandResponse(API_COMMAND_REQUEST_TOKEN, $curl_opt, Curl_Wrapper::RET_ARRAY);
             hd_debug_print("request provider token response: " . json_format_unescaped($response), true);
             if ($response === false) {
                 Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "Bad provider response");

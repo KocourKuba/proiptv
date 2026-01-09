@@ -71,6 +71,16 @@ class Curl_Wrapper
     private $is_post = false;
 
     /**
+     * @var string
+     */
+    private $file_cache_time = 3600;
+
+    /**
+     * @var string
+     */
+    private $file_cache_path;
+
+    /**
      * @var int
      */
     private static $error_no;
@@ -84,16 +94,6 @@ class Curl_Wrapper
      * @var array|null
      */
     private static $http_response_headers = null;
-
-    /**
-     * @var string
-     */
-    private $file_cache_time = 3600;
-
-    /**
-     * @var string
-     */
-    private $file_cache_path;
 
     /**
      * @param string $cache_subdir
@@ -177,7 +177,7 @@ class Curl_Wrapper
      */
     public static function get_response_header($header)
     {
-        return safe_get_value(self::get_response_headers(), $header, '');
+        return safe_get_value(self::$http_response_headers, $header, '');
     }
 
     /**
@@ -225,7 +225,12 @@ class Curl_Wrapper
      */
     public static function get_raw_response_headers()
     {
-        return implode(PHP_EOL, self::get_response_headers());
+        $headers = array();
+        foreach (self::$http_response_headers as $key => $header) {
+            $headers = "$key: $header";
+        }
+
+        return implode(PHP_EOL, $headers);
     }
 
     /**
@@ -434,6 +439,7 @@ class Curl_Wrapper
     /**
      * if $save_file == null return content of request
      * if $save_file == false return only result of request i.e. make HEAD request
+     * return false in case of error
      *
      * @param string $url
      * @param string|null|bool $save_file
@@ -595,10 +601,16 @@ class Curl_Wrapper
             file_put_contents($path, $content);
         }
 
-        if (empty($save_file)) {
-            hd_debug_print(sprintf("HTTP OK (%d) in %.3fs", self::$http_code, $execution_tm), true);
+        if ($save_file === null) {
+            hd_debug_print(sprintf("Return content: HTTP OK (%d, %d) in %.3fs", self::$http_code, strlen($content), $execution_tm), true);
+        } else if ($save_file === false) {
+            hd_debug_print(sprintf("Head response: HTTP OK (%d) in %.3fs", self::$http_code, $execution_tm), true);
+        } else if (file_exists($save_file)) {
+            hd_debug_print(sprintf("Save file: HTTP OK (%d, %d bytes) in %.3fs", self::$http_code, filesize($save_file), $execution_tm), true);
         } else {
-            hd_debug_print(sprintf("HTTP OK (%d, %d bytes) in %.3fs", self::$http_code, filesize($save_file), $execution_tm), true);
+            hd_debug_print(sprintf("HTTP code (%d) in %.3fs", self::$http_code, $execution_tm), true);
+            hd_debug_print("Saved file '$save_file' is not exist!");
+            return false;
         }
 
         return $save_file === null ? $content : true;

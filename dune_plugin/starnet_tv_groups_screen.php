@@ -498,7 +498,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
     {
         hd_debug_print(null, true);
 
-        if (!$this->plugin->is_channels_loaded() && !$this->plugin->load_channels($plugin_cookies)) {
+        if (!$this->plugin->is_channels_loaded()) {
             hd_debug_print("Channels not loaded!");
             return array();
         }

@@ -425,14 +425,15 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     }
 
     /**
+     * @param bool $first_run
      * @param object $plugin_cookies
      * @return array|null
      */
-    public function get_folder_view_for_epf(&$plugin_cookies)
+    public function get_folder_view_for_epf($first_run, &$plugin_cookies)
     {
         hd_debug_print(null, true);
 
-        if (!$this->plugin->is_channels_loaded() && !$this->plugin->load_channels($plugin_cookies)) {
+        if (!$this->plugin->load_channels($plugin_cookies, $first_run)) {
             hd_debug_print("Channels not loaded!");
         }
 

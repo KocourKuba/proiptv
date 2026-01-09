@@ -358,7 +358,7 @@ const XMLTV_SOURCE_ALL = 3;
 const LAST_ERROR_PLAYLIST = 0;
 const LAST_ERROR_VOD_LIST = 1;
 const LAST_ERROR_REQUEST = 2;
-const LAST_ERROR_XMLTV = 3;
+const LAST_ERROR_XMLTV = 'xmltv_last_error';
 
 const GROUPS_INFO = 'groups_info';
 const GROUPS_ORDER = 'groups_order';

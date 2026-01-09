@@ -51,38 +51,17 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     }
 
     /**
-     * @inheritDoc
+     * @param api_default $provider
+     * @param array $selected_preset
+     * @param array $channel_row
+     * @param int $day_start_ts
+     * @param string $epg_id
+     * @return string|null
      */
-    public function get_epg_url($provider, $channel_row, $day_start_ts, &$epg_id, &$preset)
+    public static function get_epg_url($provider, $selected_preset, $channel_row, $day_start_ts, &$epg_id)
     {
-        $all_presets = $this->plugin->get_epg_presets();
-        $presets = $provider->getConfigValue(EPG_JSON_PRESETS);
-        if (empty($presets)) {
-            hd_debug_print("No preset for selected provider");
-            return null;
-        }
-
-        $preset_idx = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
-        if (!isset($presets[$preset_idx])) {
-            hd_debug_print("Index $preset_idx not exist in provider preset list. Reset to default");
-            $preset_idx = 0;
-            if (!isset($presets[$preset_idx])) {
-                hd_debug_print("Index $preset_idx not exist in provider preset list");
-                return null;
-            }
-            $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $preset_idx);
-        }
-        $selected_preset = $presets[$preset_idx];
-        hd_debug_print("selected preset: {$selected_preset[EPG_JSON_PRESET_NAME]}", true);
-        $preset = $all_presets->get($selected_preset[EPG_JSON_PRESET_NAME]);
-        if (empty($preset)) {
-            hd_debug_print("{$selected_preset[EPG_JSON_PRESET_NAME]} not exist in plugin configuration");
-            return null;
-        }
-
-        hd_debug_print("Preset json url: {$preset[EPG_JSON_SOURCE]}", true);
         $alias = empty($selected_preset[EPG_JSON_PRESET_ALIAS]) ? $provider->getId() : $selected_preset[EPG_JSON_PRESET_ALIAS];
-        $epg_url = str_replace(array(MACRO_API, MACRO_PROVIDER), array($provider->getApiUrl(), $alias), $preset[EPG_JSON_SOURCE]);
+        $epg_url = str_replace(array(MACRO_API, MACRO_PROVIDER), array($provider->getApiUrl(), $alias), $selected_preset[EPG_JSON_SOURCE]);
         $epg_url = $provider->replace_macros($epg_url);
 
         $epg_url = str_replace(MACRO_TIMESTAMP, $day_start_ts, $epg_url);
@@ -147,8 +126,13 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 return $day_epg;
             }
 
+            $selected_preset = $provider->GetSelectedPreset();
+            if (empty($preset)) {
+                throw new Exception("Selected preset not exist in plugin configuration");
+            }
+
             $epg_id = '';
-            $epg_url = $this->get_epg_url($provider, $channel_row, $day_start_ts, $epg_id, $preset);
+            $epg_url = Epg_Manager_Json::get_epg_url($provider, $selected_preset, $channel_row, $day_start_ts, $epg_id);
             if (empty($epg_id)) {
                 throw new Exception("No EPG ID defined");
             }

@@ -74,7 +74,7 @@ class Epg_Manager_Xmltv
     /**
      * @var array
      */
-    protected $delayed_epg = array();
+    protected static $delayed_epg = array();
 
     /**
      * @param Default_Dune_Plugin $plugin
@@ -92,30 +92,17 @@ class Epg_Manager_Xmltv
      *
      * @return array
      */
-    public function get_delayed_epg()
+    public static function get_delayed_epg()
     {
-        return $this->delayed_epg;
+        return self::$delayed_epg;
     }
 
     /**
      * clear all delayed epg
      */
-    public function clear_delayed_epg()
+    public static function clear_delayed_epg()
     {
-        $this->delayed_epg = array();
-    }
-
-    /**
-     * @param object $provider
-     * @param array $channel_row
-     * @param int $day_start_ts
-     * @param string $epg_id
-     * @param array $preset
-     * @return string|null
-     */
-    public function get_epg_url($provider, $channel_row, $day_start_ts, &$epg_id, &$preset)
-    {
-        return null;
+        self::$delayed_epg = array();
     }
 
     /**
@@ -150,7 +137,7 @@ class Epg_Manager_Xmltv
             hd_debug_print("Looking in XMLTV source: {$params[PARAM_URI]} ({$params[PARAM_HASH]})");
             if (self::is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_ENTRIES)) {
                 hd_debug_print("EPG {$params[PARAM_URI]} still indexing, append to delayed queue channel id: $channel_id");
-                $this->delayed_epg[] = $channel_id;
+                self::$delayed_epg[] = $channel_id;
                 continue;
             }
 
@@ -162,7 +149,8 @@ class Epg_Manager_Xmltv
             }
 
             try {
-                $positions = $this->load_program_index($params, $channel_row);
+                $positions = self::load_program_index($params, $channel_row);
+
                 if (!empty($positions)) {
                     $cached_file = self::$cache_dir . $params[PARAM_HASH] . ".xmltv";
                     if (!file_exists($cached_file)) {
@@ -224,7 +212,7 @@ class Epg_Manager_Xmltv
             }
         }
 
-        $this->delayed_epg = array_unique($this->delayed_epg);
+        self::$delayed_epg = array_unique(self::$delayed_epg);
 
         if (empty($items)) {
             if (self::$xmltv_sources->size() === 0) {
@@ -236,8 +224,8 @@ class Epg_Manager_Xmltv
                         PluginTvEpgProgram::description => TR::load('epg_no_sources_desc'))
                     );
                 }
-            } else if (!empty($this->delayed_epg) && self::get_any_index_locked() !== false) {
-                hd_debug_print("Delayed epg: " . json_format_unescaped($this->delayed_epg));
+            } else if (!empty(self::$delayed_epg) && self::get_any_index_locked() !== false) {
+                hd_debug_print("Delayed epg: " . json_format_unescaped(self::$delayed_epg), true);
                 $items = array($day_start_ts => array(
                     PluginTvEpgProgram::end_tm_sec => $day_end_ts,
                     PluginTvEpgProgram::name => TR::load('epg_not_ready'),
@@ -377,7 +365,10 @@ class Epg_Manager_Xmltv
         }
         $res = shell_exec("wget -q -O - \"http://127.0.0.1:$port/cgi-bin/do?cmd=ui_state&result_syntax=json\"");
         $status = json_decode($res);
-        if (isset($status->ui_state->screen->folder_type) && strpos($status->ui_state->screen->folder_type, ".proiptv") !== false) {
+        hd_debug_print("Plugin run status: $res");
+        $is_playing = isset($status->playback_state) && $status->playback_state === "playing";
+        $is_right_screen = isset($status->ui_state->screen->folder_type) && strpos($status->ui_state->screen->folder_type, ".proiptv") !== false;
+        if ($is_playing || $is_right_screen) {
             hd_print("Rise finishing event: " . DuneIrControl::$key_codes[EVENT_INDEXING_DONE]);
             shell_exec('echo ' . DuneIrControl::$key_codes[EVENT_INDEXING_DONE] . ' > /proc/ir/button');
         } else {
@@ -406,6 +397,10 @@ class Epg_Manager_Xmltv
 
         $url = $params[PARAM_URI];
         $hash = $params[PARAM_HASH];
+        if (Epg_Manager_Xmltv::is_index_locked($hash, INDEXING_ALL)) {
+            hd_print("Index '$hash' is locked");
+            return 0;
+        }
 
         $cache_ttl = !isset($params[PARAM_CACHE]) ? XMLTV_CACHE_AUTO : $params[PARAM_CACHE];
 
@@ -759,7 +754,7 @@ class Epg_Manager_Xmltv
                     throw new Exception("reindex_xmltv_entries: Can't open db: $url_hash");
                 }
 
-                hd_debug_print("Indexing positions for: $url", true);
+                hd_debug_print("Indexing positions for: '$cached_file' by '$url'", true);
                 $perf->setLabel('start_reindex_entries');
 
                 $pos_table_name = self::TABLE_ENTRIES;
@@ -1008,6 +1003,7 @@ class Epg_Manager_Xmltv
             self::$epg_db = array();
         } else if (isset(self::$epg_db[$hash])) {
             unset(self::$epg_db[$hash]);
+            unset(self::$epg_db["{$hash}_entries"]);
         }
 
         Curl_Wrapper::clear_cached_etag($hash, true);
@@ -1146,11 +1142,11 @@ class Epg_Manager_Xmltv
      * @param array $channel_row
      * @return array|null
      */
-    protected function load_program_index($params, $channel_row)
+    protected static function load_program_index($params, $channel_row)
     {
         $channel_positions = array();
 
-        if (!$this->is_all_indexes_valid($params, array(self::TABLE_CHANNELS, self::TABLE_ENTRIES))) {
+        if (!self::is_all_indexes_valid($params, array(self::TABLE_CHANNELS, self::TABLE_ENTRIES))) {
             hd_debug_print("EPG for {$params[PARAM_URI]} not indexed!");
             return $channel_positions;
         }
@@ -1213,7 +1209,7 @@ class Epg_Manager_Xmltv
      * @param array $names
      * @return bool
      */
-    protected function is_all_indexes_valid($params, $names)
+    protected static function is_all_indexes_valid($params, $names)
     {
         hd_debug_print(null, true);
 
@@ -1320,7 +1316,7 @@ class Epg_Manager_Xmltv
     protected static function open_sqlite_db($db_name, $table_name, $readonly, $clear_cache = false)
     {
         if ($table_name === self::TABLE_ENTRIES) {
-            $db_name = $db_name . "_entries";
+            $db_name .= "_entries";
         }
 
         $db_file = self::$cache_dir . $db_name . ".db";
@@ -1332,6 +1328,11 @@ class Epg_Manager_Xmltv
 
         // if database not exist or requested mode is read-write create new database
         if ($clear_cache || !isset(self::$epg_db[$db_name]) || (!$readonly && self::$epg_db[$db_name]->is_readonly())) {
+            hd_debug_print("Create new db: '$db_file'", true);
+            if (isset(self::$epg_db[$db_name])) {
+                self::$epg_db[$db_name]->get_db()->close();
+                unset(self::$epg_db[$db_name]);
+            }
             $flags = $readonly ? SQLITE3_OPEN_READONLY : (SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
             $db = new Sql_Wrapper($db_file, $flags);
             if (!$db->is_valid()) {
@@ -1374,7 +1375,7 @@ class Epg_Manager_Xmltv
             if (Curl_Wrapper::get_error_no() !== 0) {
                 $msg = "CURL errno: " . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc() . "\nHTTP code: $http_code";
             } else {
-                $msg = "HTTP request failed ($http_code)\n\n" . Curl_Wrapper::get_raw_response_headers();
+                $msg = "HTTP request failed ($http_code)";
             }
 
             throw new Exception("Can't download file\n$msg");

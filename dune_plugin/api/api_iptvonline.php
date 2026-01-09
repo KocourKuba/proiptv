@@ -91,7 +91,7 @@ class api_iptvonline extends api_default
         $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
         $curl_opt[CURLOPT_POSTFIELDS] = $pairs;
 
-        $data = $this->execApiCommandResponse($cmd, $curl_opt);
+        $data = $this->execApiCommandResponse($cmd, $curl_opt, Curl_Wrapper::RET_ARRAY);
         $access_token = safe_get_value($data, 'access_token');
         $refresh_token = safe_get_value($data, 'refresh_token');
         if (!empty($access_token) && !empty($refresh_token)) {

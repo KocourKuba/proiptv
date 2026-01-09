@@ -389,7 +389,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         $items = array();
 
         try {
-            if (!$this->plugin->is_channels_loaded() && !$this->plugin->load_channels($plugin_cookies)) {
+            if (!$this->plugin->is_channels_loaded()) {
                 throw new Exception("Channels not loaded!");
             }
 
