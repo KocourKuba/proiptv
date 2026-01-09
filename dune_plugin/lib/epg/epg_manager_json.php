@@ -127,7 +127,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             }
 
             $selected_preset = $provider->GetSelectedPreset();
-            if (empty($preset)) {
+            if (empty($selected_preset)) {
                 throw new Exception("Selected preset not exist in plugin configuration");
             }
 
@@ -172,7 +172,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
             if ($from_cache === false) {
                 hd_debug_print("Fetching EPG ID: '$epg_id' from server: $epg_url");
-                $all_epg = self::get_epg_json($epg_url, $provider, $preset);
+                $all_epg = self::get_epg_json($epg_url, $provider, $selected_preset);
                 if (!empty($all_epg)) {
                     hd_debug_print("Save EPG ID: '$epg_id' to file cache $epg_cache_file");
                     store_to_json_file($epg_cache_file, $all_epg);

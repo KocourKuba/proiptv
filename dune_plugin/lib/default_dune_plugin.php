@@ -2793,7 +2793,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
             $selected_preset = $provider->GetSelectedPreset();
             $epg_id = '';
-            if (!empty($preset)) {
+            if (empty($selected_preset)) {
+                $epg_id = "No Preset!";
+            } else {
                 $epg_url = Epg_Manager_Json::get_epg_url($provider, $selected_preset, $channel_row, $day_start_ts, $epg_id);
             }
         } else {
