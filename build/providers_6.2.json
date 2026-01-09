@@ -1309,7 +1309,7 @@
       "logo": "http://iptv.esalecrm.net/res/logo_shuratv.png",
       "provider_url": "http://shura.tv/b/",
       "api_commands": {
-        "get_playlist": "http://pl.tvshka.net/?uid={PASSWORD}&srv={SERVER_ID}&type=halva"
+        "get_playlist": "http://shura.tv/b/playlist.php?uid={PASSWORD}&srv=1&type=halva"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$/",
@@ -1318,11 +1318,6 @@
             "name": "shuratv"
           }
         ],
-        "ext_params": true,
-        "servers": {
-          "0": "Server 1",
-          "1": "Server 2"
-        },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
