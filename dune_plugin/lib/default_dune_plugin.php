@@ -3445,8 +3445,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $paths = array(
             get_temp_path("*.txt"),
             get_temp_path("*.log"),
-            get_temp_path("*.m3u8"),
-            get_temp_path("*.m3u"),
+            Default_Dune_Plugin::get_playlist_cache_path() . '*.m3u8',
             "$apk_subst/tmp/run/shell.log",
             "$apk_subst/tmp/run/shell.log.old",
         );
