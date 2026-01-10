@@ -56,7 +56,7 @@ class api_default
     const CONTROL_LOGIN = 'login';
     const CONTROL_PASSWORD = 'password';
     const CONTROL_SERVER = 'server';
-    const CONTROL_PL_DOMAIN = 'pl_domain';
+    const CONTROL_PL_DOMAIN = 'domain';
     const CONTROL_API_DOMAIN = 'api_domain';
     const CONTROL_QUALITY = 'quality';
     const CONTROL_STREAM = 'stream';
@@ -123,7 +123,7 @@ class api_default
     protected $config;
 
     /**
-     * @var
+     * @var array
      */
     protected $account_info;
 
@@ -136,6 +136,16 @@ class api_default
      * @var Default_Dune_Plugin
      */
     protected $plugin;
+
+    /**
+     * @var array
+     */
+    protected $servers = array();
+
+    /**
+     * @var array
+     */
+    protected $devices = array();
 
     /**
      * @var array
@@ -408,31 +418,26 @@ class api_default
 
     /**
      * @param bool $force
-     * @return bool|object
+     * @return void
      */
-    public function get_provider_info($force = false)
+    public function request_provider_info($force = false)
     {
         hd_debug_print(null, true);
-        hd_debug_print("force get_provider_info: " . var_export($force, true), true);
-
-        if (!$this->request_provider_token()) {
-            hd_debug_print("Failed to get provider token", true);
-            return null;
-        }
+        hd_debug_print("force request_provider_info: " . var_export($force, true), true);
 
         if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
-            $account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_OBJECT);
-            if ($account_info === false || isset($account_info->error)) {
-                hd_debug_print("Failed to get provider info", true);
+            $account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_ARRAY);
+            if ($account_info === false) {
+                hd_debug_print("Failed to request_provider_info");
+            } else if (isset($account_info['error'])) {
+                hd_debug_print("request_provider_info: Server return error: {$account_info['error']}");
             } else {
-                hd_debug_print("get_provider_info: " . json_format_unescaped($account_info), true);
+                hd_debug_print("request_provider_info: " . json_format_unescaped($account_info), true);
                 $this->account_info = $account_info;
             }
         }
-
-        return $this->account_info;
     }
 
     /**
@@ -982,13 +987,13 @@ class api_default
     /**
      * set server
      *
-     * @param string $device
+     * @param string $devices
      * @return void
      */
-    public function SetDevice($device)
+    public function SetDevices($devices)
     {
         hd_debug_print(null, true);
-        $this->SetProviderParameter(MACRO_DEVICE_ID, $device);
+        $this->SetProviderParameter(MACRO_DEVICE_ID, $devices);
     }
 
     /**

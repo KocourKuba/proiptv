@@ -336,7 +336,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                 break;
 
             case api_default::CONTROL_DEVICE:
-                $provider->SetDevice($user_input->{$control_id});
+                $provider->SetDevices($user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
 

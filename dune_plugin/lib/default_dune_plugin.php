@@ -613,10 +613,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * Initialize and parse selected playlist
      *
-     * @param bool $force
      * @return bool
      */
-    public function init_playlist_parser($force = false)
+    public function init_playlist_parser()
     {
         hd_debug_print(null, true);
 
@@ -638,10 +637,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $provider = $this->get_active_provider();
                 if (is_null($provider)) {
                     throw new Exception("Unable to init provider");
-                }
-
-                if ($provider->get_provider_info($force) === false) {
-                    throw new Exception("Unable to get provider info");
                 }
 
                 $id_parser = $provider->getConfigValue(CONFIG_ID_PARSER);
@@ -793,7 +788,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         $logfile = "Copy error: " . $errors['type'] . "\n" . $errors['message'];
                     }
                 } else {
-                    if ($provider->get_provider_info() === false) {
+                    if (!$provider->request_provider_token()) {
                         throw new Exception("Unable to get provider info to download: " . json_encode($params));
                     }
                     $cmd = API_COMMAND_GET_PLAYLIST;
@@ -1017,7 +1012,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->CreatePlaylistSettingsTable($playlist_id);
 
         // init playlist parser
-        if (!$this->init_playlist_parser($force)) {
+        if (!$this->init_playlist_parser()) {
             return false;
         }
 

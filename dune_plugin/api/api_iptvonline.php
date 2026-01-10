@@ -29,16 +29,6 @@ require_once 'api_default.php';
 class api_iptvonline extends api_default
 {
     /**
-     * @var object
-     */
-    protected $device;
-
-    /**
-     * @var array
-     */
-    protected $servers = array();
-
-    /**
      * @var array
      */
     protected $playlists = array();
@@ -133,16 +123,20 @@ class api_iptvonline extends api_default
         switch ($command) {
             case API_COMMAND_GET_PLAYLIST:
 
-                if (!isset($response->success, $response->data)) break;
+                $success = (int)safe_get_value($response, 'success');
+                if ($success !== 1) break;
+                $data = safe_get_value($response, 'data');
+                if (empty($data)) break;
 
                 $curl_wrapper = $this->plugin->setup_curl();
-                return $curl_wrapper->download_file($response->data, $file);
+                return $curl_wrapper->download_file($data, $file);
 
             case API_COMMAND_GET_DEVICE:
                 hd_debug_print("GetServers: " . json_format_unescaped($response), true);
-                if (!isset($response->status) || $response->status !== 200) break;
+                $status = (int)safe_get_value($response, 'status');
+                if ($status !== 200) break;
 
-                $this->device = $response;
+                $this->devices = $response;
                 if (empty($this->servers)) {
                     $this->collect_servers($selected);
                     if ($selected !== $this->GetProviderParameter(MACRO_SERVER_ID)) {
@@ -152,8 +146,9 @@ class api_iptvonline extends api_default
                 return true;
 
             case API_COMMAND_SET_DEVICE:
-                if (isset($response->status) && $response->status === 200) {
-                    $this->device = $response;
+                $status = (int)safe_get_value($response, 'status');
+                if ($status === 200) {
+                    $this->devices = $response;
                     $this->collect_servers($selected);
                     $this->account_info = null;
                     parent::SetServer($selected, $error_msg);
@@ -161,8 +156,8 @@ class api_iptvonline extends api_default
                 }
 
                 hd_debug_print("Can't set device: " . json_format_unescaped($response));
-                if (isset($response->message)) {
-                    $error_msg = $response->message;
+                if (isset($response['message'])) {
+                    $error_msg = $response['message'];
                 } else {
                     $error_msg = json_format_readable($response);
                 }
@@ -177,41 +172,41 @@ class api_iptvonline extends api_default
      */
     public function GetInfoUI($handler)
     {
-        $account_info = $this->get_provider_info();
+        $this->request_provider_info();
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        if (empty($account_info)) {
+        if (empty($this->account_info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('warn_msg3'), null, -10);
-        } else if (!isset($account_info->status) || $account_info->status !== 200) {
-            Control_Factory::add_label($defs, TR::t('err_error'), $account_info->message, -10);
-        } else if (isset($account_info->data)) {
-            $data = $account_info->data;
-            if (isset($data->login)) {
-                Control_Factory::add_label($defs, TR::t('login'), $data->login, -15);
+        } else if (!isset($this->account_info['status']) || $this->account_info['status'] !== 200) {
+            Control_Factory::add_label($defs, TR::t('err_error'), $this->account_info['message'], -10);
+        } else {
+            $data = safe_get_value($this->account_info, 'data');
+            if (isset($data['login'])) {
+                Control_Factory::add_label($defs, TR::t('login'), $data['login'], -15);
             }
 
-            if (isset($data->balance, $data->currency)) {
-                Control_Factory::add_label($defs, TR::t('balance'), $data->balance . " " . $data->currency, -15);
+            if (isset($data['balance'], $data['currency'])) {
+                Control_Factory::add_label($defs, TR::t('balance'), "{$data['balance']} {$data['currency']}", -15);
             }
 
-            if (isset($data->server_name)) {
-                Control_Factory::add_label($defs, TR::t('server'), $data->server_name, -15);
+            if (isset($data['server_name'])) {
+                Control_Factory::add_label($defs, TR::t('server'), $data['server_name'], -15);
             }
 
-            if (isset($data->selected_playlist->title)) {
-                Control_Factory::add_label($defs, TR::t('playlist'), $data->selected_playlist->title, -15);
+            if (isset($data['selected_playlist']['title'])) {
+                Control_Factory::add_label($defs, TR::t('playlist'), $data['selected_playlist']['title'], -15);
             }
 
-            if (isset($data->subscriptions)) {
-                $packages = '';
-                foreach ($data->subscriptions as $subscription) {
-                    $packages .= $subscription->name . PHP_EOL;
-                    $packages .= TR::load('end_date__1', $subscription->end_date) . PHP_EOL;
-                    $packages .= TR::load('recurring__1', TR::load($subscription->auto_prolong ? 'yes' : 'no')) . PHP_EOL;
-                }
+            $packages = '';
+            foreach (safe_get_value($data, 'subscriptions', array()) as $subscription) {
+                $packages .= $subscription['name'] . PHP_EOL;
+                $packages .= TR::load('end_date__1', $subscription['end_date']) . PHP_EOL;
+                $packages .= TR::load('recurring__1', TR::load($subscription['auto_prolong'] ? 'yes' : 'no')) . PHP_EOL;
+            }
+            if (!empty($packages)) {
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
             }
         }
@@ -229,7 +224,7 @@ class api_iptvonline extends api_default
         hd_debug_print(null, true);
 
         $cmd = API_COMMAND_GET_DEVICE;
-        if (empty($this->device)) {
+        if (empty($this->devices)) {
             if ($this->execApiCommandWithPostResponse($cmd, $this->getCurlOpts($cmd)) === false) {
                 return array();
             }
@@ -247,12 +242,13 @@ class api_iptvonline extends api_default
     {
         $this->servers = array();
 
-        if (isset($this->device->device->settings->server_location->value)) {
-            foreach ($this->device->device->settings->server_location->value as $server) {
-                $this->servers[(string)$server->id] = $server->label;
-                if ($server->selected) {
-                    $selected = (string)$server->id;
-                }
+        foreach (safe_get_value($this->devices, array('device', 'settings', 'server_location', 'value'), array()) as $server) {
+            $id = (string)safe_get_value($server, 'id', '');
+            if (empty($id)) continue;
+
+            $this->servers[$id] = $server['label'];
+            if ($server['selected']) {
+                $selected = $id;
             }
         }
 

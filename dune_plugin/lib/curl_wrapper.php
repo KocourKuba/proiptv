@@ -312,7 +312,7 @@ class Curl_Wrapper
      * @param int $decode
      * @return mixed|false
      */
-    public static function decodeJsonResponse($is_file, $source, $decode = Curl_Wrapper::RET_OBJECT)
+    public static function decodeJsonResponse($is_file, $source, $decode = Curl_Wrapper::RET_ARRAY)
     {
         if ($source === false) {
             return false;

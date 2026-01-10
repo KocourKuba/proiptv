@@ -43,32 +43,19 @@ require_once 'api_default.php';
 class api_cbilling extends api_default
 {
     /**
-     * @var array
+     * @inheritDoc
      */
-    protected $servers = array();
-
-    /**
-     * @param bool $force
-     * @return bool|array
-     */
-    public function get_provider_info($force = false)
+    public function request_provider_info($force = false)
     {
         hd_debug_print(null, true);
-        hd_debug_print("force get_provider_info: " . var_export($force, true), true);
-
-        if (!$this->request_provider_token()) {
-            hd_debug_print("Failed to get provider token", true);
-            return null;
-        }
+        hd_debug_print("force request_provider_info: " . var_export($force, true), true);
 
         if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
-            $this->account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_OBJECT);
-            hd_debug_print("get_provider_info: " . json_format_unescaped($this->account_info), true);
+            $this->account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_ARRAY);
+            hd_debug_print("request_provider_info: " . json_format_unescaped($this->account_info), true);
         }
-
-        return $this->account_info;
     }
 
     /**
@@ -76,33 +63,33 @@ class api_cbilling extends api_default
      */
     public function GetInfoUI($handler)
     {
-        $account_info = $this->get_provider_info();
+        $this->request_provider_info();
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        if (empty($account_info)) {
+        $data = safe_get_value($this->account_info, 'data');
+        if (empty($data)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
-        } else if (isset($account_info->data)) {
-            $data = $account_info->data;
-            if (isset($data->end_date)) {
-                Control_Factory::add_label($defs, TR::t('end_date'), $data->end_date, -15);
+        } else {
+            if (isset($data['end_date'])) {
+                Control_Factory::add_label($defs, TR::t('end_date'), $data['end_date'], -15);
             }
-            if (isset($data->devices_num)) {
-                Control_Factory::add_label($defs, TR::t('devices'), $data->devices_num, -15);
+            if (isset($data['devices_num'])) {
+                Control_Factory::add_label($defs, TR::t('devices'), $data['devices_num'], -15);
             }
-            if (isset($data->server)) {
-                Control_Factory::add_label($defs, TR::t('server'), $data->server, -15);
+            if (isset($data['server'])) {
+                Control_Factory::add_label($defs, TR::t('server'), $data['server'], -15);
             }
-            if (isset($data->ssl)) {
-                Control_Factory::add_label($defs, TR::t('ssl'), $data->ssl ? TR::t('yes') : TR::t('no'), -15);
+            if (isset($data['ssl'])) {
+                Control_Factory::add_label($defs, TR::t('ssl'), $data['ssl'] ? TR::t('yes') : TR::t('no'), -15);
             }
-            if (isset($data->disable_adult)) {
-                Control_Factory::add_label($defs, TR::t('disable_adult'), $data->disable_adult ? TR::t('yes') : TR::t('no'), -15);
+            if (isset($data['disable_adult'])) {
+                Control_Factory::add_label($defs, TR::t('disable_adult'), $data['disable_adult'] ? TR::t('yes') : TR::t('no'), -15);
             }
-            if (isset($data->vod)) {
-                Control_Factory::add_label($defs, TR::t('plugin_vod__1', ':'), $data->vod ? TR::t('yes') : TR::t('no'), -15);
+            if (isset($data['vod'])) {
+                Control_Factory::add_label($defs, TR::t('plugin_vod__1', ':'), $data['vod'] ? TR::t('yes') : TR::t('no'), -15);
             }
         }
 
@@ -119,17 +106,18 @@ class api_cbilling extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_OBJECT);
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
-            if (isset($response->data)) {
-                foreach ($response->data as $server) {
-                    $this->servers[$server->name] = $server->country;
-                }
+            foreach (safe_get_value($response, 'data', array()) as $server) {
+                $this->servers[$server->name] = $server->country;
+            }
+        }
 
-                $cur_server = $this->GetProviderParameter(MACRO_SERVER_ID);
-                if (empty($cur_server) && isset($this->account_info->data->server)) {
-                    $this->SetProviderParameter(MACRO_SERVER_ID, $this->account_info->data->server);
-                }
+        $cur_server = $this->GetProviderParameter(MACRO_SERVER_ID);
+        if (empty($cur_server)) {
+            $server = safe_get_value($this->account_info, array('data', 'server'));
+            if (!empty($server)) {
+                $this->SetProviderParameter(MACRO_SERVER_ID, $server);
             }
         }
 

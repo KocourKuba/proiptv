@@ -29,11 +29,6 @@ require_once 'api_default.php';
 class api_korona extends api_default
 {
     /**
-     * @var array
-     */
-    protected $servers = array();
-
-    /**
      * @inheritDoc
      */
     public function request_provider_token($force = false)
@@ -96,20 +91,20 @@ class api_korona extends api_default
      */
     public function GetInfoUI($handler)
     {
-        $account_info = $this->get_provider_info();
+        $this->request_provider_info();
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        if (empty($account_info)) {
+        if (empty($this->account_info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('warn_msg3'), null, -10);
-        } else if (isset($account_info->balance, $account_info->tariff)) {
-            Control_Factory::add_label($defs, TR::t('balance'), "$account_info->balance {$account_info->tariff->currency}", -15);
-            $packages = $account_info->tariff->name . PHP_EOL;
-            $packages .= TR::load('end_date__1', $account_info->expiry_date) . PHP_EOL;
-            $packages .= TR::load('package_timed__1', $account_info->tariff->period) . PHP_EOL;
-            $packages .= TR::load('money_need__1', "{$account_info->tariff->full_price} {$account_info->tariff->currency}") . PHP_EOL;
+        } else if (isset($this->account_info['balance'], $this->account_info['tariff'])) {
+            Control_Factory::add_label($defs, TR::t('balance'), "{$this->account_info['balance']} {$this->account_info['tariff']['currency']}", -15);
+            $packages = $this->account_info['tariff']['name'] . PHP_EOL;
+            $packages .= TR::load('end_date__1', $this->account_info['expiry_date']) . PHP_EOL;
+            $packages .= TR::load('package_timed__1', $this->account_info['tariff']['period']) . PHP_EOL;
+            $packages .= TR::load('money_need__1', "{$this->account_info['tariff']['full_price']} {$this->account_info['tariff']['currency']}") . PHP_EOL;
             Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
         }
 
@@ -126,12 +121,10 @@ class api_korona extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_OBJECT);
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
-            if (isset($response->data)) {
-                foreach ($response->data as $server) {
-                    $this->servers[(string)$server->id] = $server->title;
-                }
+            foreach (safe_get_value($response, 'data', array()) as $server) {
+                $this->servers[(string)$server['id']] = $server['title'];
             }
         }
 

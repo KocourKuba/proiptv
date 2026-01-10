@@ -80,11 +80,6 @@ require_once 'api_default.php';
 class api_tvclub extends api_default
 {
     /**
-     * @var array
-     */
-    protected $servers = array();
-
-    /**
      * @inheritDoc
      */
     public function GetSessionId()
@@ -92,51 +87,49 @@ class api_tvclub extends api_default
         return md5($this->GetProviderParameter(MACRO_LOGIN) . md5($this->GetProviderParameter(MACRO_PASSWORD)));
     }
 
+    /**
+     * @inheritDoc
+     */
     public function GetInfoUI($handler)
     {
-        $account_info = $this->get_provider_info();
+        $this->request_provider_info();
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        if (empty($account_info)) {
+        if (empty($this->account_info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
-        } else if (isset($account_info->account)) {
-            $data = $account_info->account;
-            if (isset($data->info)) {
-                $info = $data->info;
-                if (isset($info->login)) {
-                    Control_Factory::add_label($defs, TR::t('login'), $info->login, -15);
-                }
-                if (isset($info->name)) {
-                    Control_Factory::add_label($defs, TR::t('name'), $info->name, -15);
-                }
-                if (isset($info->balance)) {
-                    Control_Factory::add_label($defs, TR::t('balance'), $info->balance, -15);
-                }
-
-                if (isset($opts->options, $opts->options->archive)) {
-                    Control_Factory::add_label($defs, TR::t('archive_support'), $opts->options->archive ? TR::t('yes') : TR::t('no'), -15);
-                }
+        } else {
+            $data = safe_get_value($this->account_info, 'account');
+            $info = safe_get_value($data, 'info');
+            if (isset($info['login'])) {
+                Control_Factory::add_label($defs, TR::t('login'), $info['login'], -15);
+            }
+            if (isset($info['name'])) {
+                Control_Factory::add_label($defs, TR::t('name'), $info['name'], -15);
+            }
+            if (isset($info['balance'])) {
+                Control_Factory::add_label($defs, TR::t('balance'), $info['balance'], -15);
             }
 
-            if (isset($data->settings)) {
-                $settings = $data->settings;
-                if (isset($settings->server_id, $settings->server_name)) {
-                    Control_Factory::add_label($defs, TR::t('server'), "$settings->server_id ($settings->server_name)", -15);
-                }
-                if (isset($settings->time_zone, $settings->tz_gmt, $settings->tz_name)) {
-                    Control_Factory::add_label($defs, TR::t('time_zone'), "$settings->tz_gmt ($settings->tz_name)", -15);
-                }
+            $opts = safe_get_value($data, 'options');
+            if (isset($opts['archive'])) {
+                Control_Factory::add_label($defs, TR::t('archive_support'), $opts['archive'] ? TR::t('yes') : TR::t('no'), -15);
             }
 
-            if (isset($data->services)) {
-                foreach ($data->services as $service) {
-                    if (isset($service->type, $service->name, $service->expire)) {
-                        $date = date('d M Y H:i', $service->expire);
-                        Control_Factory::add_label($defs, $service->type, "$service->name ($date)", -15);
-                    }
+            $settings = safe_get_value($data, 'settings');
+            if (isset($settings['server_id'], $settings['server_name'])) {
+                Control_Factory::add_label($defs, TR::t('server'), "{$settings['server_id']} ({$settings['server_name']})", -15);
+            }
+            if (isset($settings['tz_gmt'], $settings['tz_name'])) {
+                Control_Factory::add_label($defs, TR::t('time_zone'), "{$settings['tz_gmt']} ({$settings['tz_name']})", -15);
+            }
+
+            foreach (safe_get_value($data, 'services', array()) as $service) {
+                if (isset($service['type'], $service['name'], $service['expire'])) {
+                    $date = date('d M Y H:i', $service['expire']);
+                    Control_Factory::add_label($defs, $service['type'], "{$service['name']} ($date)", -15);
                 }
             }
         }
@@ -154,17 +147,15 @@ class api_tvclub extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_OBJECT);
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
-            if (isset($response->servers)) {
-                foreach ($response->servers as $server) {
-                    $this->servers[(int)$server->id] = $server->name;
-                }
-
-                if (isset($this->account_info->account->settings->server_id)) {
-                    $this->SetProviderParameter(MACRO_SERVER_ID, (int)$this->account_info->account->settings->server_id);
-                }
+            foreach (safe_get_value($response, 'servers', array()) as $server) {
+                $this->servers[(int)$server->id] = $server->name;
             }
+        }
+
+        if (isset($this->account_info['account']['settings']['server_id'])) {
+            $this->SetProviderParameter(MACRO_SERVER_ID, (int)$this->account_info['account']['settings']['server_id']);
         }
 
         return $this->servers;
@@ -177,16 +168,14 @@ class api_tvclub extends api_default
     {
         parent::SetServer($server, $error_msg);
 
-        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_SET_SERVER, Curl_Wrapper::RET_OBJECT);
-        if (isset($response->settings->current->server->id)) {
+        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_SET_SERVER, Curl_Wrapper::RET_ARRAY);
+        if (isset($response['settings']['current']['server']['id'])) {
             $this->servers = array();
             $this->account_info = null;
             return true;
         }
 
-        if (isset($response->error->msg)) {
-            $error_msg = $response->error->msg;
-        }
+        $error_msg = safe_get_value($response, array('error', 'msg'));
 
         return false;
     }

@@ -46,27 +46,26 @@ require_once 'api_default.php';
 class api_sharaclub extends api_default
 {
     /**
-     * @var array
+     * @inheritDoc
      */
-    protected $servers = array();
-
-    /**
-     * @param bool $force
-     * @return bool|object
-     */
-    public function get_provider_info($force = false)
+    public function request_provider_token($force = false)
     {
-        parent::get_provider_info($force);
-
-        if (isset($this->account_info->data->listdomain)) {
-            $this->SetProviderParameter(MACRO_PL_DOMAIN_ID, $this->account_info->data->listdomain);
+        hd_debug_print(null, true);
+        if ($force || empty($this->account_info)) {
+            $this->request_provider_info($force);
         }
 
-        if (isset($this->account_info->data->jsonEpgDomain)) {
-            $this->SetProviderParameter(MACRO_EPG_DOMAIN, $this->account_info->data->jsonEpgDomain);
+        $list_domain = safe_get_value($this->account_info, array('data', 'listdomain'));
+        if (!empty($list_domain)) {
+            $this->SetProviderParameter(MACRO_PL_DOMAIN_ID, $list_domain);
         }
 
-        return $this->account_info;
+        $epg_domain = safe_get_value($this->account_info, array('data', 'jsonEpgDomain'));
+        if (isset($epg_domain)) {
+            $this->SetProviderParameter(MACRO_EPG_DOMAIN, $epg_domain);
+        }
+
+        return true;
     }
 
     /**
@@ -74,7 +73,7 @@ class api_sharaclub extends api_default
      */
     public function GetInfoUI($handler)
     {
-        $account_info = $this->get_provider_info();
+        $this->request_provider_info();
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
@@ -84,28 +83,28 @@ class api_sharaclub extends api_default
                 "", TR::t('add_money'), null, 450, true);
         }
 
-        if (empty($account_info)) {
+        if (empty($this->account_info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('warn_msg3'), null, -10);
-        } else if (isset($account_info->status) && (int)$account_info->status !== 1) {
-            Control_Factory::add_label($defs, TR::t('err_error'), $account_info->status, -10);
-        } else if (isset($account_info->data)) {
-            $data = $account_info->data;
-            if (isset($data->login)) {
-                Control_Factory::add_label($defs, TR::t('login'), $data->login, -15);
+        } else if (isset($this->account_info['status']) && (int)$this->account_info['status'] !== 1) {
+            Control_Factory::add_label($defs, TR::t('err_error'), $this->account_info['status'], -10);
+        } else {
+            $data = safe_get_value($this->account_info, 'data');
+            if (isset($data['login'])) {
+                Control_Factory::add_label($defs, TR::t('login'), $data['login'], -15);
             }
-            if (isset($data->money, $data->currency)) {
-                Control_Factory::add_label($defs, TR::t('balance'), $data->money . " " . $data->currency, -15);
+            if (isset($data['money'], $data['currency'])) {
+                Control_Factory::add_label($defs, TR::t('balance'), $data['money'] . " " . $data['currency'], -15);
             }
-            if (isset($data->money_need, $data->currency)) {
-                Control_Factory::add_label($defs, TR::t('money_need'), "$data->money_need $data->currency", -15);
+            if (isset($data['money_need'], $data['currency'])) {
+                Control_Factory::add_label($defs, TR::t('money_need'), "{$data['money_need']} {$data['currency']}", -15);
             }
 
-            if (isset($data->abon)) {
-                $packages = '';
-                foreach ($data->abon as $package) {
-                    $packages .= $package . PHP_EOL;
-                }
+            $packages = '';
+            foreach (safe_get_value($data, 'abon', array()) as $package) {
+                $packages .= $package . PHP_EOL;
+            }
+            if (!empty($packages)) {
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
             }
         }
@@ -152,14 +151,14 @@ class api_sharaclub extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_OBJECT);
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
-            if (isset($response->status)) {
-                foreach ($response->allow_nums as $server) {
-                    $this->servers[(int)$server->id] = $server->name;
+            if (isset($response['status'])) {
+                foreach (safe_get_value($response, 'allow_nums', array()) as $server) {
+                    $this->servers[(int)$server['id']] = $server['name'];
                 }
 
-                $this->SetProviderParameter(MACRO_SERVER_ID, $response->current);
+                $this->SetProviderParameter(MACRO_SERVER_ID, $response['current']);
             }
         }
 
@@ -173,12 +172,13 @@ class api_sharaclub extends api_default
     {
         parent::SetServer($server, $error_msg);
 
-        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_SET_SERVER, Curl_Wrapper::RET_OBJECT);
-        if (isset($response->status) && (int)$response->status === 1) {
-            $this->servers = array();
-            return true;
+        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_SET_SERVER, Curl_Wrapper::RET_ARRAY);
+        $status = (int)safe_get_value($response, 'status', 0);
+        if ($status !== 1) {
+            return false;
         }
 
-        return false;
+        $this->servers = array();
+        return true;
     }
 }

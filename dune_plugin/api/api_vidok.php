@@ -68,11 +68,6 @@ require_once 'api_default.php';
 class api_vidok extends api_default
 {
     /**
-     * @var array
-     */
-    protected $servers = array();
-
-    /**
      * @inheritDoc
      */
     public function GetSessionId()
@@ -80,44 +75,47 @@ class api_vidok extends api_default
         return md5(strtolower($this->GetProviderParameter(MACRO_LOGIN)) . md5($this->GetProviderParameter(MACRO_PASSWORD)));
     }
 
+    /**
+     * @inheritDoc
+     */
     public function GetInfoUI($handler)
     {
-        $account_info = $this->get_provider_info();
+        $this->request_provider_info();
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        if (empty($account_info)) {
+        if (empty($this->account_info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
-        } else if (isset($account_info->error, $account_info->error->message)) {
+        } else if (isset($this->account_info['error'], $this->account_info['error']['message'])) {
             hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('err_error'), $account_info->error->message, -10);
-        } else if (isset($this->account_info->account)) {
-            $data = $account_info->account;
-            if (isset($data->login)) {
-                Control_Factory::add_label($defs, TR::t('login'), $data->login, -15);
+            Control_Factory::add_label($defs, TR::t('err_error'), $this->account_info['error']['message'], -10);
+        } else {
+            $data = safe_get_value($this->account_info, 'account');
+            if (isset($data['login'])) {
+                Control_Factory::add_label($defs, TR::t('login'), $data['login'], -15);
             }
-            if (isset($data->first_name, $data->last_name)) {
-                Control_Factory::add_label($defs, TR::t('name'), "$data->first_name $data->last_name", -15);
+            if (isset($data['first_name'], $data['last_name'])) {
+                Control_Factory::add_label($defs, TR::t('name'), "{$data['first_name']} {$data['last_name']}", -15);
             }
-            if (isset($data->city, $data->country)) {
-                Control_Factory::add_label($defs, TR::t('city'), "$data->city ($data->country)", -15);
+            if (isset($data['city'], $data['country'])) {
+                Control_Factory::add_label($defs, TR::t('city'), "{$data['city']} ({$data['country']})", -15);
             }
-            if (isset($data->tz)) {
-                Control_Factory::add_label($defs, TR::t('time_zone'), $data->tz, -15);
+            if (isset($data['tz'])) {
+                Control_Factory::add_label($defs, TR::t('time_zone'), $data['tz'], -15);
             }
-            if (isset($data->balance)) {
-                Control_Factory::add_label($defs, TR::t('balance'), $data->balance, -15);
+            if (isset($data['balance'])) {
+                Control_Factory::add_label($defs, TR::t('balance'), $data['balance'], -15);
             }
 
-            if (isset($data->packages)) {
-                $packages = '';
-                foreach ($data->packages as $package) {
-                    if (isset($package->name, $package->expire)) {
-                        $packages .= $package->name . " (" . date('d M Y H:i', $package->expire) . ")" . PHP_EOL;
-                    }
+            $packages = '';
+            foreach (safe_get_value($data, 'packages', array()) as $package) {
+                if (isset($package['name'], $package['expire'])) {
+                    $packages .= $package['name'] . " (" . date('d M Y H:i', $package['expire']) . ")" . PHP_EOL;
                 }
+            }
+            if (!empty($packages)) {
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
             }
         }
@@ -136,17 +134,15 @@ class api_vidok extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_OBJECT);
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
-            if (isset($response->servers)) {
-                foreach ($response->servers as $server) {
-                    $this->servers[(int)$server->id] = $server->name;
-                }
-
-                if (isset($this->account_info->account->settings->server_id)) {
-                    $this->SetProviderParameter(MACRO_SERVER_ID, (int)$this->account_info->account->settings->server_id);
-                }
+            foreach (safe_get_value($response, 'servers', array()) as $server) {
+                $this->servers[(int)$server['id']] = $server['name'];
             }
+        }
+
+        if (isset($this->account_info['account']['settings']['server_id'])) {
+            $this->SetProviderParameter(MACRO_SERVER_ID, (int)$this->account_info['account']['settings']['server_id']);
         }
 
         return $this->servers;
@@ -159,8 +155,8 @@ class api_vidok extends api_default
     {
         parent::SetServer($server, $error_msg);
 
-        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_SET_SERVER, Curl_Wrapper::RET_OBJECT);
-        if (isset($response->settings->value)) {
+        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_SET_SERVER, Curl_Wrapper::RET_ARRAY);
+        if (isset($response['settings']['value'])) {
             $this->servers = array();
             $this->account_info = null;
             return true;
