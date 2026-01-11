@@ -401,10 +401,10 @@ class vod_standard extends Abstract_Vod
             $perf->setLabel('end');
             $report = $perf->getFullReport();
 
-            hd_debug_print_separator();
+            hd_print_separator();
             hd_debug_print("IndexFile: {$report[Perf_Collector::TIME]} secs");
             hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-            hd_debug_print_separator();
+            hd_print_separator();
         }
 
         $perf = new Perf_Collector();
@@ -441,7 +441,7 @@ class vod_standard extends Abstract_Vod
         hd_debug_print("Total movies: $all_count");
         hd_debug_print("Fetch time: {$report[Perf_Collector::TIME]} secs");
         hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-        hd_debug_print_separator();
+        hd_print_separator();
 
         return true;
     }

@@ -627,9 +627,17 @@ function hd_debug_print($val = null, $is_debug = false)
     hd_print($prefix . $val);
 }
 
-function hd_debug_print_separator()
+function hd_print_separator()
 {
     hd_print(str_repeat("-", 80));
+}
+
+function hd_debug_print_separator()
+{
+    if (!LogSeverity::$is_debug)
+        return;
+
+    hd_print_separator();
 }
 
 /**
@@ -2066,7 +2074,7 @@ function json_encode_unicode($data, $flags = 0)
 
 function print_sysinfo()
 {
-    hd_debug_print_separator();
+    hd_print_separator();
     $platform = get_platform_info();
     $dns = get_dns_address();
     $values = curl_version();

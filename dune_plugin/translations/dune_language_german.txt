@@ -290,6 +290,7 @@ entry_log_not_sent_too_old = Dune HD mit alter Firmware!\nFirmware weniger als b
 entry_log_not_enabled = Die erweiterte Protokollierung wurde nicht aktiviert.\nDie Protokolle enthalten möglicherweise keine nützlichen Informationen!\nDas Senden des Protokolls wurde abgebrochen.\n\n1. Debug-Logging-Modus aktivieren.\n2. Versuchen Sie, den Fehler oder Absturz zu wiederholen.\n3. Senden Sie das Protokoll vom Plugin (Kontextmenü auf dem Plugin-Symbol und den Punkt „Protokoll an Entwickler senden“)\n4. Debug-Logging-Modus deaktivieren.
 entry_epg_fake = Fehlendes EPG emulieren
 entry_epg_cache_clear = EPG-Cache leeren
+entry_epg_cache_refresh = EPG-Cache aktualisieren
 entry_epg_cache_clear_all = Leeren Sie den gesamten EPG-Cache
 entry_epg_cache_cleared = EPG-Cache geleert
 entry_epg_cache_time = EPG-Cache-Zeit (Tage):

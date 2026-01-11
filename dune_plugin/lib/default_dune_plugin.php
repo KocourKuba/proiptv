@@ -565,7 +565,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return;
         }
 
-        hd_debug_print_separator();
+        hd_print_separator();
 
         $this->active_provider = null;
         $this->reset_playlist_db();
@@ -575,7 +575,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->init_epg_cache_dir();
 
         hd_debug_print("Init plugin done!");
-        hd_debug_print_separator();
+        hd_print_separator();
 
         $this->inited = true;
     }
@@ -921,13 +921,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $report_download = $perf->getReportItem(Perf_Collector::TIME, 'start_download_playlist', 'end_download_playlist');
             $report_parse = $perf->getReportItem(Perf_Collector::TIME, 'start_parse_playlist', 'end_parse_playlist');
             $mem_report = $perf->getReportItem(Perf_Collector::MEMORY_USAGE_KB, 'start_download_playlist', 'end_parse_playlist');
-            hd_debug_print_separator();
+            hd_print_separator();
             hd_debug_print("Parse playlist done!");
             hd_debug_print($info);
             hd_debug_print("Download time: $report_download sec");
             hd_debug_print("Parse time:    $report_parse sec");
             hd_debug_print("Memory usage:  $mem_report kb");
-            hd_debug_print_separator();
+            hd_print_separator();
             $ret = true;
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
@@ -952,7 +952,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->sql_playlist->detachDatabase(M3uParser::IPTV_DB);
             hd_debug_print("Clear db: $db_file");
             safe_unlink($db_file);
-            hd_debug_print_separator();
+            hd_print_separator();
         }
 
         return $ret;
@@ -1032,7 +1032,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         hd_debug_print("Database initialized.");
-        hd_debug_print_separator();
+        hd_print_separator();
 
         $this->init_screen_view_parameters($this->get_background_image());
 
@@ -1145,7 +1145,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return true;
         }
 
-        hd_debug_print_separator();
+        hd_print_separator();
         hd_debug_print("Build categories and channels...");
 
         $playlist_entries = $this->get_playlist_entries_count();
@@ -1375,7 +1375,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Removed groups:      " . count($removed_groups));
         hd_debug_print("Load time:           {$report[Perf_Collector::TIME]} secs");
         hd_debug_print("Memory usage:        {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-        hd_debug_print_separator();
+        hd_print_separator();
 
         $this->channels_loaded = true;
 

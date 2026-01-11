@@ -408,7 +408,9 @@ class Epg_Manager_Xmltv
 
         $cached_file = self::$cache_dir . $hash . ".xmltv";
         $cached_db = self::$cache_dir . $hash . ".db";
-        hd_debug_print("Checking cached xmltv file: $cached_file", true);
+        hd_debug_print_separator();
+        hd_debug_print("Checking '$hash' cached xmltv file: $cached_file", true);
+        hd_debug_print("Index flag: $index_flag", true);
         $expired = true;
         if (!file_exists($cached_file) || !file_exists($cached_db)) {
             hd_debug_print("Cached xmltv file not exist");
@@ -446,11 +448,11 @@ class Epg_Manager_Xmltv
         if ($expired) {
             self::clear_epg_files($hash);
             $index_flag |= INDEXING_DOWNLOAD;
-            hd_debug_print("Xmltv cache expired. Indexing flags: " . $index_flag, true);
+            hd_debug_print("Xmltv cache '$hash' expired. Indexing flags: " . $index_flag, true);
             $channels_valid = false;
             $entries_valid = false;
         } else {
-            hd_debug_print("Cached file: $cached_file is not expired");
+            hd_debug_print("Cached file '$hash': $cached_file is not expired");
             $indexed = self::get_indexes_info($params);
             // index for picons has not verified because it always exist if channels index is present
             $channels_valid = ($indexed[self::TABLE_CHANNELS] !== -1);
@@ -460,30 +462,31 @@ class Epg_Manager_Xmltv
 
         if ($channels_valid) {
             if (($index_flag & INDEXING_ENTRIES) === 0) {
-                hd_debug_print("Xmltv channels index is valid");
+                hd_debug_print("Xmltv channels index '$hash' is valid");
                 self::clear_log($hash);
                 return 0;
             }
 
             if ($entries_valid) {
-                hd_debug_print("Xmltv channels and entries index are valid");
+                hd_debug_print("Xmltv channels and entries index '$hash' are valid");
                 self::clear_log($hash);
                 return 0;
             }
         }
 
         if (!$channels_valid) {
-            hd_debug_print("Xmltv channels not valid");
+            hd_debug_print("Xmltv channels '$hash' not valid");
             $index_flag |= INDEXING_CHANNELS;
         }
 
         if (!$entries_valid && ($index_flag & INDEXING_ENTRIES) !== 0) {
-            hd_debug_print("Xmltv entries not valid");
+            hd_debug_print("Xmltv entries '$hash' not valid");
             $index_flag |= INDEXING_ENTRIES;
         }
 
         // downloaded xmltv file exists, not expired but indexes for channels, picons and positions not exists
-        hd_debug_print("Index flag: $index_flag");
+        hd_debug_print("Result index flag: $index_flag for '$hash'");
+        hd_debug_print_separator();
         return $index_flag;
     }
 
@@ -713,7 +716,7 @@ class Epg_Manager_Xmltv
                 hd_debug_print("Reindexing channels: {$report[Perf_Collector::TIME]} secs");
                 hd_debug_print("Memory usage:        {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
                 hd_debug_print("Storage space:       " . HD::get_storage_size(self::$cache_dir));
-                hd_debug_print_separator();
+                hd_print_separator();
 
                 self::update_stat($cached_file, 'channels', $report[Perf_Collector::TIME]);
                 $success = true;
@@ -845,7 +848,7 @@ class Epg_Manager_Xmltv
                 hd_debug_print("Reindexing entries: {$report[Perf_Collector::TIME]} secs");
                 hd_debug_print("Memory usage:       {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
                 hd_debug_print("Storage space:      " . HD::get_storage_size(self::$cache_dir));
-                hd_debug_print_separator();
+                hd_print_separator();
 
                 self::update_stat($cached_file, 'entries', $report[Perf_Collector::TIME]);
             } catch (Exception $ex) {
@@ -863,7 +866,7 @@ class Epg_Manager_Xmltv
         if ($perf->getLabelsCount() > 1) {
             $report = $perf->getFullReport();
             hd_debug_print("Reindexing XMLTV source done: {$report[Perf_Collector::TIME]} secs");
-            hd_debug_print_separator();
+            hd_print_separator();
         }
     }
 
@@ -894,12 +897,12 @@ class Epg_Manager_Xmltv
             $index_log = get_temp_path("{$hash}_indexing.log");
             if (file_exists($index_log)) {
                 hd_debug_print("Read epg indexing log $index_log...");
-                hd_debug_print_separator();
+                hd_print_separator();
                 $logfile = file_get_contents($index_log);
                 foreach (explode(PHP_EOL, $logfile) as $l) {
                     hd_print(preg_replace("|^\[[\d:-]+\s(.*)$|", "[$1", rtrim($l)));
                 }
-                hd_debug_print_separator();
+                hd_print_separator();
                 hd_debug_print("Read finished");
                 safe_unlink($index_log);
                 $has_imports = true;
@@ -910,13 +913,13 @@ class Epg_Manager_Xmltv
                 $error_file = file_get_contents($error_log);
                 if (!empty($error_file)) {
                     hd_debug_print("Read indexing error log $error_log...");
-                    hd_debug_print_separator();
+                    hd_print_separator();
                     foreach (explode(PHP_EOL, $error_file) as $l) {
                         if (!empty($l)) {
                             hd_print($l);
                         }
                     }
-                    hd_debug_print_separator();
+                    hd_print_separator();
                     $has_imports = true;
                 }
             }
@@ -1402,7 +1405,7 @@ class Epg_Manager_Xmltv
         hd_debug_print("Download time:  $dl_time secs");
         hd_debug_print("Download speed: $speed");
         hd_debug_print("Storage space:  " . HD::get_storage_size(self::$cache_dir));
-        hd_debug_print_separator();
+        hd_print_separator();
         self::update_stat($cached_file, 'download', $dl_time);
     }
 
@@ -1495,7 +1498,7 @@ class Epg_Manager_Xmltv
         hd_debug_print("$action        $size bytes");
         hd_debug_print("Time:          $unpack_time secs");
         hd_debug_print("Storage space: " . HD::get_storage_size(self::$cache_dir));
-        hd_debug_print_separator();
+        hd_print_separator();
 
         self::update_stat($cached_file, 'unpack', $unpack_time);
     }

@@ -185,7 +185,7 @@ class vod_glanz extends vod_standard
         hd_debug_print("Total items loaded: " . count($this->vod_items));
         hd_debug_print("Load time: {$report[Perf_Collector::TIME]} secs");
         hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-        hd_debug_print_separator();
+        hd_print_separator();
 
         return true;
     }

@@ -33,7 +33,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
 {
     const ID = 'epg_setup';
 
-    const CONTROL_ITEMS_CLEAR_EPG_CACHE = 'clear_epg_cache';
+    const CONTROL_ITEMS_REFRESH_EPG_CACHE = 'refresh_epg_cache';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -89,8 +89,8 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // clear epg cache
-        Control_Factory::add_image_button($defs, $this, self::CONTROL_ITEMS_CLEAR_EPG_CACHE,
-            TR::t('entry_epg_cache_clear'), TR::t('clear'), get_image_path('brush.png'));
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_ITEMS_REFRESH_EPG_CACHE,
+            TR::t('entry_epg_cache_refresh'), TR::t('refresh'), get_image_path('refresh.png'));
 
         if ($engine === ENGINE_JSON && isset($epg_presets)) {
             if (count($epg_presets) > 1) {
@@ -158,10 +158,12 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
                 break;
 
-            case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
+            case self::CONTROL_ITEMS_REFRESH_EPG_CACHE:
                 $this->plugin->clear_playlist_epg_cache();
+                $this->plugin->reset_channels();
                 $actions[] = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
                 $actions[] = Action_Factory::reset_controls($this->do_get_control_defs());
+                $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                 return Action_Factory::composite($actions);
 
             case PARAM_FAKE_EPG:

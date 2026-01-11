@@ -1740,7 +1740,8 @@
         },
         "domains": {
           "team.ga": "team.ga",
-          "tvtm.one": "tvtm.one"
+          "tvtm.one": "tvtm.one",
+          "rus.tvtm.one": "rus.tvtm.one"
         },
         "streams": {
           "mono.m3u8": "HLS",

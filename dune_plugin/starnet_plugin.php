@@ -103,7 +103,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         print_sysinfo();
 
-        hd_debug_print_separator();
+        hd_print_separator();
         hd_print("Plugin name:         " . $this->plugin_info['app_caption']);
         hd_print("Plugin version:      " . $this->plugin_info['app_version']);
         hd_print("Plugin date:         " . $this->plugin_info['app_release_date']);
@@ -114,7 +114,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_print("Auto resume enabled: " . safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_RESUME));
         hd_print("Auto play enabled:   " . safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_PLAY));
         hd_print("Debug log enabled:   " . safe_get_member($plugin_cookies,PARAM_COOKIE_ENABLE_DEBUG));
-        hd_debug_print_separator();
+        hd_print_separator();
 
         hd_debug_print("Plugin loading complete.");
     }

@@ -176,9 +176,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 return Action_Factory::composite($actions);
 
             case ACTION_FORCE_OPEN:
-                hd_debug_print_separator();
+                hd_print_separator();
                 hd_debug_print("FORCE LANUCH PLUGIN");
-                hd_debug_print_separator();
+                hd_print_separator();
 
                 if (!$this->plugin->load_channels($plugin_cookies, true)) {
                     return $this->open_playlist_screen($plugin_cookies);
@@ -257,9 +257,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             return $action;
                         }
 
-                        hd_debug_print_separator();
+                        hd_print_separator();
                         hd_debug_print("LANUCH PLUGIN VOD");
-                        hd_debug_print_separator();
+                        hd_print_separator();
 
                         $this->plugin->init_plugin(true);
                         if ($this->plugin->get_all_playlists_count() === 0) {
@@ -375,7 +375,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return $action;
         }
 
-        hd_debug_print_separator();
+        hd_print_separator();
         hd_debug_print("LANUCH PLUGIN");
 
         $this->plugin->init_plugin(true);

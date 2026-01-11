@@ -46,11 +46,6 @@ class Curl_Wrapper
     private $download_timeout = 90;
 
     /**
-     * @var int
-     */
-    private static $http_code;
-
-    /**
      * @var array
      */
     private $send_headers;
@@ -79,6 +74,11 @@ class Curl_Wrapper
      * @var string
      */
     private $file_cache_path;
+
+    /**
+     * @var int
+     */
+    private static $http_code;
 
     /**
      * @var int
@@ -491,6 +491,7 @@ class Curl_Wrapper
             $opts[CURLOPT_HTTPHEADER][] = "Host: {$parsed_url['host']}";
         }
 
+        $etag = '';
         if ($cache_opts & self::USE_ETAG) {
             hd_debug_print("cache opts: Use ETag capability", true);
             $etag = self::get_cached_etag($url);
@@ -500,7 +501,7 @@ class Curl_Wrapper
         }
 
         if (!empty($this->send_headers)) {
-            $opts[CURLOPT_HTTPHEADER] = array_merge($opts[CURLOPT_HTTPHEADER], $this->send_headers);
+            $opts[CURLOPT_HTTPHEADER] = array_values(safe_merge_array($opts[CURLOPT_HTTPHEADER], $this->send_headers));
         }
 
         if (!empty($this->post_data)) {
@@ -588,7 +589,7 @@ class Curl_Wrapper
 
         if ($cache_opts & self::USE_ETAG) {
             $new_etag = self::get_response_header('etag');
-            if (!isset($etag) || $etag !== $new_etag) {
+            if (!empty($new_etag) && $etag !== $new_etag) {
                 hd_debug_print("Save new ETag ($new_etag) for: $url", true);
                 self::set_cached_etag($url, $new_etag);
             }
