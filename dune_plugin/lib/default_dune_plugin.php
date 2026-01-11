@@ -282,6 +282,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $url = '';
         }
 
+        if (!isset($plugin_cookies->current_playlist) || $plugin_cookies->current_playlist !== $this->get_active_playlist_id()) {
+            $plugin_cookies->current_playlist = $this->get_active_playlist_id();
+        }
+
         hd_debug_print("Playback URL: $url", true);
         return $url;
     }

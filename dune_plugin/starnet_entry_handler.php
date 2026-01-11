@@ -277,7 +277,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                     case self::ACTION_UPDATE_EPFS:
                         $first_run = isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep);
-                        $this->plugin->load_channels($plugin_cookies);
+                        $this->plugin->load_channels($plugin_cookies, $first_run);
                         $actions[] = Action_Factory::refresh_entry_points();
                         $actions[] = Starnet_Epfs_Handler::update_epfs_file($plugin_cookies, $first_run);
                         return Action_Factory::composite($actions);
@@ -442,6 +442,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
         // selected_media_url => tv_groups
         // orig_selected_media_url => tv_groups
 
+        $is_playlist_changed = !isset($plugin_cookies->current_playlist) || $plugin_cookies->current_playlist !== $this->plugin->get_active_playlist_id();
+        hd_debug_print("current playlist changed: " . var_export($is_playlist_changed, true));
         $mode = safe_get_member($user_input, 'resume_mode');
         $resume_owner = strpos(safe_get_member($user_input, 'plugin_name', ''), get_plugin_name()) !== false;
         $media_url = MediaURL::decode();
@@ -451,19 +453,19 @@ class Starnet_Entry_Handler implements User_Input_Handler
         $archive_tm = safe_get_member($user_input, 'resume_tv_archive_tm');
         $media_url->archive_tm = ((time() - $archive_tm) < 259200) ? $archive_tm : -1;
         // Check if previous state is TV playback
-        if ($resume_owner && $mode === "PLUGIN_TV_PLAYBACK") {
+        if (!$is_playlist_changed && $resume_owner && $mode === "PLUGIN_TV_PLAYBACK") {
             hd_debug_print("Resumed media url: " . $media_url);
             return Action_Factory::tv_play($media_url);
         }
 
-        if ($resume_owner && $mode === "PLUGIN_VOD_PLAYBACK") {
+        if (!$is_playlist_changed && $resume_owner && $mode === "PLUGIN_VOD_PLAYBACK") {
             $vod_info = $this->plugin->vod->get_vod_info(MediaURL::decode(safe_get_member($user_input, 'resume_media_url')));
             if ($vod_info !== null) {
                 return Action_Factory::vod_play($vod_info);
             }
         }
 
-        if ($auto_play || $mandatory_playback) {
+        if (!$is_playlist_changed && ($auto_play || $mandatory_playback)) {
             return Action_Factory::tv_play($media_url);
         }
 
