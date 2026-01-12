@@ -1083,23 +1083,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $this->update_ui_settings();
 
-        // check is vod.
-        if ($this->vod === null) {
-            $this->vod_enabled = false;
-            $vod_class = $this->get_vod_class();
-            if (!empty($vod_class)) {
-                hd_debug_print("Using VOD: $vod_class");
-                $this->vod = new $vod_class($this);
-                $provider = $this->get_active_provider();
-                if (!is_null($provider)) {
-                    $ignore_groups = $provider->getConfigValue(CONFIG_IGNORE_GROUPS);
-                }
-
-                $this->vod_enabled = $this->vod->init_vod($provider);
-                $this->vod->init_vod_screens();
-                hd_debug_print("VOD enabled: " . SwitchOnOff::to_def($this->vod_enabled), true);
-            }
-        }
+        // Init VOD.
+        $this->init_vod($reload_playlist);
 
         if ($this->is_vod_playlist()) {
             hd_debug_print("VOD playlist inited", true);
@@ -1158,13 +1143,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $iptv_channels = M3uParser::CHANNELS_TABLE;
 
         // add provider ignored groups to known_groups
-        if (!empty($ignore_groups)) {
-            $query = '';
-            foreach ($ignore_groups as $group_id) {
-                $q_group_id = Sql_Wrapper::sql_quote($group_id);
-                $query .= "INSERT OR IGNORE INTO $groups_info_table (group_id, disabled) VALUES ($q_group_id, 1);" . PHP_EOL;
+        $provider = $this->get_active_provider();
+        if (!is_null($provider)) {
+            $ignore_groups = $provider->getConfigValue(CONFIG_IGNORE_GROUPS);
+            if (!empty($ignore_groups)) {
+                $query = '';
+                foreach ($ignore_groups as $group_id) {
+                    $q_group_id = Sql_Wrapper::sql_quote($group_id);
+                    $query .= "INSERT OR IGNORE INTO $groups_info_table (group_id, disabled) VALUES ($q_group_id, 1);" . PHP_EOL;
+                }
+                $this->sql_playlist->exec_transaction($query);
             }
-            $this->sql_playlist->exec_transaction($query);
         }
 
         ////////////////////////////////////////////////////////////////////////////////////
@@ -4162,5 +4151,28 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $this->upgrade_vod_history();
             }
         }
+    }
+
+    /**
+     * @return bool
+     */
+    public function init_vod($force = false)
+    {
+        if (!$force && $this->vod !== null) {
+            return true;
+        }
+
+        $this->vod_enabled = false;
+        $vod_class = $this->get_vod_class();
+        if (!empty($vod_class)) {
+            hd_debug_print("Using VOD: $vod_class");
+            $this->vod = new $vod_class($this);
+            $provider = $this->get_active_provider();
+            $this->vod_enabled = $this->vod->init_vod($provider);
+            $this->vod->init_vod_screens();
+            hd_debug_print("VOD enabled: " . SwitchOnOff::to_def($this->vod_enabled), true);
+        }
+
+        return $this->vod_enabled;
     }
 }

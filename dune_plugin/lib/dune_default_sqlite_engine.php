@@ -1065,6 +1065,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_groups($type, $disabled, $column = null)
     {
+        hd_debug_print(null, true);
         $groups_info_table = self::get_table_name(GROUPS_INFO);
         $where = ($disabled === PARAM_ALL) ? "" : "disabled = $disabled";
         $and = empty($where) ? "" : "AND";
