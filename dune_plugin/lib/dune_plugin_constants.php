@@ -333,6 +333,7 @@ const PARAM_CUSTOM_PLAYLIST_VOD = 'custom_playlist_vod_url';
 const PARAM_PLAYLIST_IPTV_ID = 'playlist_id';
 const PARAM_PLAYLIST_VOD_ID = 'playlist_vod_id';
 const PARAM_USE_COMMON_FAV = 'use_common_fav';
+const PARAM_CLEAR_PLAYLIST = 'clear_playlist';
 
 const PARAM_GROUP_ORDINARY = 0;
 const PARAM_GROUP_SPECIAL = 1;

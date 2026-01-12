@@ -2532,7 +2532,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $title = TR::t('playlist_name_msg__1', $title);
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, $title, $icon_file, array('clear_playlist' => true));
+        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, $title, $icon_file, array(PARAM_CLEAR_PLAYLIST => true));
         $menu_items[] = $this->create_menu_item($handler,
             ACTION_ITEMS_EDIT,
             TR::t('setup_channels_src_edit_playlists'),

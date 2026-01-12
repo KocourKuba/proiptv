@@ -386,7 +386,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
-                $this->plugin->load_channels($plugin_cookies, true);
+                if (!$this->plugin->load_channels($plugin_cookies, isset($user_input->{PARAM_CLEAR_PLAYLIST}))) {
+                    $actions[] = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
+                }
                 safe_unlink(Starnet_Epfs_Handler::get_epfs_path(Starnet_Epfs_Handler::$epf_id));
                 $actions[] = Action_Factory::refresh_entry_points();
                 $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);

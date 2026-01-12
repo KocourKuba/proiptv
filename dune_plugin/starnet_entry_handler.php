@@ -178,7 +178,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 hd_debug_print("FORCE LANUCH PLUGIN");
                 hd_print_separator();
 
-                if (!$this->plugin->load_channels($plugin_cookies, true)) {
+                if (!$this->plugin->load_channels($plugin_cookies)) {
                     return $this->open_playlist_screen($plugin_cookies);
                 }
 
@@ -222,7 +222,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     file_put_contents(Starnet_Epfs_Handler::first_run_path(), '');
                 }
 
-                if (!$this->plugin->load_channels($plugin_cookies, true)) {
+                if (!$this->plugin->load_channels($plugin_cookies)) {
                     hd_debug_print("Failed to load channels!");
                     return Action_Factory::show_title_dialog(
                         TR::t('err_load_playlist'),
@@ -268,9 +268,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         if ($this->plugin->get_all_playlists_count() === 0) {
                             return $this->open_playlist_screen($plugin_cookies);
                         }
-                        if ($this->plugin->load_channels($plugin_cookies)
-                            && $this->plugin->is_vod_enabled()
-                            && SwitchOnOff::to_bool($plugin_cookies->{PARAM_SHOW_VOD_ICON})) {
+
+                        $show_vod_icon = SwitchOnOff::to_bool($plugin_cookies->{PARAM_SHOW_VOD_ICON});
+                        if ($this->plugin->load_channels($plugin_cookies) && $this->plugin->is_vod_enabled() && $show_vod_icon) {
                             $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                             $actions[] = Action_Factory::open_folder(Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID));
                             return Action_Factory::composite($actions);
@@ -284,7 +284,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             file_put_contents(Starnet_Epfs_Handler::first_run_path(), '');
                         }
 
-                        if (!$this->plugin->load_channels($plugin_cookies, $first_run)) {
+                        if (!$this->plugin->load_channels($plugin_cookies)) {
                             hd_debug_print("Failed to load channels!");
                             return Action_Factory::show_title_dialog(
                                 TR::t('err_load_playlist'),

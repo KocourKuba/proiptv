@@ -474,7 +474,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 hd_debug_print("Action reload", true);
 
                 $this->force_parent_reload = true;
-                $this->plugin->load_channels($plugin_cookies, true);
+                if (!$this->plugin->load_channels($plugin_cookies, isset($user_input->{PARAM_CLEAR_PLAYLIST}))) {
+                    $actions[] = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
+                }
                 $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                 $actions[] = User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 return Action_Factory::composite($actions);

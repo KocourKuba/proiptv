@@ -173,7 +173,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
-                if ($this->plugin->load_channels($plugin_cookies, true)) {
+                if ($this->plugin->load_channels($plugin_cookies)) {
                     $actions[] = Action_Factory::reset_controls($this->do_get_control_defs());
                 } else {
                     $actions[] = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
