@@ -392,8 +392,10 @@ class Entry extends Json_Serializer
         // set channel icon
         // make full url for icon if used base url
         $channel_icon = $this->getAnyEntryAttribute(self::$icon_attrs, TAG_EXTINF);
-        if (!empty($icon_base_url)) {
-            if (!is_proto_http($channel_icon)) {
+        if (!is_proto_http($channel_icon)) {
+            if (empty($icon_base_url)) {
+                $channel_icon = 'http://' . $channel_icon;
+            } else {
                 $channel_icon = $icon_base_url . $channel_icon;
             }
         }
