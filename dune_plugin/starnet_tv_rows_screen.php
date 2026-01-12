@@ -140,7 +140,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         $reload_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
         $control_id = $user_input->control_id;
-        $post_action = null;
 
         switch ($control_id) {
             case GUI_EVENT_TIMER:
@@ -218,7 +217,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 $is_in_favorites = $this->plugin->is_channel_in_order($fav_id, $media_url->channel_id);
                 $opt_type = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->change_tv_favorites($opt_type, $media_url->channel_id);
-                break;
+                return Action_Factory::invalidate_epfs_folders($plugin_cookies);
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
@@ -247,7 +246,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 }
 
                 $this->plugin->arrange_channels_order_rows($media_url->group_id, $media_url->channel_id, $direction);
-                break;
+                return Action_Factory::invalidate_epfs_folders($plugin_cookies);
 
             case ACTION_ITEMS_SORT:
                 $group = $this->plugin->get_group($media_url->group_id, PARAM_GROUP_ORDINARY);
@@ -282,7 +281,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
             case ACTION_ITEM_REMOVE:
                 $this->plugin->erase_tv_history($media_url->channel_id);
-                break;
+                return Action_Factory::invalidate_epfs_folders($plugin_cookies);
 
             case ACTION_ITEMS_CLEAR:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
@@ -314,7 +313,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                     $this->plugin->set_groups_visible($media_url->group_id, false);
                 }
 
-                break;
+                return Action_Factory::invalidate_epfs_folders($plugin_cookies);
 
             case ACTION_CHANGE_EPG_SOURCE:
                 hd_debug_print("Start event popup menu for epg source");
@@ -363,7 +362,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
             case ACTION_EDIT_CHANNEL_APPLY:
                 $this->plugin->do_edit_channel_apply($user_input, $media_url->channel_id);
-                break;
+                return Action_Factory::invalidate_epfs_folders($plugin_cookies);
 
             case ACTION_INFO_DLG:
                 return $this->plugin->do_show_subscription($this);
@@ -389,8 +388,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 hd_debug_print("Action reload", true);
                 $this->plugin->load_channels($plugin_cookies, true);
                 safe_unlink(Starnet_Epfs_Handler::get_epfs_path(Starnet_Epfs_Handler::$epf_id));
+                $actions[] = Action_Factory::refresh_entry_points();
                 $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
-                $actions[] = User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map());
                 return Action_Factory::composite($actions);
 
             case ACTION_REFRESH_SCREEN:
@@ -399,7 +399,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 return Action_Factory::composite($actions);
         }
 
-        return Action_Factory::invalidate_epfs_folders($plugin_cookies, $post_action);
+        return null;
     }
 
     /**
@@ -425,17 +425,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     }
 
     /**
-     * @param bool $first_run
      * @param object $plugin_cookies
      * @return array|null
      */
-    public function get_folder_view_for_epf($first_run, &$plugin_cookies)
+    public function get_folder_view_for_epf(&$plugin_cookies)
     {
         hd_debug_print(null, true);
-
-        if (!$this->plugin->load_channels($plugin_cookies, $first_run)) {
-            hd_debug_print("Channels not loaded!");
-        }
 
         $this->update_new_ui_settings();
 

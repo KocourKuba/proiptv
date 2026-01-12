@@ -116,7 +116,7 @@ class Starnet_Epfs_Handler
 
         self::ensure_no_internet_epfs_created($first_run, $plugin_cookies);
 
-        $folder_view = self::$tv_rows_screen->get_folder_view_for_epf($first_run, $plugin_cookies);
+        $folder_view = self::$tv_rows_screen->get_folder_view_for_epf($plugin_cookies);
 
         if (!is_file(self::warmed_up_path())) {
             hd_debug_print("Cold run", true);

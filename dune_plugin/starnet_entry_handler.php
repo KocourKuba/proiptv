@@ -84,8 +84,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return null;
         }
 
-        hd_debug_print("user input control: $user_input->control_id");
-
         if (!is_r22_or_higher()) {
             hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
             return $this->show_old_player(TR::t('err_too_old_player'));
@@ -228,9 +226,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         $this->open_playlist_screen($plugin_cookies)
                     );
                 }
-                $actions[] = Action_Factory::refresh_entry_points();
-                $actions[] = Starnet_Epfs_Handler::update_epfs_file($plugin_cookies, $first_run);
-                return Action_Factory::composite($actions);
+                Starnet_Epfs_Handler::update_epfs_file($plugin_cookies, $first_run);
+                return Action_Factory::refresh_entry_points();
 
             case self::ACTION_CONTINUE_UNINSTALL:
                 $action = color_palette_restore();
@@ -277,10 +274,16 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                     case self::ACTION_UPDATE_EPFS:
                         $first_run = isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep);
-                        $this->plugin->load_channels($plugin_cookies, $first_run);
-                        $actions[] = Action_Factory::refresh_entry_points();
-                        $actions[] = Starnet_Epfs_Handler::update_epfs_file($plugin_cookies, $first_run);
-                        return Action_Factory::composite($actions);
+                        if (!$this->plugin->load_channels($plugin_cookies, $first_run)) {
+                            hd_debug_print("Failed to load channels!");
+                            return Action_Factory::show_title_dialog(
+                                TR::t('err_load_playlist'),
+                                Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST),
+                                $this->open_playlist_screen($plugin_cookies)
+                            );
+                        }
+                        Starnet_Epfs_Handler::update_epfs_file($plugin_cookies, $first_run);
+                        return Action_Factory::refresh_entry_points();
 
                     case self::ACTION_INSTALL:
                         hd_debug_print("Install not handling");
