@@ -1061,10 +1061,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $plugin_cookies->toggle_move = false;
 
+        $this->init_plugin();
+
         if ($reload_playlist) {
             // need to fully reset plugin and clear cache
             $this->reset_channels();
-            $this->init_plugin();
             $curl_wrapper = $this->setup_curl();
             $curl_wrapper->clear_cache();
         } else {
@@ -1443,9 +1444,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $to_index = array();
         foreach ($sources as $source_id => $params) {
-            $indexing_flag = Epg_Manager_Xmltv::check_xmltv_source($params, $indexing_flag);
-            if ($indexing_flag !== 0) {
-                $to_index[$source_id] = array('flag' => $indexing_flag, 'params' => $params);
+            $new_flag = Epg_Manager_Xmltv::check_xmltv_source($params, $indexing_flag);
+            if ($new_flag !== 0) {
+                $to_index[$source_id] = array('flag' => $new_flag, 'params' => $params);
             }
         }
 
@@ -1496,7 +1497,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         // background indexing performed only for one url!
-        hd_debug_print("Run background indexing for: '$source_id': {$item[PARAM_URI]}");
+        hd_debug_print("Run background indexing for: '$source_id' with flag $indexing_flag: {$item[PARAM_URI]}");
         $item[PARAM_CURL_CONNECT_TIMEOUT] = $this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30);
         $item[PARAM_CURL_DOWNLOAD_TIMEOUT] = $this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
 
