@@ -108,18 +108,22 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::composite($actions);
 
             case GUI_EVENT_KEY_ENTER:
+                $this->force_parent_reload = true;
                 if ($this->plugin->is_selected_xmltv_id($selected_id)) {
                     $this->plugin->remove_selected_xmltv_id($selected_id);
+                    $run = false;
                 } else {
                     $this->plugin->add_selected_xmltv_id($selected_id);
-                    $cached_xmltv_file = Epg_Manager_Xmltv::get_cache_dir() . "$selected_id.xmltv";
-                    if (!file_exists($cached_xmltv_file)) {
-                        return User_Input_Handler_Registry::create_action($this, ACTION_INDEX_EPG);
-                    }
+                    $run = true;
                 }
 
-                $this->force_parent_reload = true;
-                break;
+                Epg_Manager_Xmltv::update_active_sources($this->plugin->get_active_sources());
+                if (!$run) break;
+
+                $cached_xmltv_file = Epg_Manager_Xmltv::get_cache_dir() . "$selected_id.xmltv";
+                if (file_exists($cached_xmltv_file)) break;
+
+                return User_Input_Handler_Registry::create_action($this, ACTION_INDEX_EPG);
 
             case EVENT_INDEXING_DONE:
                 $xmltv_ids = $this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL, $this->plugin->get_active_playlist_id());

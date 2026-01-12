@@ -83,8 +83,17 @@ class Epg_Manager_Xmltv
     {
         self::$ext_epg_enabled = is_ext_epg_supported() && $plugin->get_bool_setting(PARAM_SHOW_EXT_EPG);
         self::$flags = $plugin->get_bool_setting(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
-        self::$xmltv_sources = $plugin->get_active_sources();
+        self::update_active_sources($plugin->get_active_sources());
         self::clear_epg_memory_cache();
+    }
+
+    /**
+     * @param Hashed_Array $sources
+     * @return void
+     */
+    public static function update_active_sources($sources)
+    {
+        self::$xmltv_sources = $sources;
     }
 
     /**
