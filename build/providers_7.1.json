@@ -117,7 +117,7 @@
       }
     },
     "tvteam": {
-      "json_source": "http://tvteam.eu/{EPG_ID}.json",
+      "json_source": "http://{API_DOMAIN_ID}/{EPG_ID}.json",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
@@ -255,10 +255,9 @@
             "url": "http://1usd.tv/pl-{PASSWORD}-hls"
           }
         },
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
-        "url_subst": {
-          "regex": "/^(.+\\/)mono\\.m3u8(.+)$/",
-          "replace": "$1{STREAM_ID}$2"
+        "api_domains": {
+          "tvteam.eu": "tvteam.eu",
+          "tvteam.pro": "tvteam.pro"
         },
         "streams": {
           "mono.m3u8": "HLS",
@@ -269,7 +268,12 @@
           "http://epg.team/tvteam.3.3.xml.tar.gz",
           "http://epg.team/tvteam.5.5.xml.tar.gz",
           "http://epg.team/tvteam.7.7.xml.tar.gz"
-        ]
+        ],
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
+        "url_subst": {
+          "regex": "/^(.+\\/)mono\\.m3u8(.+)$/",
+          "replace": "$1{STREAM_ID}$2"
+        }
       }
     },
     {
@@ -1577,6 +1581,10 @@
           "skaztv.online": "skaztv.online",
           "skaz.tv": "skaz.tv"
         },
+        "api_domains": {
+          "tvteam.eu": "tvteam.eu",
+          "tvteam.pro": "tvteam.pro"
+        },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1718,8 +1726,7 @@
           },
           {
             "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "tvteam"
+            "title": "epg.drm-play"
           }
         ],
         "playlists": {
@@ -1727,11 +1734,6 @@
             "name": "Default",
             "url": "http://{DOMAIN_ID}/pl/11/{TOKEN}/playlist.m3u8"
           }
-        },
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
-        "url_subst": {
-          "regex": "/^(.+\\/\\/.+\\/.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
-          "replace": "$1{STREAM_ID}$2"
         },
         "api_domains": {
           "tvteam.eu": "tvteam.eu",
@@ -1750,7 +1752,12 @@
         "xmltv_sources": [
           "http://epg.team/tvteam.1.1.xml.gz",
           "http://epg.team/tvteam.3.1.xml.tar.gz"
-        ]
+        ],
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
+        "url_subst": {
+          "regex": "/^(.+\\/\\/.+\\/.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
+          "replace": "$1{STREAM_ID}$2"
+        }
       }
     },
     {
