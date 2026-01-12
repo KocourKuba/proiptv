@@ -98,30 +98,25 @@ class Starnet_Epfs_Handler
     }
 
     /**
-     * @param bool $first_run
      * @param object $plugin_cookies
      * @return array|null
      */
-    public static function update_epfs_file(&$plugin_cookies, $first_run = false)
+    public static function update_epfs_file(&$plugin_cookies)
     {
         hd_debug_print(null, true);
 
         if (!self::$enabled) {
             return null;
         }
-
-        if ($first_run) {
-            hd_debug_print("First run", true);
-        }
-
-        self::ensure_no_internet_epfs_created($first_run, $plugin_cookies);
-
-        $folder_view = self::$tv_rows_screen->get_folder_view_for_epf($plugin_cookies);
-
+/*
         if (!is_file(self::warmed_up_path())) {
             hd_debug_print("Cold run", true);
             file_put_contents(self::warmed_up_path(), '');
         }
+*/
+        self::ensure_no_internet_epfs_created($plugin_cookies);
+
+        $folder_view = self::$tv_rows_screen->get_folder_view_for_epf($plugin_cookies);
 
         self::write_epfs_view(self::$epf_id, $folder_view);
 
@@ -129,14 +124,20 @@ class Starnet_Epfs_Handler
     }
 
     /**
-     * @param bool $first_run
      * @param object $plugin_cookies
      * @return void
      */
-    private static function ensure_no_internet_epfs_created($first_run, &$plugin_cookies)
+    private static function ensure_no_internet_epfs_created(&$plugin_cookies)
     {
         if (!self::$enabled || self::$no_internet_epfs_created)
             return;
+
+        $first_run = false;
+        if (is_file(self::first_run_path())) {
+            $first_run = true;
+            unlink(self::first_run_path());
+            hd_debug_print("First run", true);
+        }
 
         if ($first_run || !is_file(self::get_epfs_path(self::$no_internet_epfs))) {
             self::write_epfs_view(self::$no_internet_epfs, self::$dummy_epfs_screen->get_folder_view_for_epf(true, $plugin_cookies));
@@ -201,6 +202,11 @@ class Starnet_Epfs_Handler
     public static function warmed_up_path()
     {
         return get_temp_path('epfs_warmed_up');
+    }
+
+    public static function first_run_path()
+    {
+        return get_temp_path('epfs_first_run');
     }
 
     public static function async_worker_warmed_up_path()

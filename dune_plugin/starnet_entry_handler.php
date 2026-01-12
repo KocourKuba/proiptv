@@ -218,7 +218,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case ACTION_RELOAD:
                 $first_run = isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep);
-                if (!$this->plugin->load_channels($plugin_cookies, $first_run)) {
+                if ($first_run) {
+                    file_put_contents(Starnet_Epfs_Handler::first_run_path(), '');
+                }
+
+                if (!$this->plugin->load_channels($plugin_cookies, true)) {
                     hd_debug_print("Failed to load channels!");
                     return Action_Factory::show_title_dialog(
                         TR::t('err_load_playlist'),
@@ -226,8 +230,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         $this->open_playlist_screen($plugin_cookies)
                     );
                 }
-                Starnet_Epfs_Handler::update_epfs_file($plugin_cookies, $first_run);
-                return Action_Factory::refresh_entry_points();
+                $actions[] = Action_Factory::refresh_entry_points();
+                $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+                Action_Factory::invalidate_epfs_folders($plugin_cookies);
+                return Action_Factory::composite($actions);
 
             case self::ACTION_CONTINUE_UNINSTALL:
                 $action = color_palette_restore();
@@ -274,6 +280,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                     case self::ACTION_UPDATE_EPFS:
                         $first_run = isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep);
+                        if ($first_run) {
+                            file_put_contents(Starnet_Epfs_Handler::first_run_path(), '');
+                        }
+
                         if (!$this->plugin->load_channels($plugin_cookies, $first_run)) {
                             hd_debug_print("Failed to load channels!");
                             return Action_Factory::show_title_dialog(
@@ -282,7 +292,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                 $this->open_playlist_screen($plugin_cookies)
                             );
                         }
-                        Starnet_Epfs_Handler::update_epfs_file($plugin_cookies, $first_run);
+                        Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
                         return Action_Factory::refresh_entry_points();
 
                     case self::ACTION_INSTALL:
