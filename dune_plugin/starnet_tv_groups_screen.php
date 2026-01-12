@@ -647,8 +647,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
     private function get_visible_groups_count($include_all = false)
     {
         $visible = 0;
-        foreach ($this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ENABLED) as $group_row) {
-            $group_id = $group_row[COLUMN_GROUP_ID];
+        foreach ($this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ALL, COLUMN_GROUP_ID) as $group_id) {
             if ($this->plugin->is_vod_playlist() && $group_id !== VOD_GROUP_ID) continue;
 
             switch ($group_id) {

@@ -474,8 +474,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         $dummy_rows = array();
         $dummy_headers = array();
         $this->create_row($dummy_rows, $dummy_headers, '__dummy__row__');
-        foreach ($this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ENABLED) as $group_row) {
-            switch ($group_row[COLUMN_GROUP_ID]) {
+        foreach ($this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ALL, COLUMN_GROUP_ID) as $group_id) {
+            switch ($group_id) {
                 case TV_ALL_CHANNELS_GROUP_ID:
                     $this->get_all_channels_row($all_channels_rows, $all_channels_headers);
                     break;

@@ -1073,7 +1073,7 @@ class Dune_Default_Sqlite_Engine
         $query = "SELECT * FROM $groups_info_table WHERE $where ORDER by ROWID;";
         $rows = $this->sql_playlist->fetch_array($query);
         if ($column !== null) {
-            $rows = extract_column($rows, COLUMN_GROUP_ID);
+            $rows = extract_column($rows, $column);
         }
 
         return $rows;

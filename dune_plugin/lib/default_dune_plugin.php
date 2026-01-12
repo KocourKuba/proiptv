@@ -4075,6 +4075,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $query = '';
         foreach ($special_group as $group) {
+            $group['disabled'] = 0;
             $group['special'] = 1;
             $values = Sql_Wrapper::sql_make_insert_list($group);
             $query .= "INSERT OR IGNORE INTO $groups_info_table $values;";
