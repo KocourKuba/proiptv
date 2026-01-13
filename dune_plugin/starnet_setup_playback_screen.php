@@ -63,18 +63,6 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
         $this->plugin->create_setup_header($defs);
 
         //////////////////////////////////////
-        // Per channel zoom
-        $per_channel_zoom = $this->plugin->get_setting(PARAM_PER_CHANNELS_ZOOM, SwitchOnOff::on);
-        Control_Factory::add_image_button($defs, $this, PARAM_PER_CHANNELS_ZOOM,
-            TR::t('setup_per_channel_zoom'), SwitchOnOff::translate($per_channel_zoom), SwitchOnOff::to_image($per_channel_zoom));
-
-        //////////////////////////////////////
-        // Force detection stream
-        $force_detection = $this->plugin->get_setting(PARAM_DUNE_FORCE_TS, SwitchOnOff::off);
-        Control_Factory::add_image_button($defs, $this, PARAM_DUNE_FORCE_TS,
-            TR::t('setup_channels_dune_force_ts'), SwitchOnOff::translate($force_detection), SwitchOnOff::to_image($force_detection));
-
-        //////////////////////////////////////
         // buffering time
         $show_buf_time_ops = array();
         $show_buf_time_ops[1000] = TR::t('setup_buffer_sec_default__1', "1");
@@ -97,38 +85,52 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
             $params,
             true);
 
+        if (!$this->plugin->is_vod_playlist()) {
+            //////////////////////////////////////
+            // archive delay time
+            $show_delay_time_ops = array();
+            $show_delay_time_ops[60] = TR::t('setup_buffer_sec_default__1', "60");
+            $show_delay_time_ops[10] = TR::t('setup_buffer_sec__1', "10");
+            $show_delay_time_ops[20] = TR::t('setup_buffer_sec__1', "20");
+            $show_delay_time_ops[30] = TR::t('setup_buffer_sec__1', "30");
+            $show_delay_time_ops[2 * 60] = TR::t('setup_buffer_sec__1', "120");
+            $show_delay_time_ops[3 * 60] = TR::t('setup_buffer_sec__1', "180");
+            $show_delay_time_ops[5 * 60] = TR::t('setup_buffer_sec__1', "300");
+
+            $delay = $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60);
+            hd_debug_print("Current archive delay: $delay");
+            Control_Factory::add_combobox($defs,
+                $this,
+                PARAM_ARCHIVE_DELAY_TIME,
+                TR::t('setup_delay_time'),
+                $delay,
+                $show_delay_time_ops,
+                Control_Factory::SCR_CONTROLS_WIDTH,
+                $params,
+                true);
+
+            //////////////////////////////////////
+            // Per channel zoom
+            $per_channel_zoom = $this->plugin->get_setting(PARAM_PER_CHANNELS_ZOOM, SwitchOnOff::on);
+            Control_Factory::add_image_button($defs, $this, PARAM_PER_CHANNELS_ZOOM,
+                TR::t('setup_per_channel_zoom'), SwitchOnOff::translate($per_channel_zoom), SwitchOnOff::to_image($per_channel_zoom));
+
+            //////////////////////////////////////
+            // catchup settings
+
+            $catchup_ops[ATTR_CATCHUP_UNKNOWN] = TR::t('by_default');
+            $catchup_ops[ATTR_CATCHUP_SHIFT] = ATTR_CATCHUP_SHIFT;
+            $catchup_ops[ATTR_CATCHUP_FLUSSONIC] = ATTR_CATCHUP_FLUSSONIC;
+            $catchup_idx = safe_get_value($pl_params, PARAM_USER_CATCHUP, ATTR_CATCHUP_UNKNOWN);
+            Control_Factory::add_combobox($defs, $this, PARAM_USER_CATCHUP, TR::t('setup_channels_archive_type'),
+                $catchup_idx, $catchup_ops, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+        }
+
         //////////////////////////////////////
-        // archive delay time
-        $show_delay_time_ops = array();
-        $show_delay_time_ops[60] = TR::t('setup_buffer_sec_default__1', "60");
-        $show_delay_time_ops[10] = TR::t('setup_buffer_sec__1', "10");
-        $show_delay_time_ops[20] = TR::t('setup_buffer_sec__1', "20");
-        $show_delay_time_ops[30] = TR::t('setup_buffer_sec__1', "30");
-        $show_delay_time_ops[2 * 60] = TR::t('setup_buffer_sec__1', "120");
-        $show_delay_time_ops[3 * 60] = TR::t('setup_buffer_sec__1', "180");
-        $show_delay_time_ops[5 * 60] = TR::t('setup_buffer_sec__1', "300");
-
-        $delay = $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60);
-        hd_debug_print("Current archive delay: $delay");
-        Control_Factory::add_combobox($defs,
-            $this,
-            PARAM_ARCHIVE_DELAY_TIME,
-            TR::t('setup_delay_time'),
-            $delay,
-            $show_delay_time_ops,
-            Control_Factory::SCR_CONTROLS_WIDTH,
-            $params,
-            true);
-
-        //////////////////////////////////////
-        // catchup settings
-
-        $catchup_ops[ATTR_CATCHUP_UNKNOWN] = TR::t('by_default');
-        $catchup_ops[ATTR_CATCHUP_SHIFT] = ATTR_CATCHUP_SHIFT;
-        $catchup_ops[ATTR_CATCHUP_FLUSSONIC] = ATTR_CATCHUP_FLUSSONIC;
-        $catchup_idx = safe_get_value($pl_params, PARAM_USER_CATCHUP, ATTR_CATCHUP_UNKNOWN);
-        Control_Factory::add_combobox($defs, $this, PARAM_USER_CATCHUP, TR::t('setup_channels_archive_type'),
-            $catchup_idx, $catchup_ops, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+        // Force detection stream
+        $force_detection = $this->plugin->get_setting(PARAM_DUNE_FORCE_TS, SwitchOnOff::off);
+        Control_Factory::add_image_button($defs, $this, PARAM_DUNE_FORCE_TS,
+            TR::t('setup_channels_dune_force_ts'), SwitchOnOff::translate($force_detection), SwitchOnOff::to_image($force_detection));
 
         //////////////////////////////////////
         // UserAgent

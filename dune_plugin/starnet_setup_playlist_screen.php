@@ -113,20 +113,22 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
                 TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
         }
 
-        //////////////////////////////////////
-        // Category settings
-        Control_Factory::add_image_button($defs, $this, self::ACTION_EDIT_CATEGORY_SCREEN, TR::t('setup_category_title'),
-            TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
+        if (!$this->plugin->is_vod_playlist()) {
+            //////////////////////////////////////
+            // Category settings
+            Control_Factory::add_image_button($defs, $this, self::ACTION_EDIT_CATEGORY_SCREEN, TR::t('setup_category_title'),
+                TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
-        //////////////////////////////////////
-        // Interface NewUI settings
-        Control_Factory::add_image_button($defs, $this, ACTION_EDIT_NEWUI_SETTINGS, TR::t('setup_interface_newui_title'),
-            TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
+            //////////////////////////////////////
+            // Interface NewUI settings
+            Control_Factory::add_image_button($defs, $this, ACTION_EDIT_NEWUI_SETTINGS, TR::t('setup_interface_newui_title'),
+                TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
-        //////////////////////////////////////
-        // EPG settings
-        Control_Factory::add_image_button($defs, $this, self::CONTROL_EPG_SCREEN, TR::t('setup_epg_settings'),
-            TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
+            //////////////////////////////////////
+            // EPG settings
+            Control_Factory::add_image_button($defs, $this, self::CONTROL_EPG_SCREEN, TR::t('setup_epg_settings'),
+                TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
+        }
 
         //////////////////////////////////////
         // Streaming settings
