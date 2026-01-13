@@ -77,6 +77,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
         foreach (array(30, 60, 90, 120, 180, 240, 300) as $sec) {
             $time_range[$sec] = $sec;
         }
+        $params = array();
         Control_Factory::add_combobox($defs, $this, PARAM_CURL_CONNECT_TIMEOUT, TR::t('setup_connect_timeout'),
             $this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30),
             $time_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);

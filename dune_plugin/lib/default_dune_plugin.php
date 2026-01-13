@@ -1014,27 +1014,29 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $this->CreatePlaylistSettingsTable($playlist_id);
-
-        // init playlist parser
-        if (!$this->init_playlist_parser()) {
-            return false;
-        }
-
+        $this->init_screen_view_parameters($this->get_background_image());
         $this->init_user_agent();
 
-        // Parse playlist.
-        // if playlist is expired it will downloaded
-        // in case of download or parse error returns false
-        // if parse success database with playlist is attached
+        if ($this->is_vod_playlist()) {
+            hd_debug_print("VOD playlist inited", true);
+        } else {
+            // init playlist parser
+            if (!$this->init_playlist_parser()) {
+                return false;
+            }
 
-        if (!$this->load_and_parse_m3u_iptv_playlist($force)) {
-            return false;
+            // Parse playlist.
+            // if playlist is expired it will downloaded
+            // in case of download or parse error returns false
+            // if parse success database with playlist is attached
+
+            if (!$this->load_and_parse_m3u_iptv_playlist($force)) {
+                return false;
+            }
         }
 
         hd_debug_print("Database initialized.");
         hd_print_separator();
-
-        $this->init_screen_view_parameters($this->get_background_image());
 
         return true;
     }
@@ -1078,22 +1080,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-        $perf = new Perf_Collector();
-        $perf->reset('start');
-
-        $this->update_ui_settings();
-
         // Init VOD.
-        $this->init_vod($reload_playlist);
+        $vod_enabled = $this->init_vod_class($reload_playlist);
+        $vod_playlist = $this->is_vod_playlist();
 
-        if ($this->is_vod_playlist()) {
+        $enable_vod_icon = SwitchOnOff::to_def($vod_enabled && $vod_playlist && $this->get_bool_parameter(PARAM_SHOW_VOD_ICON, false));
+        $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
+        hd_debug_print("Show VOD icon: $enable_vod_icon", true);
+
+        if ($vod_playlist) {
             hd_debug_print("VOD playlist inited", true);
+            $this->channels_loaded = true;
             return true;
         }
 
-        $enable_vod_icon = SwitchOnOff::to_def($this->vod_enabled && $this->get_bool_parameter(PARAM_SHOW_VOD_ICON, false));
-        $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
-        hd_debug_print("Show VOD icon: $enable_vod_icon", true);
+        $this->update_ui_settings();
 
         Default_Dune_Plugin::cleanup_stalled_locks();
 
@@ -1103,6 +1104,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $this->init_epg_manager();
         $this->cleanup_active_xmltv_source();
+
+        $perf = new Perf_Collector();
+        $perf->reset('start');
 
         if ($this->use_xmltv || $this->picons_source !== PLAYLIST_PICONS) {
             Epg_Manager_Xmltv::set_xmltv_sources($this->get_active_sources());
@@ -2225,7 +2229,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-        return safe_get_value($params, PARAM_PL_TYPE) === CONTROL_PLAYLIST_VOD;
+        return safe_get_value($params, PARAM_PLAYLIST_TYPE) === CONTROL_PLAYLIST_VOD;
     }
 
     /**
@@ -4163,7 +4167,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @return bool
      */
-    public function init_vod($force = false)
+    public function init_vod_class($force = false)
     {
         if (!$force && $this->vod !== null) {
             return true;

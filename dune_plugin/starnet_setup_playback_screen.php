@@ -56,7 +56,7 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
         $defs = array();
 
         $playlist_id = isset($media_url->{PARAM_PLAYLIST_ID}) ? $media_url->{PARAM_PLAYLIST_ID} : $this->plugin->get_active_playlist_id();
-        $params = $this->plugin->get_playlist_parameters($playlist_id);
+        $pl_params = $this->plugin->get_playlist_parameters($playlist_id);
 
         //////////////////////////////////////
         // Plugin name
@@ -126,33 +126,33 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
         $catchup_ops[ATTR_CATCHUP_UNKNOWN] = TR::t('by_default');
         $catchup_ops[ATTR_CATCHUP_SHIFT] = ATTR_CATCHUP_SHIFT;
         $catchup_ops[ATTR_CATCHUP_FLUSSONIC] = ATTR_CATCHUP_FLUSSONIC;
-        $catchup_idx = safe_get_value($params, PARAM_USER_CATCHUP, ATTR_CATCHUP_UNKNOWN);
+        $catchup_idx = safe_get_value($pl_params, PARAM_USER_CATCHUP, ATTR_CATCHUP_UNKNOWN);
         Control_Factory::add_combobox($defs, $this, PARAM_USER_CATCHUP, TR::t('setup_channels_archive_type'),
             $catchup_idx, $catchup_ops, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////
         // UserAgent
 
-        $user_agent = safe_get_value($params, PARAM_USER_AGENT, '');
+        $user_agent = safe_get_value($pl_params, PARAM_USER_AGENT, '');
         Control_Factory::add_text_field($defs, $this, PARAM_USER_AGENT, TR::t('setup_channels_user_agent'), $user_agent,
             false, false, false, true, Control_Factory::SCR_CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
         // enable/disable dune_params
 
-        $enable_dune_params = safe_get_value($params, PARAM_USE_DUNE_PARAMS, SwitchOnOff::on);
+        $enable_dune_params = safe_get_value($pl_params, PARAM_USE_DUNE_PARAMS, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, PARAM_USE_DUNE_PARAMS,
             TR::t('setup_channels_enable_dune_params'), SwitchOnOff::translate($enable_dune_params), SwitchOnOff::to_image($enable_dune_params));
 
         //////////////////////////////////////
         // dune_params
 
-        $dune_params_str = safe_get_value($params, PARAM_DUNE_PARAMS, '');
+        $dune_params_str = safe_get_value($pl_params, PARAM_DUNE_PARAMS, '');
         if ($dune_params_str === '[]') {
             $dune_params_str = '';
         }
         $provider = $this->plugin->get_active_provider();
-        if (empty($dune_params_str) && safe_get_value($params, PARAM_TYPE) === PARAM_PROVIDER) {
+        if (empty($dune_params_str) && safe_get_value($pl_params, PARAM_TYPE) === PARAM_PROVIDER) {
             $dune_params_str = $provider->getConfigValue(PARAM_DUNE_PARAMS);
         }
 

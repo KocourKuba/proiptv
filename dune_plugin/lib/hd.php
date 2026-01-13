@@ -876,7 +876,7 @@ class HD
      * @param int $max_size
      * @return string
      */
-    public static function string_ellipsis($string, $max_size = 36)
+    public static function string_ellipsis($string, $max_size = 34)
     {
         if (is_null($string))
             return "";

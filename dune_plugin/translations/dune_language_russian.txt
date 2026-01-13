@@ -435,6 +435,7 @@ err_required_firmware = r21 или выше
 err_no_sqlite = В этой прошивке нет поддержки SQLite3!
 err_load_playlist = Ошибка загрузки плейлиста!
 err_empty_playlist = Пустой или неправильный плейлист!
+err_vod_playlist = IPTV каналы недоступны для плейлиста медиатеки!
 err_init_database = Ошибка инициализации базы данных плейлиста!
 err_file_exist = Этот плейлист уже есть в списке!
 err_incorrect_url = Некорректная ссылка, должна начинаться с http:// или https://

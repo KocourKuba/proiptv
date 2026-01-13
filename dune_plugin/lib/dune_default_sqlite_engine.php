@@ -176,8 +176,8 @@ class Dune_Default_Sqlite_Engine
                     foreach ($param as $playlist_id => $stg) {
                         if (empty($playlist_id)) continue;
 
-                        if (($stg->type === PARAM_FILE || $stg->type === PARAM_LINK) && !isset($stg->params[PARAM_PL_TYPE])) {
-                            $stg->params[PARAM_PL_TYPE] = CONTROL_PLAYLIST_IPTV;
+                        if (($stg->type === PARAM_FILE || $stg->type === PARAM_LINK) && !isset($stg->params[PARAM_PLAYLIST_TYPE])) {
+                            $stg->params[PARAM_PLAYLIST_TYPE] = CONTROL_PLAYLIST_IPTV;
                         }
 
                         if ($stg->type === PARAM_PROVIDER) {

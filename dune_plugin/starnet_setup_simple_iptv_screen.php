@@ -73,9 +73,9 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
         hd_debug_print($media_url, true);
 
         $playlist_id = isset($media_url->{PARAM_PLAYLIST_ID}) ? $media_url->{PARAM_PLAYLIST_ID} : $this->plugin->get_active_playlist_id();
-        $params = $this->plugin->get_playlist_parameters($playlist_id);
-        $type = safe_get_value($params, PARAM_TYPE);
-
+        $pl_params = $this->plugin->get_playlist_parameters($playlist_id);
+        $uri_type = safe_get_value($pl_params, PARAM_TYPE);
+        hd_debug_print("Uri type: $uri_type", true);
         $defs = array();
 
         //////////////////////////////////////
@@ -85,34 +85,24 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // URI
 
-        $uri = safe_get_value($params, PARAM_URI);
-        if ($type === PARAM_FILE) {
+        $uri = safe_get_value($pl_params, PARAM_URI);
+        if ($uri_type === PARAM_FILE) {
             $uri_str = HD::string_ellipsis($uri);
             Control_Factory::add_image_button($defs, $this, ACTION_CHOOSE_FILE, TR::t('playlist'), $uri_str, get_image_path('m3u_file.png'));
-        } else if ($type === PARAM_LINK) {
-            Control_Factory::add_text_field($defs, $this, CONTROL_URL_PATH, TR::t('playlist'), $uri,
+        } else if ($uri_type === PARAM_LINK) {
+            Control_Factory::add_text_field($defs, $this, PARAM_URI, TR::t('playlist'), $uri,
                 false, false, false, true, Control_Factory::SCR_CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
         // Type
 
-        $playlist_type = safe_get_value($params, PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
+        $playlist_type = safe_get_value($pl_params, PARAM_PLAYLIST_TYPE, CONTROL_PLAYLIST_IPTV);
+        hd_debug_print("Playlist type: $playlist_type", true);
         $opts[CONTROL_PLAYLIST_IPTV] = TR::t('edit_list_playlist_iptv');
         $opts[CONTROL_PLAYLIST_VOD] = TR::t('edit_list_playlist_vod');
-        Control_Factory::add_combobox($defs, $this, CONTROL_EDIT_TYPE, TR::t('edit_list_playlist_type'),
+        Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_TYPE, TR::t('edit_list_playlist_type'),
             $playlist_type, $opts, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-
-        //////////////////////////////////////
-        // ID Mapper
-
-        $id_mapper = safe_get_value($params, PARAM_ID_MAPPER, CONTROL_DETECT_ID);
-        $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
-        Control_Factory::add_combobox($defs, $this, CONTROL_DETECT_ID, TR::t('edit_list_playlist_detect_id'),
-            $id_mapper, $mapper_ops, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-
-        //////////////////////////////////////
-        // Cache time
 
         $caching_range[PHP_INT_MAX] = TR::t('setup_cache_time_never');
 
@@ -123,12 +113,24 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
             $caching_range[$hour] = TR::t('setup_cache_time_d__1', $hour / 24);
         }
 
-        $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME_IPTV, 1);
-        Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_CACHE_TIME_IPTV,
-            TR::t('setup_cache_time_iptv'), $cache_time,
-            $caching_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+        //////////////////////////////////////
+        // ID Mapper
 
-        if ($playlist_type === CONTROL_PLAYLIST_VOD) {
+        if ($playlist_type === CONTROL_PLAYLIST_IPTV) {
+            $id_mapper = safe_get_value($pl_params, PARAM_ID_MAPPER, CONTROL_DETECT_ID);
+            $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
+            Control_Factory::add_combobox($defs, $this, CONTROL_DETECT_ID, TR::t('edit_list_playlist_detect_id'),
+                $id_mapper, $mapper_ops, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+
+            //////////////////////////////////////
+            // Cache time IPTV
+            $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME_IPTV, 1);
+            Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_CACHE_TIME_IPTV,
+                TR::t('setup_cache_time_iptv'), $cache_time,
+                $caching_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+        } else if ($playlist_type === CONTROL_PLAYLIST_VOD) {
+            //////////////////////////////////////
+            // Cache time VOD
             $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME_VOD, 1);
             Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_CACHE_TIME_VOD,
                 TR::t('setup_cache_time_vod'), $cache_time,
@@ -160,16 +162,10 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                 }
                 return self::make_return_action($parent_media_url, $ret_action);
 
-            case CONTROL_URL_PATH:
+            case PARAM_URI:
+            case PARAM_PLAYLIST_TYPE:
                 $this->force_parent_reload = true;
-                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{$control_id});
-                break;
-
-            case CONTROL_PLAYLIST_IPTV:
-                $this->force_parent_reload = true;
-                $this->plugin->set_playlist_parameter($playlist_id,
-                    PARAM_PL_TYPE,
-                    safe_get_member($user_input, CONTROL_EDIT_TYPE, $control_id));
+                $this->plugin->set_playlist_parameter($playlist_id, $control_id, $user_input->{$control_id});
                 break;
 
             case ACTION_CHOOSE_FILE:

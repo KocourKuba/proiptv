@@ -446,7 +446,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     {
         hd_debug_print(null, true);
 
-        $defs[] = GComps_Factory::label_v2(GComp_Geom::place_center(), null, TR::t('err_empty_playlist'), 1, "#AFAFA0FF", 60);
+        $message = $this->plugin->is_vod_playlist() ? TR::t('err_vod_playlist') : TR::t('err_empty_playlist');
+        $defs[] = GComps_Factory::label_v2(GComp_Geom::place_center(), null, $message, 1, "#AFAFA0FF", 60);
 
         $rows[] = Rows_Factory::vgap_row(50);
         $rows[] = Rows_Factory::gcomps_row("single_row", $defs, null, 1920, 500);

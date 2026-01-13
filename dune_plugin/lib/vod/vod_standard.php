@@ -766,7 +766,7 @@ class vod_standard extends Abstract_Vod
 
         $params = $this->plugin->get_playlist_parameters($playlist_id);
         $type = safe_get_value($params, PARAM_TYPE);
-        $pl_type = safe_get_value($params, PARAM_PL_TYPE);
+        $pl_type = safe_get_value($params, PARAM_PLAYLIST_TYPE);
 
         if ($type === PARAM_PROVIDER) {
             $provider = $this->plugin->get_active_provider();

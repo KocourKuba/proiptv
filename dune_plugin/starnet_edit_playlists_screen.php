@@ -814,7 +814,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
         $params[PARAM_TYPE] = $type;
         $params[PARAM_URI] = $uri;
-        $params[PARAM_PL_TYPE] = $pl_type;
+        $params[PARAM_PLAYLIST_TYPE] = $pl_type;
 
         $tmp_file = get_temp_path($playlist_id);
         if ($type === PARAM_FILE) {
@@ -942,7 +942,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                     $detailed_info = TR::t('setup_channels_info__4',
                         $title,
                         $uri,
-                        safe_get_value($params, PARAM_PL_TYPE),
+                        safe_get_value($params, PARAM_PLAYLIST_TYPE),
                         $mapper_ops[$id_map]
                     );
                     $missed = ($type === PARAM_FILE && !file_exists($uri));

@@ -435,6 +435,7 @@ err_required_firmware = r21 or higher
 err_no_sqlite = SQLite3 is not supported by this firmware!
 err_load_playlist = Playlist loading error!
 err_empty_playlist = Empty or incorrect playlist!
+err_vod_playlist = IPTV channels not available for the VOD playlist!
 err_init_database = Playlist database initialization error!
 err_file_exist = Playlist already exist!
 err_incorrect_url = Incorrect URL, must begin from http:// or https://
