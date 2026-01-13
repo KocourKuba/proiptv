@@ -89,10 +89,14 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // clear epg cache
+        $is_json = $engine === ENGINE_JSON;
         Control_Factory::add_image_button($defs, $this, self::CONTROL_ITEMS_REFRESH_EPG_CACHE,
-            TR::t('entry_epg_cache_refresh'), TR::t('refresh'), get_image_path('refresh.png'));
+            $is_json ? TR::t('entry_epg_cache_clear') : TR::t('entry_epg_cache_refresh'),
+            $is_json ? TR::t('clear') : TR::t('refresh'),
+            get_image_path($is_json ? 'remove.png' : 'refresh.png')
+        );
 
-        if ($engine === ENGINE_JSON && isset($epg_presets)) {
+        if ($is_json && isset($epg_presets)) {
             if (count($epg_presets) > 1) {
                 $preset = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
                 $presets = array();

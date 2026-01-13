@@ -25,6 +25,7 @@ search__1 = Поиск: %s
 new_search = Новый поиск
 loading = Загрузка...
 select = Выбрать
+select_enter = Выбрать (ENTER)
 time = Время:
 export_list = Экспорт списка
 enter_name = Введите имя

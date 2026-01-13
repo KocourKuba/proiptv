@@ -25,6 +25,7 @@ search__1 = Search: %s
 new_search = New search
 loading = Loading...
 select = Select
+select_enter = Select (ENTER)
 time = Time:
 export_list = Export list
 enter_name = Enter name
