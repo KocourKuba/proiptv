@@ -2683,14 +2683,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function get_plugin_title()
     {
         $playlist_parameters = $this->get_playlist_parameters($this->get_active_playlist_id());
-        $name = safe_get_value($playlist_parameters, PARAM_NAME, '');
-        $title = $this->plugin_info['app_caption'];
-        if (!empty($name)) {
-            $title .= " ($name)";
-        }
+        $title = safe_get_value($playlist_parameters, PARAM_NAME);
+        if (safe_get_value($playlist_parameters, PARAM_TYPE) === PARAM_PROVIDER) {
+            $provider = $this->create_provider_class(safe_get_value($playlist_parameters, PARAM_PROVIDER));
+            if (!is_null($provider)) {
+                if ($title !== $provider->getName()) {
+                    $title .= " ({$provider->getName()})";
+                }
+            }
 
-        $provider = $this->get_active_provider();
-        if (!is_null($provider)) {
             $playlists = $provider->GetPlaylistsIptv();
             $provider_playlist_id = safe_get_value($playlist_parameters, PARAM_PLAYLIST_IPTV_ID);
             if ($provider_playlist_id !== PARAM_DEFAULT_CONFIG_PLAYLIST_ID) {
@@ -2698,7 +2699,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        return $title;
+        $app_title = $this->plugin_info['app_caption'];
+        if (!empty($title)) {
+            $app_title .= " • $title";
+        }
+
+        return $app_title;
     }
 
     /**
