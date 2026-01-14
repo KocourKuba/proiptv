@@ -60,7 +60,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
      */
     public static function get_epg_url($provider, $preset, $channel_row, $day_start_ts, $epg_id)
     {
-        hd_debug_print("get_epg_url: ", json_format_unescaped($preset));
         $alias = empty($preset[EPG_JSON_PRESET_ALIAS]) ? $provider->getId() : $preset[EPG_JSON_PRESET_ALIAS];
         hd_debug_print("Using alias '$alias' for preset '{$preset[EPG_JSON_PRESET_NAME]}'");
         $epg_url = str_replace(array(MACRO_API, MACRO_PROVIDER), array($provider->getApiUrl(), $alias), $preset[EPG_JSON_SOURCE]);

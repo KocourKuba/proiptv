@@ -242,11 +242,11 @@
         "id_map": "tvg-name",
         "epg_presets": [
           {
-            "name": "tvteam"
-          },
-          {
             "name": "drm-play",
             "alias": "tvteam"
+          },
+          {
+            "name": "tvteam"
           }
         ],
         "playlists": {
@@ -264,10 +264,8 @@
           "mpegts": "MPEG-TS"
         },
         "xmltv_sources": [
-          "http://epg.team/tvteam.xml.gz",
-          "http://epg.team/tvteam.3.3.xml.tar.gz",
-          "http://epg.team/tvteam.5.5.xml.tar.gz",
-          "http://epg.team/tvteam.7.7.xml.tar.gz"
+          "http://epg.team/tvteam.1.1.xml.gz",
+          "http://epg.team/tvteam.3.1.xml.tar.gz"
         ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
         "url_subst": {
@@ -1539,11 +1537,11 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/stream\\/(?<id>.+)\\/.+\\/.+\\.m3u8$/",
         "epg_presets": [
           {
-            "name": "tvteam"
-          },
-          {
             "name": "drm-play",
             "alias": "tvteam"
+          },
+          {
+            "name": "tvteam"
           }
         ],
         "playlists": {
@@ -1705,11 +1703,11 @@
         "id_map": "tvg-id",
         "epg_presets": [
           {
-            "name": "tvteam"
+            "name": "drm-play"
           },
           {
-            "name": "drm-play"
-            }
+            "name": "tvteam"
+          }
         ],
         "playlists": {
           "default": {
