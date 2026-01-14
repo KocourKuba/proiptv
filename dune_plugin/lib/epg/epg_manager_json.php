@@ -52,16 +52,18 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
     /**
      * @param api_default $provider
-     * @param array $selected_preset
+     * @param array $preset
      * @param array $channel_row
      * @param int $day_start_ts
      * @param string $epg_id
      * @return string|null
      */
-    public static function get_epg_url($provider, $selected_preset, $channel_row, $day_start_ts, &$epg_id)
+    public static function get_epg_url($provider, $preset, $channel_row, $day_start_ts, $epg_id)
     {
-        $alias = empty($selected_preset[EPG_JSON_PRESET_ALIAS]) ? $provider->getId() : $selected_preset[EPG_JSON_PRESET_ALIAS];
-        $epg_url = str_replace(array(MACRO_API, MACRO_PROVIDER), array($provider->getApiUrl(), $alias), $selected_preset[EPG_JSON_SOURCE]);
+        hd_debug_print("get_epg_url: ", json_format_unescaped($preset));
+        $alias = empty($preset[EPG_JSON_PRESET_ALIAS]) ? $provider->getId() : $preset[EPG_JSON_PRESET_ALIAS];
+        hd_debug_print("Using alias '$alias' for preset '{$preset[EPG_JSON_PRESET_NAME]}'");
+        $epg_url = str_replace(array(MACRO_API, MACRO_PROVIDER), array($provider->getApiUrl(), $alias), $preset[EPG_JSON_SOURCE]);
         $epg_url = $provider->replace_macros($epg_url);
 
         $epg_url = str_replace(MACRO_TIMESTAMP, $day_start_ts, $epg_url);
@@ -69,29 +71,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         if (strpos($epg_url, MACRO_ID) !== false) {
             hd_debug_print("using ID: {$channel_row[COLUMN_CHANNEL_ID]}", true);
             $epg_url = str_replace(MACRO_ID, $channel_row[COLUMN_CHANNEL_ID], $epg_url);
-        }
-
-        $epg_ids = Default_Dune_Plugin::make_epg_ids($channel_row);
-        if (empty($epg_ids[ATTR_TVG_NAME])) {
-            $epg_ids[ATTR_TVG_NAME] = $channel_row[COLUMN_TITLE];
-        }
-
-        if (empty($epg_ids[ATTR_TVG_ID])) {
-            $epg_ids[ATTR_TVG_ID] = $channel_row[COLUMN_CHANNEL_ID];
-        }
-
-        if (isset($selected_preset[EPG_JSON_EPG_MAP])) {
-            $epg_id = $epg_ids[$selected_preset[EPG_JSON_EPG_MAP]];
-            hd_debug_print("EPG ID map: $epg_id", true);
-        } else {
-            $epg_id = '';
-            foreach (array('epg_id', ATTR_TVG_ID, ATTR_TVG_NAME, 'name', 'id') as $key) {
-                if (!empty($epg_ids[$key])) {
-                    $epg_id = $epg_ids[$key];
-                    break;
-                }
-            }
-            hd_debug_print("Found epg id: '$epg_id'", true);
         }
 
         $cur_time = from_local_time_zone_offset($day_start_ts);
@@ -126,97 +105,107 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 return $day_epg;
             }
 
-            $selected_preset = $provider->GetSelectedPreset();
-            if (empty($selected_preset)) {
-                throw new Exception("Selected preset not exist in plugin configuration");
-            }
-
-            $epg_id = '';
-            $epg_url = Epg_Manager_Json::get_epg_url($provider, $selected_preset, $channel_row, $day_start_ts, $epg_id);
+            $epg_id = self::get_epg_id($channel_row);
             if (empty($epg_id)) {
                 throw new Exception("No EPG ID defined");
             }
 
-            if (empty($epg_url)) {
-                throw new Exception('EPG url is not generated');
-            }
-
+            // try to find in memory cache
+            // in JSON engine only one EPG ID is available
             $day_start_ts_str = format_datetime("Y-m-d H:i", $day_start_ts);
             if (isset(static::$epg_cache[$epg_id][$day_start_ts])) {
-                hd_debug_print("Memory cache: Load EPG ID: $epg_id for day start: $day_start_ts ($day_start_ts_str)");
-                $cached = true;
+                hd_debug_print("EPG memory cache: Load EPG ID: $epg_id for day start: $day_start_ts ($day_start_ts_str)");
                 $day_epg['items'] = static::$epg_cache[$epg_id][$day_start_ts];
                 return $day_epg;
             }
 
-            $epg_cache_file = self::$cache_dir . $provider->get_provider_playlist_id() . "_" . Hashed_Array::hash($epg_url) . ".cache";
-
-            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '{$channel_row[COLUMN_CHANNEL_ID]}' ({$channel_row[COLUMN_TITLE]})");
-            hd_debug_print("EPG url: $epg_url");
-
-            $from_cache = false;
-            $all_epg = array();
-            if (file_exists($epg_cache_file)) {
-                $now = time();
-                $mtime = filemtime($epg_cache_file);
-                $cache_expired = $mtime + $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1) * 3600;
-                if ($cache_expired > time()) {
-                    $all_epg = parse_json_file($epg_cache_file);
-                    $from_cache = true;
-                    hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
-                } else {
-                    hd_debug_print("EPG cache $epg_cache_file expired " . ($now - $cache_expired) . " sec ago. Timestamp $mtime. Remove cache file");
-                    safe_unlink($epg_cache_file);
+            foreach ($provider->getConfigValue(EPG_JSON_PRESETS, array()) as $preset) {
+                $config_preset = $this->plugin->get_configured_preset($preset);
+                if (empty($config_preset)) {
+                    continue;
                 }
-            }
 
-            if ($from_cache === false) {
-                hd_debug_print("Fetching EPG ID: '$epg_id' from server: $epg_url");
-                $all_epg = self::get_epg_json($epg_url, $provider, $selected_preset);
-                if (!empty($all_epg)) {
-                    hd_debug_print("Save EPG ID: '$epg_id' to file cache $epg_cache_file");
-                    store_to_json_file($epg_cache_file, $all_epg);
+                $epg_url = Epg_Manager_Json::get_epg_url($provider, $config_preset, $channel_row, $day_start_ts, $epg_id);
+                if (empty($epg_url)) {
+                    hd_debug_print("EPG url for preset '{$config_preset['name']}' is not generated");
+                    continue;
                 }
+
+                hd_debug_print("EPG url: $epg_url");
+                hd_debug_print("Try to load EPG ID: '$epg_id' for channel '{$channel_row[COLUMN_CHANNEL_ID]}' ({$channel_row[COLUMN_TITLE]})");
+
+                $epg_cache_file = self::$cache_dir . $provider->get_provider_playlist_id() . "_" . Hashed_Array::hash($epg_url) . ".cache";
+                hd_debug_print("Check cache file: $epg_cache_file");
+                $from_cache = false;
+                $all_epg = array();
+                if (file_exists($epg_cache_file)) {
+                    $now = time();
+                    $mtime = filemtime($epg_cache_file);
+                    $cache_expired = $mtime + $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1) * 3600;
+                    if ($cache_expired > time()) {
+                        $all_epg = parse_json_file($epg_cache_file);
+                        $from_cache = true;
+                        hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
+                    } else {
+                        hd_debug_print("EPG cache $epg_cache_file expired " . ($now - $cache_expired) . " sec ago. Timestamp $mtime. Remove cache file");
+                        safe_unlink($epg_cache_file);
+                    }
+                }
+
+                if ($from_cache === false) {
+                    hd_debug_print("Fetching EPG ID: '$epg_id' from server: $epg_url");
+                    $all_epg = self::get_epg_json($epg_url, $provider, $config_preset);
+                    if (!empty($all_epg)) {
+                        hd_debug_print("Save EPG ID: '$epg_id' to file cache $epg_cache_file");
+                        store_to_json_file($epg_cache_file, $all_epg);
+                    }
+                }
+
+                $counts = count($all_epg);
+                if ($counts === 0) {
+                    hd_debug_print("No EPG entries found for '$epg_url'");
+                    continue;
+                }
+
+                hd_debug_print("Total $counts EPG entries loaded");
+
+                $first_tm = key($all_epg);
+                $first = format_datetime("Y-m-d H:i", $first_tm);
+                $last_tm = $all_epg[key(array_slice($all_epg, -1, 1, true))][PluginTvEpgProgram::end_tm_sec];
+                $last = format_datetime("Y-m-d H:i", $last_tm);
+                hd_debug_print("Entries time range: $first ($first_tm) - $last ($last_tm)");
+                // filter out epg only for selected day
+                $day_end_ts = $day_start_ts + 86400;
+
+                if ($day_start_ts > $last_tm || $day_end_ts < $first_tm) {
+                    hd_debug_print("Selected time is out of range. Available EPG time range: $first - $last");
+                    continue;
+                }
+
+                if (LogSeverity::$is_debug) {
+                    $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
+                    $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
+                    hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l");
+                }
+
+                foreach ($all_epg as $program_start => $entry) {
+                    if ($program_start < $day_start_ts && $entry[PluginTvEpgProgram::end_tm_sec] < $day_start_ts) continue;
+                    if ($program_start >= $day_end_ts) break;
+
+                    $items[$program_start] = $entry;
+                }
+
+                if (empty($items)) {
+                    hd_debug_print("No EPG entries for selected time in available range");
+                    continue;
+                }
+
+                hd_debug_print("Memory cache: Store EPG ID: $epg_id for day start: $day_start_ts ($day_start_ts_str)");
+                self::$epg_cache[$epg_id][$day_start_ts] = $items;
             }
-
-            $counts = count($all_epg);
-            if ($counts === 0) {
-                throw new Exception("No EPG entries found");
-            }
-
-            hd_debug_print("Total $counts EPG entries loaded");
-
-            $first_tm = key($all_epg);
-            $first = format_datetime("Y-m-d H:i", $first_tm);
-            $last_tm = $all_epg[key(array_slice($all_epg, -1, 1, true))][PluginTvEpgProgram::end_tm_sec];
-            $last = format_datetime("Y-m-d H:i", $last_tm);
-            hd_debug_print("Entries time range: $first ($first_tm) - $last ($last_tm)");
-            // filter out epg only for selected day
-            $day_end_ts = $day_start_ts + 86400;
-
-            if ($day_start_ts > $last_tm || $day_end_ts < $first_tm) {
-                throw new Exception("Selected time is out of range. Available EPG time range: $first - $last");
-            }
-
-            if (LogSeverity::$is_debug) {
-                $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
-                $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
-                hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l");
-            }
-
-            foreach ($all_epg as $program_start => $entry) {
-                if ($program_start < $day_start_ts && $entry[PluginTvEpgProgram::end_tm_sec] < $day_start_ts) continue;
-                if ($program_start >= $day_end_ts) break;
-
-                $items[$program_start] = $entry;
-            }
-
             if (empty($items)) {
-                throw new Exception("No EPG entries for selected time in available range");
+                throw new Exception("No EPG entries for selected time in available range for all EPG presets");
             }
-
-            hd_debug_print("Memory cache: Store EPG ID: $epg_id for day start: $day_start_ts ($day_start_ts_str)");
-            self::$epg_cache[$epg_id][$day_start_ts] = $items;
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
             $day_epg['error'] = $ex->getMessage();
@@ -224,6 +213,37 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         }
         $day_epg['items'] = $items;
         return $day_epg;
+    }
+
+    /**
+     * @param array $channel_row
+     * @return string
+     */
+    public static function get_epg_id($channel_row)
+    {
+        $epg_ids = Default_Dune_Plugin::make_epg_ids($channel_row);
+        if (empty($epg_ids[ATTR_TVG_NAME])) {
+            $epg_ids[ATTR_TVG_NAME] = $channel_row[COLUMN_TITLE];
+        }
+
+        if (empty($epg_ids[ATTR_TVG_ID])) {
+            $epg_ids[ATTR_TVG_ID] = $channel_row[COLUMN_CHANNEL_ID];
+        }
+
+        if (isset($selected_preset[EPG_JSON_EPG_MAP])) {
+            $epg_id = $epg_ids[$selected_preset[EPG_JSON_EPG_MAP]];
+            hd_debug_print("EPG ID map: $epg_id", true);
+        } else {
+            $epg_id = '';
+            foreach (array('epg_id', ATTR_TVG_ID, ATTR_TVG_NAME, 'name', 'id') as $key) {
+                if (!empty($epg_ids[$key])) {
+                    $epg_id = $epg_ids[$key];
+                    break;
+                }
+            }
+            hd_debug_print("Found epg id: '$epg_id'", true);
+        }
+        return $epg_id;
     }
 
     ///////////////////////////////////////////////////////////////////////////////

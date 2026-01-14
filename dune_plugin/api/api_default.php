@@ -376,7 +376,6 @@ class api_default
         $epg_preset = $this->getConfigValue(EPG_JSON_PRESETS);
         if (!empty($epg_preset)) {
             $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;
-            $settings[PARAM_EPG_JSON_PRESET] = 0;
         }
 
         $detect_stream = $this->getConfigValue(PARAM_DUNE_FORCE_TS);
@@ -744,11 +743,12 @@ class api_default
 
     /**
      * @param string $val
+     * @param mixed|null $default
      * @return string|array|null
      */
-    public function getConfigValue($val)
+    public function getConfigValue($val, $default = null)
     {
-        return safe_get_value($this->config, $val);
+        return safe_get_value($this->config, $val, $default);
     }
 
     /**
@@ -1038,33 +1038,6 @@ class api_default
     {
         hd_debug_print(null, true);
         $this->SetProviderParameter(MACRO_QUALITY_ID, $quality);
-    }
-
-    /**
-     * @return array|false
-     */
-    public function GetSelectedPreset()
-    {
-        $preset_idx = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
-        $provider_presets = $this->getConfigValue(EPG_JSON_PRESETS);
-        if (!isset($provider_presets[$preset_idx])) {
-            hd_debug_print("No preset for selected provider");
-            return false;
-        }
-
-        $selected_preset = $provider_presets[$preset_idx];
-        hd_debug_print("selected preset: {$selected_preset[EPG_JSON_PRESET_NAME]}", true);
-        $preset = $this->plugin->get_epg_presets()->get($selected_preset[EPG_JSON_PRESET_NAME]);
-        if (empty($preset)) {
-            hd_debug_print("{$selected_preset[EPG_JSON_PRESET_NAME]} not exist in plugin configuration");
-            return false;
-        }
-
-        if (isset($selected_preset[EPG_JSON_PRESET_ALIAS])) {
-            $preset[EPG_JSON_PRESET_ALIAS] = $selected_preset[EPG_JSON_PRESET_ALIAS];
-        }
-
-        return $preset;
     }
 
     /**

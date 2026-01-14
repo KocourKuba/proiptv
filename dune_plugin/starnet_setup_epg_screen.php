@@ -96,18 +96,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
             get_image_path($is_json ? 'remove.png' : 'refresh.png')
         );
 
-        if ($is_json && isset($epg_presets)) {
-            if (count($epg_presets) > 1) {
-                $preset = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
-                $presets = array();
-                foreach ($epg_presets as $epg_preset) {
-                    $presets[] = safe_get_value($epg_preset, 'title', $epg_preset['name']);
-                }
-                Control_Factory::add_combobox($defs, $this, PARAM_EPG_JSON_PRESET,
-                    TR::t('setup_epg_cache_json'), $preset,
-                    $presets, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-            }
-
+        if ($is_json) {
             foreach (array(1, 2, 3, 6, 12) as $hour) {
                 $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
             }
@@ -152,11 +141,6 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 $this->plugin->set_setting($control_id, $val);
                 $this->plugin->init_epg_manager();
                 return $post_action;
-
-            case PARAM_EPG_JSON_PRESET:
-                $this->plugin->set_setting($control_id, $user_input->{$control_id});
-                $this->plugin->init_epg_manager();
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case PARAM_EPG_CACHE_TIME:
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});

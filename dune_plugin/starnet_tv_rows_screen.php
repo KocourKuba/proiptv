@@ -315,19 +315,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
                 return Action_Factory::invalidate_epfs_folders($plugin_cookies);
 
-            case ACTION_CHANGE_EPG_SOURCE:
-                hd_debug_print("Start event popup menu for epg source");
-                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_EPG_SOURCE => true));
-
-            case ACTION_EPG_SOURCE_SELECTED:
-                if (!isset($user_input->{LIST_IDX}) || $this->plugin->is_use_xmltv()) break;
-
-                foreach ($this->plugin->get_selected_xmltv_ids() as $id) {
-                    Epg_Manager_Xmltv::clear_epg_files($id);
-                }
-                $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
-                return $reload_action;
-
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_EPG_CACHE_ENGINE => true));
@@ -1306,9 +1293,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
         // show changing playlist and xmltv source in any place
         $menu_items = array();
-        if (isset($user_input->{ACTION_CHANGE_EPG_SOURCE})) {
-            $menu_items = $this->plugin->epg_source_menu($this);
-        } else if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
+        if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
             $menu_items = $this->plugin->epg_engine_menu($this);
         } else if (isset($user_input->{ACTION_SORT_POPUP})) {
             hd_debug_print("create sort menu", true);

@@ -292,9 +292,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 return $this->plugin->do_donate_dialog();
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                if (isset($user_input->{ACTION_CHANGE_EPG_SOURCE})) {
-                    $menu_items = $this->plugin->epg_source_menu($this);
-                } else if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
+                if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
                     $menu_items = $this->plugin->epg_engine_menu($this);
                 } else if (isset($user_input->{ACTION_SORT_POPUP})) {
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_groups'));
@@ -315,19 +313,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 }
 
                 return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
-
-            case ACTION_CHANGE_EPG_SOURCE:
-                hd_debug_print("Start event popup menu for epg source", true);
-                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_EPG_SOURCE => true));
-
-            case ACTION_EPG_SOURCE_SELECTED:
-                if (!isset($user_input->{LIST_IDX}) || $this->plugin->is_use_xmltv()) break;
-
-                foreach ($this->plugin->get_selected_xmltv_ids() as $id) {
-                    Epg_Manager_Xmltv::clear_epg_files($id);
-                }
-                $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);

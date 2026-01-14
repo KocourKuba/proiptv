@@ -1637,6 +1637,35 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * @param array $provider_preset
+     * @return array|false
+     */
+    public function get_configured_preset($provider_preset)
+    {
+        if (!$this->epg_presets->size()) {
+            hd_debug_print("No configured EPG presets for plugin", true);
+            return false;
+        }
+
+        $config_preset = $this->epg_presets->get($provider_preset[EPG_JSON_PRESET_NAME]);
+        if (empty($config_preset)) {
+            hd_debug_print("{$provider_preset[EPG_JSON_PRESET_NAME]} not exist in plugin configuration");
+            return false;
+        }
+
+        if (isset($provider_preset[EPG_JSON_PRESET_NAME])) {
+            $config_preset[EPG_JSON_PRESET_NAME] = $provider_preset[EPG_JSON_PRESET_NAME];
+        }
+
+        if (isset($provider_preset[EPG_JSON_PRESET_ALIAS])) {
+            $config_preset[EPG_JSON_PRESET_ALIAS] = $provider_preset[EPG_JSON_PRESET_ALIAS];
+        }
+
+        hd_debug_print("get_configured_preset: " . json_format_unescaped($config_preset), true);
+        return $config_preset;
+    }
+
+    /**
      * @return Hashed_Array<api_default>
      */
     public function get_providers()
@@ -2467,16 +2496,20 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if (!is_null($provider) && !$this->use_xmltv) {
             $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
             if (!empty($epg_presets)) {
-                $current = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
-                foreach ($epg_presets as $key => $epg_preset) {
-                    $selected = (int)$key === (int)$current;
-                    $menu_items[] = $this->create_menu_item($handler,
-                        ACTION_EPG_SOURCE_SELECTED,
-                        isset($epg_preset['title']) ? $epg_preset['title'] : $epg_preset['name'],
-                        $selected ? "check.png" : null,
-                        array(LIST_IDX => $key, IS_LIST_SELECTED => $selected)
-                    );
+                $titles = array();
+                foreach ($epg_presets as $epg_preset) {
+                    $title = isset($epg_preset['title']) ? $epg_preset['title'] : $epg_preset['name'];
+                    if (isset($epg_preset['alias'])) {
+                        $title = "{$epg_preset['alias']}.$title";
+                    }
+                    $titles[] = $title;
                 }
+                if (count($titles) > 1) {
+                    $name = "EPG Group: " . implode(',', $titles);
+                } else {
+                    $name = $titles[0];
+                }
+                $menu_items[] = $this->create_menu_item($handler, ACTION_EPG_SOURCE_SELECTED, $name);
             }
         }
 
@@ -2497,15 +2530,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $provider = $this->get_active_provider();
         if ($provider !== null) {
             $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
-            if (count($epg_presets) != 1) {
+            if (count($epg_presets)) {
                 $engine = TR::t('setup_epg_cache_json');
-            } else {
-                $preset = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
-                $name = safe_get_value($epg_presets[$preset], 'title', $epg_presets[$preset]['name']);
-                $engine = TR::t('setup_epg_cache_json__1', $name);
+                $menu_items[] = $this->create_menu_item($handler, ENGINE_JSON, $engine, $this->use_xmltv ? null : "check.png");
             }
-
-            $menu_items[] = $this->create_menu_item($handler, ENGINE_JSON, $engine, $this->use_xmltv ? null : "check.png");
         }
         return $menu_items;
     }
@@ -2557,6 +2585,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
         hd_debug_print("group: $group_id, is classic: " . var_export($is_classic, true), true);
 
+        $provider = $this->get_active_provider();
         $fav_id = $this->get_fav_id();
         $menu_items = array();
         if ($group_id !== null) {
@@ -2581,16 +2610,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if ($is_classic) {
             $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
+            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
         }
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
-        $menu_items[] = $this->create_menu_item($handler,
-            ACTION_ITEMS_EDIT,
-            TR::t('setup_edit_xmltv_list'),
-            "epg.png",
-            array(CONTROL_ACTION_EDIT => Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST));
-
-        $provider = $this->get_active_provider();
         if (!is_null($provider)) {
             $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
             $preset_cnt = count($epg_presets);
@@ -2599,29 +2621,28 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1',
                         TR::t($this->use_xmltv ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json')),
                     "engine.png");
-
-                if (!$this->use_xmltv && $preset_cnt > 1) {
-                    $preset = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
-                    $name = safe_get_value($epg_presets[$preset], 'title', $epg_presets[$preset]['name']);
-                    $menu_items[] = $this->create_menu_item($handler,
-                        ACTION_CHANGE_EPG_SOURCE,
-                        TR::t('change_json_epg_source__1', $name),
-                        "epg.png");
-                }
-            }
-
-            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-            if ($provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
-                $menu_items[] = $this->create_menu_item($handler, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
             }
         }
 
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+        $menu_items[] = $this->create_menu_item($handler,
+            ACTION_ITEMS_EDIT,
+            TR::t('setup_edit_xmltv_list'),
+            "epg.png",
+            array(CONTROL_ACTION_EDIT => Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST));
+
         $menu_items[] = $this->create_menu_item($handler,
             ACTION_EDIT_PLAYLIST_SETTINGS,
             TR::t('setup_playlist'),
             "playlist_settings.png");
         $menu_items[] = $this->create_menu_item($handler, ACTION_PLUGIN_SETTINGS, TR::t('entry_setup'), "settings.png");
+
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+        if (!is_null($provider)) {
+            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            if ($provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
+            }
+        }
 
         return $menu_items;
     }
@@ -2788,18 +2809,25 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $provider = $this->get_active_provider();
 
+        $epg_urls = array();
+        $epg_ids = array();
         if (!is_null($provider) && $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_JSON) {
-            $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
-            $selected_preset = $provider->GetSelectedPreset();
-            $epg_id = '';
-            if (empty($selected_preset)) {
-                $epg_id = "No Preset!";
-            } else {
-                $epg_url = Epg_Manager_Json::get_epg_url($provider, $selected_preset, $channel_row, $day_start_ts, $epg_id);
+            $epg_id = Epg_Manager_Json::get_epg_id($channel_row);
+            if (!empty($epg_id)) {
+                $epg_ids[] = $epg_id;
+                $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
+                foreach ($provider->getConfigValue(EPG_JSON_PRESETS, array()) as $preset) {
+                    $config_preset = $this->get_configured_preset($preset);
+                    if (empty($config_preset)) {
+                        continue;
+                    }
+                    $epg_urls[] = Epg_Manager_Json::get_epg_url($provider, $config_preset, $channel_row, $day_start_ts, $epg_id);
+                }
             }
         } else {
-            $epg_id = implode(', ', array_unique(array_filter(self::make_epg_ids($channel_row))));
+            $epg_ids = self::make_epg_ids($channel_row);
         }
+        $epg_id = implode(', ', array_unique(array_filter($epg_ids)));
         $defs = array();
 
         Control_Factory::add_vgap($defs, -20);
@@ -2823,8 +2851,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $icon = $this->get_channel_picon($channel_row, $is_classic);
         self::format_smart_label($defs, TR::load('icon'), $icon);
 
-        if (!empty($epg_url)) {
-            self::format_smart_label($defs, TR::load('epg_url'), $epg_url);
+        foreach ($epg_urls as $epg_url) {
+            if (!empty($epg_url)) {
+                self::format_smart_label($defs, TR::load('epg_url'), $epg_url);
+            }
         }
 
         try {
