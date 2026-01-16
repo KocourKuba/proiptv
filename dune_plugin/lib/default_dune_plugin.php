@@ -797,7 +797,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     }
                     $cmd = API_COMMAND_GET_PLAYLIST;
                     $opts = $provider->getCurlOpts($cmd);
-                    $opts[CURLOPT_TIMEOUT] = 30;
                     $exec_result = $provider->execApiCommandFile($cmd, $m3u_file, $opts);
                     $res = $provider->postExecAction($cmd, $exec_result, $m3u_file);
                     if ($res === false) {
@@ -1429,7 +1428,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param Hashed_Array $sources
      * @param int $indexing_flag
      * @param $plugin_cookies
-     * @return bool
+     * @return void
      */
     public function check_and_run_bg_indexing($sources, $indexing_flag, $plugin_cookies)
     {
@@ -1438,7 +1437,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $to_index = array();
         foreach ($sources as $source_id => $params) {
             $new_flag = Epg_Manager_Xmltv::check_xmltv_source($params, $indexing_flag);
-            if ($new_flag !== 0) {
+            if ($new_flag > 0) {
                 $to_index[$source_id] = array('flag' => $new_flag, 'params' => $params);
             }
         }
@@ -1453,8 +1452,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         } else {
             unset($plugin_cookies->ticker);
         }
-
-        return $indexing_run;
     }
 
     /**

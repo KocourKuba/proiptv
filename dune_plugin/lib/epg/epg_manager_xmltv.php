@@ -387,6 +387,7 @@ class Epg_Manager_Xmltv
 
     /**
      * check xmltv source and return required flags for indexing
+     * or -1 in case of error
      *
      * @param array $params
      * @param int $index_flag
@@ -431,11 +432,13 @@ class Epg_Manager_Xmltv
                 $curl_wrapper = Curl_Wrapper::getInstance();
 
                 $etag = Curl_Wrapper::get_cached_etag($url);
-                $expired = false;
                 if (empty($etag)) {
                     hd_debug_print("No ETag value");
-                    $expired = true;
-                } else if ($curl_wrapper->download_file($url, false, Curl_Wrapper::USE_ETAG)) {
+                } else {
+                    $res = $curl_wrapper->download_file($url, false, Curl_Wrapper::USE_ETAG);
+                    if ($res === false) {
+                        return -1;
+                    }
                     $code = Curl_Wrapper::get_http_code();
                     hd_debug_print("http code: $code", true);
                     $expired = !($code === 304 || ($code === 200 && Curl_Wrapper::get_response_header('etag') === $etag));
