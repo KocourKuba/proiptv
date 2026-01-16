@@ -179,7 +179,15 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 hd_print_separator();
 
                 if (!$this->plugin->load_channels($plugin_cookies)) {
-                    return $this->open_playlist_screen($plugin_cookies);
+                    $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+                    $actions[] = Action_Factory::open_folder(
+                        Starnet_Tv_Groups_Screen::ID,
+                        $this->plugin->get_plugin_title(),
+                        null,
+                        null,
+                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
+                    );
+                    return Action_Factory::composite($actions);
                 }
 
                 hd_debug_print("action: launch open", true);
@@ -394,10 +402,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
         $this->plugin->init_plugin(true);
         if ($this->plugin->get_all_playlists_count() === 0) {
             hd_debug_print("No playlists found. Open playlists page");
-            return $this->open_playlist_screen($plugin_cookies);
-        }
-
-        if (!$this->plugin->init_playlist_db()) {
             return $this->open_playlist_screen($plugin_cookies);
         }
 
