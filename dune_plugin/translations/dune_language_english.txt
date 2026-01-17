@@ -474,3 +474,4 @@ err_no_need_patch = No palette fixing required!
 err_load_xmltv_source = Can't load XMLTV source!
 err_no_xmltv_sources = No XMLTV source selected!
 err_empty_export_list = Export list empty!
+err_no_epg_in_all_range = No EPG entries for selected time in available range for all EPG presets

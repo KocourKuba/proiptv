@@ -141,7 +141,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
 
             case GUI_EVENT_KEY_INFO:
-                return $this->plugin->do_show_channel_info($channel_id, true);
+                return $this->plugin->do_show_channel_info($this, $channel_id, true);
 
             case GUI_EVENT_KEY_SUBTITLE:
                 $attrs['initial_sel_ndx'] = 2;

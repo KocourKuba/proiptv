@@ -359,7 +359,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
             case GUI_EVENT_KEY_INFO:
                 if (isset($media_url->channel_id)) {
-                    return $this->plugin->do_show_channel_info($media_url->channel_id, false);
+                    return $this->plugin->do_show_channel_info(null, $media_url->channel_id, false);
                 }
                 return null;
 

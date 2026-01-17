@@ -2792,11 +2792,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * @param User_Input_Handler|null $handler
      * @param string $channel_id
      * @param bool $is_classic
      * @return array|null
      */
-    public function do_show_channel_info($channel_id, $is_classic)
+    public function do_show_channel_info($handler, $channel_id, $is_classic)
     {
         $channel_row = $this->get_channel_info($channel_id);
         if (empty($channel_row)) {
@@ -2852,6 +2853,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 self::format_smart_label($defs, TR::load('epg_url'), $epg_url);
             }
         }
+
+        Control_Factory::add_vgap($defs, 30);
 
         try {
             $live_url = $this->generate_stream_url($channel_row, -1, true);
@@ -2912,9 +2915,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        Control_Factory::add_vgap($defs, 20);
-        Control_Factory::add_vgap($defs, 10);
+        Control_Factory::add_vgap($defs, 30);
         Control_Factory::add_ok_button($defs, true);
+        if ($handler) {
+            Control_Factory::add_button($defs, $handler,
+                GUI_EVENT_KEY_SUBTITLE, null, 'Show EPG',
+                null, Control_Factory::DLG_BUTTON_WIDTH, true);
+        }
 
         return Action_Factory::show_dialog($defs, TR::t('channel_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
     }

@@ -474,3 +474,4 @@ err_no_need_patch = Keine Palettenfixierung erforderlich!
 err_load_xmltv_source = XMLTV-Quelle kann nicht geladen werden!
 err_no_xmltv_sources = Keine XMLTV-Quelle ausgewählt!
 err_empty_export_list = Exportliste leer!
+err_no_epg_in_all_range = Keine EPG-Einträge für ausgewählte Zeit im verfügbaren Bereich für alle EPG-Voreinstellungen

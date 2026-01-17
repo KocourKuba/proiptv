@@ -203,7 +203,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 self::$epg_cache[$epg_id][$day_start_ts] = $items;
             }
             if (empty($items)) {
-                throw new Exception("No EPG entries for selected time in available range for all EPG presets");
+                throw new Exception(TR::load('err_no_epg_in_all_range'));
             }
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
