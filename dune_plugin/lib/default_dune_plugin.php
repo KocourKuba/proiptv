@@ -929,7 +929,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             hd_print_separator();
             $ret = true;
         } catch (Exception $ex) {
-            print_backtrace_exception($ex);
             $ret = false;
             hd_debug_print($ex->getMessage());
             $err = $ex->getMessage();

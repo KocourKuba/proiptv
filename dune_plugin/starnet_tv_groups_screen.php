@@ -331,8 +331,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     $this->plugin->init_epg_manager();
                     $active_sources = $this->plugin->get_selected_xmltv_ids();
                     $post_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
-                    if (empty($active_sources) && $user_input->control_id === ENGINE_XMLTV) {
-                        $post_action = Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_no_xmltv_sources'), $post_action);
+                    if ($user_input->control_id === ENGINE_XMLTV) {
+                        if (empty($active_sources)) {
+                            $post_action = Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_no_xmltv_sources'), $post_action);
+                        } else {
+                            $this->plugin->reset_channels_loaded();
+                        }
                     }
                     return $post_action;
                 }

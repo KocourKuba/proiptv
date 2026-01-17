@@ -2232,7 +2232,6 @@ class Dune_Default_Sqlite_Engine
         $db_name = self::get_db_name($name);
 
         if (!empty($db_name) && !$this->sql_playlist->is_database_attached($db_name)) {
-            hd_debug_print("is_table_exists: Database '$db_name' not attached!");
             return false;
         }
 

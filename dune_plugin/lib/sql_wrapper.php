@@ -145,7 +145,6 @@ class Sql_Wrapper
     public function is_table_exists($table_name, $db_name = null)
     {
         if (!empty($db_name) && !$this->is_database_attached($db_name)) {
-            hd_debug_print("is_table_exists: Database '$db_name' not attached!");
             return false;
         }
 
