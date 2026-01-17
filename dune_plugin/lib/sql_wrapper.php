@@ -144,12 +144,12 @@ class Sql_Wrapper
      */
     public function is_table_exists($table_name, $db_name = null)
     {
-        if (!is_null($db_name) && !$this->is_database_attached($db_name)) {
+        if (!empty($db_name) && !$this->is_database_attached($db_name)) {
             hd_debug_print("is_table_exists: Database '$db_name' not attached!");
             return false;
         }
 
-        $db_name = is_null($db_name) ? 'sqlite_master' : "$db_name.sqlite_master";
+        $db_name = empty($db_name) ? 'sqlite_master' : "$db_name.sqlite_master";
         return (int)$this->query_value("SELECT count(name) FROM $db_name WHERE type='table' AND name='$table_name';") !== 0;
     }
 

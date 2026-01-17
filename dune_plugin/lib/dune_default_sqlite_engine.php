@@ -119,7 +119,7 @@ class Dune_Default_Sqlite_Engine
             return;
         }
 
-        $query =  sprintf(self::CREATE_PLUGIN_PARAMETERS_TABLE, self::PARAMETERS_TABLE);
+        $query = sprintf(self::CREATE_PLUGIN_PARAMETERS_TABLE, self::PARAMETERS_TABLE);
         $query .= sprintf(self::CREATE_PLAYLISTS_TABLE, self::PLAYLISTS_TABLE);
         $query .= sprintf(self::CREATE_PLAYLIST_PARAMETERS_TABLE, self::PLAYLIST_PARAMETERS_TABLE);
         $query .= sprintf(self::CREATE_COMMON_XMLTV_TABLE, self::XMLTV_TABLE);
@@ -213,7 +213,7 @@ class Dune_Default_Sqlite_Engine
                     unset($parameters[$key]);
                 } else {
                     $type = gettype($param);
-                    if ($type === 'NULL' ) {
+                    if ($type === 'NULL') {
                         $param = '';
                     } else if ($type === 'boolean') {
                         $param = SwitchOnOff::to_def($param);
@@ -700,7 +700,7 @@ class Dune_Default_Sqlite_Engine
             }
 
             $table_name = self::SETTINGS_TABLE;
-            $query  = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, $table_name);
+            $query = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, $table_name);
             foreach ($data as $key => $value) {
                 $type = gettype($value);
                 if ($type === 'NULL') {
@@ -872,7 +872,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_table_values($table)
     {
-        $table_name = self::get_table_name($table);
+        $table_name = self::get_table_full_name($table);
         return $this->sql_playlist->fetch_array("SELECT * FROM $table_name ORDER BY ROWID;");
     }
 
@@ -885,7 +885,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_table_value_id($table, $value)
     {
-        $table_name = self::get_table_name($table);
+        $table_name = self::get_table_full_name($table);
         $q_value = Sql_Wrapper::sql_quote($value);
         return $this->sql_playlist->query_value("SELECT ROWID FROM $table_name WHERE item = $q_value");
     }
@@ -899,7 +899,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_table_value($table, $id)
     {
-        $table_name = self::get_table_name($table);
+        $table_name = self::get_table_full_name($table);
         return $this->sql_playlist->query_value("SELECT item FROM $table_name WHERE ROWID = $id");
     }
 
@@ -912,7 +912,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function set_table_value($table, $value, $id = -1)
     {
-        $table_name = self::get_table_name($table);
+        $table_name = self::get_table_full_name($table);
         $q_value = Sql_Wrapper::sql_quote($value);
         if ($id === -1) {
             $this->sql_playlist->exec("INSERT OR IGNORE INTO $table_name (item) VALUES ($q_value);");
@@ -929,7 +929,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function remove_table_value($table, $value)
     {
-        $table_name = self::get_table_name($table);
+        $table_name = self::get_table_full_name($table);
         $q_value = Sql_Wrapper::sql_quote($value);
         $this->sql_playlist->exec("DELETE FROM $table_name WHERE item = $q_value;");
     }
@@ -955,7 +955,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function remove_changed_channel($channel_id)
     {
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         $q_id = Sql_Wrapper::sql_quote($channel_id);
         $query = "UPDATE $table_name SET changed = 0 WHERE channel_id = $q_id AND changed = 1;";
         $query .= "DELETE FROM $table_name WHERE channel_id = $q_id AND changed = -1;";
@@ -968,9 +968,13 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_changed_channels($type)
     {
+        if (!$this->is_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
+            return array();
+        }
+
         $column = $this->get_id_column();
         $iptv_channels = M3uParser::CHANNELS_TABLE;
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         if ($type === PARAM_NEW) {
             $query = "SELECT ch.ROWID, ch.channel_id, pl.*
                         FROM $table_name AS ch
@@ -1000,7 +1004,7 @@ class Dune_Default_Sqlite_Engine
             $val = "NOT $val";
         }
 
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         $query = "SELECT channel_id FROM $table_name WHERE $val ORDER BY ROWID;";
         return $this->sql_playlist->fetch_single_array($query, COLUMN_CHANNEL_ID);
     }
@@ -1017,7 +1021,7 @@ class Dune_Default_Sqlite_Engine
             $val = "NOT $val";
         }
 
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         $cond = is_null($channel_id) ? "" : ("AND channel_id = " . Sql_Wrapper::sql_quote($channel_id));
         $query = "SELECT COUNT(*) FROM $table_name WHERE $val $cond;";
 
@@ -1030,8 +1034,8 @@ class Dune_Default_Sqlite_Engine
     public function clear_changed_channels()
     {
         $id_column = $this->get_id_column();
-        $channels_info_table = self::get_table_name(CHANNELS_INFO);
-        $groups_info_table = self::get_table_name(self::GROUPS_INFO_TABLE);
+        $channels_info_table = self::get_table_full_name(CHANNELS_INFO);
+        $groups_info_table = self::get_table_full_name(self::GROUPS_INFO_TABLE);
 
         $q_changed = Sql_Wrapper::sql_quote(TV_CHANGED_CHANNELS_GROUP_ID);
         $query = "DELETE FROM $channels_info_table WHERE changed = -1;";
@@ -1039,8 +1043,8 @@ class Dune_Default_Sqlite_Engine
         $query .= "UPDATE $groups_info_table SET disabled = 1 WHERE group_id = $q_changed;";
         $this->sql_playlist->exec_transaction($query);
 
-        $tmp_table = self::get_table_name(CHANNELS_INFO) . "tmp";
-        $channels_info_table_s = self::get_table_name(CHANNELS_INFO, true);
+        $tmp_table = "{$channels_info_table}_tmp";
+        $channels_info_table_s = self::get_table_name(CHANNELS_INFO);
         $iptv_channels = M3uParser::CHANNELS_TABLE;
         $query = sprintf(self::CREATE_CHANNELS_INFO_TABLE, $tmp_table);
         $query .= "INSERT INTO $tmp_table
@@ -1066,7 +1070,7 @@ class Dune_Default_Sqlite_Engine
     public function get_groups($type, $disabled, $column = null)
     {
         hd_debug_print(null, true);
-        $groups_info_table = self::get_table_name(GROUPS_INFO);
+        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
         $where = ($disabled === PARAM_ALL) ? "" : "disabled = $disabled";
         $and = empty($where) ? "" : "AND";
         $where = $type === PARAM_ALL ? "" : "$where $and special = $type";
@@ -1088,7 +1092,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_groups_count($type, $disabled)
     {
-        $groups_info_table = self::get_table_name(GROUPS_INFO);
+        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
         $where = ($disabled === PARAM_ALL) ? "" : "disabled = $disabled";
         $and = empty($where) ? "" : "AND";
         $where = $type === PARAM_ALL ? "" : "WHERE $where $and special = $type";
@@ -1105,7 +1109,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_group($group_id, $type)
     {
-        $groups_info_table = self::get_table_name(GROUPS_INFO);
+        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
         $q_group_id = Sql_Wrapper::sql_quote($group_id);
         $and = $type === PARAM_ALL ? "" : "AND special = $type";
         $query = "SELECT * FROM $groups_info_table WHERE group_id = $q_group_id AND disabled = 0 $and ORDER by ROWID;";
@@ -1122,9 +1126,9 @@ class Dune_Default_Sqlite_Engine
      */
     public function set_groups_visible($group_ids, $show, $special = false)
     {
-        $groups_info_table = self::get_table_name(GROUPS_INFO);
-        $groups_order_table = self::get_table_name(GROUPS_ORDER);
-        $channels_info_table = self::get_table_name(CHANNELS_INFO);
+        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
+        $groups_order_table = self::get_table_full_name(GROUPS_ORDER);
+        $channels_info_table = self::get_table_full_name(CHANNELS_INFO);
         $disabled = (int)!$show;
 
         $where = Sql_Wrapper::sql_make_where_clause($group_ids, COLUMN_GROUP_ID);
@@ -1142,7 +1146,7 @@ class Dune_Default_Sqlite_Engine
 
             foreach ($to_alter as $group_id) {
                 $q_group_id = Sql_Wrapper::sql_quote($group_id);
-                $table_name = self::get_table_name($group_id);
+                $table_name = self::get_table_full_name($group_id);
 
                 if ($disabled) {
                     $query .= "DELETE FROM $groups_order_table WHERE group_id = $q_group_id;";
@@ -1167,7 +1171,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_group_icon($group_id)
     {
-        $groups_info_table = self::get_table_name(GROUPS_INFO);
+        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
         $group_id = Sql_Wrapper::sql_quote($group_id);
         return $this->sql_playlist->query_value("SELECT icon FROM $groups_info_table WHERE group_id = $group_id;");
     }
@@ -1188,7 +1192,7 @@ class Dune_Default_Sqlite_Engine
             }
         }
 
-        $groups_info_table = self::get_table_name(GROUPS_INFO);
+        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
         $q_icon = Sql_Wrapper::sql_quote($icon);
         $old_cached_image = $this->get_group_icon($group_id);
         hd_debug_print("Assign icon: $icon to group: $group_id");
@@ -1207,8 +1211,8 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_groups_by_order()
     {
-        $groups_info_table = self::get_table_name(GROUPS_INFO);
-        $groups_order_table = self::get_table_name(GROUPS_ORDER);
+        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
+        $groups_order_table = self::get_table_full_name(GROUPS_ORDER);
         /** @noinspection SqlCheckUsingColumns */
         $query = "SELECT grp.group_id, grp.title, grp.icon, grp.adult
                     FROM $groups_info_table AS grp
@@ -1222,10 +1226,10 @@ class Dune_Default_Sqlite_Engine
      */
     public function sort_groups_order($reset = false)
     {
-        $groups_info_table = self::get_table_name(GROUPS_INFO);
-        $groups_order_table = self::get_table_name(GROUPS_ORDER);
-        $groups_order_table_s = self::get_table_name(GROUPS_ORDER, true);
-        $tmp_table = self::get_table_name(GROUPS_ORDER) . "_tmp";
+        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
+        $groups_order_table = self::get_table_full_name(GROUPS_ORDER);
+        $groups_order_table_s = self::get_table_name(GROUPS_ORDER);
+        $tmp_table = "{$groups_order_table}_tmp";
         $query = sprintf(self::CREATE_ORDERED_TABLE, $tmp_table, COLUMN_GROUP_ID);
 
         if ($reset) {
@@ -1277,7 +1281,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_channels_order($group_id)
     {
-        $table_name = self::get_table_name($group_id);
+        $table_name = self::get_table_full_name($group_id);
         return $this->sql_playlist->fetch_single_array("SELECT channel_id FROM $table_name ORDER BY ROWID;", COLUMN_CHANNEL_ID);
     }
 
@@ -1289,7 +1293,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function is_channel_in_order($group_id, $channel_id)
     {
-        $table_name = self::get_table_name($group_id);
+        $table_name = self::get_table_full_name($group_id);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         $query = "SELECT COUNT(*) FROM $table_name WHERE channel_id = $q_channel_id;";
         return (int)$this->sql_playlist->query_value($query);
@@ -1302,7 +1306,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function is_channel_visible($channel_id)
     {
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         $query = "SELECT disabled FROM $table_name WHERE channel_id = $q_channel_id;";
         return $this->sql_playlist->query_value($query) === 0;
@@ -1314,7 +1318,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function remove_channels_order($group_id)
     {
-        $table_name = self::get_table_name($group_id);
+        $table_name = self::get_table_full_name($group_id);
         $query = "DROP TABLE IF EXISTS $table_name;";
         $query .= sprintf(self::CREATE_ORDERED_TABLE, $table_name, COLUMN_CHANNEL_ID);
         $this->sql_playlist->exec_transaction($query);
@@ -1328,7 +1332,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function change_channels_order($group_id, $channel_id, $remove)
     {
-        $table_name = self::get_table_name($group_id);
+        $table_name = self::get_table_full_name($group_id);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         if ($remove) {
             $qry = "DELETE FROM $table_name WHERE channel_id = $q_channel_id;";
@@ -1346,7 +1350,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function bulk_change_channels_order($group_id, $channel_ids, $remove)
     {
-        $table_name = self::get_table_name($group_id);
+        $table_name = self::get_table_full_name($group_id);
         if ($remove) {
             $q_channel_ids = Sql_Wrapper::sql_make_list_from_values($channel_ids);
             $qry = "DELETE FROM $table_name WHERE channel_id IN ($q_channel_ids);";
@@ -1366,11 +1370,15 @@ class Dune_Default_Sqlite_Engine
      */
     public function sort_channels_order($group_id, $reset = false)
     {
+        if (!$this->is_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
+            return;
+        }
+
         $iptv_channels = M3uParser::CHANNELS_TABLE;
-        $channels_info_table = self::get_table_name(CHANNELS_INFO);
-        $group_table = self::get_table_name($group_id);
+        $channels_info_table = self::get_table_full_name(CHANNELS_INFO);
+        $group_table = self::get_table_full_name($group_id);
         $tmp_table = $group_table . "_tmp";
-        $alter_table_name = self::get_table_name($group_id, true);
+        $alter_table_name = self::get_table_name($group_id);
         $q_group_id = Sql_Wrapper::sql_quote($group_id);
 
         $query = sprintf(self::CREATE_ORDERED_TABLE, $tmp_table, COLUMN_CHANNEL_ID);
@@ -1400,7 +1408,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_order_count($group_id)
     {
-        $table_name = self::get_table_name($group_id);
+        $table_name = self::get_table_full_name($group_id);
         return (int)$this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name;");
     }
 
@@ -1412,12 +1420,12 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_channels($group_id, $disabled_channels, $full = false)
     {
-        $groups_info_table = self::get_table_name(GROUPS_INFO);
+        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
         if (is_null($group_id) || $group_id === TV_ALL_CHANNELS_GROUP_ID) {
-            if (!$this->sql_playlist->is_table_exists(self::get_table_name(GROUPS_INFO, true), self::get_db_name(GROUPS_INFO))) {
+            if (!$this->is_playlist_table_exists(GROUPS_INFO)) {
                 return array();
             }
-            $where = "ch.group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = " . PARAM_ENABLED .")";
+            $where = "ch.group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = " . PARAM_ENABLED . ")";
         } else {
             $q_group_id = Sql_Wrapper::sql_quote($group_id);
             $where = "ch.group_id = $q_group_id";
@@ -1427,13 +1435,13 @@ class Dune_Default_Sqlite_Engine
             $where = "$where AND disabled = $disabled_channels";
         }
 
-        if (!$this->sql_playlist->is_table_exists(self::get_table_name(CHANNELS_INFO, true), self::get_db_name(CHANNELS_INFO))) {
+        if (!$this->is_playlist_table_exists(CHANNELS_INFO)) {
             return array();
         }
 
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         if ($full) {
-            if (!$this->sql_playlist->is_table_exists(M3uParser::S_CHANNELS_TABLE, M3uParser::IPTV_DB)) {
+            if (!$this->is_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
                 return array();
             }
 
@@ -1455,9 +1463,9 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_channels_ids($group_id, $disabled_channels)
     {
-        $groups_info_table = self::get_table_name(GROUPS_INFO);
+        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
         if (is_null($group_id) || $group_id === TV_ALL_CHANNELS_GROUP_ID) {
-            $where = "group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = " . PARAM_ENABLED .")";
+            $where = "group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = " . PARAM_ENABLED . ")";
         } else {
             $where = "group_id = " . Sql_Wrapper::sql_quote($group_id);
         }
@@ -1466,9 +1474,22 @@ class Dune_Default_Sqlite_Engine
             $where = empty($where) ? "disabled = $disabled_channels" : "$where AND disabled = $disabled_channels";
         }
 
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         $query = "SELECT channel_id FROM $table_name WHERE $where;";
         return $this->sql_playlist->fetch_single_array($query, COLUMN_CHANNEL_ID);
+    }
+
+    /**
+     * @return int
+     */
+    public function get_playlist_entries_count()
+    {
+        if (!$this->is_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
+            return 0;
+        }
+
+        $iptv_channels = M3uParser::CHANNELS_TABLE;
+        return (int)$this->sql_playlist->query_value("SELECT COUNT(*) FROM $iptv_channels;");
     }
 
     /**
@@ -1479,7 +1500,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_channels_count($group_id, $disabled_channels, $disabled_groups = 0)
     {
-        $groups_info_table = self::get_table_name(GROUPS_INFO);
+        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
         if (is_null($group_id) || $group_id === TV_ALL_CHANNELS_GROUP_ID) {
             $and = ($disabled_groups !== PARAM_ALL) ? "AND disabled = $disabled_groups" : "";
             $where = "group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 $and)";
@@ -1494,22 +1515,9 @@ class Dune_Default_Sqlite_Engine
             $where = "$where AND disabled = $disabled_channels";
         }
 
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         $query = "SELECT count(channel_id) FROM $table_name WHERE $where;";
         return $this->sql_playlist->query_value($query);
-    }
-
-    /**
-     * @return int
-     */
-    public function get_playlist_entries_count()
-    {
-        if ($this->sql_playlist->is_table_exists(M3uParser::S_CHANNELS_TABLE, M3uParser::IPTV_DB)) {
-            $iptv_channels = M3uParser::CHANNELS_TABLE;
-            return (int)$this->sql_playlist->query_value("SELECT COUNT(*) FROM $iptv_channels;");
-        }
-
-        return 0;
     }
 
     /**
@@ -1590,7 +1598,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_channel_zoom($channel_id)
     {
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         $query = "SELECT zoom FROM $table_name WHERE channel_id = $q_channel_id";
         return $this->sql_playlist->query_value($query);
@@ -1603,7 +1611,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function set_channel_zoom($channel_id, $preset)
     {
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         $q_preset = Sql_Wrapper::sql_quote($preset === null ? "x" : $preset);
         $query = "UPDATE $table_name SET zoom = $q_preset WHERE channel_id = $q_channel_id;";
@@ -1616,7 +1624,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_channel_epg_shift($channel_id)
     {
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         $query = "SELECT epg_shift FROM $table_name WHERE channel_id = $q_channel_id";
         return $this->sql_playlist->query_value($query);
@@ -1633,21 +1641,21 @@ class Dune_Default_Sqlite_Engine
         $sign = $shift_hour < 0 ? -1 : 1;
         $shift = $shift_hour * 3600 + $sign * $shift_mins * 60;
 
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         $query = "UPDATE $table_name SET epg_shift = '$shift' WHERE channel_id = $q_channel_id;";
         $this->sql_playlist->exec_transaction($query);
     }
 
     /**
-    /**
+     * /**
      * @param string $channel_id
      * @param bool $external
      * @return void
      */
     public function set_channel_ext_player($channel_id, $external)
     {
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         $q_external = Sql_Wrapper::sql_quote($external ? 1 : 0);
         $query = "UPDATE $table_name SET external_player = $q_external WHERE channel_id = $q_channel_id;";
@@ -1659,7 +1667,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_channel_ext_player($channel_id)
     {
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         $query = "SELECT external_player FROM $table_name WHERE channel_id = $q_channel_id";
         $value = $this->sql_playlist->query_value($query);
@@ -1676,14 +1684,14 @@ class Dune_Default_Sqlite_Engine
     {
         hd_debug_print(null, true);
 
-        if (!$this->sql_playlist->is_table_exists(self::get_table_name(TV_HISTORY, true), self::get_db_name(TV_HISTORY))
-            || !$this->sql_playlist->is_table_exists(self::get_table_name(CHANNELS_INFO, true), self::get_db_name(CHANNELS_INFO))
-            || !$this->sql_playlist->is_table_exists(M3uParser::S_CHANNELS_TABLE, M3uParser::IPTV_DB)) {
+        if (!$this->is_playlist_table_exists(TV_HISTORY)
+            || !$this->is_playlist_table_exists(CHANNELS_INFO)
+            || !$this->is_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
             return array();
         }
 
-        $tv_history = self::get_table_name(TV_HISTORY);
-        $channels_info = self::get_table_name(CHANNELS_INFO);
+        $tv_history = self::get_table_full_name(TV_HISTORY);
+        $channels_info = self::get_table_full_name(CHANNELS_INFO);
         $iptv_channels = M3uParser::CHANNELS_TABLE;
         $ch_id_column = $this->get_id_column();
 
@@ -1699,7 +1707,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_tv_history_count()
     {
-        $table_name = self::get_table_name(TV_HISTORY);
+        $table_name = self::get_table_full_name(TV_HISTORY);
         return (int)$this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name;");
     }
 
@@ -1709,7 +1717,7 @@ class Dune_Default_Sqlite_Engine
     public function erase_tv_history($id)
     {
         hd_debug_print("erase $id");
-        $table_name = self::get_table_name(TV_HISTORY);
+        $table_name = self::get_table_full_name(TV_HISTORY);
         $q_id = Sql_Wrapper::sql_quote($id);
         $this->sql_playlist->exec("DELETE FROM $table_name WHERE channel_id = $q_id;");
     }
@@ -1719,7 +1727,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function clear_tv_history()
     {
-        $table_name = self::get_table_name(TV_HISTORY);
+        $table_name = self::get_table_full_name(TV_HISTORY);
         $query = "DROP TABLE IF EXISTS $table_name;";
         $query .= sprintf(self::CREATE_TV_HISTORY_TABLE, $table_name);
         $this->sql_playlist->exec_transaction($query);
@@ -1735,7 +1743,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_all_vod_history()
     {
-        $table_name = self::get_table_name(VOD_HISTORY);
+        $table_name = self::get_table_full_name(VOD_HISTORY);
         return $this->sql_playlist->fetch_array("SELECT *, MAX(time_stamp) FROM $table_name GROUP BY movie_id ORDER BY time_stamp DESC;");
     }
 
@@ -1746,7 +1754,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_all_vod_history_count()
     {
-        $table_name = self::get_table_name(VOD_HISTORY);
+        $table_name = self::get_table_full_name(VOD_HISTORY);
         return $this->sql_playlist->query_value("SELECT COUNT(DISTINCT movie_id) FROM $table_name;");
     }
 
@@ -1758,7 +1766,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_vod_history($movie_id)
     {
-        $table_name = self::get_table_name(VOD_HISTORY);
+        $table_name = self::get_table_full_name(VOD_HISTORY);
         $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
         return $this->sql_playlist->fetch_array("SELECT * FROM $table_name WHERE movie_id = $q_movie_id;");
     }
@@ -1773,7 +1781,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function set_vod_history($movie_id, $series_id, $values)
     {
-        $table_name = self::get_table_name(VOD_HISTORY);
+        $table_name = self::get_table_full_name(VOD_HISTORY);
         $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
         $q_series_id = Sql_Wrapper::sql_quote($series_id);
         $q_params = Sql_Wrapper::sql_make_list_from_keys($values);
@@ -1791,7 +1799,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_vod_history_count($movie_id)
     {
-        $table_name = self::get_table_name(VOD_HISTORY);
+        $table_name = self::get_table_full_name(VOD_HISTORY);
         $q_id = Sql_Wrapper::sql_quote($movie_id);
         return (int)$this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name WHERE movie_id = $q_id;");
     }
@@ -1806,7 +1814,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_vod_history_params($movie_id, $series_id, $param_name = null)
     {
-        $table_name = self::get_table_name(VOD_HISTORY);
+        $table_name = self::get_table_full_name(VOD_HISTORY);
         $q_id = Sql_Wrapper::sql_quote($movie_id);
         $q_series = Sql_Wrapper::sql_quote($series_id);
         if ($param_name === null) {
@@ -1825,7 +1833,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function remove_vod_history($movie_id)
     {
-        $table_name = self::get_table_name(VOD_HISTORY);
+        $table_name = self::get_table_full_name(VOD_HISTORY);
         $q_value = Sql_Wrapper::sql_quote($movie_id);
         $this->sql_playlist->exec("DELETE FROM $table_name WHERE movie_id = $q_value;");
     }
@@ -1838,7 +1846,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function remove_vod_history_part($movie_id, $series_id)
     {
-        $table_name = self::get_table_name(VOD_HISTORY);
+        $table_name = self::get_table_full_name(VOD_HISTORY);
         $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
         $q_series_id = Sql_Wrapper::sql_quote($series_id);
         $this->sql_playlist->exec("DELETE FROM $table_name WHERE movie_id = $q_movie_id AND series_id = $q_series_id;");
@@ -1849,7 +1857,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function clear_all_vod_history()
     {
-        $table_name = self::get_table_name(VOD_HISTORY);
+        $table_name = self::get_table_full_name(VOD_HISTORY);
         $query = "DROP TABLE IF EXISTS $table_name;";
         $query .= sprintf(self::CREATE_VOD_HISTORY_TABLE, $table_name);
         $this->sql_playlist->exec_transaction($query);
@@ -1861,12 +1869,12 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_playlist_group_count()
     {
-        if ($this->sql_playlist->is_table_exists(M3uParser::S_GROUPS_TABLE, M3uParser::IPTV_DB)) {
-            $iptv_groups = M3uParser::GROUPS_TABLE;
-            return (int)$this->sql_playlist->query_value("SELECT COUNT(*) FROM $iptv_groups;");
+        if (!$this->is_playlist_table_exists(M3uParser::S_GROUPS_TABLE)) {
+            return 0;
         }
 
-        return 0;
+        $iptv_groups = M3uParser::GROUPS_TABLE;
+        return (int)$this->sql_playlist->query_value("SELECT COUNT(*) FROM $iptv_groups;");
     }
 
     /**
@@ -1876,14 +1884,14 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_channels_by_order($group_id, $include_hidden = false)
     {
-        if (!$this->sql_playlist->is_database_attached(M3uParser::IPTV_DB)) {
+        if (!$this->is_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
             return array();
         }
 
         $hidden = $include_hidden ? "" : "AND ch.disabled = 0";
         $iptv_channels = M3uParser::CHANNELS_TABLE;
-        $order_table = self::get_table_name($group_id);
-        $channels_info_table = self::get_table_name(CHANNELS_INFO);
+        $order_table = self::get_table_full_name($group_id);
+        $channels_info_table = self::get_table_full_name(CHANNELS_INFO);
         $column = $this->get_id_column();
         $query = "SELECT ord.channel_id, ch.*, pl.*, pl.ROWID as ch_number
                     FROM $iptv_channels AS pl
@@ -1898,15 +1906,14 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_channels_by_order_cnt($group_id, $include_hidden = false)
     {
-        if (!$this->sql_playlist->is_database_attached(M3uParser::IPTV_DB)) {
-            hd_debug_print("get_channels_by_order_cnt: Database 'iptv' not attached");
+        if (!$this->is_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
             return 0;
         }
 
         $hidden = $include_hidden ? "" : "AND ch.disabled = 0";
         $iptv_channels = M3uParser::CHANNELS_TABLE;
-        $order_table = self::get_table_name($group_id);
-        $channels_info_table = self::get_table_name(CHANNELS_INFO);
+        $order_table = self::get_table_full_name($group_id);
+        $channels_info_table = self::get_table_full_name(CHANNELS_INFO);
         $column = $this->get_id_column();
         $query = "SELECT COUNT(ord.channel_id)
                     FROM $iptv_channels AS pl
@@ -1929,14 +1936,14 @@ class Dune_Default_Sqlite_Engine
         }
 
         $disable = (int)!$show;
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         $distinct = is_array($channel_id) ? 'DISTINCT' : '';
         $where = Sql_Wrapper::sql_make_where_clause($channel_id, COLUMN_CHANNEL_ID);
         $groups_select = "SELECT $distinct group_id FROM $table_name WHERE $where;";
 
         $query = '';
         foreach ($this->sql_playlist->fetch_array($groups_select) as $group) {
-            $q_table = self::get_table_name($group[COLUMN_GROUP_ID]);
+            $q_table = self::get_table_full_name($group[COLUMN_GROUP_ID]);
             if ($show) {
                 $q_group = Sql_Wrapper::sql_quote($group[COLUMN_GROUP_ID]);
                 $query .= "INSERT OR IGNORE INTO $q_table (channel_id) SELECT channel_id FROM $table_name WHERE $where AND group_id = $q_group ORDER BY ROWID;";
@@ -1957,7 +1964,7 @@ class Dune_Default_Sqlite_Engine
     public function get_channel_info($channel_id, $full = true)
     {
         $channel_id = Sql_Wrapper::sql_quote($channel_id);
-        $table_name = self::get_table_name(CHANNELS_INFO);
+        $table_name = self::get_table_full_name(CHANNELS_INFO);
         if ($full) {
             $iptv_channels = M3uParser::CHANNELS_TABLE;
             $column = $this->get_id_column();
@@ -1970,6 +1977,164 @@ class Dune_Default_Sqlite_Engine
         }
 
         return $this->sql_playlist->query_value($query, true);
+    }
+
+    /**
+     * @return void
+     */
+    public function reset_playlist_db()
+    {
+        hd_debug_print(null, true);
+        $this->sql_playlist = null;
+    }
+
+    public function get_id_column()
+    {
+        return safe_get_value(M3uParser::$id_to_column_mapper, $this->channel_id_map, PARAM_HASH);
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @param array $actions
+     * @return void
+     */
+    public function add_shortcuts_handlers($handler, &$actions)
+    {
+        foreach ($this->get_playlists_shortcuts() as $row) {
+            $actions[$row[PARAM_SHORTCUT]] = User_Input_Handler_Registry::create_action($handler,
+                ACTION_SHORTCUT,
+                null,
+                array(COLUMN_PLAYLIST_ID => $row[COLUMN_PLAYLIST_ID])
+            );
+        }
+    }
+
+    /**
+     * Returns full table name
+     *
+     * @param string $id
+     * @return string
+     */
+    public static function get_table_name($id)
+    {
+        switch ($id) {
+            case VOD_FAV_GROUP_ID:
+                $table_name = self::FAV_VOD_ORDERS_TABLE;
+                break;
+
+            case TV_FAV_GROUP_ID:
+            case TV_FAV_COMMON_GROUP_ID:
+                $table_name = self::FAV_TV_ORDERS_TABLE;
+                break;
+
+            case TV_HISTORY:
+                $table_name = self::TV_HISTORY_TABLE;
+                break;
+
+            case VOD_HISTORY:
+                $table_name = self::VOD_HISTORY_TABLE;
+                break;
+
+            case VOD_LIST_GROUP_ID:
+                $table_name = self::VOD_LIST_TABLE;
+                break;
+
+            case VOD_FILTER_LIST:
+                $table_name = self::VOD_FILTERS_TABLE;
+                break;
+
+            case VOD_SEARCH_LIST:
+                $table_name = self::VOD_SEARCHES_TABLE;
+                break;
+
+            case GROUPS_ORDER:
+                $table_name = self::GROUPS_ORDER_TABLE;
+                break;
+
+            case GROUPS_INFO:
+                $table_name = self::GROUPS_INFO_TABLE;
+                break;
+
+            case CHANNELS_INFO:
+                $table_name = self::CHANNELS_INFO_TABLE;
+                break;
+
+            case self::PLAYLISTS_TABLE:
+                $table_name = self::PLAYLISTS_TABLE;
+                break;
+
+            case self::XMLTV_TABLE:
+                $table_name = self::XMLTV_TABLE;
+                break;
+
+            case self::SELECTED_XMLTV_TABLE:
+                $table_name = self::SELECTED_XMLTV_TABLE;
+                break;
+
+            case M3uParser::S_CHANNELS_TABLE:
+                $table_name = M3uParser::S_CHANNELS_TABLE;
+                break;
+
+            case M3uParser::S_GROUPS_TABLE:
+                $table_name = M3uParser::S_GROUPS_TABLE;
+                break;
+
+            default:
+                $table_name = "orders_" . Hashed_Array::hash($id);
+                break;
+        }
+
+        return $table_name;
+    }
+
+    public static function get_table_full_name($id)
+    {
+        $table_name = self::get_table_name($id);
+        $db = self::get_db_name($id);
+        if (empty($db)) {
+            return $table_name;
+        }
+
+        return "$db.$table_name";
+    }
+
+    public static function get_db_name($id)
+    {
+        switch ($id) {
+            case TV_HISTORY:
+                $db = self::TV_HISTORY_DB;
+                break;
+
+            case VOD_HISTORY:
+                $db = self::VOD_HISTORY_DB;
+                break;
+
+            case VOD_FAV_GROUP_ID:
+            case VOD_LIST_GROUP_ID:
+            case VOD_FILTER_LIST:
+            case VOD_SEARCH_LIST:
+            case TV_FAV_COMMON_GROUP_ID:
+            case self::PLAYLISTS_TABLE:
+            case self::XMLTV_TABLE:
+            case self::SELECTED_XMLTV_TABLE:
+                $db = '';
+                break;
+
+            case M3uParser::S_CHANNELS_TABLE:
+            case M3uParser::S_GROUPS_TABLE:
+                $db = M3uParser::IPTV_DB;
+                break;
+
+            case GROUPS_INFO:
+            case CHANNELS_INFO:
+            case GROUPS_ORDER:
+            case TV_FAV_GROUP_ID:
+            default:
+                $db = self::PLAYLIST_ORDERS_DB;
+                break;
+        }
+
+        return $db;
     }
 
     ////////////////////////////////////////////////////////
@@ -1991,8 +2156,8 @@ class Dune_Default_Sqlite_Engine
             $sql_wrapper = $this->sql_params;
         } else {
             $script = self::CREATE_ORDERED_TABLE;
-            $table_name = self::get_table_name($table);
-            $table_name_short = self::get_table_name($table, true);
+            $table_name = self::get_table_full_name($table);
+            $table_name_short = self::get_table_name($table);
             $sql_wrapper = $this->sql_playlist;
         }
 
@@ -2059,130 +2224,19 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
-     * @return void
+     * @return bool
      */
-    public function reset_playlist_db()
+    public function is_playlist_table_exists($name)
     {
-        hd_debug_print(null, true);
-        $this->sql_playlist = null;
-    }
+        $table_name = self::get_table_name($name);
+        $db_name = self::get_db_name($name);
 
-    public function get_id_column()
-    {
-        return safe_get_value(M3uParser::$id_to_column_mapper, $this->channel_id_map, PARAM_HASH);
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @param array $actions
-     * @return void
-     */
-    public function add_shortcuts_handlers($handler, &$actions)
-    {
-        foreach ($this->get_playlists_shortcuts() as $row) {
-            $actions[$row[PARAM_SHORTCUT]] = User_Input_Handler_Registry::create_action($handler,
-                ACTION_SHORTCUT,
-                null,
-                array(COLUMN_PLAYLIST_ID => $row[COLUMN_PLAYLIST_ID])
-            );
-        }
-    }
-
-    /**
-     * Returns full table name
-     *
-     * @param string $id
-     * @param bool $only_table true - does not include database name into full table name
-     * @return string
-     */
-    public static function get_table_name($id, $only_table = false)
-    {
-        switch ($id) {
-            case VOD_FAV_GROUP_ID:
-                $table_name = self::FAV_VOD_ORDERS_TABLE;
-                break;
-
-            case TV_FAV_GROUP_ID:
-            case TV_FAV_COMMON_GROUP_ID:
-                $table_name = self::FAV_TV_ORDERS_TABLE;
-                break;
-
-            case TV_HISTORY:
-                $table_name = self::TV_HISTORY_TABLE;
-                break;
-
-            case VOD_HISTORY:
-                $table_name = self::VOD_HISTORY_TABLE;
-                break;
-
-            case VOD_LIST_GROUP_ID:
-                $table_name = self::VOD_LIST_TABLE;
-                break;
-
-            case VOD_FILTER_LIST:
-                $table_name = self::VOD_FILTERS_TABLE;
-                break;
-
-            case VOD_SEARCH_LIST:
-                $table_name = self::VOD_SEARCHES_TABLE;
-                break;
-
-            case GROUPS_ORDER:
-                $table_name = self::GROUPS_ORDER_TABLE;
-                break;
-
-            case GROUPS_INFO:
-                $table_name = self::GROUPS_INFO_TABLE;
-                break;
-
-            case CHANNELS_INFO:
-                $table_name = self::CHANNELS_INFO_TABLE;
-                break;
-
-            default:
-                $table_name = "orders_" . Hashed_Array::hash($id);
-                break;
+        if (!empty($db_name) && !$this->sql_playlist->is_database_attached($db_name)) {
+            hd_debug_print("is_table_exists: Database '$db_name' not attached!");
+            return false;
         }
 
-        if ($only_table) {
-            return $table_name;
-        }
-
-        $db = self::get_db_name($id);
-        if (!empty($db)) {
-            $db .= ".";
-        }
-
-        return $db . $table_name;
-    }
-
-    public static function get_db_name($id)
-    {
-        switch ($id) {
-            case TV_HISTORY:
-                $db = self::TV_HISTORY_DB;
-                break;
-
-            case VOD_HISTORY:
-                $db = self::VOD_HISTORY_DB;
-                break;
-
-            case VOD_FAV_GROUP_ID:
-            case VOD_LIST_GROUP_ID:
-            case VOD_FILTER_LIST:
-            case VOD_SEARCH_LIST:
-            case TV_FAV_COMMON_GROUP_ID:
-                $db = '';
-                break;
-            case GROUPS_INFO:
-            case CHANNELS_INFO:
-            case GROUPS_ORDER:
-            case TV_FAV_GROUP_ID:
-            default:
-                $db = self::PLAYLIST_ORDERS_DB;
-                break;
-        }
-
-        return $db;
+        $db_name = empty($db_name) ? 'sqlite_master' : "$db_name.sqlite_master";
+        return (int)$this->sql_playlist->query_value("SELECT count(name) FROM $db_name WHERE type='table' AND name='$table_name';") !== 0;
     }
 }
