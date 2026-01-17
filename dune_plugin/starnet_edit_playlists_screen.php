@@ -52,10 +52,10 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return $this->do_get_action_map();
+        return $this->do_get_action_map($plugin_cookies);
     }
 
-    protected function do_get_action_map()
+    protected function do_get_action_map(&$plugin_cookies)
     {
         hd_debug_print(null, true);
 
@@ -132,7 +132,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
-                $actions = $this->do_get_action_map();
+                $actions = $this->do_get_action_map($plugin_cookies);
                 return Action_Factory::change_behaviour($actions);
 
             case ACTION_ITEM_UP:

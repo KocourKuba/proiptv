@@ -54,10 +54,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return $this->do_get_action_map();
+        return $this->do_get_action_map($plugin_cookies);
     }
 
-    protected function do_get_action_map()
+    protected function do_get_action_map(&$plugin_cookies)
     {
         hd_debug_print(null, true);
 
@@ -156,7 +156,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 if (!is_limited_apk()) return null;
 
                 $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
-                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map(), 1000);
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($plugin_cookies), 1000);
                 return Action_Factory::composite($actions);
 
             case EVENT_INDEXING_DONE:
@@ -379,12 +379,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 safe_unlink(Starnet_Epfs_Handler::get_epfs_path(Starnet_Epfs_Handler::$epf_id));
                 $actions[] = Action_Factory::refresh_entry_points();
                 $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
-                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map());
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($plugin_cookies));
                 return Action_Factory::composite($actions);
 
             case ACTION_REFRESH_SCREEN:
                 $actions[] = Action_Factory::refresh_entry_points();
-                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map());
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($plugin_cookies));
                 return Action_Factory::composite($actions);
         }
 

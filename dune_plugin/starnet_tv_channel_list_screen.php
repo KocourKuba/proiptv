@@ -51,10 +51,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return $this->do_get_action_map($media_url);
+        return $this->do_get_action_map($media_url, &$plugin_cookies);
     }
 
-    protected function do_get_action_map(MediaURL $media_url)
+    protected function do_get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
 
@@ -134,7 +134,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 if (!is_limited_apk()) break;
 
                 $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
-                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($parent_media_url), 1000);
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($parent_media_url, $plugin_cookies), 1000);
                 return Action_Factory::composite($actions);
 
             case EVENT_INDEXING_DONE:
@@ -202,7 +202,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
-                return Action_Factory::change_behaviour($this->do_get_action_map($parent_media_url));
+                return Action_Factory::change_behaviour($this->do_get_action_map($parent_media_url, $plugin_cookies));
 
             case ACTION_ITEM_UP:
                 $sel_ndx--;
