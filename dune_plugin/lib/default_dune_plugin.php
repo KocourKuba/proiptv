@@ -1816,21 +1816,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * clear EPG cache for active playlist
-     *
-     * @return void
-     */
-    public function clear_playlist_epg_cache()
-    {
-        hd_debug_print(null, true);
-        $playlist_id = $this->get_active_playlist_id();
-        Epg_Manager_Json::clear_epg_files($playlist_id);
-        foreach ($this->get_selected_xmltv_ids() as $id) {
-            Epg_Manager_Xmltv::clear_epg_files($id);
-        }
-    }
-
-    /**
      * @param string $fav_op_type
      * @param string $movie_id
      */

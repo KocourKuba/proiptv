@@ -147,8 +147,17 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 break;
 
             case self::CONTROL_ITEMS_REFRESH_EPG_CACHE:
-                $this->plugin->clear_playlist_epg_cache();
-                $this->plugin->reset_channels();
+                $engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
+
+                $playlist_id = $this->plugin->get_active_playlist_id();
+                if ($engine === ENGINE_JSON) {
+                    Epg_Manager_Json::clear_epg_files($playlist_id);
+                } else {
+                    foreach ($this->plugin->get_selected_xmltv_ids() as $id) {
+                        Epg_Manager_Xmltv::clear_epg_files($id);
+                    }
+                    $this->plugin->reset_channels();
+                }
                 $actions[] = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
                 $actions[] = Action_Factory::reset_controls($this->do_get_control_defs());
                 $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);

@@ -263,7 +263,11 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_RESET_PLAYLIST_DLG_APPLY);
 
             case self::ACTION_RESET_PLAYLIST_DLG_APPLY:
-                $this->plugin->clear_playlist_epg_cache();
+                $playlist_id = $this->plugin->get_active_playlist_id();
+                Epg_Manager_Json::clear_epg_files($playlist_id);
+                foreach ($this->plugin->get_selected_xmltv_ids() as $id) {
+                    Epg_Manager_Xmltv::clear_epg_files($id);
+                }
                 $this->plugin->remove_playlist_data($playlist_id);
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
