@@ -2279,10 +2279,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return;
         }
 
-        $this->iptv_m3u_parser->clear_data();
-        $tmp_file = self::get_playlist_cache_path() . "{$playlist_id}_playlist.m3u8";
-        hd_debug_print("clear_playlist_cache: remove $tmp_file");
-        safe_unlink($tmp_file);
+        if ($this->iptv_m3u_parser) {
+            $this->iptv_m3u_parser->clear_data();
+        }
+
+        foreach (glob_dir(self::get_playlist_cache_path(), "/^$playlist_id.*$/i") as $file) {
+            hd_debug_print("clear_playlist_cache: $file", true);
+            safe_unlink($file);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -3225,6 +3229,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             hd_debug_print("remove cached image: $file", true);
             safe_unlink($file);
         }
+
+        // clear curl cache for selected id
+        Curl_Wrapper::getInstance($playlist_id)->clear_cache();
+
+        // clear playlist cache for selected id
+        $this->clear_playlist_cache($playlist_id);
     }
 
     public function is_full_size_remote()
