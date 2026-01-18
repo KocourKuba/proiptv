@@ -1,4 +1,31 @@
-﻿### Version 7.0.1478
+﻿### Version 7.1.1560
+- Added the ability to view the current EPG (the one called up by the SUBTITLE button) to the plugin information dialog.
+- Resuming playback when launching the plugin is forced to stop if the playlist was previously changed.
+- Added a workaround for links to icons in the 1ott provider playlist (guys from 1ott, you really need to specify the protocol!)
+- Added a new server request cache. Mainly applicable to VOD. Added due to the specifics of the JellyFin API.
+- Added an additional API Domain setting (for some providers, this is critical because the command processing server and the playlist download server are different, for example, TV Team and its clones).
+- Added the Yosso VOD. Implemented JellyFin API support.
+- Added an addition to XMLTV processing. Those who write XMLTV generators have hit the bottom. Well, maybe we should start reading the docs for example?
+- Additional checks for successful XMLTV unpacking
+- Fixed display of the Changed Channels category in NewUI (old and outdated settings could affect this, causing the plugin to not display this category)
+- Fixed processing of additional data for Ext_Epg. If information supported by Ext_Epg is available in the XMLTV or Internet EPG source, it is passed to the Ext_Epg plugin.
+- Fixed an error indexing XMLTV sources when multiple are selected.
+- Fixed an error updating NewUI after rebooting the Dune HD box.
+- Fixed some errors when selecting a folder/file.
+- Fixed errors when updating/clearing the XMLTV/Internet source cache.
+- The "Add to Favorites" function, where used, now binded to a FAV1 button (new remote controls).
+- The "Delete" function, where used, also binded to a CLEAR button (if you have one, please use it).
+- Updated configuration for Shura TV, TVTeam, and Sharaclub.
+- Reworked ETAG (If-None-Match header) processing for more consistent information retrieval and to prevent erroneous deletion of the existing EPG cache in the event of server connection issues. If we couldn't test it, we're not changing anything.
+- The color button bindings on some plugin screens have been revised.
+- The plugin now automatically checks the relevance of all selected XMLTV sources if the corresponding XMLTV engine is selected.
+- The plugin title (indicating the current playlist) is now displayed consistently in both the top menu and the popup.
+- The ability to select a set of Internet EPG sources has been removed. Now the plugin simply tries to find EPG in all available sources specified in the provider's configuration. This takes a bit longer, but is more reliable. It also helps resolve issues with multiple EPG sources in a playlist, such as TV Boom.
+- The channel loading algorithm has been improved; the plugin now requests/updates the playlist less frequently after executing certain commands.
+- Improved XMLTV indexing error handling. In the event of errors, the plugin attempts to display an error message (unfortunately, displaying an error message is sometimes impossible due to limitations of the Dune API).
+- Reduced the number of requests to the API server for information about subscriptions, servers, domains, etc.
+
+### Version 7.0.1478
 - Added setting to disable the Sleep timer
 - Added a setting for the timer Sleep method. As in the system or disabling the video output
 - The ability to change the broadcast server for TV Team has been returned
