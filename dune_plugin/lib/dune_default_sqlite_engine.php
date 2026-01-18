@@ -132,7 +132,7 @@ class Dune_Default_Sqlite_Engine
         $query = '';
         foreach ($this->get_all_playlists_ids() as $playlist_id) {
             $old_parameters_table = str_replace('.', '_', "parameters_$playlist_id");
-            if ($this->sql_params->is_table_exists($old_parameters_table)) {
+            if ($this->is_params_table_exists($old_parameters_table)) {
                 $query .= "INSERT INTO $playlist_parameters (playlist_id, name, value) SELECT '$playlist_id', name, value FROM $old_parameters_table;";
                 $query .= "DROP TABLE IF EXISTS $old_parameters_table;";
             }
@@ -1535,7 +1535,7 @@ class Dune_Default_Sqlite_Engine
     public function get_all_playlists_count()
     {
         $table_name = self::PLAYLISTS_TABLE;
-        if (!$this->sql_params->is_table_exists($table_name)) {
+        if (!$this->is_params_table_exists($table_name)) {
             return 0;
         }
 
@@ -1548,12 +1548,8 @@ class Dune_Default_Sqlite_Engine
      */
     public function is_playlist_entry_exist($id)
     {
-        if (empty($id)) {
-            return false;
-        }
-
         $table_name = self::PLAYLISTS_TABLE;
-        if (!$this->sql_params->is_table_exists($table_name)) {
+        if (empty($id) || !$this->is_params_table_exists($table_name)) {
             return false;
         }
 
@@ -2237,5 +2233,13 @@ class Dune_Default_Sqlite_Engine
 
         $db_name = empty($db_name) ? 'sqlite_master' : "$db_name.sqlite_master";
         return (int)$this->sql_playlist->query_value("SELECT count(name) FROM $db_name WHERE type='table' AND name='$table_name';") !== 0;
+    }
+
+    /**
+     * @return bool
+     */
+    public function is_params_table_exists($name)
+    {
+        return $this->sql_params && $this->sql_params->is_table_exists($name);
     }
 }
