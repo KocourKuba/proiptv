@@ -11,6 +11,7 @@
 - Fixed processing of additional data for Ext_Epg. If information supported by Ext_Epg is available in the XMLTV or Internet EPG source, it is passed to the Ext_Epg plugin.
 - Fixed an error indexing XMLTV sources when multiple are selected.
 - Fixed an error updating NewUI after rebooting the Dune HD box.
+- Fixed a clean install bug
 - Fixed some errors when selecting a folder/file.
 - Fixed errors when updating/clearing the XMLTV/Internet source cache.
 - The "Add to Favorites" function, where used, now binded to a FAV1 button (new remote controls).
