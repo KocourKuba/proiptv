@@ -1069,6 +1069,10 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_groups($type, $disabled, $column = null)
     {
+        if (!$this->sql_playlist) {
+            return array();
+        }
+
         hd_debug_print(null, true);
         $groups_info_table = self::get_table_full_name(GROUPS_INFO);
         $where = ($disabled === PARAM_ALL) ? "" : "disabled = $disabled";
@@ -1281,6 +1285,9 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_channels_order($group_id)
     {
+        if (!$this->sql_playlist) {
+            return array();
+        }
         $table_name = self::get_table_full_name($group_id);
         return $this->sql_playlist->fetch_single_array("SELECT channel_id FROM $table_name ORDER BY ROWID;", COLUMN_CHANNEL_ID);
     }

@@ -453,6 +453,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             return $this->get_empty_rows_pane();
         }
 
+        if (!$this->plugin->get_sql_playlist()) {
+            return $this->get_empty_rows_pane();
+        }
+
         $all_channels_rows = array();
         $all_channels_headers = array();
         $fav_headers = array();
