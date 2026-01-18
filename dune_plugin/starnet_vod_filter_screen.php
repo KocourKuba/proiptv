@@ -47,6 +47,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this,
                 ACTION_CREATE_FILTER, null, array(ACTION_FILTER => ACTION_OPEN_FOLDER));
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+        $actions[GUI_EVENT_KEY_CLEAR] =  User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
 
         $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
         $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));

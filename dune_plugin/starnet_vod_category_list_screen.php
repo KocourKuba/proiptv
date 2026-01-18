@@ -125,7 +125,6 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 }
                 break;
 
-
             default:
                 break;
         }

@@ -45,14 +45,18 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen
     {
         hd_debug_print(null, true);
 
-        $actions[GUI_EVENT_KEY_ENTER] = Action_Factory::open_folder();
-        $actions[GUI_EVENT_KEY_PLAY] = Action_Factory::vod_play();
-        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
-        $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'));
-        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $add_to_favorite = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
+        $remove = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
+
+        $actions[GUI_EVENT_KEY_ENTER] = Action_Factory::open_folder();
+        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_PLAY] = Action_Factory::vod_play();
+        $actions[GUI_EVENT_KEY_CLEAR] = $remove;
+
+        $actions[GUI_EVENT_KEY_B_GREEN] = $remove;
+        $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'));
         $actions[GUI_EVENT_KEY_D_BLUE] = $add_to_favorite;
-        $actions[GUI_EVENT_KEY_DUNE] = $add_to_favorite;
+        $actions[GUI_EVENT_KEY_DUNE] = $add_to_favorite; // FAV1
 
         return $actions;
     }

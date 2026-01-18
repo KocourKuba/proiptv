@@ -154,7 +154,6 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
 
         Control_Factory::add_vgap($defs, 10);
 
-        //file_put_contents(get_temp_path("test.json"), pretty_json_format($defs, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         return $defs;
     }
 
