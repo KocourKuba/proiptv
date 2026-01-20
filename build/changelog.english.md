@@ -1,4 +1,7 @@
-﻿### Version 7.1.1560
+﻿### Version 7.1.1564
+- The link for movies in the CBilling VOD was formed incorrectly
+
+### Version 7.1.1562
 - Added the ability to view the current EPG (the one called up by the SUBTITLE button) to the plugin information dialog.
 - Resuming playback when launching the plugin is forced to stop if the playlist was previously changed.
 - Added a workaround for links to icons in the 1ott provider playlist (guys from 1ott, you really need to specify the protocol!)
