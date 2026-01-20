@@ -47,14 +47,16 @@ class vod_cbilling extends vod_standard
             $acc_data = $provider->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_ARRAY);
             if (isset($acc_data['data'])) {
                 $info_data = safe_get_value($acc_data, 'data');
+                hd_debug_print("VOD Data: " . json_encode($info_data));
                 if (!empty($info_data)) {
                     $this->token = safe_get_value($info_data, 'private_token');
-                    $scheme = safe_get_value($acc_data, 'ssl', "http://");
-                    $server = safe_get_value($acc_data, 'server');
+                    $is_ssl = safe_get_value($info_data, 'ssl', false);
+                    $scheme = $is_ssl ? 'https' : 'http';
+                    $server = safe_get_value($info_data, 'server');
                     if (empty($server)) {
                         $server = $provider->getApiCommand(API_COMMAND_GET_VOD);
                     }
-                    $this->server = $scheme .$server;
+                    $this->server = "$scheme://$server";
                     return true;
                 }
             }
