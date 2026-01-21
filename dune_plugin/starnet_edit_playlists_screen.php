@@ -648,6 +648,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 hd_debug_print("import link: '$uri'", true);
                 try {
                     $this->add_playlist($uri, PARAM_LINK, '', CONTROL_DETECT_ID, CONTROL_PLAYLIST_IPTV);
+                    $new_count++;
                 } catch (Exception $ex) {
                     hd_debug_print("Problem importing '$uri' " . $ex->getMessage());
                 }
