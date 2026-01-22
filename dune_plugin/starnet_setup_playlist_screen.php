@@ -166,7 +166,7 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
         $control_id = $user_input->control_id;
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $playlist_id = isset($parent_media_url->{PARAM_PLAYLIST_ID}) ? $parent_media_url->{PARAM_PLAYLIST_ID} : $this->plugin->get_active_playlist_id();
-        $sel_ndx = safe_get_member($user_input, 'initial_sel_ndx', -1);
+        $sel_ndx = safe_get_value($user_input, 'initial_sel_ndx', -1);
 
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:

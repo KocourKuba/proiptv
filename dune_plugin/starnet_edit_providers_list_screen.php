@@ -70,8 +70,8 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
             case GUI_EVENT_KEY_RETURN:
                 $target_action = null;
                 if (isset($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_CANCEL_ACTION})) {
-                    $source_window = safe_get_member($parent_media_url, PARAM_SOURCE_WINDOW_ID);
-                    $cancel_action = safe_get_member($parent_media_url, PARAM_CANCEL_ACTION);
+                    $source_window = safe_get_value($parent_media_url, PARAM_SOURCE_WINDOW_ID);
+                    $cancel_action = safe_get_value($parent_media_url, PARAM_CANCEL_ACTION);
                     hd_debug_print("Call parent: $source_window action: $cancel_action", true);
                     $target_action = User_Input_Handler_Registry::create_screen_action($source_window, $cancel_action);
                 }
@@ -81,8 +81,8 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
             case GUI_EVENT_KEY_ENTER:
                 $target_action = null;
                 if (isset($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_END_ACTION})) {
-                    $source_window = safe_get_member($parent_media_url, PARAM_SOURCE_WINDOW_ID);
-                    $end_action = safe_get_member($parent_media_url, PARAM_END_ACTION);
+                    $source_window = safe_get_value($parent_media_url, PARAM_SOURCE_WINDOW_ID);
+                    $end_action = safe_get_value($parent_media_url, PARAM_END_ACTION);
                     hd_debug_print("Call parent: $source_window action: $end_action", true);
                     $target_action = User_Input_Handler_Registry::create_screen_action(
                         $source_window,

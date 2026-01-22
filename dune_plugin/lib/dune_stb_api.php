@@ -1908,7 +1908,7 @@ function get_plugin_manifest_info()
         $result['app_version'] = (string)$xml->version;
         $ver = explode('.', $result['app_version']);
         $result['app_base_version'] = "$ver[0].$ver[1]";
-        $result['app_version_idx'] = (string)safe_get_member($xml, 'version_index', '0');
+        $result['app_version_idx'] = (string)safe_get_value($xml, 'version_index', '0');
         $result['app_release_date'] = (string)$xml->release_date;
         $result['app_background'] = (string)$xml->background;
         $result['app_manifest_path'] = $manifest_path;
@@ -2416,44 +2416,57 @@ function safe_merge_array($ar1, $ar2)
 }
 
 /**
- * Safe get value from array by key
+ * Safe get value from array or object by key or the keys chain
  *
- * @param array $ar
+ * @param array|object $src
  * @param string|array $param
- * @param mixed|null $default
+ * @param mixed $default
  * @return mixed
  */
-function safe_get_value($ar, $param, $default = null)
+function safe_get_value($src, $param, $default = null)
 {
-    if (is_null($param)) {
+    // No key to resolve. Null key or empty string is not allowed
+    if (is_null($param) || $param === '') {
         return $default;
     }
 
-    if (is_array($param)) {
-        $next = $ar;
-        foreach ($param as $val) {
-            if (!isset($next[$val])) {
-                return $default;
-            }
-            $next = $next[$val];
+    // Base case: single key
+    if (!is_array($param)) {
+        if (is_array($src)) {
+            return isset($src[$param]) ? $src[$param] : $default;
         }
-        return $next;
+
+        if (is_object($src)) {
+            return isset($src->{$param}) ? $src->{$param} : $default;
+        }
+
+        return $default;
     }
 
-    return isset($ar[$param]) ? $ar[$param] : $default;
-}
+    // Recursive case: key path
 
-/**
- * Safe get value from member (object->member)
- *
- * @param object $obj
- * @param string $param
- * @param mixed|null $default
- * @return mixed
- */
-function safe_get_member($obj, $param, $default = null)
-{
-    return isset($obj->{$param}) ? $obj->{$param} : $default;
+    // empty array also is not allowed
+    if (empty($param)) {
+        return $default;
+    }
+
+    $key = array_shift($param);
+
+    if (is_array($src)) {
+        if (!isset($src[$key])) {
+            return $default;
+        }
+        return safe_get_value($src[$key], $param, $default);
+    }
+
+    if (is_object($src)) {
+        if (!isset($src->{$key})) {
+            return $default;
+        }
+        return safe_get_value($src->{$key}, $param, $default);
+    }
+
+    return $default;
 }
 
 function extract_column($rows, $column)
@@ -2483,7 +2496,7 @@ function get_cookie_bool_param($plugin_cookies, $param, $default = true)
  */
 function toggle_cookie_param($plugin_cookies, $param)
 {
-    $old = safe_get_member($plugin_cookies, $param, SwitchOnOff::off);
+    $old = safe_get_value($plugin_cookies, $param, SwitchOnOff::off);
     $new = SwitchOnOff::toggle($old);
     $plugin_cookies->{$param} = $new;
     hd_debug_print("toggle new cookie param $param: $old -> $new", true);

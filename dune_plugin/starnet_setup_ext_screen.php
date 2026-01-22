@@ -117,7 +117,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // debugging
-        $debug_state = safe_get_member($plugin_cookies, PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off);
+        $debug_state = safe_get_value($plugin_cookies, PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, PARAM_COOKIE_ENABLE_DEBUG,
             TR::t('setup_debug'), SwitchOnOff::translate($debug_state), SwitchOnOff::to_image($debug_state));
 

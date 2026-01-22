@@ -134,7 +134,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen
 
             case ACTION_REFRESH_SCREEN:
             case RESET_CONTROLS_ACTION_ID:
-                $sel_ndx = safe_get_member($user_input, 'initial_sel_ndx', -1);
+                $sel_ndx = safe_get_value($user_input, 'initial_sel_ndx', -1);
                 return Action_Factory::reset_controls($this->do_get_control_defs(), null, $sel_ndx);
         }
 

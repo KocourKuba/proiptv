@@ -3057,7 +3057,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function new_search($handler, $plugin_cookies)
     {
-        $search_text = safe_get_member($plugin_cookies, PARAM_COOKIE_LAST_TV_SEARCH, '');
+        $search_text = safe_get_value($plugin_cookies, PARAM_COOKIE_LAST_TV_SEARCH, '');
 
         $defs = array();
         Control_Factory::add_text_field($defs, $handler, ACTION_NEW_SEARCH, '', $search_text, false,

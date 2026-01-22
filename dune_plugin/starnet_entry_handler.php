@@ -418,11 +418,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
         }
 
         $auto_play = false;
-        $mandatory_playback = (int)safe_get_member($user_input, PARAM_MANDATORY_PLAYBACK);
-        $auto_resume = safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_RESUME);
+        $mandatory_playback = (int)safe_get_value($user_input, PARAM_MANDATORY_PLAYBACK);
+        $auto_resume = safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_RESUME);
 
         if ($user_input->action_id === self::ACTION_LAUNCH) {
-            $auto_play = safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_PLAY);
+            $auto_play = safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_PLAY);
             hd_debug_print("Play button used: $mandatory_playback");
             hd_debug_print("Auto play:        $auto_play");
 
@@ -461,13 +461,13 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         $is_playlist_changed = !isset($plugin_cookies->current_playlist) || $plugin_cookies->current_playlist !== $this->plugin->get_active_playlist_id();
         hd_debug_print("current playlist changed: " . var_export($is_playlist_changed, true));
-        $mode = safe_get_member($user_input, 'resume_mode');
-        $resume_owner = strpos(safe_get_member($user_input, 'plugin_name', ''), get_plugin_name()) !== false;
+        $mode = safe_get_value($user_input, 'resume_mode');
+        $resume_owner = strpos(safe_get_value($user_input, 'plugin_name', ''), get_plugin_name()) !== false;
         $media_url = MediaURL::decode();
-        $media_url->is_favorite = safe_get_member($user_input, 'resume_tv_is_favorite');
-        $media_url->group_id = safe_get_member($user_input, 'resume_tv_group');
-        $media_url->channel_id = safe_get_member($user_input, 'resume_tv_channel');
-        $archive_tm = safe_get_member($user_input, 'resume_tv_archive_tm');
+        $media_url->is_favorite = safe_get_value($user_input, 'resume_tv_is_favorite');
+        $media_url->group_id = safe_get_value($user_input, 'resume_tv_group');
+        $media_url->channel_id = safe_get_value($user_input, 'resume_tv_channel');
+        $archive_tm = safe_get_value($user_input, 'resume_tv_archive_tm');
         $media_url->archive_tm = ((time() - $archive_tm) < 259200) ? $archive_tm : -1;
         // Check if previous state is TV playback
         if (!$is_playlist_changed && $resume_owner && $mode === "PLUGIN_TV_PLAYBACK") {
@@ -476,7 +476,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
         }
 
         if (!$is_playlist_changed && $resume_owner && $mode === "PLUGIN_VOD_PLAYBACK") {
-            $vod_info = $this->plugin->vod->get_vod_info(MediaURL::decode(safe_get_member($user_input, 'resume_media_url')));
+            $vod_info = $this->plugin->vod->get_vod_info(MediaURL::decode(safe_get_value($user_input, 'resume_media_url')));
             if ($vod_info !== null) {
                 return Action_Factory::vod_play($vod_info);
             }

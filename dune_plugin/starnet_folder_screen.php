@@ -94,7 +94,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
 
         if (empty($media_url->{PARAM_FILEPATH})) {
-            $allow_network = safe_get_member($media_url, self::PARAM_ALLOW_NETWORK, false);
+            $allow_network = safe_get_value($media_url, self::PARAM_ALLOW_NETWORK, false);
             if ($allow_network && !is_android()) {
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this,
                     self::ACTION_SMB_SETUP, TR::t('folder_screen_smb_settings'));
@@ -105,7 +105,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                     self::ACTION_RESET, TR::t('reset_default'));
             }
 
-            $allow_image_lib = safe_get_member($media_url, self::PARAM_ALLOW_IMAGE_LIB, false);
+            $allow_image_lib = safe_get_value($media_url, self::PARAM_ALLOW_IMAGE_LIB, false);
             if ($allow_image_lib) {
                 $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this,
                     self::ACTION_RELOAD_IMAGE_FOLDER, TR::t('refresh'));
@@ -164,8 +164,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
             case GUI_EVENT_KEY_RETURN:
                 $target_action = null;
                 if (isset($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_END_ACTION})) {
-                    $source_window = safe_get_member($parent_media_url, PARAM_SOURCE_WINDOW_ID);
-                    $end_action = safe_get_member($parent_media_url, PARAM_END_ACTION);
+                    $source_window = safe_get_value($parent_media_url, PARAM_SOURCE_WINDOW_ID);
+                    $end_action = safe_get_value($parent_media_url, PARAM_END_ACTION);
                     hd_debug_print("Call parent: $source_window action: $end_action", true);
                     $target_action = User_Input_Handler_Registry::create_screen_action(
                         $source_window,
@@ -237,7 +237,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
         }
 
         hd_debug_print("dir: " . json_format_unescaped($dir), true);
-        $files_list = $this->get_file_list($plugin_cookies, $dir, !safe_get_member($media_url, self::PARAM_CHOOSE_FILE, false));
+        $files_list = $this->get_file_list($plugin_cookies, $dir, !safe_get_value($media_url, self::PARAM_CHOOSE_FILE, false));
 
         $items = array();
         foreach ($files_list as $item_type => $item) {
@@ -284,7 +284,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                     $type = self::SELECTED_TYPE_FOLDER;
                     $info = TR::t('folder_screen_folder__1', $caption);
                 } else if ($item_type === self::SELECTED_TYPE_FOLDER) {
-                    $allow_network = safe_get_member($new_media_url, self::PARAM_ALLOW_NETWORK, false);
+                    $allow_network = safe_get_value($new_media_url, self::PARAM_ALLOW_NETWORK, false);
                     if ($k === self::SELECTED_TYPE_NFS_FOLDER) {
                         if (!$allow_network) continue;
                         $caption = 'NFS';
@@ -296,7 +296,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                     } else if ($k === self::SELECTED_TYPE_INTERNAL) {
                         $caption = TR::load('internal');
                     } else if ($k === self::SELECTED_TYPE_IMAGE_LIB) {
-                        if (!safe_get_member($new_media_url, self::PARAM_ALLOW_IMAGE_LIB, false)) continue;
+                        if (!safe_get_value($new_media_url, self::PARAM_ALLOW_IMAGE_LIB, false)) continue;
                         $caption = TR::load('image_libs');
                     } else {
                         $caption = $k;
@@ -427,7 +427,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                 if (is_limited_apk()) {
                     $info = 1;
                 } else {
-                    $info = safe_get_member($plugin_cookies, self::ACTION_SMB_SETUP, 1);
+                    $info = safe_get_value($plugin_cookies, self::ACTION_SMB_SETUP, 1);
                 }
 
                 $s[self::SELECTED_TYPE_SMB] = $smb_shares->get_mount_all_smb($info);
@@ -597,8 +597,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
             Control_Factory::add_label($defs, TR::t('folder_screen_smb_ip'), $selected_media_url->{smb_tree::PARAM_IP_PATH});
 
             if (strpos($selected_media_url->{smb_tree::PARAM_ERR}, "Permission denied") !== false) {
-                $user = safe_get_member($selected_media_url, smb_tree::PARAM_USER, '');
-                $password = safe_get_member($selected_media_url, smb_tree::PARAM_PASSWORD, '');
+                $user = safe_get_value($selected_media_url, smb_tree::PARAM_USER, '');
+                $password = safe_get_value($selected_media_url, smb_tree::PARAM_PASSWORD, '');
                 $this->GetSMBAccessDefs($defs, $user, $password);
             } else {
                 Control_Factory::add_label($defs, '', '');
@@ -847,7 +847,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
         hd_debug_print(null, true);
 
         $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
-        $smb_view = safe_get_member($plugin_cookies, self::ACTION_SMB_SETUP, 1);
+        $smb_view = safe_get_value($plugin_cookies, self::ACTION_SMB_SETUP, 1);
 
         $smb_view_ops[1] = TR::t('folder_screen_net_folders');
         $smb_view_ops[2] = TR::t('folder_screen_net_folders_smb');

@@ -66,7 +66,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
-        $group_id = safe_get_member($selected_media_url, COLUMN_GROUP_ID);
+        $group_id = safe_get_value($selected_media_url, COLUMN_GROUP_ID);
 
         switch ($user_input->control_id) {
             case ACTION_RELOAD:

@@ -98,8 +98,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
         $fav_id = $this->plugin->get_fav_id();
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $selected_media_url = MediaURL::decode(safe_get_member($user_input, 'selected_media_url'));
-        $sel_ndx = safe_get_member($user_input, 'sel_ndx', 0);
+        $selected_media_url = MediaURL::decode(safe_get_value($user_input, 'selected_media_url'));
+        $sel_ndx = safe_get_value($user_input, 'sel_ndx', 0);
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -199,7 +199,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_ITEM_DELETE:
                 // hide group
                 $this->force_parent_reload = true;
-                $group_id = safe_get_member($selected_media_url, COLUMN_GROUP_ID);
+                $group_id = safe_get_value($selected_media_url, COLUMN_GROUP_ID);
                 if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID || $group_id === TV_HISTORY_GROUP_ID) {
                     return User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR);
                 }
@@ -308,7 +308,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                         TR::t('search'),
                         "search.png");
                     $refresh_menu[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                    $group_id = safe_get_member($selected_media_url, COLUMN_GROUP_ID);
+                    $group_id = safe_get_value($selected_media_url, COLUMN_GROUP_ID);
                     $menu_items = array_merge($refresh_menu, $this->plugin->common_categories_menu($this, $group_id));
                 }
 
@@ -385,7 +385,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
 
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
-                $group_id = safe_get_member($selected_media_url, COLUMN_GROUP_ID);
+                $group_id = safe_get_value($selected_media_url, COLUMN_GROUP_ID);
                 if ($group_id === TV_HISTORY_GROUP_ID) {
                     $this->plugin->clear_tv_history();
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);

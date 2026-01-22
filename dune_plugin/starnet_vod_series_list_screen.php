@@ -76,7 +76,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
         $a_variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_AUDIO, 'auto');
         hd_debug_print("Default Audio: $a_variant");
 
-        $season_id = safe_get_member($media_url, 'season_id');
+        $season_id = safe_get_value($media_url, 'season_id');
         $qualities = $movie->collect_all_qualities($season_id);
         $audios = $movie->collect_all_audios($season_id);
 

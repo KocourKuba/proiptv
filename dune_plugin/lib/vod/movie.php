@@ -588,7 +588,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
                 return array();
         }
 
-        $sel_id = safe_get_member($media_url, 'episode_id');
+        $sel_id = safe_get_value($media_url, 'episode_id');
         $series_array = array();
         $initial_series_ndx = 0;
         $def_q_variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_QUALITY, 'auto');

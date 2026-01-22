@@ -74,8 +74,8 @@ class smb_tree
         } else {
             $save_folder[$selected_url->{self::PARAM_IP_PATH}][self::PARAM_FOLDERNAME] = preg_replace(
                 "|^/tmp/mnt/smb/\d*|", '', $selected_url->{PARAM_FILEPATH});
-            $save_folder[$selected_url->{self::PARAM_IP_PATH}][self::PARAM_USER] = safe_get_member($selected_url, self::PARAM_USER,  false);
-            $save_folder[$selected_url->{self::PARAM_IP_PATH}][self::PARAM_PASSWORD] = safe_get_member($selected_url, self::PARAM_PASSWORD, false);
+            $save_folder[$selected_url->{self::PARAM_IP_PATH}][self::PARAM_USER] = safe_get_value($selected_url, self::PARAM_USER,  false);
+            $save_folder[$selected_url->{self::PARAM_IP_PATH}][self::PARAM_PASSWORD] = safe_get_value($selected_url, self::PARAM_PASSWORD, false);
         }
 
         return json_encode($save_folder);

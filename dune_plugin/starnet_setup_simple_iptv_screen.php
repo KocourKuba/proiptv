@@ -218,8 +218,8 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                         throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n" . substr($contents, 0, 512));
                     }
 
-                    $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
-                    $pl_type = safe_get_member($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
+                    $detect_id = safe_get_value($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
+                    $pl_type = safe_get_value($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
                     if ($pl_type === CONTROL_PLAYLIST_IPTV) {
                         if ($detect_id === CONTROL_DETECT_ID) {
                             $detect_info = $this->plugin->collect_detect_info($tmp_file);

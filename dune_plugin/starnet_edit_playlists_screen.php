@@ -98,8 +98,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 if ($this->force_parent_reload && isset($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_END_ACTION})) {
                     $this->force_parent_reload = false;
                     $this->plugin->reset_channels();
-                    $source_window = safe_get_member($parent_media_url, PARAM_SOURCE_WINDOW_ID);
-                    $end_action = safe_get_member($parent_media_url, PARAM_END_ACTION);
+                    $source_window = safe_get_value($parent_media_url, PARAM_SOURCE_WINDOW_ID);
+                    $end_action = safe_get_value($parent_media_url, PARAM_END_ACTION);
                     hd_debug_print("Force parent reload: $source_window action: $end_action", true);
                     $target_action = User_Input_Handler_Registry::create_screen_action($source_window, $end_action);
                 }
@@ -307,7 +307,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
     protected function edit_provider_dlg($user_input)
     {
-        $playlist_id = safe_get_member($user_input, COLUMN_PLAYLIST_ID, '');
+        $playlist_id = safe_get_value($user_input, COLUMN_PLAYLIST_ID, '');
         if (empty($playlist_id)) {
             // add new provider
             $provider = $this->plugin->create_provider_class($user_input->{PARAM_PROVIDER});
@@ -340,7 +340,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
 
         // edit existing or new provider in starnet_edit_list_screen
-        $playlist_id = safe_get_member($user_input, CONTROL_EDIT_ITEM, '');
+        $playlist_id = safe_get_value($user_input, CONTROL_EDIT_ITEM, '');
         if (empty($playlist_id)) {
             // create new provider
             $provider = $this->plugin->create_provider_class($user_input->{PARAM_PROVIDER});
@@ -540,15 +540,15 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
     {
         hd_debug_print(null, true);
 
-        $uri = safe_get_member($user_input, CONTROL_URL_PATH, '');
+        $uri = safe_get_value($user_input, CONTROL_URL_PATH, '');
         if (!is_proto_http($uri)) {
             return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_incorrect_url'));
         }
 
         try {
-            $name = safe_get_member($user_input, CONTROL_EDIT_NAME, '');
-            $pl_type = safe_get_member($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
-            $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
+            $name = safe_get_value($user_input, CONTROL_EDIT_NAME, '');
+            $pl_type = safe_get_value($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
+            $detect_id = safe_get_value($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
 
             $post_action = $this->add_playlist($uri, PARAM_LINK, $name, $detect_id, $pl_type);
         } catch (Exception $ex) {
@@ -606,14 +606,14 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
 
         try {
-            $file_path = safe_get_member($user_input, CONTROL_URL_PATH);
+            $file_path = safe_get_value($user_input, CONTROL_URL_PATH);
             if (empty($file_path)) {
                 return null;
             }
 
-            $pl_type = safe_get_member($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
-            $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
-            $name = safe_get_member($user_input, CONTROL_EDIT_NAME);
+            $pl_type = safe_get_value($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
+            $detect_id = safe_get_value($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
+            $name = safe_get_value($user_input, CONTROL_EDIT_NAME);
 
             $post_action = $this->add_playlist($file_path, PARAM_FILE, $name, $detect_id, $pl_type);
         } catch (Exception $ex) {

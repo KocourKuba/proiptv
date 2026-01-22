@@ -513,7 +513,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
      */
     protected function get_screen_by_url(MediaURL $media_url)
     {
-        $screen_id = safe_get_member($media_url, PARAM_SCREEN_ID, $media_url->get_raw_string());
+        $screen_id = safe_get_value($media_url, PARAM_SCREEN_ID, $media_url->get_raw_string());
 
         return $this->get_screen_by_id($screen_id);
     }

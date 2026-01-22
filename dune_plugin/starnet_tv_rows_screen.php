@@ -1005,9 +1005,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         hd_debug_print($media_url, true);
 
         $fav_id = $this->plugin->get_fav_id();
-        $group_id = safe_get_member($media_url, COLUMN_GROUP_ID);
-        $channel_id = safe_get_member($media_url, COLUMN_CHANNEL_ID);
-        $archive_tm = safe_get_member($media_url, 'archive_tm', -1);
+        $group_id = safe_get_value($media_url, COLUMN_GROUP_ID);
+        $channel_id = safe_get_value($media_url, COLUMN_CHANNEL_ID);
+        $archive_tm = safe_get_value($media_url, 'archive_tm', -1);
 
         if (is_null($channel_id) || empty($group_id)) {
             return null;
@@ -1363,7 +1363,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             // popup menu for left side list
             hd_debug_print("in menu side", true);
             $refresh_menu = $this->plugin->refresh_playlist_menu($this);
-            $group_id = safe_get_member($media_url, COLUMN_GROUP_ID);
+            $group_id = safe_get_value($media_url, COLUMN_GROUP_ID);
             $menu_items = array_merge($refresh_menu, $menu_items, $this->plugin->common_categories_menu($this, $group_id, false));
         }
 

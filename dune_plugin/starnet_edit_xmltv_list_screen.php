@@ -92,8 +92,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $actions[] = Action_Factory::close_and_run();
                 if ($this->force_parent_reload && isset($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_END_ACTION})) {
                     $this->force_parent_reload = false;
-                    $source_window = safe_get_member($parent_media_url, PARAM_SOURCE_WINDOW_ID);
-                    $end_action = safe_get_member($parent_media_url, PARAM_END_ACTION);
+                    $source_window = safe_get_value($parent_media_url, PARAM_SOURCE_WINDOW_ID);
+                    $end_action = safe_get_value($parent_media_url, PARAM_END_ACTION);
                     hd_debug_print("Force parent reload: $source_window action: $end_action", true);
 
                     if ($source_window === Starnet_Entry_Handler::ID) {
