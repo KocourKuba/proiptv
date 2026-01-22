@@ -1274,7 +1274,7 @@ class api_default
      */
     protected function apply_user_input_parameter($user_input, $param, $macro)
     {
-        $value = safe_get_member($user_input,  $param);
+        $value = safe_get_value($user_input,  $param);
         if (!empty($value)) {
             $this->SetProviderParameter($macro, (string)$value);
         }

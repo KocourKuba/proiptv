@@ -124,7 +124,9 @@ class api_korona extends api_default
             $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             foreach (safe_get_value($response, 'data', array()) as $server) {
-                $this->servers[(string)$server['id']] = $server['title'];
+                if (isset($server['id'])) {
+                    $this->servers[(string)$server['id']] = safe_get_value($server, 'title', 'unknown');
+                }
             }
         }
 

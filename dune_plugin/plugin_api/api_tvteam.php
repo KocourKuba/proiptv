@@ -53,8 +53,8 @@ class api_tvteam extends api_default
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        $data = safe_get_value($this->account_info, 'data');
-        $userData = safe_get_value($data, 'userData');
+        $data = safe_get_value($this->account_info, 'data', array());
+        $userData = safe_get_value($data, 'userData', array());
         if (empty($userData)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
@@ -82,10 +82,10 @@ class api_tvteam extends api_default
 
             $packages = '';
             foreach (safe_get_value($data, 'userPackagesList', array()) as $package) {
-                $packages .= TR::load('package__1', $package->packageName) . PHP_EOL;
-                $packages .= TR::load('start_date__1', $package->fromDate) . PHP_EOL;
-                $packages .= TR::load('end_date__1', $package->toDate) . PHP_EOL;
-                $packages .= TR::load('money_need__1', "$package->salePrice$") . PHP_EOL;
+                $packages .= TR::load('package__1', safe_get_value($package, 'packageName', '')) . PHP_EOL;
+                $packages .= TR::load('start_date__1', safe_get_value($package, 'fromDate', '')) . PHP_EOL;
+                $packages .= TR::load('end_date__1', safe_get_value($package, 'toDate', '')) . PHP_EOL;
+                $packages .= TR::load('money_need__1', safe_get_value($package, 'salePrice', '') . '$') . PHP_EOL;
             }
             if (!empty($packages)) {
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);

@@ -183,7 +183,7 @@ class api_iptvonline extends api_default
         } else if (!isset($this->account_info['status']) || $this->account_info['status'] !== 200) {
             Control_Factory::add_label($defs, TR::t('err_error'), $this->account_info['message'], -10);
         } else {
-            $data = safe_get_value($this->account_info, 'data');
+            $data = safe_get_value($this->account_info, 'data', array());
             if (isset($data['login'])) {
                 Control_Factory::add_label($defs, TR::t('login'), $data['login'], -15);
             }
@@ -202,9 +202,9 @@ class api_iptvonline extends api_default
 
             $packages = '';
             foreach (safe_get_value($data, 'subscriptions', array()) as $subscription) {
-                $packages .= $subscription['name'] . PHP_EOL;
-                $packages .= TR::load('end_date__1', $subscription['end_date']) . PHP_EOL;
-                $packages .= TR::load('recurring__1', TR::load($subscription['auto_prolong'] ? 'yes' : 'no')) . PHP_EOL;
+                $packages .= safe_get_value($subscription, 'name', '') . PHP_EOL;
+                $packages .= TR::load('end_date__1', safe_get_value($subscription, 'end_date', '')) . PHP_EOL;
+                $packages .= TR::load('recurring__1', TR::load(safe_get_value($subscription, 'auto_prolong', false) ? 'yes' : 'no')) . PHP_EOL;
             }
             if (!empty($packages)) {
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
@@ -243,7 +243,7 @@ class api_iptvonline extends api_default
         $this->servers = array();
 
         foreach (safe_get_value($this->devices, array('device', 'settings', 'server_location', 'value'), array()) as $server) {
-            $id = (string)safe_get_value($server, 'id', '');
+            $id = (string)safe_get_value($server, 'id');
             if (empty($id)) continue;
 
             $this->servers[$id] = $server['label'];

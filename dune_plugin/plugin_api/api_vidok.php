@@ -137,7 +137,9 @@ class api_vidok extends api_default
             $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             foreach (safe_get_value($response, 'servers', array()) as $server) {
-                $this->servers[(int)$server['id']] = $server['name'];
+                if (isset($server['id'])) {
+                    $this->servers[(int)$server['id']] = safe_get_value($server, 'name', 'unknown');
+                }
             }
         }
 

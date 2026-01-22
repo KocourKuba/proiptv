@@ -68,7 +68,7 @@ class api_cbilling extends api_default
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        $data = safe_get_value($this->account_info, 'data');
+        $data = safe_get_value($this->account_info, 'data', array());
         if (empty($data)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
@@ -109,7 +109,9 @@ class api_cbilling extends api_default
             $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             foreach (safe_get_value($response, 'data', array()) as $server) {
-                $this->servers[$server->name] = $server->country;
+                if (isset($server['name'])) {
+                    $this->servers[$server['name']] = safe_get_value($server, 'country', 'unknown');
+                }
             }
         }
 

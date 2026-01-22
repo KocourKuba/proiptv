@@ -101,8 +101,8 @@ class api_tvclub extends api_default
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
         } else {
-            $data = safe_get_value($this->account_info, 'account');
-            $info = safe_get_value($data, 'info');
+            $data = safe_get_value($this->account_info, 'account', array());
+            $info = safe_get_value($data, 'info', array());
             if (isset($info['login'])) {
                 Control_Factory::add_label($defs, TR::t('login'), $info['login'], -15);
             }
@@ -150,7 +150,9 @@ class api_tvclub extends api_default
             $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             foreach (safe_get_value($response, 'servers', array()) as $server) {
-                $this->servers[(int)$server->id] = $server->name;
+                if (isset($server['id'])) {
+                    $this->servers[(int)$server['id']] = safe_get_value($server, 'name', 'unknown');
+                }
             }
         }
 

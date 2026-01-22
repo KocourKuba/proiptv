@@ -89,7 +89,7 @@ class api_sharaclub extends api_default
         } else if (isset($this->account_info['status']) && (int)$this->account_info['status'] !== 1) {
             Control_Factory::add_label($defs, TR::t('err_error'), $this->account_info['status'], -10);
         } else {
-            $data = safe_get_value($this->account_info, 'data');
+            $data = safe_get_value($this->account_info, 'data', array());
             if (isset($data['login'])) {
                 Control_Factory::add_label($defs, TR::t('login'), $data['login'], -15);
             }
@@ -155,7 +155,9 @@ class api_sharaclub extends api_default
             hd_debug_print("GetServers: " . json_format_unescaped($response), true);
             if (isset($response['status'])) {
                 foreach (safe_get_value($response, 'allow_nums', array()) as $server) {
-                    $this->servers[(int)$server['id']] = $server['name'];
+                    if (isset($server['id'])) {
+                        $this->servers[(int)$server['id']] = safe_get_value($server, 'name', 'unknown');
+                    }
                 }
 
                 $this->SetProviderParameter(MACRO_SERVER_ID, $response['current']);
