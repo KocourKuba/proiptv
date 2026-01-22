@@ -30,7 +30,7 @@ require_once 'control_factory_ext.php';
 require_once 'default_archive.php';
 require_once 'catchup_params.php';
 require_once 'named_storage.php';
-require_once 'api/api_default.php';
+require_once 'plugin_api/api_default.php';
 require_once 'm3u/M3uParser.php';
 require_once 'm3u/M3uTags.php';
 require_once 'lib/dune_default_ui_parameters.php';
