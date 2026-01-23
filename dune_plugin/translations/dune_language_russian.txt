@@ -133,6 +133,7 @@ city = Город
 playlist_picons = Плейлист
 xmltv_picons = XMLTV
 combined_picons = Плейлист + XMLTV
+combined_picons2 = XMLTV + Плейлист
 edit_account = Редактировать данные доступа
 edit_provider_settings = Настройки провайдера
 edit_iptv_settings = Настройки IPTV

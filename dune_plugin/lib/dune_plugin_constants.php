@@ -349,6 +349,7 @@ const IS_LIST_SELECTED = 'is_list_selected';
 const PLAYLIST_PICONS = 'playlist_picons';
 const XMLTV_PICONS = 'xmltv_picons';
 const COMBINED_PICONS = 'combined_picons';
+const COMBINED_PICONS2 = 'combined_picons2';
 
 const XMLTV_SOURCE_PLAYLIST = 1;
 const XMLTV_SOURCE_EXTERNAL = 2;

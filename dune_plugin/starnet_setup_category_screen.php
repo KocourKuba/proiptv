@@ -71,6 +71,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
         $picons_ops[PLAYLIST_PICONS] = TR::t('playlist_picons');
         $picons_ops[XMLTV_PICONS] = TR::t('xmltv_picons');
         $picons_ops[COMBINED_PICONS] = TR::t('combined_picons');
+        $picons_ops[COMBINED_PICONS2] = TR::t('combined_picons2');
         $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
         Control_Factory::add_combobox($defs, $this, PARAM_USE_PICONS, TR::t('setup_channels_picons_source'),
             $picons_idx, $picons_ops, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);

@@ -2333,13 +2333,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // if selected xmltv or combined mode look into xmltv source
         // in combined mode search is not performed if already got picon from playlist
         do {
-            if ($this->picons_source !== XMLTV_PICONS) {
+            $pl_icon_url = $channel_row[COLUMN_ICON];
+            if ($this->picons_source === PLAYLIST_PICONS) {
                 // playlist icons first in priority
-                $icon_url = $channel_row[COLUMN_ICON];
+                return empty($pl_icon_url) ? $this->get_default_channel_icon($is_classic) : $pl_icon_url;
             }
 
-            if ($this->picons_source !== XMLTV_PICONS && ($this->picons_source !== COMBINED_PICONS || !empty($icon_url))) break;
-            if (empty($this->epg_manager)) break;
+            if (empty($this->epg_manager) || ($this->picons_source === COMBINED_PICONS && !empty($pl_icon_url))) {
+                return $pl_icon_url;
+            }
 
             if (!empty($channel_row[COLUMN_TITLE])) {
                 $picon_ids[] = mb_convert_case($channel_row[COLUMN_TITLE], MB_CASE_LOWER, "UTF-8");
@@ -2363,12 +2365,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             foreach (Epg_Manager_Xmltv::get_sources() as $key => $params) {
                 if (Epg_Manager_Xmltv::is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_CHANNELS)) continue;
 
-                $icon_url = Epg_Manager_Xmltv::get_picon($key, $placeHolders);
-                if (!empty($icon_url)) break;
+                $xmltv_icon_url = Epg_Manager_Xmltv::get_picon($key, $placeHolders);
+                if (!empty($xmltv_icon_url)) break;
             }
         } while (false);
 
-        return empty($icon_url) ? $this->get_default_channel_icon($is_classic) : $icon_url;
+        if ($this->picons_source === COMBINED_PICONS2) {
+            if (!empty($xmltv_icon_url)) {
+                return $xmltv_icon_url;
+            }
+            $xmltv_icon_url = $pl_icon_url;
+        }
+
+        return empty($xmltv_icon_url) ? $this->get_default_channel_icon($is_classic) : $xmltv_icon_url;
     }
 
     public function get_image_archive()
