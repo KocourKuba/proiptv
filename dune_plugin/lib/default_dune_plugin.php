@@ -1877,18 +1877,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $provider = $this->get_active_provider();
         if (!is_null($provider)) {
             $idx = $provider->GetPlaylistIptvId();
-            if ($idx !== DIRECT_PLAYLIST_ID) {
+            if ($idx !== DIRECT_PLAYLIST_ID && $idx !== DIRECT_FILE_PLAYLIST_ID) {
                 $url_subst = $provider->getConfigValue(CONFIG_URL_SUBST);
                 if (!empty($url_subst)) {
                     $stream_url = preg_replace($url_subst['regex'], $url_subst['replace'], $stream_url);
                     $stream_url = $provider->replace_macros($stream_url);
                 }
-            }
 
-            $streams = $provider->GetStreams();
-            if (!empty($streams)) {
-                $idx = $provider->GetProviderParameter(MACRO_STREAM_ID);
-                $force_detect = ($streams[$idx] === 'MPEG-TS');
+                $streams = $provider->GetStreams();
+                if (!empty($streams)) {
+                    $idx = $provider->GetProviderParameter(MACRO_STREAM_ID);
+                    $force_detect = ($streams[$idx] === 'MPEG-TS');
+                }
             }
 
             $detect_stream = $provider->getConfigValue(PARAM_DUNE_FORCE_TS);

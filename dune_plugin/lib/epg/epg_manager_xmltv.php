@@ -142,11 +142,13 @@ class Epg_Manager_Xmltv
         $day_end_ts = $day_start_ts + 86400;
 
         $items = array();
+        $has_locks = false;
         foreach (self::$xmltv_sources as $key => $params) {
             hd_debug_print("Looking in XMLTV source: {$params[PARAM_URI]} ({$params[PARAM_HASH]})");
             if (self::is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_ENTRIES)) {
                 hd_debug_print("EPG {$params[PARAM_URI]} still indexing, append to delayed queue channel id: $channel_id");
                 self::$delayed_epg[] = $channel_id;
+                $has_locks = true;
                 continue;
             }
 
@@ -233,7 +235,7 @@ class Epg_Manager_Xmltv
                         PluginTvEpgProgram::description => TR::load('epg_no_sources_desc'))
                     );
                 }
-            } else if (!empty(self::$delayed_epg) && self::get_any_index_locked() !== false) {
+            } else if (!empty(self::$delayed_epg) && $has_locks) {
                 hd_debug_print("Delayed epg: " . json_format_unescaped(self::$delayed_epg), true);
                 $items = array($day_start_ts => array(
                     PluginTvEpgProgram::end_tm_sec => $day_end_ts,

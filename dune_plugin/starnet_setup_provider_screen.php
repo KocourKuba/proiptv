@@ -85,6 +85,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 
         $has_vod_cache = false;
         $provider = $this->plugin->get_provider($playlist_id);
+
         //////////////////////////////////////
         // Account
 
@@ -99,83 +100,14 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $provider->check_config_values();
 
         //////////////////////////////////////
-        // Streams settings
-
-        $streams = $provider->GetStreams();
-        if (!empty($streams) && count($streams) > 1) {
-            $idx = $provider->GetProviderParameter(MACRO_STREAM_ID);
-            hd_debug_print("streams ($idx): " . json_format_unescaped($streams), true);
-
-            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_STREAM, TR::t('stream'),
-                $idx, $streams, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-        }
-
-        //////////////////////////////////////
-        // Domains settings
-
-        $pl_domains = $provider->GetPlDomains();
-        if (!empty($pl_domains) && count($pl_domains) > 1) {
-            $idx = $provider->GetProviderParameter(MACRO_PL_DOMAIN_ID);
-            hd_debug_print("domains ($idx): " . json_format_unescaped($pl_domains), true);
-
-            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_PL_DOMAIN, TR::t('pl_domain'),
-                $idx, $pl_domains, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-        }
-
-        $api_domains = $provider->GetApiDomains();
-        if (!empty($api_domains) && count($api_domains) > 1) {
-            $idx = $provider->GetProviderParameter(MACRO_API_DOMAIN_ID);
-            hd_debug_print("domains ($idx): " . json_format_unescaped($api_domains), true);
-
-            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_API_DOMAIN, TR::t('api_domain'),
-                $idx, $api_domains, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-        }
-
-        //////////////////////////////////////
-        // Servers settings
-
-        $servers = $provider->GetServers();
-        if (!empty($servers) && count($servers) > 1) {
-            $idx = $provider->GetProviderParameter(MACRO_SERVER_ID);
-            hd_debug_print("servers ($idx): " . json_format_unescaped($servers), true);
-
-            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_SERVER, TR::t('server'),
-                $idx, $servers, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-        }
-
-        //////////////////////////////////////
-        // Devices settings
-
-        $devices = $provider->GetDevices();
-        if (!empty($devices) && count($devices) > 1) {
-            $idx = $provider->GetProviderParameter(MACRO_DEVICE_ID);
-            hd_debug_print("devices ($idx): " . json_format_unescaped($devices), true);
-
-            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_DEVICE, TR::t('device'),
-                $idx, $devices, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-        }
-
-        //////////////////////////////////////
-        // Qualities settings
-
-        $qualities = $provider->GetQualities();
-        if (!empty($qualities) && count($qualities) > 1) {
-            $idx = $provider->GetProviderParameter(MACRO_QUALITY_ID);
-            hd_debug_print("qualities ($idx): " . json_format_unescaped($qualities), true);
-
-            Control_Factory::add_combobox($defs, $this, api_default::CONTROL_QUALITY, TR::t('quality'),
-                $idx, $qualities, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-        }
-
-        //////////////////////////////////////
         // Playlists settings
 
+        $pl_idx = $provider->GetPlaylistIptvId();
         $playlists = $provider->GetPlaylistsIptv();
         $pl_names = extract_column($playlists, COLUMN_NAME);
         if (isset($pl_names['default'])) {
             $pl_names['default'] = TR::t('by_default');
         }
-        $pl_idx = $provider->GetPlaylistIptvId();
 
         Control_Factory::add_combobox($defs, $this, self::CONTROL_SELECTED_PLAYLIST, TR::t('provider_playlist'),
             $pl_idx, $pl_names, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
@@ -193,6 +125,74 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             $path_str = HD::string_ellipsis($file_path);
             Control_Factory::add_image_button($defs, $this, ACTION_CHOOSE_FILE, TR::t('select_file'), $path_str, get_image_path('m3u_file.png'));
         } else {
+            //////////////////////////////////////
+            // Streams settings
+
+            $streams = $provider->GetStreams();
+            if (!empty($streams) && count($streams) > 1) {
+                $idx = $provider->GetProviderParameter(MACRO_STREAM_ID);
+                hd_debug_print("streams ($idx): " . json_format_unescaped($streams), true);
+
+                Control_Factory::add_combobox($defs, $this, api_default::CONTROL_STREAM, TR::t('stream'),
+                    $idx, $streams, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+            }
+
+            //////////////////////////////////////
+            // Domains settings
+            $pl_domains = $provider->GetPlDomains();
+            if (!empty($pl_domains) && count($pl_domains) > 1) {
+                $idx = $provider->GetProviderParameter(MACRO_PL_DOMAIN_ID);
+                hd_debug_print("domains ($idx): " . json_format_unescaped($pl_domains), true);
+
+                Control_Factory::add_combobox($defs, $this, api_default::CONTROL_PL_DOMAIN, TR::t('pl_domain'),
+                    $idx, $pl_domains, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+            }
+
+            $api_domains = $provider->GetApiDomains();
+            if (!empty($api_domains) && count($api_domains) > 1) {
+                $idx = $provider->GetProviderParameter(MACRO_API_DOMAIN_ID);
+                hd_debug_print("domains ($idx): " . json_format_unescaped($api_domains), true);
+
+                Control_Factory::add_combobox($defs, $this, api_default::CONTROL_API_DOMAIN, TR::t('api_domain'),
+                    $idx, $api_domains, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+            }
+
+            //////////////////////////////////////
+            // Servers settings
+
+            $servers = $provider->GetServers();
+            if (!empty($servers) && count($servers) > 1) {
+                $idx = $provider->GetProviderParameter(MACRO_SERVER_ID);
+                hd_debug_print("servers ($idx): " . json_format_unescaped($servers), true);
+
+                Control_Factory::add_combobox($defs, $this, api_default::CONTROL_SERVER, TR::t('server'),
+                    $idx, $servers, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+            }
+
+            //////////////////////////////////////
+            // Devices settings
+
+            $devices = $provider->GetDevices();
+            if (!empty($devices) && count($devices) > 1) {
+                $idx = $provider->GetProviderParameter(MACRO_DEVICE_ID);
+                hd_debug_print("devices ($idx): " . json_format_unescaped($devices), true);
+
+                Control_Factory::add_combobox($defs, $this, api_default::CONTROL_DEVICE, TR::t('device'),
+                    $idx, $devices, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+            }
+
+            //////////////////////////////////////
+            // Qualities settings
+
+            $qualities = $provider->GetQualities();
+            if (!empty($qualities) && count($qualities) > 1) {
+                $idx = $provider->GetProviderParameter(MACRO_QUALITY_ID);
+                hd_debug_print("qualities ($idx): " . json_format_unescaped($qualities), true);
+
+                Control_Factory::add_combobox($defs, $this, api_default::CONTROL_QUALITY, TR::t('quality'),
+                    $idx, $qualities, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+            }
+
             //////////////////////////////////////
             // Icon replacements settings
 
