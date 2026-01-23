@@ -105,49 +105,12 @@ class api_tvteam extends api_default
         hd_debug_print(null, true);
         hd_debug_print("force request_provider_info: " . var_export($force, true), true);
 
-        if (!$this->request_provider_token()) {
-            hd_debug_print("Failed to get provider token");
-            return;
+        if (empty($this->account_info)) {
+            $force = true;
         }
 
-        if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
-            $this->account_info = array();
-        } else if (empty($this->account_info) || $force) {
-            $curl_opt[CURLOPT_TIMEOUT] = 30;
-            $response = $this->execApiCommandResponse(API_COMMAND_ACCOUNT_INFO, $curl_opt, Curl_Wrapper::RET_ARRAY);
-            if ($response === false) {
-                Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "Bad provider response");
-                return;
-            }
-
-            $status = (int)safe_get_value($response, 'status');
-            $error = safe_get_value($response, 'error');
-            if ($status !== 1 || !empty($error)) {
-                hd_debug_print("request_provider_info error response: " . json_format_unescaped($response), true);
-            }
-
-            $this->account_info = $response;
-            $data = safe_get_value($response, 'data');
-            $userData = safe_get_value($response, 'userData');
-            $userToken = safe_get_value($userData, 'userToken');
-
-            if (!empty($userToken)) {
-                $this->plugin->set_cookie(PARAM_TOKEN, $userToken);
-            }
-
-            foreach (safe_get_value($data, 'serversGroupsList', array()) as $server) {
-                $id = safe_get_value($server, 'groupId');
-                if (empty($id)) continue;
-
-                $groupCountry = safe_get_value($server, 'groupCountry');
-                $domainName = safe_get_value($server, 'streamDomainName');
-                $this->servers[$id] = "$groupCountry ($domainName)";
-            }
-
-            $groupId = safe_get_value($userData, 'groupId');
-            if (!empty($groupId)) {
-                $this->SetProviderParameter(MACRO_SERVER_ID, $groupId);
-            }
+        if (!$this->request_provider_token($force)) {
+            hd_debug_print("Failed to get provider token");
         }
     }
 
@@ -160,41 +123,91 @@ class api_tvteam extends api_default
         hd_debug_print("force request provider token: " . var_export($force, true));
 
         $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID, true);
-        $expired = empty($session_id);
+        $userToken = $this->plugin->get_cookie(PARAM_TOKEN);
+        $expired = empty($session_id) || empty($userToken);
 
         if (!$force && !$expired) {
             hd_debug_print("request not required", true);
             return true;
         }
 
-        $error_msg = Dune_Last_Error::get_last_error(LAST_ERROR_REQUEST);
-        if (!$force && !empty($error_msg)) {
-            $info_msg = str_replace('|', PHP_EOL, TR::load('err_auth_no_spam'));
-            hd_debug_print($info_msg);
-            Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "$info_msg\n\n$error_msg");
-        } else {
+        do {
+            $error_msg = Dune_Last_Error::get_last_error(LAST_ERROR_REQUEST);
+            if (!$force && !empty($error_msg)) {
+                $info_msg = str_replace('|', PHP_EOL, TR::load('err_auth_no_spam'));
+                hd_debug_print($info_msg);
+                Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "$info_msg\n\n$error_msg");
+                break;
+            }
+
             $curl_opt[CURLOPT_TIMEOUT] = 30;
             $response = $this->execApiCommandResponse(API_COMMAND_REQUEST_TOKEN, $curl_opt, Curl_Wrapper::RET_ARRAY);
             if ($response === false) {
                 Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "Bad provider response");
-                return false;
+                break;
             }
+
             $status = safe_get_value($response, 'status');
             $error = safe_get_value($response, 'error');
             if (empty($status) || !empty($error)) {
                 hd_debug_print("request provider token bad response: " . json_format_unescaped($response), true);
                 Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, $error);
-                return false;
+                break;
             }
 
             $session_id = safe_get_value($response, array('data', 'sessionId'));
-            if (!empty($session_id)) {
-                $this->plugin->set_cookie(PARAM_SESSION_ID, $session_id, time() + 86400 * 7);
-                return true;
+            if (empty($session_id)) {
+                hd_debug_print("Empty session id in response: " . json_format_unescaped($response), true);
+                break;
             }
-        }
 
-        return false;
+            $this->plugin->set_cookie(PARAM_SESSION_ID, $session_id, time() + 86400 * 7);
+
+            if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
+                $this->account_info = array();
+            } else if (empty($this->account_info) || $force) {
+                $curl_opt[CURLOPT_TIMEOUT] = 30;
+                $response = $this->execApiCommandResponse(API_COMMAND_ACCOUNT_INFO, $curl_opt, Curl_Wrapper::RET_ARRAY);
+                if ($response === false) {
+                    Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "Bad provider response");
+                    break;
+                }
+
+                $status = (int)safe_get_value($response, 'status');
+                $error = safe_get_value($response, 'error');
+                if ($status !== 1 || !empty($error)) {
+                    hd_debug_print("request_provider_info error response: " . json_format_unescaped($response), true);
+                }
+
+                $this->account_info = $response;
+                $data = safe_get_value($response, 'data');
+                $userData = safe_get_value($data, 'userData');
+                $userToken = safe_get_value($userData, 'userToken');
+
+                if (!empty($userToken)) {
+                    $this->plugin->set_cookie(PARAM_TOKEN, $userToken);
+                    hd_debug_print("save token: $userToken", true);
+                }
+
+                foreach (safe_get_value($data, 'serversGroupsList', array()) as $server) {
+                    $id = safe_get_value($server, 'groupId');
+                    if (empty($id)) continue;
+
+                    $groupCountry = safe_get_value($server, 'groupCountry');
+                    $domainName = safe_get_value($server, 'streamDomainName');
+                    $this->servers[$id] = "$groupCountry ($domainName)";
+                    hd_debug_print("save server : $id => $groupCountry ($domainName)", true);
+                }
+
+                $groupId = safe_get_value($userData, 'groupId');
+                if (!empty($groupId)) {
+                    $this->SetProviderParameter(MACRO_SERVER_ID, $groupId);
+                    hd_debug_print("save server id: $groupId", true);
+                }
+            }
+        }while (false);
+
+        return !empty($userToken);
     }
 
     /**

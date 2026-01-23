@@ -51,7 +51,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return $this->do_get_action_map($media_url, &$plugin_cookies);
+        return $this->do_get_action_map($media_url, $plugin_cookies);
     }
 
     protected function do_get_action_map(MediaURL $media_url, &$plugin_cookies)

@@ -2456,14 +2456,14 @@ function safe_get_value($src, $param, $default = null)
         if (!isset($src[$key])) {
             return $default;
         }
-        return safe_get_value($src[$key], $param, $default);
+        return count($param) ? safe_get_value($src[$key], $param, $default) : $src[$key];
     }
 
     if (is_object($src)) {
         if (!isset($src->{$key})) {
             return $default;
         }
-        return safe_get_value($src->{$key}, $param, $default);
+        return count($param) ? safe_get_value($src->{$key}, $param, $default) : $src->{$key};
     }
 
     return $default;
