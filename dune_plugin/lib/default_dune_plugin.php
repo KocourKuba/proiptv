@@ -1082,7 +1082,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $vod_enabled = $this->init_vod_class($reload_playlist);
         $vod_playlist = $this->is_vod_playlist();
 
-        $enable_vod_icon = SwitchOnOff::to_def($vod_enabled && $vod_playlist && $this->get_bool_parameter(PARAM_SHOW_VOD_ICON, false));
+        $enable_vod_icon = SwitchOnOff::to_def(($vod_enabled || $vod_playlist) && $this->get_bool_parameter(PARAM_SHOW_VOD_ICON, false));
         $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
         hd_debug_print("Show VOD icon: $enable_vod_icon", true);
 
