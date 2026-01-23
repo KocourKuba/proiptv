@@ -1,4 +1,11 @@
-﻿### Version 7.1.1564
+﻿### Version 7.1.1574
+- Added another option 'XMLTV + Playlist' to select the channel icon
+- Some provider settings are disabled if a direct link to a playlist or file is selected
+- Fixed errors in obtaining account information in CBilling, TVTeam, TVClub
+- Fixed a bug with selecting a channel icon from an XMLTV source
+- Fixed an incorrect error message when importing a file with links
+
+### Version 7.1.1564
 - The link for movies in the CBilling VOD was formed incorrectly
 
 ### Version 7.1.1562
