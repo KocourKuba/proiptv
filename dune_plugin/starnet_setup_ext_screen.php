@@ -73,31 +73,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
             TR::t('setup_adult_change'), get_image_path('text.png'), Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         //////////////////////////////////////
-        // Curl connect timeout
-        foreach (array(30, 60, 90, 120, 180, 240, 300) as $sec) {
-            $time_range[$sec] = $sec;
-        }
-        $params = array();
-        Control_Factory::add_combobox($defs, $this, PARAM_CURL_CONNECT_TIMEOUT, TR::t('setup_connect_timeout'),
-            $this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30),
-            $time_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-
-        //////////////////////////////////////
-        // Curl download timeout
-        Control_Factory::add_combobox($defs, $this, PARAM_CURL_DOWNLOAD_TIMEOUT, TR::t('setup_download_timeout'),
-            $this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120),
-            $time_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-
-        //////////////////////////////////////
-        // Curl cache time
-        foreach (array(1, 2, 3, 6, 12, 24) as $sec) {
-            $cache_range[$sec] = $sec;
-        }
-        Control_Factory::add_combobox($defs, $this, PARAM_CURL_FILE_CACHE_TIME, TR::t('setup_cache_time'),
-            $this->plugin->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 1),
-            $cache_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-
-        //////////////////////////////////////
         // Settings full size remote
         if (is_limited_apk()) {
             $remote = $this->plugin->get_parameter(PARAM_FULL_SIZE_REMOTE, SwitchOnOff::off);
@@ -164,12 +139,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
                 hd_debug_print("pass: $param, old pass: $old_pass, new pass: $user_input->pass2", true);
 
                 $post_action = Action_Factory::show_title_dialog($msg);
-                break;
-
-            case PARAM_CURL_CONNECT_TIMEOUT:
-            case PARAM_CURL_DOWNLOAD_TIMEOUT:
-            case PARAM_CURL_FILE_CACHE_TIME:
-                $this->plugin->set_parameter($control_id, $user_input->{$control_id});
                 break;
 
             case PARAM_FULL_SIZE_REMOTE:

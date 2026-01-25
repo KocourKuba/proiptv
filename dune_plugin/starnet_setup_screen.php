@@ -37,6 +37,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen
     const CONTROL_SLEEP_TIMER_SCREEN = 'sleep_timer_screen';
     const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
     const CONTROL_FOLDERS_SCREEN = 'folders_screen';
+    const CONTROL_DOWNLOAD_SCREEN = 'download_screen';
     const CONTROL_EXT_SETUP_SCREEN = 'extended_setup_screen';
 
     ///////////////////////////////////////////////////////////////////////
@@ -88,6 +89,11 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen
             TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         //////////////////////////////////////
+        // Download settings
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_DOWNLOAD_SCREEN, TR::t('setup_download_settings'),
+            TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
+
+        //////////////////////////////////////
         // Extended settings
         Control_Factory::add_image_button($defs, $this, self::CONTROL_EXT_SETUP_SCREEN, TR::t('setup_extended_setup'),
             TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
@@ -126,6 +132,11 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen
                 return Action_Factory::open_folder(
                     Starnet_Setup_Folders_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
                     TR::t('setup_folder_settings'));
+
+            case self::CONTROL_DOWNLOAD_SCREEN: // show download settings dialog
+                return Action_Factory::open_folder(
+                    Starnet_Setup_Download_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
+                    TR::t('setup_download_settings'));
 
             case self::CONTROL_EXT_SETUP_SCREEN: // show additional settings dialog
                 return Action_Factory::open_folder(

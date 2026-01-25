@@ -41,6 +41,7 @@ require_once 'starnet_setup_folders_screen.php';
 require_once 'starnet_setup_playback_screen.php';
 require_once 'starnet_setup_provider_screen.php';
 require_once 'starnet_setup_simple_iptv_screen.php';
+require_once 'starnet_setup_download_screen.php';
 require_once 'starnet_setup_ext_screen.php';
 require_once 'starnet_tv_changed_channels_screen.php';
 require_once 'starnet_folder_screen.php';
@@ -85,6 +86,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Setup_Epg_Screen($this));
         $this->create_screen(new Starnet_Setup_Folders_Screen($this));
         $this->create_screen(new Starnet_Setup_Playback_Screen($this));
+        $this->create_screen(new Starnet_Setup_Download_Screen($this));
         $this->create_screen(new Starnet_Setup_Ext_Screen($this));
         $this->create_screen(new Starnet_Setup_Provider_Screen($this));
         $this->create_screen(new Starnet_Setup_Simple_IPTV_Screen($this));

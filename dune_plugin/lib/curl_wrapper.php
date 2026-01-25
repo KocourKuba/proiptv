@@ -250,7 +250,7 @@ class Curl_Wrapper
     }
 
     /**
-     * @param int $time
+     * @param int $time in hours
      */
     public function set_file_cache_time($time)
     {
@@ -293,6 +293,7 @@ class Curl_Wrapper
             $path = $this->file_cache_path;
         }
 
+        hd_debug_print("Clear query cache: $path");
         if (file_exists($path)) {
             clear_directory($path);
         }

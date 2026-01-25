@@ -237,6 +237,26 @@ class Dune_Default_Sqlite_Engine
         $xmltv_table = self::XMLTV_TABLE;
         $query = "DELETE FROM $xmltv_table WHERE hash ISNULL OR hash = '' OR type ISNULL OR type = '' OR uri ISNULL OR uri = '';";
         $this->sql_params->exec($query);
+
+        // check default parameters
+
+        // 30s - 300s
+        $param = $this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30);
+        if ($param < 30 || $param > 300) {
+            $this->set_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30);
+        }
+
+        // 30s - 300s
+        $param = $this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
+        if ($param < 30 || $param > 300) {
+            $this->set_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
+        }
+
+        // 1h - 24h
+        $param = $this->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 1);
+        if ($param < 1 || $param > 24) {
+            $this->set_parameter(PARAM_CURL_FILE_CACHE_TIME, 1);
+        }
     }
 
     /**

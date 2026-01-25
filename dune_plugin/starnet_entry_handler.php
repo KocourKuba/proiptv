@@ -304,7 +304,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         return Action_Factory::refresh_entry_points();
 
                     case self::ACTION_INSTALL:
-                        hd_debug_print("Install not handling");
+                        Curl_Wrapper::getInstance()->clear_cache(true);
                         break;
 
                     case self::ACTION_UNINSTALL:
