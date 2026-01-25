@@ -1348,6 +1348,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $added_channels_cnt = $this->get_changed_channels_count(PARAM_NEW);
         $removed_channels_cnt = $this->get_changed_channels_count(PARAM_REMOVED);
 
+        if (!$this->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS)) {
+            $this->clear_changed_channels();
+        }
+
         $perf->setLabel('end');
         $report = $perf->getFullReport();
 
