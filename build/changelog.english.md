@@ -1,4 +1,10 @@
-﻿### Version 7.1.1574
+﻿### Version 7.1.1576
+- Download management plugin settings moved to a separate settings screen
+- The query cache is forcibly cleared when the plugin is updated
+- Added a button to clear the query cache
+- Added checking of some plugin parameters for correctness
+
+- ### Version 7.1.1574
 - Added another option 'XMLTV + Playlist' to select the channel icon
 - Some provider settings are disabled if a direct link to a playlist or file is selected
 - Fixed errors in obtaining account information in CBilling, TVTeam, TVClub
