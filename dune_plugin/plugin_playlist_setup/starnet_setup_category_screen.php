@@ -75,16 +75,16 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
         $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
         Control_Factory::add_combobox($defs, $this, PARAM_USE_PICONS, TR::t('setup_channels_picons_source'),
             $picons_idx, $picons_ops, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-/*
-        //////////////////////////////////////
-        // Delayed picons indexing
-        if (defined('PluginUpdateEpgActionData::ext_epg_enabled') && $picons_idx !== PLAYLIST_PICONS) {
-            $delay_load = $this->plugin->get_setting(PARAM_PICONS_DELAY_LOAD, SwitchOnOff::off);
-            Control_Factory::add_image_button($defs, $this, null,
-                PARAM_PICONS_DELAY_LOAD, TR::t('setup_channels_delay_picons_load'), SwitchOnOff::translate($delay_load),
-                SwitchOnOff::to_image($delay_load), Control_Factory::CONTROLS_WIDTH);
-        }
-*/
+        /*
+                //////////////////////////////////////
+                // Delayed picons indexing
+                if (defined('PluginUpdateEpgActionData::ext_epg_enabled') && $picons_idx !== PLAYLIST_PICONS) {
+                    $delay_load = $this->plugin->get_setting(PARAM_PICONS_DELAY_LOAD, SwitchOnOff::off);
+                    Control_Factory::add_image_button($defs, $this, null,
+                        PARAM_PICONS_DELAY_LOAD, TR::t('setup_channels_delay_picons_load'), SwitchOnOff::translate($delay_load),
+                        SwitchOnOff::to_image($delay_load), Control_Factory::CONTROLS_WIDTH);
+                }
+        */
 
         //////////////////////////////////////
         // show all channels category

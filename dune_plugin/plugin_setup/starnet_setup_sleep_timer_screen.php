@@ -117,7 +117,7 @@ class Starnet_Setup_Sleep_Timer_Screen extends Abstract_Controls_Screen
             case PARAM_SLEEP_TIMER_COUNTDOWN:
             case PARAM_SLEEP_TIMER_STEP:
             case PARAM_SLEEP_TIMER_POWER:
-            $this->plugin->set_parameter($control_id, $user_input->{$control_id});
+                $this->plugin->set_parameter($control_id, $user_input->{$control_id});
                 break;
         }
 

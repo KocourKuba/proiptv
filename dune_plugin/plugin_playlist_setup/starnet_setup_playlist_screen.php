@@ -119,10 +119,12 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
             Control_Factory::add_image_button($defs, $this, self::ACTION_EDIT_CATEGORY_SCREEN, TR::t('setup_category_title'),
                 TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
-            //////////////////////////////////////
-            // Interface NewUI settings
-            Control_Factory::add_image_button($defs, $this, ACTION_EDIT_NEWUI_SETTINGS, TR::t('setup_interface_newui_title'),
-                TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
+            if (Starnet_Epfs_Handler::$enabled) {
+                //////////////////////////////////////
+                // Interface NewUI settings
+                Control_Factory::add_image_button($defs, $this, ACTION_EDIT_NEWUI_SETTINGS, TR::t('setup_interface_newui_title'),
+                    TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
+            }
 
             //////////////////////////////////////
             // EPG settings

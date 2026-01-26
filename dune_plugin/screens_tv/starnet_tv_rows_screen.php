@@ -267,13 +267,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 }
 
                 if ($user_input->{ACTION_RESET_TYPE} === ACTION_SORT_CHANNELS) {
-                    $this->plugin->sort_channels_order($media_url->group_id,true);
+                    $this->plugin->sort_channels_order($media_url->group_id, true);
                 } else if ($user_input->{ACTION_RESET_TYPE} === ACTION_SORT_GROUPS) {
                     $this->plugin->sort_groups_order(true);
                 } else if ($user_input->{ACTION_RESET_TYPE} === ACTION_SORT_ALL) {
                     $this->plugin->sort_groups_order(true);
                     foreach ($this->plugin->get_groups_by_order() as $row) {
-                        $this->plugin->sort_channels_order($row[COLUMN_GROUP_ID],true);
+                        $this->plugin->sort_channels_order($row[COLUMN_GROUP_ID], true);
                     }
                 }
 
@@ -333,7 +333,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
             case ACTION_PLUGIN_SETTINGS:
                 return $this->plugin->show_protect_settings_dialog($this,
-                    Action_Factory::open_folder(Starnet_Setup_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup'))
+                    Action_Factory::open_folder(Starnet_Plugin_Setup_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup'))
                 );
 
             case ACTION_EDIT_PLAYLIST_SETTINGS:
@@ -475,11 +475,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                     break;
 
                 case TV_FAV_GROUP_ID:
-                    $this->get_favorites_rows($favorites_rows,$fav_headers);
+                    $this->get_favorites_rows($favorites_rows, $fav_headers);
                     break;
 
                 case TV_HISTORY_GROUP_ID:
-                    $this->get_history_rows($history_rows,$history_headers);
+                    $this->get_history_rows($history_rows, $history_headers);
                     break;
 
                 case TV_CHANGED_CHANNELS_GROUP_ID:
@@ -1424,7 +1424,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     protected static function row_id_decoder($item_id, $assoc = false)
     {
         $vars = array();
-        foreach(explode(';', $item_id) as $part) {
+        foreach (explode(';', $item_id) as $part) {
             $ar = explode(':', $part);
             if (count($ar) == 2) {
                 $vars[$ar[0]] = $ar[1];
@@ -1441,9 +1441,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     protected static function row_id_encoder($items)
     {
         return implode(';',
-            array_map(function($k, $v) {
+            array_map(function ($k, $v) {
                 return $k . ':' . $v;
-                },
+            },
                 array_keys($items), array_values($items)
             )
         );

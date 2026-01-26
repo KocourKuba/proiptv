@@ -31,16 +31,16 @@ require_once 'lib/default_dune_plugin.php';
 require_once 'lib/history_item.php';
 require_once 'lib/perf_collector.php';
 
-require_once 'starnet_vod_search_screen.php';
-require_once 'starnet_vod_filter_screen.php';
-require_once 'starnet_vod_category_list_screen.php';
-require_once 'starnet_vod_list_screen.php';
-require_once 'starnet_vod_movie_screen.php';
-require_once 'starnet_vod_seasons_list_screen.php';
-require_once 'starnet_vod_series_list_screen.php';
-require_once 'starnet_vod_favorites_screen.php';
-require_once 'starnet_vod_history_screen.php';
-require_once 'starnet_vod_movie_list_screen.php';
+require_once 'screens_vod/starnet_vod_search_screen.php';
+require_once 'screens_vod/starnet_vod_filter_screen.php';
+require_once 'screens_vod/starnet_vod_category_list_screen.php';
+require_once 'screens_vod/starnet_vod_list_screen.php';
+require_once 'screens_vod/starnet_vod_movie_screen.php';
+require_once 'screens_vod/starnet_vod_seasons_list_screen.php';
+require_once 'screens_vod/starnet_vod_series_list_screen.php';
+require_once 'screens_vod/starnet_vod_favorites_screen.php';
+require_once 'screens_vod/starnet_vod_history_screen.php';
+require_once 'screens_vod/starnet_vod_movie_list_screen.php';
 
 ///////////////////////////////////////////////////////////////////////////
 

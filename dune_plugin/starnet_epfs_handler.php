@@ -26,7 +26,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-require_once "starnet_tv_rows_screen.php";
+require_once "screens_tv/starnet_tv_rows_screen.php";
 
 require_once 'lib/dune_stb_api.php';
 require_once "lib/epfs/config.php";
@@ -83,12 +83,15 @@ class Starnet_Epfs_Handler
     public static function init(Default_Dune_Plugin $plugin)
     {
         self::$enabled = HD::rows_api_support();
-        if (!self::$enabled)
-            return;
-
         self::$epf_id = $plugin->plugin_info['app_name'];
         self::$no_internet_epfs = self::$epf_id . '.no_internet';
         self::$dir_path = getenv('FS_PREFIX') . self::EPFS_PATH . self::$epf_id;
+
+        // Setup all variables before exit
+        if (!self::$enabled) {
+            return;
+        }
+
         self::$tv_rows_screen = new Starnet_Tv_Rows_Screen($plugin);
 
         $plugin->create_screen(self::$tv_rows_screen);
@@ -103,17 +106,12 @@ class Starnet_Epfs_Handler
      */
     public static function update_epfs_file(&$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         if (!self::$enabled) {
             return null;
         }
-/*
-        if (!is_file(self::warmed_up_path())) {
-            hd_debug_print("Cold run", true);
-            file_put_contents(self::warmed_up_path(), '');
-        }
-*/
+
+        hd_debug_print(null, true);
+
         self::ensure_no_internet_epfs_created($plugin_cookies);
 
         $folder_view = self::$tv_rows_screen->get_folder_view_for_epf($plugin_cookies);
@@ -129,8 +127,14 @@ class Starnet_Epfs_Handler
      */
     private static function ensure_no_internet_epfs_created(&$plugin_cookies)
     {
-        if (!self::$enabled || self::$no_internet_epfs_created)
+        if (!self::$enabled) {
             return;
+        }
+
+        hd_debug_print(null, true);
+        if (self::$no_internet_epfs_created) {
+            return;
+        }
 
         $first_run = false;
         if (is_file(self::first_run_path())) {
@@ -176,6 +180,7 @@ class Starnet_Epfs_Handler
         $new_json = json_encode($folder_view);
         $md5 = md5($new_json);
 
+        // Do not load existing json to memory to check equality
         if (is_file($path)) {
             if ($md5 === hash_file('md5', $path)) {
                 hd_debug_print("$path is up to date", true);

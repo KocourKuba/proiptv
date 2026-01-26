@@ -116,7 +116,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
                 if ($this->force_parent_reload) {
                     $this->force_parent_reload = false;
                     hd_debug_print("Force parent reload", true);
-                    $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE);
+                    $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_INVALIDATE);
                 }
                 return Action_Factory::composite($actions);
 

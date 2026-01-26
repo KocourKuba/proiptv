@@ -26,7 +26,7 @@
 require_once 'lib/dune_plugin_constants.php';
 require_once 'lib/abstract_preloaded_regular_screen.php';
 require_once 'lib/user_input_handler_registry.php';
-require_once 'starnet_setup_screen.php';
+require_once 'plugin_setup/starnet_plugin_setup_screen.php';
 
 class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 {
@@ -229,7 +229,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     case ACTION_SORT_ALL:
                         $this->plugin->sort_groups_order(true);
                         foreach ($this->plugin->get_groups_by_order() as $row) {
-                            $this->plugin->sort_channels_order($row[COLUMN_GROUP_ID],true);
+                            $this->plugin->sort_channels_order($row[COLUMN_GROUP_ID], true);
                         }
                         break;
 
@@ -269,7 +269,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_PLUGIN_SETTINGS:
                 return $this->plugin->show_protect_settings_dialog($this,
-                    Action_Factory::open_folder(Starnet_Setup_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup'))
+                    Action_Factory::open_folder(Starnet_Plugin_Setup_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup'))
                 );
 
             case ACTION_EDIT_PLAYLIST_SETTINGS:

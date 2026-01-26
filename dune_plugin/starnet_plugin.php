@@ -30,31 +30,35 @@ require_once 'lib/dune_last_error.php';
 require_once "lib/curl_wrapper.php";
 
 require_once 'starnet_entry_handler.php';
-require_once 'starnet_tv_groups_screen.php';
-require_once 'starnet_setup_playlist_screen.php';
-require_once 'starnet_setup_interface_screen.php';
-require_once 'starnet_setup_interface_newui_screen.php';
-require_once 'starnet_setup_sleep_timer_screen.php';
-require_once 'starnet_setup_category_screen.php';
-require_once 'starnet_setup_epg_screen.php';
-require_once 'starnet_setup_folders_screen.php';
-require_once 'starnet_setup_playback_screen.php';
-require_once 'starnet_setup_provider_screen.php';
-require_once 'starnet_setup_simple_iptv_screen.php';
-require_once 'starnet_setup_download_screen.php';
-require_once 'starnet_setup_ext_screen.php';
-require_once 'starnet_tv_changed_channels_screen.php';
-require_once 'starnet_folder_screen.php';
-require_once 'starnet_tv.php';
-require_once 'starnet_tv_channel_list_screen.php';
-require_once 'starnet_tv_favorites_screen.php';
-require_once 'starnet_tv_history_screen.php';
 require_once 'starnet_epfs_handler.php';
-require_once 'starnet_edit_playlists_screen.php';
-require_once 'starnet_edit_xmltv_list_screen.php';
-require_once 'starnet_edit_providers_list_screen.php';
-require_once 'starnet_edit_hidden_list_screen.php';
-require_once 'starnet_setup_backup_screen.php';
+
+require_once 'plugin_setup/starnet_setup_interface_screen.php';
+require_once 'plugin_setup/starnet_setup_download_screen.php';
+require_once 'plugin_setup/starnet_setup_sleep_timer_screen.php';
+require_once 'plugin_setup/starnet_setup_folders_screen.php';
+require_once 'plugin_setup/starnet_setup_ext_screen.php';
+require_once 'plugin_setup/starnet_setup_backup_screen.php';
+
+require_once 'plugin_playlist_setup/starnet_setup_interface_newui_screen.php';
+require_once 'plugin_playlist_setup/starnet_setup_category_screen.php';
+require_once 'plugin_playlist_setup/starnet_setup_epg_screen.php';
+require_once 'plugin_playlist_setup/starnet_setup_playback_screen.php';
+require_once 'plugin_playlist_setup/starnet_setup_provider_screen.php';
+require_once 'plugin_playlist_setup/starnet_setup_playlist_screen.php';
+require_once 'plugin_playlist_setup/starnet_setup_simple_iptv_screen.php';
+
+require_once 'screens_tv/starnet_tv_groups_screen.php';
+require_once 'screens_tv/starnet_tv_changed_channels_screen.php';
+require_once 'screens_tv/starnet_tv.php';
+require_once 'screens_tv/starnet_tv_channel_list_screen.php';
+require_once 'screens_tv/starnet_tv_favorites_screen.php';
+require_once 'screens_tv/starnet_tv_history_screen.php';
+require_once 'screens_tv/starnet_edit_hidden_list_screen.php';
+
+require_once 'screens_common/starnet_folder_screen.php';
+require_once 'screens_common/starnet_edit_playlists_screen.php';
+require_once 'screens_common/starnet_edit_xmltv_list_screen.php';
+require_once 'screens_common/starnet_edit_providers_list_screen.php';
 
 class Starnet_Plugin extends Default_Dune_Plugin
 {
@@ -77,7 +81,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Tv_History_Screen($this));
         $this->create_screen(new Starnet_Tv_Changed_Channels_Screen($this));
 
-        $this->create_screen(new Starnet_Setup_Screen($this));
+        $this->create_screen(new Starnet_Plugin_Setup_Screen($this));
         $this->create_screen(new Starnet_Setup_Interface_Screen($this));
         $this->create_screen(new Starnet_Setup_Interface_NewUI_Screen($this));
         $this->create_screen(new Starnet_Setup_Sleep_Timer_Screen($this));

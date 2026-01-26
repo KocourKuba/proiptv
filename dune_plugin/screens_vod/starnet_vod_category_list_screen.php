@@ -71,12 +71,12 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         switch ($user_input->control_id) {
             case ACTION_RELOAD:
                 hd_debug_print("reload categories");
-                if($this->plugin->init_vod_class(true)) {
+                if ($this->plugin->init_vod_class(true)) {
                     return User_Input_Handler_Registry::create_action($this, ACTION_INVALIDATE);
                 }
 
                 $this->plugin->reset_channels();
-                $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,ACTION_RELOAD);
+                $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD);
                 $actions[] = Action_Factory::close_and_run();
                 return Action_Factory::composite($actions);
 

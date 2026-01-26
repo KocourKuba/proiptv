@@ -193,8 +193,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
             case CONTROL_DETECT_ID:
                 $uri = safe_get_value($params, PARAM_URI);
                 $tmp_file = $uri;
-                try
-                {
+                try {
                     if (empty($uri)) {
                         break;
                     }

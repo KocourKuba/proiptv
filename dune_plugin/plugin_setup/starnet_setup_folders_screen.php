@@ -99,14 +99,14 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-            if ($this->force_parent_reload) {
-                $this->force_parent_reload = false;
-                hd_debug_print("Force parent reload", true);
-                $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
-            }
+                if ($this->force_parent_reload) {
+                    $this->force_parent_reload = false;
+                    hd_debug_print("Force parent reload", true);
+                    $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+                }
 
-            $actions[] = self::make_return_action(MediaURL::decode($user_input->parent_media_url));
-            return Action_Factory::composite($actions);
+                $actions[] = self::make_return_action(MediaURL::decode($user_input->parent_media_url));
+                return Action_Factory::composite($actions);
 
             case self::CONTROL_HISTORY_CHANGE_FOLDER:
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,

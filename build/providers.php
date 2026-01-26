@@ -119,7 +119,6 @@ function IP2Country($ip)
 
 $url_params = parse_url(getenv("REQUEST_URI"));
 if (isset($url_params['query'])) {
-    /** @noinspection PhpUndefinedVariableInspection */
     parse_str($url_params['query'], $params);
 }
 
@@ -185,6 +184,7 @@ $DB->obj['sql_user'] = IPTV_USER;
 $DB->obj['sql_pass'] = IPTV_PASSWORD;
 
 if($DB->connect()) {
+    $data = array();
     $data['model'] = $model;
     $data['firmware'] = $firmware;
     $data['revision'] = $revision;

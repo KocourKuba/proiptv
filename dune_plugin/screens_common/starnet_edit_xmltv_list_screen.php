@@ -125,8 +125,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case EVENT_INDEXING_DONE:
                 $xmltv_ids = $this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL, $this->plugin->get_active_playlist_id());
-                $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies, null,  $xmltv_ids);
-                $actions[] = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
+                $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies, null, $xmltv_ids);
+                $actions[] = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies), true);
                 return Action_Factory::composite($actions);
 
             case GUI_EVENT_TIMER:
@@ -138,7 +138,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                     $actions[] = Action_Factory::change_behaviour($this->do_get_action_map(), self::REFRESH_TIMER);
                 }
 
-                $actions[] = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
+                $actions[] = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies), true);
 
                 return Action_Factory::composite($actions);
 
@@ -294,7 +294,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 
         // Add URL
-        $menu_items[] = $this->plugin->create_menu_item($this,ACTION_ADD_URL_DLG, TR::t('edit_list_add_url'), "link.png");
+        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ADD_URL_DLG, TR::t('edit_list_add_url'), "link.png");
 
         // Add list file
         $menu_items[] = $this->plugin->create_menu_item($this,
@@ -309,7 +309,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         // Copy to external
         $item = $this->plugin->get_xmltv_source($this->plugin->get_active_playlist_id(), $selected_id);
         if (!empty($item)) {
-            $menu_items[] = $this->plugin->create_menu_item($this,ACTION_ADD_TO_EXTERNAL_SOURCE, TR::t('edit_list_add_to_external_source'), "copy.png");
+            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ADD_TO_EXTERNAL_SOURCE, TR::t('edit_list_add_to_external_source'), "copy.png");
         }
 
 
@@ -552,7 +552,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $title = "Unrecognized or bad xmltv entry";
             } else {
                 $order_key = array_search($key, $selected_sources);
-                $title = $order_key !== false ? "(" . ($order_key + 1) .  ") - $title" : $title;
+                $title = $order_key !== false ? "(" . ($order_key + 1) . ") - $title" : $title;
             }
 
             $cached_xmltv_file = Epg_Manager_Xmltv::get_cache_dir() . "$key.xmltv";
@@ -693,9 +693,9 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $params = $this->plugin->find_xmltv_source($id);
         if ($params[COLUMN_CACHE] === 'auto') {
-            $cache =  TR::t('auto');
+            $cache = TR::t('auto');
         } else {
-            $cache =  TR::t('days__1', $params[COLUMN_CACHE]);
+            $cache = TR::t('days__1', $params[COLUMN_CACHE]);
         }
 
         Control_Factory::add_smart_label($defs, null,

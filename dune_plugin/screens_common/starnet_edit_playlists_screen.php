@@ -821,7 +821,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         if ($type === PARAM_FILE) {
             $res = copy($uri, $tmp_file);
             $errors = error_get_last();
-            $logfile = "Copy error: " . $errors['type'] . "\n" .$errors['message'];
+            $logfile = "Copy error: " . $errors['type'] . "\n" . $errors['message'];
         } else {
             $curl_wrapper = Curl_Wrapper::getInstance();
             $res = $curl_wrapper->download_file($uri, $tmp_file);
@@ -838,8 +838,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n$contents");
         }
 
-        $post_action = User_Input_Handler_Registry::create_action($this,ACTION_INVALIDATE, null, array(PARAM_PLAYLIST_ID => $playlist_id));
-        if ($pl_type === CONTROL_PLAYLIST_IPTV  && $detect_id === CONTROL_DETECT_ID) {
+        $post_action = User_Input_Handler_Registry::create_action($this, ACTION_INVALIDATE, null, array(PARAM_PLAYLIST_ID => $playlist_id));
+        if ($pl_type === CONTROL_PLAYLIST_IPTV && $detect_id === CONTROL_DETECT_ID) {
             hd_debug_print("Detect playlist id: $detect_id");
             $detect_info = $this->plugin->collect_detect_info($tmp_file);
             hd_debug_print($detect_info);

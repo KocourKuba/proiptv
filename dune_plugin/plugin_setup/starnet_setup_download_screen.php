@@ -115,6 +115,6 @@ class Starnet_Setup_Download_Screen extends Abstract_Controls_Screen
                 return Action_Factory::show_title_dialog(TR::t('setup_cache_cleared'));
         }
 
-        return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies), $post_action);
+        return Action_Factory::reset_controls($this->do_get_control_defs(), $post_action);
     }
 }

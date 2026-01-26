@@ -27,10 +27,21 @@
 require_once 'lib/abstract_preloaded_regular_screen.php';
 require_once 'lib/user_input_handler_registry.php';
 
-class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
+class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen
 {
-    const ID = 'filter_screen';
-    const FILTER_ICON_PATH = 'plugin_file://icons/icon_filter.png';
+    const ID = 'search_screen';
+    const SEARCH_ICON_PATH = 'plugin_file://icons/icon_search.png';
+
+    /**
+     * Get MediaURL string representation (json encoded)
+     * *
+     * @param string $group_id
+     * @return false|string
+     */
+    public static function make_group_media_url_str($group_id)
+    {
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_id));
+    }
 
     /**
      * @inheritDoc
@@ -45,9 +56,10 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
 
         $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this,
-                ACTION_CREATE_FILTER, null, array(ACTION_FILTER => ACTION_OPEN_FOLDER));
+            ACTION_SHOW_SEARCH_DLG, null, array(ACTION_SEARCH => ACTION_OPEN_FOLDER));
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
-        $actions[GUI_EVENT_KEY_CLEAR] =  User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
+        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
+        $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
 
         $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
         $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
@@ -61,12 +73,52 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        $sel_ndx = $user_input->sel_ndx;
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $sel_ndx = $user_input->sel_ndx;
         switch ($user_input->control_id) {
+            case ACTION_SHOW_SEARCH_DLG:
+                if (!isset($user_input->parent_media_url)) break;
+
+                $media_url = MediaURL::decode($user_input->selected_media_url);
+                if ($media_url->genre_id !== Vod_Category::FLAG_SEARCH && $user_input->{ACTION_SEARCH} === ACTION_OPEN_FOLDER) {
+                    return Action_Factory::open_folder($user_input->selected_media_url);
+                }
+
+                if ($user_input->{ACTION_SEARCH} === ACTION_ITEMS_EDIT) {
+                    $search_string = $media_url->genre_id;
+                    $initial = $this->plugin->get_table_value_id(VOD_SEARCH_LIST, $search_string);
+                } else {
+                    $initial = -1;
+                    $search_string = "";
+                }
+
+                $defs = array();
+                $params = array(ACTION_ITEMS_EDIT => $initial);
+                Control_Factory::add_text_field($defs, $this, ACTION_NEW_SEARCH, '', $search_string,
+                    false, false, true, true,
+                    Control_Factory::DLG_MAX_CONTROLS_WIDTH, false, true, $params);
+                Control_Factory::add_vgap($defs, 500);
+
+                return Action_Factory::show_dialog($defs, TR::t('search'));
+
+            case ACTION_NEW_SEARCH:
+                $search_string = $user_input->{ACTION_NEW_SEARCH};
+                if (isset($user_input->{ACTION_ITEMS_EDIT})) {
+                    $idx = (int)$user_input->{ACTION_ITEMS_EDIT};
+                } else {
+                    $idx = -1;
+                }
+                hd_debug_print("search string: $search_string", true);
+                $this->plugin->set_table_value(VOD_SEARCH_LIST, $search_string, $idx);
+                $action = Action_Factory::open_folder(
+                    Starnet_Vod_Movie_List_Screen::make_vod_media_url_str(Vod_Category::FLAG_SEARCH, $search_string),
+                    TR::t('search__1', ": $search_string"));
+
+                return Action_Factory::close_dialog_and_run(Action_Factory::invalidate_folders(array($user_input->parent_media_url), $action));
+
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($user_input->selected_media_url)
-                    && MediaURL::decode($user_input->selected_media_url)->genre_id !== Vod_Category::FLAG_FILTER) {
+                    && MediaURL::decode($user_input->selected_media_url)->genre_id !== Vod_Category::FLAG_SEARCH) {
 
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete'), "brush.png");
                     return Action_Factory::show_popup_menu($menu_items);
@@ -74,48 +126,14 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
 
                 break;
 
-            case ACTION_CREATE_FILTER:
-                $selected_media_url = MediaURL::decode($user_input->selected_media_url);
-                if ($selected_media_url->genre_id !== Vod_Category::FLAG_FILTER && $user_input->{ACTION_FILTER} === ACTION_OPEN_FOLDER) {
-                    return Action_Factory::open_folder($user_input->selected_media_url);
-                }
-
-                if ($user_input->{ACTION_FILTER} === ACTION_ITEMS_EDIT) {
-                    $filter_idx = $this->plugin->get_table_value_id(VOD_FILTER_LIST, $selected_media_url->genre_id);
-                } else {
-                    $filter_idx = -1;
-                }
-
-                return $this->plugin->vod->AddFilterUI($this, $filter_idx);
-
-            case ACTION_RUN_FILTER:
-                $filter_string = $this->plugin->vod->CompileSaveFilterItem($user_input);
-                if (empty($filter_string)) break;
-
-                hd_debug_print("filter_screen filter string: $filter_string", true);
-                if (isset($user_input->{ACTION_ITEMS_EDIT})) {
-                    $idx = (int)$user_input->{ACTION_ITEMS_EDIT};
-                } else {
-                    $idx = -1;
-                }
-                $this->plugin->set_table_value(VOD_FILTER_LIST, $filter_string, $idx);
-
-                return Action_Factory::invalidate_folders(
-                    array($user_input->parent_media_url),
-                    Action_Factory::open_folder(
-                        Starnet_Vod_Movie_List_Screen::make_vod_media_url_str(Vod_Category::FLAG_FILTER, $filter_string),
-                        TR::t('filter')
-                    )
-                );
-
             case ACTION_ITEMS_EDIT:
                 $selected_media_url = MediaURL::decode($user_input->selected_media_url);
-                if ($selected_media_url->category_id === VOD_FILTER_GROUP_ID) break;
+                if ($selected_media_url->category_id === VOD_SEARCH_GROUP_ID) break;
 
                 return User_Input_Handler_Registry::create_action($this,
-                    ACTION_CREATE_FILTER,
+                    ACTION_SHOW_SEARCH_DLG,
                     null,
-                    array(ACTION_FILTER => ACTION_ITEMS_EDIT)
+                    array(ACTION_SEARCH => ACTION_ITEMS_EDIT)
                 );
 
             case ACTION_ITEM_UP:
@@ -123,27 +141,27 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_ITEM_DELETE:
                 if (!isset($user_input->selected_media_url)) break;
 
-                $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+                $media_url = MediaURL::decode($user_input->selected_media_url);
                 switch ($user_input->control_id) {
                     case ACTION_ITEM_UP:
                         $sel_ndx--;
                         if ($sel_ndx < 1) {
                             return null;
                         }
-                        $this->plugin->arrange_table_values(VOD_FILTER_LIST, $selected_media_url->genre_id, Ordered_Array::UP);
+                        $this->plugin->arrange_table_values(VOD_SEARCH_LIST, $media_url->genre_id, Ordered_Array::UP);
                         break;
 
                     case ACTION_ITEM_DOWN:
-                        $max_sel = $this->plugin->get_order_count(VOD_FILTER_LIST) + 1;
+                        $max_sel = $this->plugin->get_order_count(VOD_SEARCH_LIST) + 1;
                         $sel_ndx++;
                         if ($sel_ndx > $max_sel) {
                             return null;
                         }
-                        $this->plugin->arrange_table_values(VOD_FILTER_LIST, $selected_media_url->genre_id, Ordered_Array::DOWN);
+                        $this->plugin->arrange_table_values(VOD_SEARCH_LIST, $media_url->genre_id, Ordered_Array::DOWN);
                         break;
 
                     case ACTION_ITEM_DELETE:
-                        $this->plugin->remove_table_value(VOD_FILTER_LIST, $selected_media_url->genre_id);
+                        $this->plugin->remove_table_value(VOD_SEARCH_LIST, $media_url->genre_id);
                         break;
                 }
 
@@ -151,17 +169,6 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
         }
 
         return null;
-    }
-
-    /**
-     * Get MediaURL string representation (json encoded)
-     * *
-     * @param string $category
-     * @return false|string
-     */
-    public static function make_group_media_url_str($category = '')
-    {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => VOD_FILTER_GROUP_ID, 'category' => $category));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -176,24 +183,24 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
 
         $items[] = array(
             PluginRegularFolderItem::media_url => Starnet_Vod_Movie_List_Screen::make_vod_media_url_str(
-                Vod_Category::FLAG_FILTER, Vod_Category::FLAG_FILTER),
-            PluginRegularFolderItem::caption => TR::t('vod_screen_new_filter'),
+                Vod_Category::FLAG_SEARCH, Vod_Category::FLAG_SEARCH),
+            PluginRegularFolderItem::caption => TR::t('new_search'),
             PluginRegularFolderItem::view_item_params => array(
-                ViewItemParams::icon_path => self::FILTER_ICON_PATH,
-                ViewItemParams::item_detailed_icon_path => self::FILTER_ICON_PATH,
+                ViewItemParams::icon_path => self::SEARCH_ICON_PATH,
+                ViewItemParams::item_detailed_icon_path => self::SEARCH_ICON_PATH,
             ),
         );
 
-        foreach ($this->plugin->get_table_values(VOD_FILTER_LIST) as $item_row) {
+        foreach ($this->plugin->get_table_values(VOD_SEARCH_LIST) as $item_row) {
             if (empty($item_row)) continue;
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => Starnet_Vod_Movie_List_Screen::make_vod_media_url_str(
-                    Vod_Category::FLAG_FILTER, $item_row['item']),
-                PluginRegularFolderItem::caption => TR::t('filter__1', $item_row['item']),
+                    Vod_Category::FLAG_SEARCH, $item_row['item']),
+                PluginRegularFolderItem::caption => TR::t('search__1', $item_row['item']),
                 PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::icon_path => self::FILTER_ICON_PATH,
-                    ViewItemParams::item_detailed_icon_path => self::FILTER_ICON_PATH,
+                    ViewItemParams::icon_path => self::SEARCH_ICON_PATH,
+                    ViewItemParams::item_detailed_icon_path => self::SEARCH_ICON_PATH,
                 ),
             );
         }
