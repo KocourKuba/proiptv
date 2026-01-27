@@ -2478,7 +2478,7 @@ function extract_column($rows, $column)
  * @param object $plugin_cookies
  * @param string $param
  * @param bool $default
- * @return mixed
+ * @return bool
  */
 function get_cookie_bool_param($plugin_cookies, $param, $default = true)
 {
@@ -2486,7 +2486,7 @@ function get_cookie_bool_param($plugin_cookies, $param, $default = true)
         $plugin_cookies->{$param} = SwitchOnOff::to_def($default);
     }
 
-    return $plugin_cookies->{$param};
+    return SwitchOnOff::to_bool($plugin_cookies->{$param});
 }
 
 /**

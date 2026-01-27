@@ -71,7 +71,7 @@ class api_cbilling extends api_default
         $data = safe_get_value($this->account_info, 'data', array());
         if (empty($data)) {
             hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
+            Control_Factory::add_label($defs, TR::t('error'), TR::t('warn_msg3'), -10);
         } else {
             if (isset($data['end_date'])) {
                 Control_Factory::add_label($defs, TR::t('end_date'), $data['end_date'], -15);

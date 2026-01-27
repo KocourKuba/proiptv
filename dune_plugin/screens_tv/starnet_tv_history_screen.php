@@ -159,7 +159,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
                 $message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
                 $this->plugin->change_channels_order($fav_id, $selected_media_url->channel_id, $is_favorite);
 
-                $actions[] = Action_Factory::show_title_dialog($message);
+                $actions[] = Action_Factory::show_title_dialog(TR::t('information'), $message);
                 $actions[] = $this->plugin->change_tv_favorites($opt_type, $selected_media_url->channel_id);
                 return Action_Factory::composite($actions);
 

@@ -77,12 +77,13 @@ class Starnet_Epfs_Handler
 
     /**
      * @param Default_Dune_Plugin $plugin
+     * @param object $plugin_cookies
      * @return void
-     * @throws Exception
      */
-    public static function init(Default_Dune_Plugin $plugin)
+    public static function init(Default_Dune_Plugin $plugin, $plugin_cookies)
     {
-        self::$enabled = HD::rows_api_support();
+        $newui_enabled = get_cookie_bool_param($plugin_cookies, PARAM_COOKIE_ENABLE_NEWUI);
+        self::$enabled = HD::rows_api_support() && $newui_enabled;
         self::$epf_id = $plugin->plugin_info['app_name'];
         self::$no_internet_epfs = self::$epf_id . '.no_internet';
         self::$dir_path = getenv('FS_PREFIX') . self::EPFS_PATH . self::$epf_id;
@@ -119,6 +120,16 @@ class Starnet_Epfs_Handler
         self::write_epfs_view(self::$epf_id, $folder_view);
 
         return Action_Factory::status(0);
+    }
+
+    /**
+     * @return void
+     */
+    public static function clear_epfs_file()
+    {
+        hd_debug_print(null, true);
+        safe_unlink(self::get_epfs_path(self::$epf_id));
+        safe_unlink(self::get_epfs_path(self::$no_internet_epfs));
     }
 
     /**

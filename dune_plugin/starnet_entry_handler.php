@@ -106,7 +106,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
             case self::ACTION_CALL_PLAYLIST_SETTINGS:
                 $this->plugin->init_plugin();
                 if (!$this->plugin->init_playlist_db()) {
-                    return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_init_database'));
+                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_init_database'));
                 }
                 return $this->plugin->show_protect_settings_dialog($this,
                     Action_Factory::open_folder(Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID), TR::t('setup_playlist')));
@@ -126,7 +126,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     if (!empty($pl_error)) {
                         return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
                     }
-                    return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_init_database'));
+                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_init_database'));
                 }
 
 
@@ -170,7 +170,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 Epg_Manager_Xmltv::clear_epg_files();
                 $this->plugin->reset_channels_loaded();
                 $actions[] = Action_Factory::clear_rows_info_cache();
-                $actions[] = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
+                $actions[] = Action_Factory::show_title_dialog(TR::t('information'), TR::t('entry_epg_cache_cleared'));
                 return Action_Factory::composite($actions);
 
             case ACTION_FORCE_OPEN:
@@ -212,10 +212,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
             case Starnet_Setup_Backup_Screen::ACTION_BACKUP_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 if (Default_Dune_Plugin::do_backup_settings($this->plugin, $data->{PARAM_FILEPATH}) === false) {
-                    return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_backup'));
+                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_backup'));
                 }
 
-                $actions[] = Action_Factory::show_title_dialog(TR::t('setup_copy_done'));
+                $actions[] = Action_Factory::show_title_dialog(TR::t('information'), TR::t('setup_copy_done'));
                 $actions[] = User_Input_Handler_Registry::create_action(
                     $this,
                     self::ACTION_PLUGIN_ENTRY,

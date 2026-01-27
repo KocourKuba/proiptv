@@ -57,7 +57,7 @@ class api_tvteam extends api_default
         $userData = safe_get_value($data, 'userData', array());
         if (empty($userData)) {
             hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
+            Control_Factory::add_label($defs, TR::t('error'), TR::t('warn_msg3'), -10);
         } else {
             if (isset($userData['userLogin'])) {
                 Control_Factory::add_label($defs, TR::t('login'), $userData['userLogin'], -15);

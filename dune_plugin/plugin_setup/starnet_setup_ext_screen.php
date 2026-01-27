@@ -138,7 +138,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
                 }
                 hd_debug_print("pass: $param, old pass: $old_pass, new pass: $user_input->pass2", true);
 
-                $post_action = Action_Factory::show_title_dialog($msg);
+                $post_action = Action_Factory::show_title_dialog(TR::t('information'), $msg);
                 break;
 
             case PARAM_FULL_SIZE_REMOTE:

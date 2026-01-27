@@ -398,7 +398,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         if (isset($user_input->{CONTROL_URL_PATH})) {
             $item[PARAM_URI] = $user_input->{CONTROL_URL_PATH};
             if (($source & XMLTV_SOURCE_EXTERNAL) && !is_proto_http($item[PARAM_URI])) {
-                return Action_Factory::close_and_run(Action_Factory::show_title_dialog(TR::t('err_incorrect_url')));
+                return Action_Factory::close_and_run(Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_incorrect_url')));
             }
             $new_id = Hashed_Array::hash($item[PARAM_URI]);
         } else {
@@ -446,7 +446,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print("Choosed file: " . $selected_media_url->{PARAM_FILEPATH}, true);
         $lines = file($selected_media_url->{PARAM_FILEPATH}, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         if ($lines === false || (count($lines) === 1 && trim($lines[0]) === '')) {
-            return Action_Factory::show_title_dialog(TR::t('edit_list_empty_file'));
+            return Action_Factory::show_title_dialog(TR::t('error'), TR::t('edit_list_empty_file'));
         }
 
         $old_count = $this->plugin->get_xmltv_sources_count(null);
@@ -491,10 +491,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         }
 
         if ($old_count === $new_count) {
-            return Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
+            return Action_Factory::show_title_dialog(TR::t('error'), TR::t('edit_list_no_files'));
         }
 
-        $actions[] = Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $new_count - $old_count, count($lines)));
+        $actions[] = Action_Factory::show_title_dialog(TR::t('information'), TR::t('edit_list_added__2', $new_count - $old_count, count($lines)));
         $actions[] = Action_Factory::close_and_run();
         $actions[] = Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('setup_edit_xmltv_list'));
         return Action_Factory::composite($actions);
@@ -515,7 +515,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         }
 
         if (empty($list_sources)) {
-            return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_empty_export_list'));
+            return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_empty_export_list'));
         }
 
         $folder_screen = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});

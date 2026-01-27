@@ -181,7 +181,7 @@ class api_iptvonline extends api_default
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('warn_msg3'), null, -10);
         } else if (!isset($this->account_info['status']) || $this->account_info['status'] !== 200) {
-            Control_Factory::add_label($defs, TR::t('err_error'), $this->account_info['message'], -10);
+            Control_Factory::add_label($defs, TR::t('error'), $this->account_info['message'], -10);
         } else {
             $data = safe_get_value($this->account_info, 'data', array());
             if (isset($data['login'])) {

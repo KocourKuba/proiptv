@@ -115,7 +115,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen
                 $opt_type = $in_order ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->change_vod_favorites($opt_type, $movie_id);
                 $message = $in_order ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
-                return Action_Factory::show_title_dialog($message);
+                return Action_Factory::show_title_dialog(TR::t('information'), $message);
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);

@@ -222,7 +222,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                     if ($pl_type === CONTROL_PLAYLIST_IPTV) {
                         if ($detect_id === CONTROL_DETECT_ID) {
                             $detect_info = $this->plugin->collect_detect_info($tmp_file);
-                            $post_action = Action_Factory::show_title_dialog(TR::t('info'), $detect_info, $post_action);
+                            $post_action = Action_Factory::show_title_dialog(TR::t('information'), $detect_info, $post_action);
                         }
                         $this->plugin->set_playlist_parameter($playlist_id, PARAM_ID_MAPPER, $detect_id);
                         $this->force_parent_reload = true;

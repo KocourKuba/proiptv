@@ -46,7 +46,7 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
     {
         hd_debug_print(null, true);
 
-        $info = User_Input_Handler_Registry::create_action($this, self::ACTION_SHOW_QR, TR::t('info'));
+        $info = User_Input_Handler_Registry::create_action($this, self::ACTION_SHOW_QR, TR::t('information'));
 
         $actions[GUI_EVENT_KEY_INFO] = $info;
         $actions[GUI_EVENT_KEY_D_BLUE] = $info;

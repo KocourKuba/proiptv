@@ -112,7 +112,7 @@ class Starnet_Setup_Download_Screen extends Abstract_Controls_Screen
 
             case self::CONTROL_ITEMS_CLEAR_FILE_CACHE:
                 Curl_Wrapper::getInstance()->clear_cache(true);
-                return Action_Factory::show_title_dialog(TR::t('setup_cache_cleared'));
+                return Action_Factory::show_title_dialog(TR::t('information'), TR::t('setup_cache_cleared'));
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs(), $post_action);

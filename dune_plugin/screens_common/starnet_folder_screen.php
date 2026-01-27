@@ -740,7 +740,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
         $parent_url = MediaURL::decode($user_input->parent_media_url);
 
         if (!create_path($parent_url->{PARAM_FILEPATH} . '/' . $user_input->{self::ACTION_CREATE_FOLDER})) {
-            return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_cant_create_folder'));
+            return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_cant_create_folder'));
         }
         return Action_Factory::invalidate_folders(array($user_input->parent_media_url));
     }
@@ -882,6 +882,6 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
             $plugin_cookies->{self::ACTION_SMB_SETUP} = $user_input->smb_view;
         }
 
-        return Action_Factory::show_title_dialog(TR::t('folder_screen_used__1', $smb_view_ops[$smb_view]));
+        return Action_Factory::show_title_dialog(TR::t('information'), TR::t('folder_screen_used__1', $smb_view_ops[$smb_view]));
     }
 }

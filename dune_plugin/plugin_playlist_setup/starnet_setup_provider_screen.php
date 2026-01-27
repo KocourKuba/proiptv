@@ -329,7 +329,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             case api_default::CONTROL_SERVER:
                 $provider->SetServer($user_input->{$control_id}, $msg);
                 if (!empty($msg)) {
-                    return Action_Factory::show_title_dialog(TR::t('err_error'), wrap_string_to_lines($msg, 80));
+                    return Action_Factory::show_title_dialog(TR::t('error'), wrap_string_to_lines($msg, 80));
                 }
 
                 $this->force_parent_reload = true;

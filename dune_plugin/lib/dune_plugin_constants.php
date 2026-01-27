@@ -206,6 +206,7 @@ const PARAM_COOKIE_ENABLE_DEBUG = 'enable_debug';
 const PARAM_COOKIE_LAST_TV_SEARCH = 'last_tv_search';
 const PARAM_COOKIE_AUTO_PLAY = 'auto_play';
 const PARAM_COOKIE_AUTO_RESUME = 'auto_resume';
+const PARAM_COOKIE_ENABLE_NEWUI = 'enable_newui';
 
 const PARAM_SCREEN_ID = 'screen_id';
 const PARAM_SOURCE_WINDOW_ID = 'source_window_id';

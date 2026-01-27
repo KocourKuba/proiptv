@@ -102,7 +102,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Edit_Providers_List_Screen($this));
         $this->create_screen(new Starnet_Edit_Hidden_List_Screen($this));
 
-        Starnet_Epfs_Handler::init($this);
+        Starnet_Epfs_Handler::init($this, $plugin_cookies);
 
         $this->init_providers_config();
         $this->init_screen_view_parameters($this->plugin_info['app_background']);
@@ -115,7 +115,8 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_print("Plugin date:         " . $this->plugin_info['app_release_date']);
         hd_print("LocalTime:           " . format_datetime('Y-m-d H:i', time()));
         hd_print("TimeZone:            " . getTimeZone());
-        hd_print("New UI support:      " . var_export(HD::rows_api_support(), true));
+        hd_print("NewUI support:       " . var_export(HD::rows_api_support(), true));
+        hd_print("NewUI enabled:       " . var_export(Starnet_Epfs_Handler::$enabled, true));
         hd_print("Ext EPG support:     " . var_export(is_ext_epg_supported(), true));
         hd_print("Auto resume enabled: " . safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_RESUME));
         hd_print("Auto play enabled:   " . safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_PLAY));

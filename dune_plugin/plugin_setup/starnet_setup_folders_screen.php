@@ -151,7 +151,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                         throw new Exception("Cannot copy $history_path to itself!");
                     }
                     HD::copy_data($default_path, "/_" . PARAM_TV_HISTORY_ITEMS . "$/", $history_path);
-                    $post_action = Action_Factory::show_title_dialog(TR::t('setup_copy_done'));
+                    $post_action = Action_Factory::show_title_dialog(TR::t('information'), TR::t('setup_copy_done'));
                 } catch (Exception $ex) {
                     print_backtrace_exception($ex);
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_copy'), $ex->getMessage());
@@ -167,7 +167,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                         throw new Exception("Cannot copy $history_path to itself!");
                     }
                     HD::copy_data($history_path, '_' . PARAM_TV_HISTORY_ITEMS . '$/', $default_path);
-                    $post_action = Action_Factory::show_title_dialog(TR::t('setup_copy_done'));
+                    $post_action = Action_Factory::show_title_dialog(TR::t('information'), TR::t('setup_copy_done'));
                 } catch (Exception $ex) {
                     print_backtrace_exception($ex);
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_copy'), $ex->getMessage());

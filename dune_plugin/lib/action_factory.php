@@ -167,7 +167,7 @@ class Action_Factory
      * @param int $preferred_width
      * @return array
      */
-    public static function show_title_dialog($title, $multiline = '', $post_action = null, $preferred_width = self::SMALL_DLG_WIDTH, $attrs = array())
+    public static function show_title_dialog($title, $multiline, $post_action = null, $preferred_width = self::SMALL_DLG_WIDTH, $attrs = array())
     {
         $defs = array();
 

@@ -87,10 +87,10 @@ class api_vidok extends api_default
 
         if (empty($this->account_info)) {
             hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
+            Control_Factory::add_label($defs, TR::t('error'), TR::t('warn_msg3'), -10);
         } else if (isset($this->account_info['error'], $this->account_info['error']['message'])) {
             hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('err_error'), $this->account_info['error']['message'], -10);
+            Control_Factory::add_label($defs, TR::t('error'), $this->account_info['error']['message'], -10);
         } else {
             $data = safe_get_value($this->account_info, 'account');
             if (isset($data['login'])) {

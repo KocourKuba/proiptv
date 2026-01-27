@@ -159,7 +159,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_PLAY_ITEM:
                 if (!$this->plugin->is_channel_visible($selected_media_url->channel_id)) {
-                    return Action_Factory::show_title_dialog(TR::t('err_channel_hidden'));
+                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_channel_hidden'));
                 }
 
                 try {

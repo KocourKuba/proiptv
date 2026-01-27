@@ -136,7 +136,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 $val = $user_input->{$control_id};
                 $active_sources = $this->plugin->get_selected_xmltv_ids();
                 if (empty($active_sources) && $val === ENGINE_XMLTV) {
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_no_xmltv_sources'), $post_action);
+                    $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_xmltv_sources'), $post_action);
                 }
                 $this->plugin->set_setting($control_id, $val);
                 $this->plugin->init_epg_manager();
@@ -158,7 +158,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                     }
                     $this->plugin->reset_channels();
                 }
-                $actions[] = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
+                $actions[] = Action_Factory::show_title_dialog(TR::t('information'), TR::t('entry_epg_cache_cleared'));
                 $actions[] = Action_Factory::reset_controls($this->do_get_control_defs());
                 $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                 return Action_Factory::composite($actions);

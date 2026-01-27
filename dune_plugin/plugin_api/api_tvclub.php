@@ -99,7 +99,7 @@ class api_tvclub extends api_default
 
         if (empty($this->account_info)) {
             hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
+            Control_Factory::add_label($defs, TR::t('error'), TR::t('warn_msg3'), -10);
         } else {
             $data = safe_get_value($this->account_info, 'account', array());
             $info = safe_get_value($data, 'info', array());

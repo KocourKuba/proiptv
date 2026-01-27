@@ -167,7 +167,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
                 Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID)
             );
 
-            $actions[] = Action_Factory::show_title_dialog($in_order ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite'));
+            $actions[] = Action_Factory::show_title_dialog(TR::t('information'), $in_order ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite'));
             $actions[] = Action_Factory::invalidate_folders($invalidate_urls);
             $actions[] = Action_Factory::close_and_run();
             return Action_Factory::composite($actions);

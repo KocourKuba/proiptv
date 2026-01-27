@@ -56,7 +56,7 @@ class api_shurik extends api_default
 
         if (!isset($this->account_info[0])) {
             hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
+            Control_Factory::add_label($defs, TR::t('error'), TR::t('warn_msg3'), -10);
         } else {
             $info = $this->account_info[0];
             if (isset($info['packet'])) {

@@ -170,7 +170,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
                 $active_sources = $this->plugin->get_selected_xmltv_ids();
                 $val = $user_input->{$control_id};
                 if (empty($active_sources) && $val !== PLAYLIST_PICONS) {
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_no_xmltv_sources'));
+                    $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_xmltv_sources'));
                 }
 
                 $this->plugin->set_setting($user_input->control_id, $val);

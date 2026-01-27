@@ -110,7 +110,7 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
             case self::ACTION_BACKUP_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 $msg = Default_Dune_Plugin::do_backup_settings($this->plugin, $data->{PARAM_FILEPATH}) ? TR::t('setup_copy_done') : TR::t('err_backup');
-                $post_action = Action_Factory::show_title_dialog($msg);
+                $post_action = Action_Factory::show_title_dialog(TR::t('information'), $msg);
                 break;
 
             case self::ACTION_RESTORE_FILE_SELECTED:
@@ -208,7 +208,7 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
         // force plugin to fully reinit
         $this->plugin->init_plugin(true);
 
-        $actions[] = Action_Factory::show_title_dialog(TR::t('setup_restore_done'));
+        $actions[] = Action_Factory::show_title_dialog(TR::t('information'), TR::t('setup_restore_done'));
         $actions[] = Action_Factory::close_and_run();
         $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Entry_Handler::ID, ACTION_RELOAD);
         return Action_Factory::composite($actions);
