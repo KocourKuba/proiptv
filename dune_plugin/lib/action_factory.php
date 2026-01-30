@@ -385,6 +385,24 @@ class Action_Factory
         );
     }
 
+    public static function add_gui_item(&$items, $id, $caption, $icon_url = null, $group_id = null, $params = null)
+    {
+        $item = array(GuiItem::id => $id, GuiItem::caption => $caption);
+        if ($icon_url) {
+            $item[GuiItem::icon_url] = $icon_url;
+        }
+
+        if (isset($group_id)) {
+            $item[GuiItem::group_id] = $group_id;
+        }
+
+        if (defined('GuiItem::params') && $params) {
+            $item[GuiItem::params] = $params;
+        }
+
+        $items[] = $item;
+    }
+
     public static function edit_list_config($config_id, $title, $all_items, $checked_ids = null, $groups = null,
                                             $options = null, $close_item_params = null, $sel_id = null, $post_action = null)
     {
@@ -416,7 +434,7 @@ class Action_Factory
         }
 
         if (defined('EditListConfigActionData::close_item_params') && !is_null($close_item_params)) {
-            // r24?
+            // r24
             $arr[EditListConfigActionData::close_item_params] = $close_item_params;
         }
 
@@ -477,9 +495,16 @@ class Action_Factory
      * @param int $delay_ms
      * @return array
      */
-    public static function timer($delay_ms)
+    public static function timer($delay_ms, $reset_on_keypress = false, $clear_on_keypress = false)
     {
-        return array(GuiTimerDef::delay_ms => $delay_ms);
+        $arr = array(GuiTimerDef::delay_ms => $delay_ms);
+        if ($reset_on_keypress) {
+            $arr[GuiTimerDef::reset_on_keypress] = true;
+        }
+        if ($clear_on_keypress) {
+            $arr[GuiTimerDef::clear_on_keypress] = true;
+        }
+        return $arr;
     }
 
     /**
