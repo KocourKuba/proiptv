@@ -28,9 +28,9 @@ require_once 'lib/user_input_handler.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
+class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
 {
-    const ID = 'interface_setup';
+    const ID = 'plugin_interface_setup';
 
     const CONTROL_SHOW_TV = 'show_tv';
     const CONTROL_AUTO_RESUME = 'auto_resume';

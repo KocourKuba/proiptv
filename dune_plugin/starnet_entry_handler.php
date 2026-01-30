@@ -101,7 +101,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
             case self::ACTION_CALL_PLUGIN_SETTINGS:
                 $this->plugin->init_plugin();
                 return $this->plugin->show_protect_settings_dialog($this,
-                    Action_Factory::open_folder(Starnet_Plugin_Setup_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup')));
+                    Action_Factory::open_folder(Starnet_Setup_Plugin_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup')));
 
             case self::ACTION_CALL_PLAYLIST_SETTINGS:
                 $this->plugin->init_plugin();

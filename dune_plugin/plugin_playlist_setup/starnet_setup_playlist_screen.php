@@ -36,12 +36,10 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
     const CONTROL_RESET_PLAYLIST_DLG = 'reset_playlist';
     const CONTROL_PLAYBACK_SCREEN = 'playback_screen';
     const CONTROL_EPG_SCREEN = 'epg_screen';
-    const ACTION_EDIT_PROVIDER_SETTINGS = 'edit_setup_provider';
-    const ACTION_EDIT_IPTV_SETTINGS = 'edit_setup_iptv';
-    const ACTION_EDIT_CATEGORY_SCREEN = 'edit_category_screen';
+    const CONTROL_EDIT_INTERFACE_SETTINGS = 'edit_interface_screen';
+    const CONTROL_EDIT_PROVIDER_SETTINGS = 'edit_setup_provider';
+    const CONTROL_EDIT_IPTV_SETTINGS = 'edit_setup_iptv';
     const ACTION_RESET_PLAYLIST_DLG_APPLY = 'reset_playlist_apply';
-    const ACTION_BG_FILE_SELECTED = 'bg_file_selected';
-    const ACTION_BG_RESET_DEFAULT = 'bg_reset_default';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -106,26 +104,19 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
         // IPTV settings
 
         if ($this->plugin->get_playlist_parameter($playlist_id, PARAM_TYPE) === PARAM_PROVIDER) {
-            Control_Factory::add_image_button($defs, $this, self::ACTION_EDIT_PROVIDER_SETTINGS, TR::t('edit_provider_settings'),
+            Control_Factory::add_image_button($defs, $this, self::CONTROL_EDIT_PROVIDER_SETTINGS, TR::t('edit_provider_settings'),
                 TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
         } else {
-            Control_Factory::add_image_button($defs, $this, self::ACTION_EDIT_IPTV_SETTINGS, TR::t('edit_iptv_settings'),
+            Control_Factory::add_image_button($defs, $this, self::CONTROL_EDIT_IPTV_SETTINGS, TR::t('edit_iptv_settings'),
                 TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
         }
 
+        //////////////////////////////////////
+        // Category settings
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_EDIT_INTERFACE_SETTINGS, TR::t('setup_interface_title'),
+            TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
+
         if (!$this->plugin->is_vod_playlist()) {
-            //////////////////////////////////////
-            // Category settings
-            Control_Factory::add_image_button($defs, $this, self::ACTION_EDIT_CATEGORY_SCREEN, TR::t('setup_category_title'),
-                TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
-
-            if (Starnet_Epfs_Handler::$enabled) {
-                //////////////////////////////////////
-                // Interface NewUI settings
-                Control_Factory::add_image_button($defs, $this, ACTION_EDIT_NEWUI_SETTINGS, TR::t('setup_interface_newui_title'),
-                    TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
-            }
-
             //////////////////////////////////////
             // EPG settings
             Control_Factory::add_image_button($defs, $this, self::CONTROL_EPG_SCREEN, TR::t('setup_epg_settings'),
@@ -136,17 +127,6 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
         // Streaming settings
         Control_Factory::add_image_button($defs, $this, self::CONTROL_PLAYBACK_SCREEN, TR::t('setup_playback_settings'),
             TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
-
-        //////////////////////////////////////
-        // change background
-        if ($this->plugin->is_background_image_default()) {
-            $button = TR::t('by_default');
-        } else {
-            $button = substr(basename($this->plugin->get_background_image()), strlen($this->plugin->get_active_playlist_id()) + 1);
-        }
-
-        Control_Factory::add_image_button($defs, $this, ACTION_CHANGE_BACKGROUND,
-            TR::t('change_background'), $button, get_image_path('image.png'), Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         //////////////////////////////////////
         // reset playlist settings
@@ -183,82 +163,32 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
                 $this->plugin->set_playlist_parameter($playlist_id, PARAM_NAME, $user_input->{CONTROL_EDIT_NAME});
                 break;
 
-            case self::ACTION_EDIT_PROVIDER_SETTINGS:
+            case self::CONTROL_EDIT_PROVIDER_SETTINGS:
                 return Action_Factory::open_folder(
                     Starnet_Setup_Provider_Screen::make_controls_media_url_str(static::ID, $user_input->return_index, $playlist_id),
                     TR::t('edit_provider_settings')
                 );
 
-            case self::ACTION_EDIT_IPTV_SETTINGS:
+            case self::CONTROL_EDIT_IPTV_SETTINGS:
                 return Action_Factory::open_folder(
                     Starnet_Setup_Simple_IPTV_Screen::make_controls_media_url_str(static::ID, $user_input->return_index, $playlist_id),
                     TR::t('edit_iptv_settings')
                 );
 
-            case self::CONTROL_PLAYBACK_SCREEN: // show streaming settings dialog
+            case self::CONTROL_EDIT_INTERFACE_SETTINGS: // show interface settings screen
+                return Action_Factory::open_folder(
+                    Starnet_Setup_Interface_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
+                    TR::t('setup_interface_title'));
+
+            case self::CONTROL_PLAYBACK_SCREEN: // show streaming settings screen
                 return Action_Factory::open_folder(
                     Starnet_Setup_Playback_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
                     TR::t('setup_playback_settings'));
-
-            case ACTION_EDIT_NEWUI_SETTINGS: // show interface NewUI settings dialog
-                return Action_Factory::open_folder(
-                    Starnet_Setup_Interface_NewUI_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
-                    TR::t('setup_interface_newui_title'));
 
             case self::CONTROL_EPG_SCREEN: // show epg settings dialog
                 return Action_Factory::open_folder(
                     Starnet_Setup_Epg_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
                     TR::t('setup_epg_settings'));
-
-            case self::ACTION_EDIT_CATEGORY_SCREEN: // show category settings dialog
-                return Action_Factory::open_folder(
-                    Starnet_Setup_Category_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
-                    TR::t('setup_category_title'));
-
-            case ACTION_CHANGE_BACKGROUND:
-                $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
-                    array(
-                        PARAM_EXTENSION => 'png|jpg|jpeg',
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_BG_FILE_SELECTED,
-                        Starnet_Folder_Screen::PARAM_RESET_ACTION => self::ACTION_BG_RESET_DEFAULT,
-                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
-                        Starnet_Folder_Screen::PARAM_ALLOW_IMAGE_LIB => true,
-                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
-                    )
-                );
-                return Action_Factory::open_folder($media_url, TR::t('select_file'));
-
-            case self::ACTION_BG_FILE_SELECTED:
-                $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
-                $old_image = $this->plugin->get_background_image();
-                $is_old_default = $this->plugin->is_background_image_default();
-                $cached_image = get_cached_image_path($this->plugin->get_active_playlist_id() . '_' . $data->{PARAM_CAPTION});
-
-                hd_print("copy from: " . $data->{PARAM_FILEPATH} . " to: $cached_image");
-                if (!copy($data->{PARAM_FILEPATH}, $cached_image)) {
-                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_copy'));
-                }
-
-                if (!$is_old_default && $old_image !== $cached_image) {
-                    safe_unlink($old_image);
-                }
-
-                hd_debug_print("Set image $cached_image as background");
-                $this->plugin->set_background_image($cached_image);
-                $this->plugin->init_screen_view_parameters($cached_image);
-
-                $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
-                $actions[] = User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
-                return Action_Factory::composite($actions);
-
-            case self::ACTION_BG_RESET_DEFAULT:
-                hd_debug_print("Background set to default");
-                $this->plugin->set_background_image(null);
-                $this->plugin->init_screen_view_parameters($this->plugin->plugin_info['app_background']);
-
-                $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
-                $actions[] = User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
-                return Action_Factory::composite($actions);
 
             case self::CONTROL_RESET_PLAYLIST_DLG:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_RESET_PLAYLIST_DLG_APPLY);

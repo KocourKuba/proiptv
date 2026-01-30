@@ -29,9 +29,9 @@ require_once 'lib/curl_wrapper.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Plugin_Setup_Screen extends Abstract_Controls_Screen
+class Starnet_Setup_Plugin_Screen extends Abstract_Controls_Screen
 {
-    const ID = 'setup';
+    const ID = 'plugin_setup';
 
     const CONTROL_INTERFACE_SCREEN = 'interface_screen';
     const CONTROL_SLEEP_TIMER_SCREEN = 'sleep_timer_screen';

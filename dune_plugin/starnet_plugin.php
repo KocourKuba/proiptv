@@ -32,13 +32,15 @@ require_once "lib/curl_wrapper.php";
 require_once 'starnet_entry_handler.php';
 require_once 'starnet_epfs_handler.php';
 
-require_once 'plugin_setup/starnet_setup_interface_screen.php';
+require_once 'plugin_setup/starnet_setup_plugin_screen.php';
+require_once 'plugin_setup/starnet_setup_plugin_interface_screen.php';
 require_once 'plugin_setup/starnet_setup_download_screen.php';
 require_once 'plugin_setup/starnet_setup_sleep_timer_screen.php';
 require_once 'plugin_setup/starnet_setup_folders_screen.php';
 require_once 'plugin_setup/starnet_setup_ext_screen.php';
 require_once 'plugin_setup/starnet_setup_backup_screen.php';
 
+require_once 'plugin_playlist_setup/starnet_setup_interface_screen.php';
 require_once 'plugin_playlist_setup/starnet_setup_interface_newui_screen.php';
 require_once 'plugin_playlist_setup/starnet_setup_category_screen.php';
 require_once 'plugin_playlist_setup/starnet_setup_epg_screen.php';
@@ -75,26 +77,32 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         $this->iptv = new Starnet_Tv($this);
 
+        // TV screens
         $this->create_screen(new Starnet_Tv_Groups_Screen($this));
         $this->create_screen(new Starnet_Tv_Channel_List_Screen($this));
         $this->create_screen(new Starnet_Tv_Favorites_Screen($this));
         $this->create_screen(new Starnet_Tv_History_Screen($this));
         $this->create_screen(new Starnet_Tv_Changed_Channels_Screen($this));
 
-        $this->create_screen(new Starnet_Plugin_Setup_Screen($this));
-        $this->create_screen(new Starnet_Setup_Interface_Screen($this));
-        $this->create_screen(new Starnet_Setup_Interface_NewUI_Screen($this));
+        // plugin setup screens
+        $this->create_screen(new Starnet_Setup_Plugin_Screen($this));
+        $this->create_screen(new Starnet_Setup_Plugin_Interface_Screen($this));
+        $this->create_screen(new Starnet_Setup_Folders_Screen($this));
+        $this->create_screen(new Starnet_Setup_Download_Screen($this));
         $this->create_screen(new Starnet_Setup_Sleep_Timer_Screen($this));
+        $this->create_screen(new Starnet_Setup_Ext_Screen($this));
+
+        $this->create_screen(new Starnet_Setup_Backup_Screen($this));
+
+        // playlist setup screen
+        $this->create_screen(new Starnet_Setup_Interface_Screen($this));
         $this->create_screen(new Starnet_Setup_Category_Screen($this));
+        $this->create_screen(new Starnet_Setup_Interface_NewUI_Screen($this));
         $this->create_screen(new Starnet_Setup_Playlist_Screen($this));
         $this->create_screen(new Starnet_Setup_Epg_Screen($this));
-        $this->create_screen(new Starnet_Setup_Folders_Screen($this));
         $this->create_screen(new Starnet_Setup_Playback_Screen($this));
-        $this->create_screen(new Starnet_Setup_Download_Screen($this));
-        $this->create_screen(new Starnet_Setup_Ext_Screen($this));
         $this->create_screen(new Starnet_Setup_Provider_Screen($this));
         $this->create_screen(new Starnet_Setup_Simple_IPTV_Screen($this));
-        $this->create_screen(new Starnet_Setup_Backup_Screen($this));
 
         $this->create_screen(new Starnet_Folder_Screen($this));
         $this->create_screen(new Starnet_Edit_Playlists_Screen($this));
@@ -152,7 +160,8 @@ class Starnet_Plugin extends Default_Dune_Plugin
             $ver = $this->plugin_info['app_version'];
             $model = get_product_id();
             $firmware = get_raw_firmware_version();
-            $jsonArray = Curl_Wrapper::getInstance()->download_content(self::CONFIG_URL . "?ver=$ver&model=$model&firmware=$firmware&serial=$serial", Curl_Wrapper::RET_ARRAY);
+            $config_url = sprintf("%s?ver=%s&model=%s&firmware=%s&serial=%s", self::CONFIG_URL, $ver, $model, $firmware, $serial);
+            $jsonArray = Curl_Wrapper::getInstance()->download_content($config_url, Curl_Wrapper::RET_ARRAY);
             if (empty($jsonArray) || !isset($jsonArray['providers'])) {
                 if (file_exists($tmp_file)) {
                     hd_debug_print("Load actual providers configuration");

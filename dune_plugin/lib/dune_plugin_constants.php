@@ -54,7 +54,6 @@ const ACTION_RELOAD = 'reload';
 const ACTION_FORCE_OPEN = 'force_open';
 const ACTION_PLUGIN_SETTINGS = 'plugin_settings';
 const ACTION_EDIT_PLAYLIST_SETTINGS = 'edit_playlist_settings';
-const ACTION_EDIT_NEWUI_SETTINGS = 'edit_newui_settings';
 const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
 const ACTION_SETUP_SCREEN = 'setup_screen';
 const ACTION_EMPTY = 'empty';

@@ -333,7 +333,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
             case ACTION_PLUGIN_SETTINGS:
                 return $this->plugin->show_protect_settings_dialog($this,
-                    Action_Factory::open_folder(Starnet_Plugin_Setup_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup'))
+                    Action_Factory::open_folder(Starnet_Setup_Plugin_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup'))
                 );
 
             case ACTION_EDIT_PLAYLIST_SETTINGS:
