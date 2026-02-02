@@ -373,8 +373,7 @@ class api_default
             $settings[PARAM_USE_PICONS] = COMBINED_PICONS;
         }
 
-        $epg_preset = $this->getConfigValue(EPG_JSON_PRESETS);
-        if (!empty($epg_preset)) {
+        if (count($this->plugin->get_provider_epg_presets())) {
             $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;
         }
 

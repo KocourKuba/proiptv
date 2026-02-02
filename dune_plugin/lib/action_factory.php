@@ -385,8 +385,19 @@ class Action_Factory
         );
     }
 
-    public static function add_gui_item(&$items, $id, $caption, $icon_url = null, $group_id = null, $params = null)
+    /**
+     * @param array $items
+     * @param array $checked_ids
+     * @param string $id
+     * @param string $caption
+     * @param string $icon_url
+     * @param string $group_id
+     * @param array|null $params
+     * @return void
+     */
+    public static function add_gui_item(&$items, &$checked_ids, $id, $caption, $icon_url = null, $group_id = null, $params = null)
     {
+        $checked_ids[] = $id;
         $item = array(GuiItem::id => $id, GuiItem::caption => $caption);
         if ($icon_url) {
             $item[GuiItem::icon_url] = $icon_url;
@@ -403,6 +414,18 @@ class Action_Factory
         $items[] = $item;
     }
 
+    /**
+     * @param string $config_id
+     * @param string $title
+     * @param array $all_items
+     * @param array $checked_ids
+     * @param array|null $groups
+     * @param array|null $options
+     * @param array|null $close_item_params
+     * @param string $sel_id
+     * @param array|null $post_action
+     * @return array|null
+     */
     public static function edit_list_config($config_id, $title, $all_items, $checked_ids = null, $groups = null,
                                             $options = null, $close_item_params = null, $sel_id = null, $post_action = null)
     {
@@ -441,6 +464,17 @@ class Action_Factory
         return array(GuiAction::handler_string_id => EDIT_LIST_CONFIG_ACTION_ID, GuiAction::data => $arr);
     }
 
+    /**
+     * @param string $config_id
+     * @param string $set_default
+     * @param string $def_id
+     * @param array|null $ids_to_check
+     * @param array|null $ids_to_uncheck
+     * @param array|null $ids_to_def
+     * @param array|null $order
+     * @param array|null $post_action
+     * @return array|null
+     */
     public static function change_list_config($config_id, $set_default = null, $def_id = null, $ids_to_check = null,
                                               $ids_to_uncheck = null, $ids_to_def = null, $order = null, $post_action = null)
     {
@@ -481,18 +515,46 @@ class Action_Factory
         return array(GuiAction::handler_string_id => CHANGE_LIST_CONFIG_ACTION_ID, GuiAction::data => $arr,);
     }
 
+    /**
+     * @param string $config_id
+     * @param array|null $post_action
+     * @return array|null
+     */
     public static function change_list_config_reset_to_default($config_id, $post_action)
     {
         return self::change_list_config($config_id, true, null, null, null, null, null, $post_action);
     }
 
+    /**
+     * @param string $config_id
+     * @param array|null $order
+     * @param array|null $post_action
+     * @return array|null
+     */
     public static function change_list_config_replace_order($config_id, $order, $post_action)
     {
         return self::change_list_config($config_id, false, null, null, null, null, $order, $post_action);
     }
 
     /**
+     * @param array $action
+     * @param string $key
+     * @param mixed $value
+     * @return void
+     */
+    public static function set_action_param(&$action, $key, $value)
+    {
+        if (isset($action['params'])) {
+            $action['params'][$key] = $value;
+        } else {
+            $action['params'] = array($key => $value);
+        }
+    }
+
+    /**
      * @param int $delay_ms
+     * @param bool $reset_on_keypress
+     * @param bool $clear_on_keypress
      * @return array
      */
     public static function timer($delay_ms, $reset_on_keypress = false, $clear_on_keypress = false)

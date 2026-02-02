@@ -24,6 +24,7 @@
  */
 
 require_once 'epg_manager_xmltv.php';
+require_once 'lib/list_utils.php';
 
 class Epg_Manager_Json extends Epg_Manager_Xmltv
 {
@@ -60,9 +61,14 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
      */
     public static function get_epg_url($provider, $preset, $channel_row, $day_start_ts, $epg_id)
     {
-        $alias = empty($preset[EPG_JSON_PRESET_ALIAS]) ? $provider->getId() : $preset[EPG_JSON_PRESET_ALIAS];
-        hd_debug_print("Using alias '$alias' for preset '{$preset[EPG_JSON_PRESET_NAME]}'");
-        $epg_url = str_replace(array(MACRO_API, MACRO_PROVIDER), array($provider->getApiUrl(), $alias), $preset[EPG_JSON_SOURCE]);
+        if (empty($preset[EPG_JSON_PRESET_ALIAS])) {
+            $provider_id = $provider->getId();
+            hd_debug_print("Using id '$provider_id' for preset '{$preset[EPG_JSON_PRESET_NAME]}'");
+        } else {
+            $provider_id = $preset[EPG_JSON_PRESET_ALIAS];
+            hd_debug_print("Using alias '$provider_id' for preset '{$preset[EPG_JSON_PRESET_NAME]}'");
+        }
+        $epg_url = str_replace(array(MACRO_API, MACRO_PROVIDER), array($provider->getApiUrl(), $provider_id), $preset[EPG_JSON_SOURCE]);
         $epg_url = $provider->replace_macros($epg_url);
 
         $epg_url = str_replace(MACRO_TIMESTAMP, $day_start_ts, $epg_url);
@@ -98,8 +104,13 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         $items = array();
         try {
             $provider = $this->plugin->get_active_provider();
-            if (is_null($provider)) {
-                $day_epg['error'] = "No provider found";
+            if (empty($provider)) {
+                throw new Exception("Unknown active provider");
+            }
+
+            $presets_ids = $this->plugin->get_provider_epg_presets();
+            if (empty($presets_ids)) {
+                $day_epg['error'] = "No EPG preset";
                 $day_epg['items'] = array();
                 return $day_epg;
             }
@@ -118,9 +129,14 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 return $day_epg;
             }
 
-            foreach ($provider->getConfigValue(EPG_JSON_PRESETS, array()) as $preset) {
-                $config_preset = $this->plugin->get_configured_preset($preset);
+            $preset_order = List_Utils::get_enabled_order($this->plugin->get_active_epg_config(), array_keys($presets_ids));
+            hd_debug_print("EPG servers order: " . json_format_unescaped($preset_order), true);
+            foreach ($preset_order as $id) {
+                if (!isset($presets_ids[$id])) continue;
+
+                $config_preset = $this->plugin->get_configured_preset($presets_ids[$id]);
                 if (empty($config_preset)) {
+                    hd_debug_print("EPG preset '$id' is not configured");
                     continue;
                 }
 
@@ -201,6 +217,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
                 hd_debug_print("Memory cache: Store EPG ID: $epg_id for day start: $day_start_ts ($day_start_ts_str)");
                 self::$epg_cache[$epg_id][$day_start_ts] = $items;
+                break;
             }
             if (empty($items)) {
                 throw new Exception(TR::load('err_no_epg_in_all_range'));

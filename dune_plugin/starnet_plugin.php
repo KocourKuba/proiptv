@@ -73,6 +73,8 @@ class Starnet_Plugin extends Default_Dune_Plugin
     {
         parent::__construct();
 
+        $this->set_plugin_cookies($plugin_cookies);
+
         User_Input_Handler_Registry::get_instance()->register_handler(new Starnet_Entry_Handler($this));
 
         $this->iptv = new Starnet_Tv($this);

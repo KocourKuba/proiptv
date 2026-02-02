@@ -150,6 +150,36 @@ class Control_Factory
 
     /**
      * @param array &$defs
+     * @param User_Input_Handler $handler
+     * @param string $name
+     * @param string $title
+     * @param string $caption
+     * @param array|null $add_params
+     * @param int $width
+     * @param array|null $gui_params
+     */
+    public static function add_custom_gui_button(&$defs, $handler, $name, $title, $caption,
+                                      $add_params = null, $width = self::SCR_CONTROLS_WIDTH, $gui_params = null)
+    {
+        if (is_null($gui_params)) {
+            $gui_params = array('button_caption_centered' => 'no');
+        }
+
+        $defs[] = array(
+            GuiControlDef::name => $name,
+            GuiControlDef::title => $title,
+            GuiControlDef::kind => GUI_CONTROL_BUTTON,
+            GuiControlDef::params => $gui_params,
+            GuiControlDef::specific_def => array(
+                GuiButtonDef::caption => $caption,
+                GuiButtonDef::width => $width,
+                GuiButtonDef::push_action => self::apply_action($handler, $name, $add_params)
+            ),
+        );
+    }
+
+    /**
+     * @param array &$defs
      * @param string $name
      * @param string $title
      * @param string $caption

@@ -358,7 +358,7 @@ class Epg_Manager_Xmltv
             hd_print("Log:         " . $LOG_FILE);
             hd_print("Cache dir:   " . self::$cache_dir);
             hd_print("Index flag:  " . $config[PARAM_INDEXING_FLAG]);
-            hd_print("XMLTV param: " . json_encode($config[PARAMS_XMLTV]));
+            hd_print("XMLTV param: " . json_format_unescaped($config[PARAMS_XMLTV]));
 
             self::reindex_xmltv($config[PARAMS_XMLTV], $config[PARAM_INDEXING_FLAG]);
         } catch (Exception $ex) {
@@ -376,7 +376,6 @@ class Epg_Manager_Xmltv
         }
         $res = shell_exec("wget -q -O - \"http://127.0.0.1:$port/cgi-bin/do?cmd=ui_state&result_syntax=json\"");
         $status = json_decode($res);
-        hd_debug_print("Plugin run status: $res");
         $is_playing = isset($status->playback_state) && $status->playback_state === "playing";
         $is_right_screen = isset($status->ui_state->screen->folder_type) && strpos($status->ui_state->screen->folder_type, ".proiptv") !== false;
         if ($is_playing || $is_right_screen) {

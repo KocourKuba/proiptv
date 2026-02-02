@@ -173,11 +173,10 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
 
         safe_unlink($tmp_filename);
 
-        foreach (array(".settings", ".db") as $ext) {
-            foreach (glob_dir(get_data_path(), "/$ext$/i") as $file) {
-                hd_debug_print("Rename $file to $file.prev");
-                rename($file, "$file.prev");
-            }
+        $ext = ".db";
+        foreach (glob_dir(get_data_path(), "/$ext$/i") as $file) {
+            hd_debug_print("Rename $file to $file.prev");
+            rename($file, "$file.prev");
         }
 
         rename(get_data_path(CACHED_IMAGE_SUBDIR), get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
@@ -189,10 +188,14 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
 
         foreach ($files as $src) {
             /** @noinspection PhpUndefinedMethodInspection */
-            $dest = get_data_path($files->getSubPathname());
+            $name = $files->getSubPathName();
+            $dest = get_data_path($name);
             if ($src->isDir()) {
                 create_path($dest);
             } else {
+                if (preg_match("/lcfg_proiptv_epg_.+\.txt/i", $name)) {
+                    $dest = "/config/$name";
+                }
                 $mtime = filemtime($src);
                 rename($src, $dest);
                 touch($dest, $mtime);

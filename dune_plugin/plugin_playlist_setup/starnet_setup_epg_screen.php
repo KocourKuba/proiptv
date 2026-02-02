@@ -34,6 +34,8 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
     const ID = 'epg_setup';
 
     const CONTROL_ITEMS_REFRESH_EPG_CACHE = 'refresh_epg_cache';
+    const CONTROL_ARRANGE_EPG_SOURCE = 'arrange_epg_source';
+    const CONTROL_APPLY_ARRANGE_EPG_SOURCE = 'apply_arrange_epg_source';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -61,15 +63,15 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // EPG cache engine
+        $has_presets = count($this->plugin->get_provider_epg_presets());
+
         $engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
         $engine_variants[ENGINE_XMLTV] = TR::t('setup_epg_cache_xmltv');
-        $provider = $this->plugin->get_active_provider();
-        if (!is_null($provider)) {
-            $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
-            if (!empty($epg_presets)) {
-                $engine_variants[ENGINE_JSON] = TR::t('setup_epg_cache_json');
-            }
+        if ($has_presets) {
+            $engine_variants[ENGINE_JSON] = TR::t('setup_epg_cache_json');
         }
+
+        $is_json = $engine === ENGINE_JSON;
 
         if (count($engine_variants) > 1) {
             Control_Factory::add_combobox($defs, $this, PARAM_EPG_CACHE_ENGINE,
@@ -77,6 +79,24 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 $engine_variants, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         } else if (count($engine_variants) === 1) {
             Control_Factory::add_button($defs, $this, "dummy", TR::t('setup_epg_cache_engine'), reset($engine_variants));
+        }
+
+        if ($is_json && $has_presets) {
+            if ($has_presets > 1) {
+                Control_Factory::add_image_button($defs, $this, self::CONTROL_ARRANGE_EPG_SOURCE,
+                    TR::t('entry_epg_edit_json_source'),
+                    TR::t('edit'),
+                    'move.png'
+                );
+            }
+
+            foreach (array(1, 2, 3, 6, 12) as $hour) {
+                $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
+            }
+            $cache_time = $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1);
+            Control_Factory::add_combobox($defs, $this, PARAM_EPG_CACHE_TIME,
+                TR::t('setup_cache_time_epg'), $cache_time,
+                $caching_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         }
 
         //////////////////////////////////////
@@ -89,22 +109,11 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // clear epg cache
-        $is_json = $engine === ENGINE_JSON;
         Control_Factory::add_image_button($defs, $this, self::CONTROL_ITEMS_REFRESH_EPG_CACHE,
             $is_json ? TR::t('entry_epg_cache_clear') : TR::t('entry_epg_cache_refresh'),
             $is_json ? TR::t('clear') : TR::t('refresh'),
             get_image_path($is_json ? 'remove.png' : 'refresh.png')
         );
-
-        if ($is_json) {
-            foreach (array(1, 2, 3, 6, 12) as $hour) {
-                $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
-            }
-            $cache_time = $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1);
-            Control_Factory::add_combobox($defs, $this, PARAM_EPG_CACHE_TIME,
-                TR::t('setup_cache_time_epg'), $cache_time,
-                $caching_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-        }
 
         //////////////////////////////////////
         // Fake EPG
@@ -141,6 +150,24 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 $this->plugin->set_setting($control_id, $val);
                 $this->plugin->init_epg_manager();
                 return $post_action;
+
+            case self::CONTROL_ARRANGE_EPG_SOURCE:
+                $all_ids = array();
+                $checked_ids = array();
+                foreach ($this->plugin->get_provider_epg_presets() as $id => $epg_preset) {
+                    Action_Factory::add_gui_item($all_ids, $checked_ids, $id, $id);
+                }
+
+                return Action_Factory::edit_list_config($this->plugin->get_active_epg_config(), TR::t('entry_epg_edit_json_source'),
+                    $all_ids, $checked_ids,
+                    null, null, null, null,
+                    User_Input_Handler_Registry::create_action($this, self::CONTROL_APPLY_ARRANGE_EPG_SOURCE));
+
+            case self::CONTROL_APPLY_ARRANGE_EPG_SOURCE:
+                if ($user_input->list_config_changed) {
+                    Epg_Manager_Json::clear_epg_files($this->plugin->get_active_playlist_id());
+                }
+                break;
 
             case PARAM_EPG_CACHE_TIME:
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
