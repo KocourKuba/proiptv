@@ -111,7 +111,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                     self::ACTION_RELOAD_IMAGE_FOLDER, TR::t('refresh'));
             }
         } else {
-            if ($media_url->{self::PARAM_CHOOSE_FOLDER} !== false) {
+            if (!empty($media_url->{self::PARAM_CHOOSE_FOLDER})) {
                 $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this,
                     ACTION_OPEN_FOLDER, TR::t('folder_screen_open_folder'));
 

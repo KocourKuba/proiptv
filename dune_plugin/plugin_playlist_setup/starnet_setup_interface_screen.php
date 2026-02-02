@@ -122,7 +122,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         $post_action = null;
-        $control_id = $user_input->control_id;
+        $control_id = isset($user_input->control_id) ? $user_input->control_id : RESET_CONTROLS_ACTION_ID;
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $sel_ndx = safe_get_value($user_input, 'initial_sel_ndx', -1);
 
