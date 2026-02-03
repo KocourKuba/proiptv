@@ -237,7 +237,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
         }
 
         hd_debug_print("dir: " . json_format_unescaped($dir), true);
-        $files_list = $this->get_file_list($plugin_cookies, $dir, !safe_get_value($media_url, self::PARAM_CHOOSE_FILE, false));
+        $show_empty = !safe_get_value($media_url, self::PARAM_CHOOSE_FILE, false);
+        $files_list = $this->get_file_list($plugin_cookies, $dir, $show_empty);
 
         $items = array();
         foreach ($files_list as $item_type => $item) {
@@ -306,7 +307,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                         if (empty($new_media_url->{PARAM_EXTENSION})) {
                             $info = TR::t('folder_screen_select__1', $caption);
                         } else {
-                            $info = TR::t('folder_screen_select_file_shows__1', $caption);
+                            $info = TR::t('folder_screen_select_file_shows__2', $caption, TR::load($show_empty ? 'yes' : 'no'));
                         }
                     } else {
                         $info = TR::t('folder_screen_folder__1', $caption);
@@ -361,7 +362,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
 
         if (empty($items)) {
             if (isset($media_url->{PARAM_EXTENSION})) {
-                $info = TR::t('folder_screen_select_file_shows__1', $media_url->{PARAM_CAPTION});
+                $info = TR::t('folder_screen_select_file_shows__2', $media_url->{PARAM_CAPTION}, TR::load($show_empty ? 'yes' : 'no'));
             } else {
                 $info = TR::t('folder_screen_select__1', $media_url->{PARAM_CAPTION});
             }
@@ -494,9 +495,13 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                     if (is_dir($absolute_filepath) === false) {
                         $fileData[self::SELECTED_TYPE_FILE][$file][self::PARAM_SIZE] = filesize($absolute_filepath);
                         $fileData[self::SELECTED_TYPE_FILE][$file][PARAM_FILEPATH] = $absolute_filepath;
-                    } else if ($absolute_filepath !== self::NFS_MOUNT_PATH && $absolute_filepath !== self::MOUNT_ROOT_PATH . "/D") {
-                        $files = glob("$absolute_filepath/*");
-                        if (empty($files) && !$show_empty) continue;
+                    } else if ($absolute_filepath !== self::MOUNT_ROOT_PATH . "/D") {
+                        $pattern = str_replace(array('[', ']', '{', '}'), array('\[', '\]', '\{', '\}'), $absolute_filepath);
+                        $files = glob("$pattern/*");
+                        if (empty($files) && !$show_empty) {
+                            hd_debug_print("Skip empty dir: $absolute_filepath", true);
+                            continue;
+                        }
 
                         $fileData[self::SELECTED_TYPE_FOLDER][$file][PARAM_FILEPATH] = $absolute_filepath;
                     }
