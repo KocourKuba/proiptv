@@ -62,9 +62,9 @@ class vod_ipstream extends vod_standard
         $movie = null;
         foreach ($this->vod_items as $item) {
             if (isset($item['id'])) {
-                $id = (string)$item['id'];
+                $id = (string)safe_get_value($item, 'id');
             } else if (isset($item['series_id'])) {
-                $id = $item['series_id'] . "_serial";
+                $id = safe_get_value($item, 'series_id') . "_serial";
             } else {
                 $id = Hashed_Array::hash($item['name']);
             }
@@ -74,35 +74,41 @@ class vod_ipstream extends vod_standard
             }
 
             $duration = "";
-            $info = safe_get_value($item, 'info', array());
-            if (isset($info['duration_secs'])) {
-                $duration = (int)$info['duration_secs'] / 60;
-            } else if (isset($info['episode_run_time'])) {
-                $duration = (int)$info['episode_run_time'];
+            $movie_info = safe_get_value($item, 'info', array());
+            if (isset($movie_info['duration_secs'])) {
+                $duration = safe_get_value($movie_info, 'duration_secs', 0) / 60;
+            } else if (isset($movie_info['episode_run_time'])) {
+                $duration = safe_get_value($movie_info, 'episode_run_time', 0);
             }
 
-            $movie = new Movie($movie_id, $this->plugin);
             $name = safe_get_value($item, 'name');
+            $age = safe_get_value($movie_info, 'adult');
+            $age_limit = empty($age) ? array() : array(TR::t('vod_screen_age_limit') => "$age+");
+
+            $movie = new Movie($movie_id, $this->plugin);
             $movie->set_data(
-                $name,                           // name,
-                '',                        // name_original,
-                safe_get_value($info, 'plot'),                     // description,
-                safe_get_value($info, 'poster'),                   // poster_url,
-                $duration,                             // length_min,
-                safe_get_value($info, 'year'),                     // year,
-                HD::ArrayToStr(safe_get_value($info, 'director', array())), // director_str,
+                $name,                                      // name,
+                '',                             // name_original,
+                safe_get_value($movie_info, 'plot'),  // description,
+                safe_get_value($movie_info, 'poster'),// poster_url,
+                $duration,                                   // length_min,
+                safe_get_value($movie_info, 'year'),  // year,
+                HD::ArrayToStr(safe_get_value($movie_info, 'director', array())), // director_str,
                 '',                        // scenario_str,
-                HD::ArrayToStr(safe_get_value($info, 'cast', array())),     // actors_str,
-                HD::ArrayToStr(safe_get_value($info, 'genre', array())),    // genres_str,
-                safe_get_value($info, 'rating'),                   // rate_imdb,
-                '',                       // rate_kinopoisk,
-                '',                          // rate_mpaa,
-                HD::ArrayToStr(safe_get_value($info, 'country', array()))   // country,
+                HD::ArrayToStr(safe_get_value($movie_info, 'cast', array())),     // actors_str,
+                HD::ArrayToStr(safe_get_value($movie_info, 'genre', array())),    // genres_str,
+                safe_get_value($movie_info, 'rating'), // rate_imdb,
+                '',                              // rate_kinopoisk,
+                '',                                 // rate_mpaa,
+                HD::ArrayToStr(safe_get_value($movie_info, 'country', array())),   // country,
+                '',
+                array(), // details
+                $age_limit // rate details
             );
 
             // case for serials
             if (isset($item['seasons'])) {
-                foreach (safe_get_value($item, 'seasons', array()) as $season) {
+                foreach (safe_get_value($item['seasons'], array()) as $season) {
                     $season_name = safe_get_value($season, 'season');
                     if (empty($season_name)) continue;
 
@@ -142,14 +148,14 @@ class vod_ipstream extends vod_standard
         hd_debug_print(null, true);
 
         $response = $this->provider->execApiCommandResponseNoOpt(API_COMMAND_GET_VOD, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
-        if ($response !== false) {
-            $this->vod_items = $response;
-        } else {
+        if (empty($response)) {
             $this->vod_items = false;
             $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
             Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
             return false;
         }
+
+        $this->vod_items = $response;
 
         $this->category_index = array();
         $cat_info = array();
@@ -172,17 +178,16 @@ class vod_ipstream extends vod_standard
             ++$cat_info[$category];
 
             // collect filters information
-            $movie_info = safe_get_value($movieData, 'info');
-            $year = (int)safe_get_value($movie_info, 'year');
+            $year = safe_get_value($movieData, array('info', 'year'), 0);
             $years[$year] = $year;
-            foreach (safe_get_value($movie_info, 'genre', array()) as $genre) {
+            foreach (safe_get_value($movieData, array('info', 'genre')) as $genre) {
                 $genres[$genre] = $genre;
             }
         }
 
         foreach ($cat_info as $category => $movie_count) {
-            $name = ($category === Vod_Category::FLAG_ALL_MOVIES) ? TR::t('vod_screen_all_movies__1', " ($movie_count)") : "$category ($movie_count)";
-            $cat = new Vod_Category($category, $name);
+            $cat = new Vod_Category($category,
+                ($category === Vod_Category::FLAG_ALL_MOVIES) ? TR::t('vod_screen_all_movies__1', " ($movie_count)") : "$category ($movie_count)");
             $this->category_index[$category] = $cat;
         }
 

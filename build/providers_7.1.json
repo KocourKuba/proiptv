@@ -645,7 +645,9 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)(?:\\/.+\\.m3u8|\\.ts)$/",
         "ignore_groups": [
           "Video on Demand",
-          "Сериалы"
+          "Кино по запросу",
+          "Сериалы",
+          "Шоу"
         ],
         "epg_presets": [
           {

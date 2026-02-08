@@ -49,7 +49,7 @@ class vod_sharaclub extends vod_standard
     public function TryLoadMovie($movie_id)
     {
         hd_debug_print(null, true);
-        hd_debug_print($movie_id);
+        hd_debug_print("Try Load Movie: $movie_id");
 
         if (empty($movie_id)) {
             hd_debug_print("Movie ID is empty!");
@@ -178,8 +178,8 @@ class vod_sharaclub extends vod_standard
         $cat_info[Vod_Category::FLAG_ALL_MOVIES] = $count;
         $genres = array();
         $years = array();
-        foreach ($this->vod_items as $movie) {
-            $category = safe_get_value($movie, 'category');
+        foreach ($this->vod_items as $movieData) {
+            $category = safe_get_value($movieData, 'category');
             if (empty($category)) {
                 $category = TR::load('no_category');
             }
@@ -191,9 +191,9 @@ class vod_sharaclub extends vod_standard
             ++$cat_info[$category];
 
             // collect filters information
-            $year = safe_get_value($movie, array('info', 'year'), 0);
+            $year = safe_get_value($movieData, array('info', 'year'), 0);
             $years[$year] = $year;
-            foreach (safe_get_value($movie, array('info', 'genre')) as $genre) {
+            foreach (safe_get_value($movieData, array('info', 'genre')) as $genre) {
                 $genres[$genre] = $genre;
             }
         }
