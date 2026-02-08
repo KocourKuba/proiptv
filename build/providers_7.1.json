@@ -1319,7 +1319,7 @@
       "logo": "http://iptv.esalecrm.net/res/logo_satq.png",
       "provider_url": "https://satq.tv/",
       "config": {
-        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
+        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+?token=(?<token>.+)$/",
         "epg_presets": [
           {
             "name": "drm-play",
@@ -1329,12 +1329,19 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "http://iptv11.com/1/{PASSWORD}.m3u8"
+            "url": "http://{DOMAIN_ID}/{PASSWORD}.m3u"
           }
         },
         "url_subst": {
           "regex": "/^(.+\\/\\/).+(\\/[^\\/]+\\/[^\\/]+\\/.+)$/",
           "replace": "$1{SERVER_ID}$2"
+        },
+        "domains": {
+          "iptv11.com": "Germany",
+          "ru.iptv11.com": "Russia",
+          "ua.iptv11.com": "Ukraine",
+          "pl.itvago.com": "CDN1",
+          "satq.tv/iptv": "CDN2"
         },
         "servers": {
           "cdn.iptv11.com": "Germany",
