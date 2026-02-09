@@ -192,8 +192,6 @@ class vod_yosso extends vod_standard
             if (safe_get_value($collection, 'Type') != "CollectionFolder") continue;
 
             $sid = $id = safe_get_value($collection, 'Id');
-            $name = safe_get_value($collection, 'Name', 'no name');
-
             $query_params = array('ParentId' => $id, 'StartIndex' => 0, 'Limit' => 1);
             $items = $this->jfc->getItems($query_params);
             $movie_count = safe_get_value($items, 'TotalRecordCount');
@@ -207,6 +205,7 @@ class vod_yosso extends vod_standard
                 $sid .= '_' . jellyfin_api::MOVIES;
             }
 
+            $name = safe_get_value($collection, 'Name', 'no name');
             $exist_filters['source']['values'][$id] = $name;
             $icon = $this->jfc->getItemImageUrl($id, 'Primary', 400, 0, 'Jpg');
             $this->category_index[$id] = new Vod_Category($sid, $name . " ($movie_count)", null, $icon);
