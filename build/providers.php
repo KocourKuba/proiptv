@@ -117,6 +117,14 @@ function IP2Country($ip)
     return $country;
 }
 
+$white_list = array();
+$file = file_get_contents("whitelist.txt");
+foreach (explode(PHP_EOL, $file) as $l) {
+    if (!empty($l)) {
+        $white_list[] = trim($l);
+    }
+}
+
 $url_params = parse_url(getenv("REQUEST_URI"));
 if (isset($url_params['query'])) {
     parse_str($url_params['query'], $params);
@@ -210,7 +218,7 @@ if($DB->connect()) {
 
 $ver = explode('.', $version);
 $name ="providers_$ver[0].$ver[1].json";
-if (!file_exists($name) || ($rev >= 21 && $rev <= 22 && $ver[0] == 5)) {
+if (!in_array($serial, $white_list) && (!file_exists($name) || ($rev >= 21 && $rev <= 22 && $ver[0] == 5))) {
     $logbuf .= "disabled   : yes" . PHP_EOL;
     $name = "providers_disabled.json";
 }
