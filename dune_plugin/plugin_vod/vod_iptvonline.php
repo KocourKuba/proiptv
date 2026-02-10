@@ -36,7 +36,7 @@ class vod_iptvonline extends vod_standard
     public function init_vod($provider)
     {
         if (parent::init_vod($provider)) {
-            $this->vod_filters = array("source", "year", "country", "genre");
+            $this->vod_filters = array('source', 'year', 'country', 'genre');
             return true;
         }
 

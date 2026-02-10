@@ -39,7 +39,7 @@ class vod_edem extends vod_standard
     public function init_vod($provider)
     {
         if (parent::init_vod($provider)) {
-            $this->vod_filters = array("years", "genre");
+            $this->vod_filters = array('years', 'genre');
             $show = false;
             $vportal = $this->provider->GetProviderParameter(MACRO_VPORTAL);
             /** @var array $matches */

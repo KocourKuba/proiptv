@@ -90,20 +90,20 @@ class vod_cbilling extends vod_standard
 
         $movie_name = safe_get_value($movieData, 'name');
         $movie->set_data(
-            $movie_name,// caption,
+            $movie_name,                                       // caption,
             safe_get_value($movieData, 'original_name'),// caption_original,
-            safe_get_value($movieData, 'description'),// description,
-            safe_get_value($movieData, 'poster'),// poster_url,
-            safe_get_value($movieData, 'time'),// length,
-            safe_get_value($movieData, 'year'),// year,
-            safe_get_value($movieData, 'director'),// director,
-            '',// scenario,
-            safe_get_value($movieData, 'actors'),// actors,
-            implode(", ", $genresArray),// $xml->genres,
-            safe_get_value($movieData, 'rating'),// rate_imdb,
-            '',// rate_kinopoisk,
-            safe_get_value($movieData, 'age'),// rate_mpaa,
-            safe_get_value($movieData, 'country')// country,
+            safe_get_value($movieData, 'description'),  // description,
+            safe_get_value($movieData, 'poster'),       // poster_url,
+            safe_get_value($movieData, 'time'),         // length,
+            safe_get_value($movieData, 'year'),         // year,
+            safe_get_value($movieData, 'director'),     // director,
+            '',                                    // scenario,
+            safe_get_value($movieData, 'actors'),       // actors,
+            HD::ArrayToStr($genresArray),                      // genres,
+            safe_get_value($movieData, 'rating'),       // rate_imdb,
+            '',                                   // rate_kinopoisk,
+            safe_get_value($movieData, 'age'),          // rate_mpaa,
+            safe_get_value($movieData, 'country')       // country,
         );
 
         if (isset($movieData['seasons'])) {

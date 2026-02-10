@@ -227,10 +227,10 @@ class Curl_Wrapper
     {
         $headers = array();
         foreach (self::$http_response_headers as $key => $header) {
-            $headers = "$key: $header";
+            $headers[] = "$key: $header";
         }
 
-        return implode(PHP_EOL, $headers);
+        return empty($headers) ? '' : implode(PHP_EOL, $headers);
     }
 
     /**

@@ -219,7 +219,7 @@ class jellyfin_api
      */
     public function getFilters($query = array())
     {
-        return $this->get('Items/Filters2', $query);
+        return $this->get('Items/Filters', $query);
     }
 
     /**

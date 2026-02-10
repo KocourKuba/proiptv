@@ -552,7 +552,7 @@ class vod_standard extends Abstract_Vod
             return null;
         }
 
-        hd_debug_print($initial);
+        hd_debug_print("Initial index: $initial");
         $added = false;
         if ($initial !== -1) {
             $user_filter = $this->plugin->get_table_value(VOD_FILTER_LIST, $initial);
@@ -565,11 +565,12 @@ class vod_standard extends Abstract_Vod
 
         foreach ($this->vod_filters as $name) {
             $filter = $this->get_filter_type($name);
-            hd_debug_print("filter: $name : " . json_format_unescaped($filter), true);
             if ($filter === null) {
                 hd_debug_print("no filters with '$name'");
                 continue;
             }
+
+            hd_debug_print("filter: $name : " . json_format_unescaped($filter), true);
 
             // fill get value from already set user filter
             if (!empty($user_filter)) {
@@ -747,6 +748,28 @@ class vod_standard extends Abstract_Vod
 
         $query = "SELECT * FROM " . M3uParser::VOD_TABLE . " WHERE hash = '$hash';";
         return $this->wrapper->query_value($query, true);
+    }
+
+    /**
+     * @param string $query_id
+     * @return array
+     */
+    protected function get_filter_params($query_id)
+    {
+        $filter_params = array();
+        foreach (explode(",", $query_id) as $pair) {
+            /** @var array $m */
+            if (preg_match("/^(.+):(.+)$/", $pair, $m)) {
+                $filter = $this->get_filter_type($m[1]);
+                if ($filter !== null && !empty($filter['values'])) {
+                    $item_key = array_search($m[2], $filter['values']);
+                    if ($item_key !== false && $item_key !== -1) {
+                        $filter_params[$m[1]] = $item_key;
+                    }
+                }
+            }
+        }
+        return $filter_params;
     }
 
     /**

@@ -41,7 +41,7 @@ class vod_yosso extends vod_standard
     public function init_vod($provider)
     {
         if (parent::init_vod($provider)) {
-            $this->vod_filters = array("source", "genre");
+            $this->vod_filters = array('source', 'genre', 'years');
             $vod_url = $this->provider->replace_macros($this->provider->getRawApiCommand(API_COMMAND_GET_VOD));
 
             $this->jfc = new jellyfin_api();
@@ -152,7 +152,7 @@ class vod_yosso extends vod_standard
             safe_get_value($movie_item, 'OriginalTitle'), // name_original,
             safe_get_value($movie_item, 'Overview'),  // description,
             $this->jfc->getItemImageUrl($real_id),  // poster_url,
-            (int)safe_get_value($movie_item, 'RunTimeTicks') / 60 / 1000000, // length_min,
+            '', // length_min,
             safe_get_value($movie_item, 'ProductionYear'), // year,
             implode(', ', safe_get_value($persons, 'Director', array())),
             implode(', ', safe_get_value($persons, 'Writer', array())),
@@ -185,7 +185,13 @@ class vod_yosso extends vod_standard
             'genre' => array(
                 'title' => TR::load('genre'),
                 'values' => array(-1 => TR::t('no'))),
+            'years' => array(
+                'title' => TR::load('year'),
+                'values' => array(-1 => TR::t('no'))),
         );
+
+        $genres = array();
+        $years = array();
 
         $this->category_index = array();
         foreach ($collections as $collection) {
@@ -213,15 +219,20 @@ class vod_yosso extends vod_standard
             $query_params = array('ParentId' => $id, 'recursive' => 'true');
             $jsonData = $this->jfc->getFilters($query_params);
 
-            $filters = safe_get_value($jsonData, 'Genres', array());
-            foreach ($filters as $filter) {
-                $key = safe_get_value($filter, 'Id');
-                $name = safe_get_value($filter, 'Name');
-                if (empty($key) || empty($name)) continue;
+            foreach (safe_get_value($jsonData, 'Genres', array()) as $filter) {
+                $genres[$filter] = $filter;
+            }
 
-                $exist_filters['genre']['values'][$key] = $name;
+            foreach (safe_get_value($jsonData, 'Years', array()) as $filter) {
+                $years[$filter] = $filter;
             }
         }
+
+        ksort($genres);
+        krsort($years);
+
+        $exist_filters['genre']['values'] += $genres;
+        $exist_filters['years']['values'] += $years;
 
         $this->set_filter_types($exist_filters);
 
@@ -329,12 +340,18 @@ class vod_yosso extends vod_standard
             $filter = $this->get_filter_type($m[1]);
             if ($filter === null) continue;
             if (!empty($filter['values'])) {
-                $item_idx = array_search($m[2], $filter['values']);
-                if ($item_idx !== false && $item_idx !== -1) {
-                    if ($m[1] === "source") {
-                        $query_params['ParentId'] = $item_idx;
-                    } else if ($m[1] === "genre") {
-                        $query_params['genreIds'] = $item_idx;
+                $item_key = array_search($m[2], $filter['values']);
+                if ($item_key !== false && $item_key !== -1) {
+                    switch ($m[1]) {
+                        case 'source':
+                            $query_params['ParentId'] = $item_key;
+                            break;
+                        case 'genre':
+                            $query_params['genres'] = $item_key;
+                            break;
+                        case 'years':
+                            $query_params['years'] = $item_key;
+                            break;
                     }
                 }
             }
