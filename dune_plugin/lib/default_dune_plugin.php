@@ -2267,12 +2267,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function is_vod_playlist()
     {
+        $vod = false;
         $params = $this->get_playlist_parameters($this->get_active_playlist_id());
-        if (empty($params)) {
-            return false;
+        if (!empty($params)) {
+            $vod = safe_get_value($params, PARAM_PLAYLIST_TYPE) === CONTROL_PLAYLIST_VOD;
         }
 
-        return safe_get_value($params, PARAM_PLAYLIST_TYPE) === CONTROL_PLAYLIST_VOD;
+        $provider = $this->get_active_provider();
+        if (!is_null($provider) && !$vod) {
+            $vod = $provider->getVodOnly();
+        }
+
+        return $vod;
     }
 
     /**

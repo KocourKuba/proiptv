@@ -78,6 +78,11 @@ class api_default
     protected $vod = '';
 
     /**
+     * @var bool
+     */
+    protected $vod_only = false;
+
+    /**
      * @var string
      */
     protected $name = '';
@@ -292,6 +297,22 @@ class api_default
     public function setVod($vod)
     {
         $this->vod = $vod;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getVodOnly()
+    {
+        return $this->vod_only;
+    }
+
+    /**
+     * @param bool $vod_only
+     */
+    public function setVodOnly($vod_only)
+    {
+        $this->vod_only = $vod_only;
     }
 
     /**
@@ -1136,39 +1157,41 @@ class api_default
 
         if ($is_new) {
             $command_url = $this->getRawApiCommand(API_COMMAND_GET_PLAYLIST);
-            $command_url = $this->replace_by_func($command_url);
-            hd_debug_print("command_url: $command_url", true);
+            if (!empty($command_url)) {
+                $command_url = $this->replace_by_func($command_url);
+                hd_debug_print("command_url: $command_url", true);
 
-            $config_pl_domains = $this->getConfigValue(CONFIG_PL_DOMAINS);
-            hd_debug_print("pl_domains: " . json_format_unescaped($config_pl_domains), true);
-            if (!empty($config_pl_domains) && count($config_pl_domains) > 1 && strpos($command_url, MACRO_PL_DOMAIN_ID) !== false) {
-                $idx = key($config_pl_domains);
-                Control_Factory::add_combobox($defs, $handler, self::CONTROL_PL_DOMAIN, TR::t('pl_domain'),
-                    $idx, $config_pl_domains, Control_Factory::DLG_CONTROLS_WIDTH);
-            }
+                $config_pl_domains = $this->getConfigValue(CONFIG_PL_DOMAINS);
+                hd_debug_print("pl_domains: " . json_format_unescaped($config_pl_domains), true);
+                if (!empty($config_pl_domains) && count($config_pl_domains) > 1 && strpos($command_url, MACRO_PL_DOMAIN_ID) !== false) {
+                    $idx = key($config_pl_domains);
+                    Control_Factory::add_combobox($defs, $handler, self::CONTROL_PL_DOMAIN, TR::t('pl_domain'),
+                        $idx, $config_pl_domains, Control_Factory::DLG_CONTROLS_WIDTH);
+                }
 
-            $config_api_domains = $this->getConfigValue(CONFIG_API_DOMAINS);
-            hd_debug_print("api_domains: " . json_format_unescaped($config_pl_domains), true);
-            if (!empty($config_api_domains) && count($config_api_domains) > 1) {
-                $idx = key($config_api_domains);
-                Control_Factory::add_combobox($defs, $handler, self::CONTROL_API_DOMAIN, TR::t('api_domain'),
-                    $idx, $config_api_domains, Control_Factory::DLG_CONTROLS_WIDTH);
-            }
+                $config_api_domains = $this->getConfigValue(CONFIG_API_DOMAINS);
+                hd_debug_print("api_domains: " . json_format_unescaped($config_pl_domains), true);
+                if (!empty($config_api_domains) && count($config_api_domains) > 1) {
+                    $idx = key($config_api_domains);
+                    Control_Factory::add_combobox($defs, $handler, self::CONTROL_API_DOMAIN, TR::t('api_domain'),
+                        $idx, $config_api_domains, Control_Factory::DLG_CONTROLS_WIDTH);
+                }
 
-            $config_servers = $this->getConfigValue(CONFIG_SERVERS);
-            hd_debug_print("servers: " . json_format_unescaped($config_servers), true);
-            if (!empty($config_servers) && count($config_servers) > 1 && strpos($command_url, MACRO_SERVER_ID) !== false) {
-                $idx = key($config_servers);
-                Control_Factory::add_combobox($defs, $handler, self::CONTROL_SERVER, TR::t('server'),
-                    $idx, $config_servers, Control_Factory::DLG_CONTROLS_WIDTH);
-            }
+                $config_servers = $this->getConfigValue(CONFIG_SERVERS);
+                hd_debug_print("servers: " . json_format_unescaped($config_servers), true);
+                if (!empty($config_servers) && count($config_servers) > 1 && strpos($command_url, MACRO_SERVER_ID) !== false) {
+                    $idx = key($config_servers);
+                    Control_Factory::add_combobox($defs, $handler, self::CONTROL_SERVER, TR::t('server'),
+                        $idx, $config_servers, Control_Factory::DLG_CONTROLS_WIDTH);
+                }
 
-            $config_qialities = $this->getConfigValue(CONFIG_QUALITIES);
-            hd_debug_print("qualities: " . json_format_unescaped($config_qialities), true);
-            if (!empty($config_qialities) && count($config_qialities) > 1 && strpos($command_url, MACRO_QUALITY_ID) !== false) {
-                $idx = key($config_qialities);
-                Control_Factory::add_combobox($defs, $handler, self::CONTROL_QUALITY, TR::t('quality'),
-                    $idx, $config_qialities, Control_Factory::DLG_CONTROLS_WIDTH);
+                $config_qialities = $this->getConfigValue(CONFIG_QUALITIES);
+                hd_debug_print("qualities: " . json_format_unescaped($config_qialities), true);
+                if (!empty($config_qialities) && count($config_qialities) > 1 && strpos($command_url, MACRO_QUALITY_ID) !== false) {
+                    $idx = key($config_qialities);
+                    Control_Factory::add_combobox($defs, $handler, self::CONTROL_QUALITY, TR::t('quality'),
+                        $idx, $config_qialities, Control_Factory::DLG_CONTROLS_WIDTH);
+                }
             }
         }
 

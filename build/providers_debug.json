@@ -380,6 +380,26 @@
     },
     {
       "enable": true,
+      "id": "bcumedia_vod",
+      "name": "BCU Media VOD",
+      "type": "login",
+      "vod": "bcumedia",
+      "vod_only": true,
+      "logo": "http://iptv.esalecrm.net/res/logo_bcumedia.png",
+      "provider_url": "https://bcumedia.pro/",
+      "vod_api_url": "http://mir-kino.pp.ru:8080",
+      "config": {
+        "playlists_vod": {
+          "default": {
+            "name": "Default",
+            "url": "{VOD_API}"
+          }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "bittv",
       "name": "BitTV",
       "type": "login",

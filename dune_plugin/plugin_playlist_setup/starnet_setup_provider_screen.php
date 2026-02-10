@@ -80,6 +80,18 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $defs = array();
 
         //////////////////////////////////////
+        // Cache time
+
+        $caching_range[PHP_INT_MAX] = TR::t('setup_cache_time_never');
+
+        foreach (array(1, 6, 12) as $hour) {
+            $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
+        }
+        foreach (array(24, 48, 96, 168) as $hour) {
+            $caching_range[$hour] = TR::t('setup_cache_time_d__1', $hour / 24);
+        }
+
+        //////////////////////////////////////
         // Plugin name
         $this->plugin->create_setup_header($defs);
 
@@ -102,150 +114,140 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // Playlists settings
 
-        $pl_idx = $provider->GetPlaylistIptvId();
-        $playlists = $provider->GetPlaylistsIptv();
-        $pl_names = extract_column($playlists, COLUMN_NAME);
-        if (isset($pl_names['default'])) {
-            $pl_names['default'] = TR::t('by_default');
-        }
-
-        Control_Factory::add_combobox($defs, $this, self::CONTROL_SELECTED_PLAYLIST, TR::t('provider_playlist'),
-            $pl_idx, $pl_names, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-
-        if ($pl_idx === DIRECT_PLAYLIST_ID) {
-            //////////////////////////////////////
-            // Direct playlist url
-            $url = $provider->GetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV);
-            Control_Factory::add_text_field($defs, $this, self::CONTROL_CUSTOM_URL, TR::t('direct_url'), $url,
-                false, false, false, true, Control_Factory::SCR_CONTROLS_WIDTH, true);
-        } else if ($pl_idx === DIRECT_FILE_PLAYLIST_ID) {
-            //////////////////////////////////////
-            // Direct playlist file
-            $file_path = $provider->GetProviderParameter(PARAM_CUSTOM_FILE_PLAYLIST_IPTV);
-            $path_str = HD::string_ellipsis($file_path);
-            Control_Factory::add_image_button($defs, $this, ACTION_CHOOSE_FILE, TR::t('select_file'), $path_str, get_image_path('m3u_file.png'));
-        } else {
-            //////////////////////////////////////
-            // Streams settings
-
-            $streams = $provider->GetStreams();
-            if (!empty($streams) && count($streams) > 1) {
-                $idx = $provider->GetProviderParameter(MACRO_STREAM_ID);
-                hd_debug_print("streams ($idx): " . json_format_unescaped($streams), true);
-
-                Control_Factory::add_combobox($defs, $this, api_default::CONTROL_STREAM, TR::t('stream'),
-                    $idx, $streams, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+        if (!$provider->getVodOnly()) {
+            $pl_idx = $provider->GetPlaylistIptvId();
+            $playlists = $provider->GetPlaylistsIptv();
+            $pl_names = extract_column($playlists, COLUMN_NAME);
+            if (isset($pl_names['default'])) {
+                $pl_names['default'] = TR::t('by_default');
             }
 
-            //////////////////////////////////////
-            // Domains settings
-            $pl_domains = $provider->GetPlDomains();
-            if (!empty($pl_domains) && count($pl_domains) > 1) {
-                $idx = $provider->GetProviderParameter(MACRO_PL_DOMAIN_ID);
-                hd_debug_print("domains ($idx): " . json_format_unescaped($pl_domains), true);
+            Control_Factory::add_combobox($defs, $this, self::CONTROL_SELECTED_PLAYLIST, TR::t('provider_playlist'),
+                $pl_idx, $pl_names, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
-                Control_Factory::add_combobox($defs, $this, api_default::CONTROL_PL_DOMAIN, TR::t('pl_domain'),
-                    $idx, $pl_domains, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-            }
+            if ($pl_idx === DIRECT_PLAYLIST_ID) {
+                //////////////////////////////////////
+                // Direct playlist url
+                $url = $provider->GetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV);
+                Control_Factory::add_text_field($defs, $this, self::CONTROL_CUSTOM_URL, TR::t('direct_url'), $url,
+                    false, false, false, true, Control_Factory::SCR_CONTROLS_WIDTH, true);
+            } else if ($pl_idx === DIRECT_FILE_PLAYLIST_ID) {
+                //////////////////////////////////////
+                // Direct playlist file
+                $file_path = $provider->GetProviderParameter(PARAM_CUSTOM_FILE_PLAYLIST_IPTV);
+                $path_str = HD::string_ellipsis($file_path);
+                Control_Factory::add_image_button($defs, $this, ACTION_CHOOSE_FILE, TR::t('select_file'), $path_str, get_image_path('m3u_file.png'));
+            } else {
+                //////////////////////////////////////
+                // Streams settings
 
-            $api_domains = $provider->GetApiDomains();
-            if (!empty($api_domains) && count($api_domains) > 1) {
-                $idx = $provider->GetProviderParameter(MACRO_API_DOMAIN_ID);
-                hd_debug_print("domains ($idx): " . json_format_unescaped($api_domains), true);
+                $streams = $provider->GetStreams();
+                if (!empty($streams) && count($streams) > 1) {
+                    $idx = $provider->GetProviderParameter(MACRO_STREAM_ID);
+                    hd_debug_print("streams ($idx): " . json_format_unescaped($streams), true);
 
-                Control_Factory::add_combobox($defs, $this, api_default::CONTROL_API_DOMAIN, TR::t('api_domain'),
-                    $idx, $api_domains, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-            }
-
-            //////////////////////////////////////
-            // Servers settings
-
-            $servers = $provider->GetServers();
-            if (!empty($servers) && count($servers) > 1) {
-                $idx = $provider->GetProviderParameter(MACRO_SERVER_ID);
-                hd_debug_print("servers ($idx): " . json_format_unescaped($servers), true);
-
-                Control_Factory::add_combobox($defs, $this, api_default::CONTROL_SERVER, TR::t('server'),
-                    $idx, $servers, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-            }
-
-            //////////////////////////////////////
-            // Devices settings
-
-            $devices = $provider->GetDevices();
-            if (!empty($devices) && count($devices) > 1) {
-                $idx = $provider->GetProviderParameter(MACRO_DEVICE_ID);
-                hd_debug_print("devices ($idx): " . json_format_unescaped($devices), true);
-
-                Control_Factory::add_combobox($defs, $this, api_default::CONTROL_DEVICE, TR::t('device'),
-                    $idx, $devices, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-            }
-
-            //////////////////////////////////////
-            // Qualities settings
-
-            $qualities = $provider->GetQualities();
-            if (!empty($qualities) && count($qualities) > 1) {
-                $idx = $provider->GetProviderParameter(MACRO_QUALITY_ID);
-                hd_debug_print("qualities ($idx): " . json_format_unescaped($qualities), true);
-
-                Control_Factory::add_combobox($defs, $this, api_default::CONTROL_QUALITY, TR::t('quality'),
-                    $idx, $qualities, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-            }
-
-            //////////////////////////////////////
-            // Icon replacements settings
-
-            $icon_replacements = $provider->getConfigValue(CONFIG_ICON_REPLACE);
-            if (!empty($icon_replacements)) {
-                $icon_idx = $provider->GetProviderParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
-                Control_Factory::add_combobox($defs, $this, PARAM_REPLACE_ICON, TR::t('setup_channels_square_icons'),
-                    $icon_idx, SwitchOnOff::$translated, Control_Factory::SCR_CONTROLS_WIDTH,
-                    $params, true);
-            }
-
-            //////////////////////////////////////
-            // Playlist mirrors settings
-
-            $playlist_mirrors = $provider->getConfigValue(CONFIG_PLAYLIST_MIRRORS);
-            if (!empty($playlist_mirrors)) {
-                $idx = $provider->GetProviderParameter(PARAM_SELECTED_MIRROR);
-                if (empty($idx) || !isset($playlist_mirrors[$idx])) {
-                    $idx = key($playlist_mirrors);
-                    $provider->SetProviderParameter(PARAM_SELECTED_MIRROR, $idx);
+                    Control_Factory::add_combobox($defs, $this, api_default::CONTROL_STREAM, TR::t('stream'),
+                        $idx, $streams, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
                 }
-                $pairs = array();
-                foreach ($playlist_mirrors as $key => $value) {
-                    $pairs[$key] = $key;
+
+                //////////////////////////////////////
+                // Domains settings
+                $pl_domains = $provider->GetPlDomains();
+                if (!empty($pl_domains) && count($pl_domains) > 1) {
+                    $idx = $provider->GetProviderParameter(MACRO_PL_DOMAIN_ID);
+                    hd_debug_print("domains ($idx): " . json_format_unescaped($pl_domains), true);
+
+                    Control_Factory::add_combobox($defs, $this, api_default::CONTROL_PL_DOMAIN, TR::t('pl_domain'),
+                        $idx, $pl_domains, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
                 }
-                Control_Factory::add_combobox($defs, $this, PARAM_SELECTED_MIRROR, TR::t('setup_channels_using_mirror'),
-                    $idx, $pairs, Control_Factory::SCR_CONTROLS_WIDTH,
-                    $params, true);
+
+                $api_domains = $provider->GetApiDomains();
+                if (!empty($api_domains) && count($api_domains) > 1) {
+                    $idx = $provider->GetProviderParameter(MACRO_API_DOMAIN_ID);
+                    hd_debug_print("domains ($idx): " . json_format_unescaped($api_domains), true);
+
+                    Control_Factory::add_combobox($defs, $this, api_default::CONTROL_API_DOMAIN, TR::t('api_domain'),
+                        $idx, $api_domains, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+                }
+
+                //////////////////////////////////////
+                // Servers settings
+
+                $servers = $provider->GetServers();
+                if (!empty($servers) && count($servers) > 1) {
+                    $idx = $provider->GetProviderParameter(MACRO_SERVER_ID);
+                    hd_debug_print("servers ($idx): " . json_format_unescaped($servers), true);
+
+                    Control_Factory::add_combobox($defs, $this, api_default::CONTROL_SERVER, TR::t('server'),
+                        $idx, $servers, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+                }
+
+                //////////////////////////////////////
+                // Devices settings
+
+                $devices = $provider->GetDevices();
+                if (!empty($devices) && count($devices) > 1) {
+                    $idx = $provider->GetProviderParameter(MACRO_DEVICE_ID);
+                    hd_debug_print("devices ($idx): " . json_format_unescaped($devices), true);
+
+                    Control_Factory::add_combobox($defs, $this, api_default::CONTROL_DEVICE, TR::t('device'),
+                        $idx, $devices, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+                }
+
+                //////////////////////////////////////
+                // Qualities settings
+
+                $qualities = $provider->GetQualities();
+                if (!empty($qualities) && count($qualities) > 1) {
+                    $idx = $provider->GetProviderParameter(MACRO_QUALITY_ID);
+                    hd_debug_print("qualities ($idx): " . json_format_unescaped($qualities), true);
+
+                    Control_Factory::add_combobox($defs, $this, api_default::CONTROL_QUALITY, TR::t('quality'),
+                        $idx, $qualities, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+                }
+
+                //////////////////////////////////////
+                // Icon replacements settings
+
+                $icon_replacements = $provider->getConfigValue(CONFIG_ICON_REPLACE);
+                if (!empty($icon_replacements)) {
+                    $icon_idx = $provider->GetProviderParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
+                    Control_Factory::add_combobox($defs, $this, PARAM_REPLACE_ICON, TR::t('setup_channels_square_icons'),
+                        $icon_idx, SwitchOnOff::$translated, Control_Factory::SCR_CONTROLS_WIDTH,
+                        $params, true);
+                }
+
+                //////////////////////////////////////
+                // Playlist mirrors settings
+
+                $playlist_mirrors = $provider->getConfigValue(CONFIG_PLAYLIST_MIRRORS);
+                if (!empty($playlist_mirrors)) {
+                    $idx = $provider->GetProviderParameter(PARAM_SELECTED_MIRROR);
+                    if (empty($idx) || !isset($playlist_mirrors[$idx])) {
+                        $idx = key($playlist_mirrors);
+                        $provider->SetProviderParameter(PARAM_SELECTED_MIRROR, $idx);
+                    }
+                    $pairs = array();
+                    foreach ($playlist_mirrors as $key => $value) {
+                        $pairs[$key] = $key;
+                    }
+                    Control_Factory::add_combobox($defs, $this, PARAM_SELECTED_MIRROR, TR::t('setup_channels_using_mirror'),
+                        $idx, $pairs, Control_Factory::SCR_CONTROLS_WIDTH,
+                        $params, true);
+                }
             }
+
+            $fav_id = $this->plugin->get_setting(PARAM_USE_COMMON_FAV, SwitchOnOff::off);
+            Control_Factory::add_image_button($defs, $this, PARAM_USE_COMMON_FAV,
+                TR::t('setup_use_common_fav'), SwitchOnOff::translate($fav_id), SwitchOnOff::to_image($fav_id));
+
+            $param = PARAM_PLAYLIST_CACHE_TIME_IPTV . ($pl_idx === 'default' ? '' : "_$pl_idx");
+            $cache_time = $this->plugin->get_setting($param, 1);
+            hd_debug_print("Playlist $param = $cache_time");
+            Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_CACHE_TIME_IPTV,
+                TR::t('setup_cache_time_iptv'), $cache_time,
+                $caching_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         }
-
-        $fav_id = $this->plugin->get_setting(PARAM_USE_COMMON_FAV, SwitchOnOff::off);
-        Control_Factory::add_image_button($defs, $this, PARAM_USE_COMMON_FAV,
-            TR::t('setup_use_common_fav'), SwitchOnOff::translate($fav_id), SwitchOnOff::to_image($fav_id));
-
-        //////////////////////////////////////
-        // Cache time
-
-        $caching_range[PHP_INT_MAX] = TR::t('setup_cache_time_never');
-
-        foreach (array(1, 6, 12) as $hour) {
-            $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
-        }
-        foreach (array(24, 48, 96, 168) as $hour) {
-            $caching_range[$hour] = TR::t('setup_cache_time_d__1', $hour / 24);
-        }
-
-        $param = PARAM_PLAYLIST_CACHE_TIME_IPTV . ($pl_idx === 'default' ? '' : "_$pl_idx");
-        $cache_time = $this->plugin->get_setting($param, 1);
-        hd_debug_print("Playlist $param = $cache_time");
-        Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_CACHE_TIME_IPTV,
-            TR::t('setup_cache_time_iptv'), $cache_time,
-            $caching_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         if ($has_vod_cache) {
             $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME_VOD, 1);
