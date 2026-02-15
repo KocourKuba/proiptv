@@ -1,4 +1,16 @@
-﻿### Version 7.1.1576
+﻿### Version 7.1.1594
+- Added translation to Chinese Simplified
+- Redesigned playlist settings window
+- Fixed incorrect display of colored buttons when selecting a file/folder in Folder Screen
+- Added the ability to change Internet sources
+- Added processing of folder selection containing []{} characters
+- Added the ability to select a broadcast server for Vivamax
+- Added the ability to select a playlist domain for SatQ
+- Added country filter for Sharaclub/IpStream/Glanz
+- Clarifications for the IpStream/iShara media library
+- Added the ability to select the BCU VOD media library as a separate provider
+
+### Version 7.1.1576
 - Download management plugin settings moved to a separate settings screen
 - The query cache is forcibly cleared when the plugin is updated
 - Added a button to clear the query cache
