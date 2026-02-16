@@ -1,7 +1,12 @@
-﻿### Version 7.1.1594
+﻿### Version 7.1.1596
+- The plugin interface settings window was not shown
+- Additional check for the path to the icon pointing to a local file
+
+### Version 7.1.1594
 - Added translation to Chinese Simplified
 - Redesigned playlist settings window
 - Fixed incorrect display of colored buttons when selecting a file/folder in Folder Screen
+- Added the ability to disable NewUI support
 - Added the ability to change Internet sources
 - Added processing of folder selection containing []{} characters
 - Added the ability to select a broadcast server for Vivamax
