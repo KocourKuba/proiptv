@@ -120,7 +120,7 @@ class Starnet_Setup_Plugin_Screen extends Abstract_Controls_Screen
 
             case self::CONTROL_INTERFACE_SCREEN: // show interface settings dialog
                 return Action_Factory::open_folder(
-                    Starnet_Setup_Interface_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
+                    Starnet_Setup_Plugin_Interface_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
                     TR::t('setup_interface_title'));
 
             case self::CONTROL_SLEEP_TIMER_SCREEN: // show sleep timer settings dialog
