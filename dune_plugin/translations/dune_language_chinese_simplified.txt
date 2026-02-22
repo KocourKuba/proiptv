@@ -115,6 +115,7 @@ server = 服务器
 quality = 画质
 playlist = 播放列表
 provider_playlist = 服务商播放列表
+provider_vod_playlist = 供应商点播播放列表
 playlist_name = 播放列表名称
 subscription = 订阅
 add_money = 充值

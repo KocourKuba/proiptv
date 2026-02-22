@@ -33,8 +33,6 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 {
     const ID = 'setup_provider_screen';
 
-    const CONTROL_CUSTOM_URL = 'custom_url';
-    const CONTROL_SELECTED_PLAYLIST = 'selected_playlist';
     const ACTION_COPY_FAVORITE = 'copy_favorite';
     ///////////////////////////////////////////////////////////////////////
 
@@ -122,14 +120,14 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                 $pl_names['default'] = TR::t('by_default');
             }
 
-            Control_Factory::add_combobox($defs, $this, self::CONTROL_SELECTED_PLAYLIST, TR::t('provider_playlist'),
+            Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_IPTV_ID, TR::t('provider_playlist'),
                 $pl_idx, $pl_names, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
             if ($pl_idx === DIRECT_PLAYLIST_ID) {
                 //////////////////////////////////////
                 // Direct playlist url
                 $url = $provider->GetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV);
-                Control_Factory::add_text_field($defs, $this, self::CONTROL_CUSTOM_URL, TR::t('direct_url'), $url,
+                Control_Factory::add_text_field($defs, $this, PARAM_CUSTOM_PLAYLIST_IPTV, TR::t('direct_url'), $url,
                     false, false, false, true, Control_Factory::SCR_CONTROLS_WIDTH, true);
             } else if ($pl_idx === DIRECT_FILE_PLAYLIST_ID) {
                 //////////////////////////////////////
@@ -235,6 +233,18 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                         $idx, $pairs, Control_Factory::SCR_CONTROLS_WIDTH,
                         $params, true);
                 }
+            }
+
+            $vod_playlists = $provider->GetPlaylistsVod();
+            if (count($vod_playlists) > 1) {
+                $pl_vod_idx = $provider->GetPlaylistVodId();
+                $pl_vod_names = extract_column($vod_playlists, COLUMN_NAME);
+                if (isset($pl_vod_names['default'])) {
+                    $pl_vod_names['default'] = TR::t('by_default');
+                }
+
+                Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_VOD_ID, TR::t('provider_vod_playlist'),
+                    $pl_vod_idx, $pl_vod_names, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
             }
 
             $fav_id = $this->plugin->get_setting(PARAM_USE_COMMON_FAV, SwitchOnOff::off);
@@ -347,13 +357,12 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                 $this->force_parent_reload = true;
                 break;
 
-            case self::CONTROL_SELECTED_PLAYLIST:
-                $provider->SetProviderParameter(PARAM_PLAYLIST_IPTV_ID, $user_input->{$control_id});
-                $this->force_parent_reload = true;
-                break;
-
-            case self::CONTROL_CUSTOM_URL:
-                $provider->SetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV, $user_input->{$control_id});
+            case PARAM_PLAYLIST_IPTV_ID:
+            case PARAM_PLAYLIST_VOD_ID:
+            case PARAM_CUSTOM_PLAYLIST_IPTV:
+            case PARAM_REPLACE_ICON:
+            case PARAM_SELECTED_MIRROR:
+                $provider->SetProviderParameter($control_id, $user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
 
@@ -372,12 +381,6 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             case ACTION_FILE_PLAYLIST:
                 $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 $provider->SetProviderParameter(PARAM_CUSTOM_FILE_PLAYLIST_IPTV, $selected_media_url->{PARAM_FILEPATH});
-                $this->force_parent_reload = true;
-                break;
-
-            case PARAM_REPLACE_ICON:
-            case PARAM_SELECTED_MIRROR:
-                $provider->SetProviderParameter($control_id, $user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
 

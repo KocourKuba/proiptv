@@ -115,6 +115,7 @@ server = Server
 quality = Quality
 playlist = Playlist
 provider_playlist = Provider playlist
+provider_vod_playlist = Provider VOD playlist
 playlist_name = Playlist name
 subscription = Subscription
 add_money = Add money

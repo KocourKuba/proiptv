@@ -115,6 +115,7 @@ server = Server
 quality = Qualität
 playlist = Wiedergabeliste
 provider_playlist = Anbieter-Playlist
+provider_vod_playlist = Anbieter VOD-Playlist
 playlist_name = Name der Wiedergabeliste
 subscription = Abonnement
 add_money = Geld hinzufügen

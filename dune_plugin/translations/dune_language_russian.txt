@@ -115,6 +115,7 @@ server = Сервер
 quality = Качество
 playlist = Плейлист
 provider_playlist = Плейлист провайдера
+provider_vod_playlist = Плейлист VOD
 playlist_name = Имя плейлиста
 subscription = Подписка
 add_money = Пополнить баланс
