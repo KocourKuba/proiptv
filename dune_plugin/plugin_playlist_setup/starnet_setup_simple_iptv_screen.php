@@ -213,7 +213,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                     }
 
                     $contents = file_get_contents($tmp_file, false, null, 0, 512);
-                    if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
+                    if (!M3uParser::is_valid_m3u($contents)) {
                         throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n" . substr($contents, 0, 512));
                     }
 

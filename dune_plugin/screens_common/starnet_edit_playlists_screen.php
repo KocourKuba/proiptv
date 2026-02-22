@@ -833,7 +833,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         }
 
         $contents = file_get_contents($tmp_file, false, null, 0, 512);
-        if ($contents === false || (strpos($contents, TAG_EXTM3U) === false && strpos($contents, TAG_EXTINF) === false)) {
+        if (!M3uParser::is_valid_m3u($contents)) {
             safe_unlink($tmp_file);
             throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n$contents");
         }

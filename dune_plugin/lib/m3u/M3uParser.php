@@ -674,4 +674,9 @@ class M3uParser extends Json_Serializer
             || strpos($lower_title, "18+") !== false
             || strpos($lower_title, "xxx") !== false) ? 1 : 0;
     }
+
+    public static function is_valid_m3u($contents)
+    {
+        return !($contents === false || (strpos($contents, TAG_EXTM3U) == false && strpos($contents, TAG_EXTINF) === false));
+    }
 }
