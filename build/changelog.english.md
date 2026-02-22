@@ -14,6 +14,7 @@
 - Added country filter for Sharaclub/IpStream/Glanz
 - Clarifications for the IpStream/iShara media library
 - Added the ability to select the BCU VOD media library as a separate provider
+- Added the ability to change the priority/disabling of Internet EPG sources if there are more than 1 of them. In the playlist settings.
 
 ### Version 7.1.1576
 - Download management plugin settings moved to a separate settings screen
