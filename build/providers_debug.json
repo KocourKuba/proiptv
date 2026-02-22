@@ -616,8 +616,8 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_glanz.png",
       "provider_url": "http://ottg.tv/",
-      "api_url": "http://pl.{API_DOMAIN_ID}",
-      "vod_api_url": "http://api.{API_DOMAIN_ID}",
+      "api_url": "http://pl.{DOMAIN_ID}",
+      "vod_api_url": "http://api.{DOMAIN_ID}",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "epg_presets": [
@@ -630,9 +630,9 @@
           "hls": "HLS",
           "ts": "MPEG-TS"
         },
-        "api_domains": {
+        "domains": {
           "ottg.app": "ottg.app",
-          "ottg.cc": "ottg.cc"
+          "sprintplay.ru": "sprintplay.ru"
         },
         "playlists": {
           "standard": {
