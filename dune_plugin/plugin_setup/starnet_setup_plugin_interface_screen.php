@@ -132,13 +132,16 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
                 return self::make_return_action($parent_media_url);
 
             case self::CONTROL_SHOW_TV:
-            case self::CONTROL_AUTO_PLAY:
             case self::CONTROL_AUTO_RESUME:
-                toggle_cookie_param($plugin_cookies, $control_id);
+                toggle_cookie_param($plugin_cookies, $control_id, SwitchOnOff::on);
+                break;
+
+            case self::CONTROL_AUTO_PLAY:
+                toggle_cookie_param($plugin_cookies, $control_id, SwitchOnOff::off);
                 break;
 
             case PARAM_COOKIE_ENABLE_NEWUI:
-                toggle_cookie_param($plugin_cookies, $control_id);
+                toggle_cookie_param($plugin_cookies, $control_id, SwitchOnOff::on);
                 Starnet_Epfs_Handler::clear_epfs_file();
                 $actions[] = Action_Factory::show_title_dialog(TR::t('warning'), TR::t('setup_reboot_required'));
                 $actions[] = Action_Factory::restart();

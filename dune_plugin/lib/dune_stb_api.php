@@ -2492,11 +2492,12 @@ function get_cookie_bool_param($plugin_cookies, $param, $default = true)
 /**
  * @param object $plugin_cookies
  * @param string $param
+ * @param string $default
  * @return string
  */
-function toggle_cookie_param($plugin_cookies, $param)
+function toggle_cookie_param($plugin_cookies, $param, $default)
 {
-    $old = safe_get_value($plugin_cookies, $param, SwitchOnOff::off);
+    $old = safe_get_value($plugin_cookies, $param, $default);
     $new = SwitchOnOff::toggle($old);
     $plugin_cookies->{$param} = $new;
     hd_debug_print("toggle new cookie param $param: $old -> $new", true);
