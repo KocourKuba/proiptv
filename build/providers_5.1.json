@@ -1567,11 +1567,14 @@
       "provider_url": "https://uspeh.tv/",
       "api_url": "https://m3u.admuspeh.my",
       "api_commands": {
-        "get_playlist": "{API}/hls/token={PASSWORD}"
+        "get_playlist": "https://{SERVER_ID}/token={PASSWORD}"
       },
       "config": {
         "id_map": "tvg-id",
-        "vod_parser": "/^(?<title>[^(]+)\\s\\((?<year>\\d{4})\\)$/",
+        "servers": {
+          "m3u.biluspeh.com/hls": "EU",
+          "m3u.uspeh-bil.ru/ru": "Russia"
+        },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
