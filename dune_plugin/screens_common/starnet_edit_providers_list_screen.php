@@ -126,11 +126,15 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
         $items = array();
         /** @var api_default $provider */
         foreach ($this->plugin->get_providers() as $provider) {
+            $vod_type = ($provider->get_vod_class() === 'vod_standard')
+                ? TR::load('plugin_vod_type_m3u')
+                : TR::load('plugin_vod_type_json');
+
             $info = TR::t('setup_provider_info__4',
                 $provider->getProviderUrl(),
                 $provider->getId(),
                 $provider->getType(),
-                $provider->hasApiCommand(API_COMMAND_GET_VOD) ? TR::load('yes') : TR::load('no')
+                $provider->hasApiCommand(API_COMMAND_GET_VOD) ? TR::load('yes') . " ($vod_type)" : TR::load('no')
             );
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'id' => $provider->getId())),

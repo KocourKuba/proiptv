@@ -166,6 +166,8 @@ plugin_changed = Geänderte Kanäle
 plugin_vod = Video auf Nachfrage
 plugin_vod__1 = Video auf Nachfrage%s
 plugin_info = Plugin info
+plugin_vod_type_json = Dienst
+plugin_vod_type_m3u = M3U
 filters = Filter
 movie_list = Merkliste
 

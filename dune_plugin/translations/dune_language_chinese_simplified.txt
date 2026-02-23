@@ -166,6 +166,8 @@ plugin_changed = 已更新频道
 plugin_vod = 视频点播
 plugin_vod__1 = 视频点播%s
 plugin_info = 插件信息
+plugin_vod_type_json = 服务
+plugin_vod_type_m3u = M3U
 filters = 筛选条件
 movie_list = 观看列表
 

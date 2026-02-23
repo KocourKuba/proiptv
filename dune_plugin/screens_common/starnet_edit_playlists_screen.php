@@ -928,7 +928,10 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                     }
                     $icon_file = $provider->getLogo();
                     if ($provider->hasApiCommand(API_COMMAND_GET_VOD)) {
-                        $detailed_info = "$title||" . TR::load('plugin_vod__1', ': ' . TR::load('yes'));
+                        $vod_type = ($provider->get_vod_class() === 'vod_standard')
+                            ? TR::load('plugin_vod_type_m3u')
+                            : TR::load('plugin_vod_type_json');
+                        $detailed_info = "$title||" . TR::load('plugin_vod__1', ': ' . TR::load('yes')) . " ($vod_type)";
                     } else {
                         $detailed_info = "$title||" . TR::load('plugin_vod__1', ': ' . TR::load('no'));
                     }

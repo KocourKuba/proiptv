@@ -166,6 +166,8 @@ plugin_changed = Измененные каналы
 plugin_vod = Медиатека
 plugin_vod__1 = Медиатека%s
 plugin_info = Информация о плагине
+plugin_vod_type_json = Сервис
+plugin_vod_type_m3u = M3U
 filters = Фильтры
 movie_list = Список просмотра
 
