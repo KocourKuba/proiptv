@@ -263,10 +263,6 @@
           "mono.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
-        "xmltv_sources": [
-          "http://epg.team/tvteam.1.1.xml.gz",
-          "http://epg.team/tvteam.3.1.xml.tar.gz"
-        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
         "url_subst": {
           "regex": "/^(.+\\/)mono\\.m3u8(.+)$/",
@@ -1746,8 +1742,7 @@
         },
         "api_domains": {
           "tvteam.eu": "tvteam.eu",
-          "tvteam.pro": "tvteam.pro",
-          "tv.team": "tv.team"
+          "tvteam.pro": "tvteam.pro"
         },
         "domains": {
           "team.ga": "team.ga",
@@ -1834,15 +1829,15 @@
             "alias": "uspeh"
           }
         ],
+        "playlist_mirrors": {
+          "EU": "https://m3u.biluspeh.com/hls",
+          "RU": "https://m3u.uspeh-bil.ru/ru"
+        },
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "https://{SERVER_ID}/token={PASSWORD}"
+            "url": "{MIRROR}/token={PASSWORD}"
           }
-        },
-        "servers": {
-          "m3u.biluspeh.com/hls": "EU",
-          "m3u.uspeh-bil.ru/ru": "Russia"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }

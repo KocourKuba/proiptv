@@ -1746,8 +1746,7 @@
         },
         "api_domains": {
           "tvteam.eu": "tvteam.eu",
-          "tvteam.pro": "tvteam.pro",
-          "tv.team": "tv.team"
+          "tvteam.pro": "tvteam.pro"
         },
         "domains": {
           "team.ga": "team.ga",

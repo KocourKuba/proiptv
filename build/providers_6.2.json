@@ -1530,7 +1530,6 @@
           "replace": "$1{STREAM_ID}$2"
         },
         "domains": {
-          "tv.team": "tv.team",
           "tvteam.eu": "tvteam.eu",
           "tvteam.pro": "tvteam.pro"
         },
