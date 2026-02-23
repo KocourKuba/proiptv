@@ -32,8 +32,6 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
 {
     const ID = 'playback_setup';
 
-    const CONTROL_DUNE_FORCE_TS = 'dune_force_ts';
-
     ///////////////////////////////////////////////////////////////////////
 
     /**

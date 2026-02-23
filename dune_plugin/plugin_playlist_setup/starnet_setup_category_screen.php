@@ -32,14 +32,6 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
 {
     const ID = 'category_setup';
 
-    const ACTION_SHOW_ALL = 'show_all_channels';
-    const ACTION_SHOW_FAVORITES = 'show_favorites';
-    const ACTION_SHOW_HISTORY = 'show_history';
-    const ACTION_SHOW_VOD = 'show_vod';
-    const ACTION_SHOW_CHANGED_CHANNELS = 'show_changed_channels';
-    const ACTION_SHOW_VOD_ICON = 'show_vod_icon';
-    const ACTION_SHOW_ADULT = 'show_adult';
-
     ///////////////////////////////////////////////////////////////////////
 
     protected $force_parent_reload = false;

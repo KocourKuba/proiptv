@@ -34,7 +34,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
 
     const CONTROL_ADULT_PASS_DLG = 'adult_pass_dialog';
     const ACTION_ADULT_PASS_DLG_APPLY = 'adult_pass_apply';
-    const ACTION_SETTINGS_PASS_DLG_APPLY = 'settings_pass_apply';
 
     ///////////////////////////////////////////////////////////////////////
 
