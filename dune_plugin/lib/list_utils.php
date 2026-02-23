@@ -34,40 +34,13 @@ class List_Utils
 
     /**
      * @param string $config_id
-     * @param array $all_list
      * @return array
      */
-    public static function get_enabled_order($config_id, $all_list)
-    {
-        $on_off = safe_get_value(self::read_config_file($config_id), 'changes', array());
-        $order = safe_get_value(self::read_config_file($config_id), 'order', array());
-
-        $idset = $order;
-        foreach ($all_list as $id) {
-            if (!in_array($id, $order)) {
-                $idset[] = $id;
-            }
-        }
-
-        foreach ($on_off as $id => $value) {
-            $pos = array_search($id, $idset);
-            if ($pos !== -1 && $value === '-') {
-                array_splice($idset, $pos, 1);
-            }
-        }
-
-        return array_values($idset);
-    }
-
-    /**
-     * @param string $config_id
-     * @return array
-     */
-    protected static function read_config_file($config_id)
+    public static function read_config_file($config_id)
     {
         $path = self::config_file_path($config_id);
 
-        $cfg = array('changes' => array(), 'order' => array());
+        $cfg = array();
         if (!is_file($path)) {
             return $cfg;
         }
@@ -79,12 +52,13 @@ class List_Utils
         }
 
         $is_order = false;
+        $changes = array();
         foreach ($lines as $line) {
             $line = trim($line);
             if (strlen($line) == 0) continue;
 
             if ($is_order) {
-                $cfg['order'][] = $line;
+                $cfg[$line] = isset($changes[$line]) ? $changes[$line] : 1;
                 continue;
             }
 
@@ -94,10 +68,37 @@ class List_Utils
             }
 
             $id = substr($line, 1);
-            if ($line[0] == '+' || $line[0] == '-') {
-                $cfg['changes'][$id] = $line[0];
+            if ($line[0] === '+' || $line[0] === '-') {
+                $changes[$id] = ($line[0] === '-') ? 0 : 1;
             }
         }
         return $cfg;
+    }
+
+    /**
+     * @param string $config_id
+     * @param array $cfg
+     * @return void
+     */
+    public static function write_config_file($config_id, $cfg)
+    {
+        hd_debug_print("Write config file: " . json_format_unescaped($cfg), true);
+        $cfg_path = self::config_file_path($config_id);
+        $enabled = '';
+        $ordering = '';
+        foreach ($cfg as $key => $value) {
+            $enabled .= ($value ? '+' : '-') . $key . PHP_EOL;
+            $ordering .= $key . PHP_EOL;
+        }
+
+        if (!empty($enabled)) {
+            $enabled .= '---' . PHP_EOL;
+        }
+
+        $content = $enabled . $ordering;
+
+        if (!empty($content)) {
+            file_put_contents($cfg_path, $content);
+        }
     }
 }

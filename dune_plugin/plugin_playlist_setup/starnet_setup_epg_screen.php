@@ -152,20 +152,25 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 return $post_action;
 
             case self::CONTROL_ARRANGE_EPG_SOURCE:
+                $config_id = $this->plugin->get_active_epg_config();
                 $all_ids = array();
                 $checked_ids = array();
                 foreach ($this->plugin->get_provider_epg_presets() as $id => $epg_preset) {
                     Action_Factory::add_gui_item($all_ids, $checked_ids, $id, $id);
                 }
 
-                return Action_Factory::edit_list_config($this->plugin->get_active_epg_config(), TR::t('entry_epg_edit_json_source'),
+                List_Utils::write_config_file($config_id, $this->plugin->get_selected_json_sources(false));
+
+                return Action_Factory::edit_list_config($config_id, TR::t('entry_epg_edit_json_source'),
                     $all_ids, $checked_ids,
                     null, null, null, null,
                     User_Input_Handler_Registry::create_action($this, self::CONTROL_APPLY_ARRANGE_EPG_SOURCE));
 
             case self::CONTROL_APPLY_ARRANGE_EPG_SOURCE:
+                $playlist_id = $this->plugin->get_active_playlist_id();
+                $this->plugin->update_selected_json_source($this->plugin->get_active_provider());
                 if ($user_input->list_config_changed) {
-                    Epg_Manager_Json::clear_epg_files($this->plugin->get_active_playlist_id());
+                    Epg_Manager_Json::clear_epg_files($playlist_id);
                 }
                 break;
 

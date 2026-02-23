@@ -1226,7 +1226,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // cleanup if group removed from playlist
         $query = "SELECT group_id FROM $groups_info_table WHERE group_id NOT IN (SELECT group_id FROM $iptv_groups) AND special = 0;";
-        $removed_groups = $this->sql_playlist->fetch_single_array($query, COLUMN_GROUP_ID);
+        $removed_groups = $this->sql_playlist->fetch_array($query, COLUMN_GROUP_ID);
         if (!empty($removed_groups)) {
             $groups_order_table = self::get_table_full_name(GROUPS_ORDER);
             $where = Sql_Wrapper::sql_make_where_clause($removed_groups, COLUMN_GROUP_ID);
@@ -1243,11 +1243,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // mark as removed channels that not present iptv.iptv_channels db
         $query = "SELECT channel_id FROM $channel_info_table WHERE channel_id NOT IN
                     (SELECT $id_column AS channel_id FROM $iptv_channels WHERE channel_id NOT NULL AND channel_id != '');";
-        $removed_channels = $this->sql_playlist->fetch_single_array($query, COLUMN_CHANNEL_ID);
+        $removed_channels = $this->sql_playlist->fetch_array($query, COLUMN_CHANNEL_ID);
 
         $query = "SELECT $id_column AS channel_id FROM $iptv_channels
                     WHERE channel_id NOT IN (SELECT channel_id FROM $channel_info_table WHERE changed != -1);";
-        $new_channels = $this->sql_playlist->fetch_single_array($query, COLUMN_CHANNEL_ID);
+        $new_channels = $this->sql_playlist->fetch_array($query, COLUMN_CHANNEL_ID);
 
         if (!empty($removed_channels)) {
             $remove_where = Sql_Wrapper::sql_make_where_clause($removed_channels, COLUMN_CHANNEL_ID);
@@ -1553,7 +1553,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $playlist_id = $this->get_active_playlist_id();
         $table_name = self::SELECTED_XMLTV_TABLE;
-        return $this->sql_params->fetch_single_array("SELECT hash FROM $table_name WHERE playlist_id = '$playlist_id' ORDER BY ROWID;", PARAM_HASH);
+        return $this->sql_params->fetch_array("SELECT hash FROM $table_name WHERE playlist_id = '$playlist_id' ORDER BY ROWID;", PARAM_HASH);
     }
 
     /**
@@ -1668,9 +1668,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @return array
      */
-    public function get_provider_epg_presets()
+    public function get_provider_epg_presets($provider = null)
     {
-        $provider = $this->get_active_provider();
+        $provider = is_null($provider) ? $this->get_active_provider() : $provider;
         if (is_null($provider)) {
             return array();
         }
@@ -1843,9 +1843,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @return string
      */
-    public function get_active_epg_config()
+    public function get_active_epg_config($playlist_id = '')
     {
-        return 'proiptv_epg_' . $this->get_active_playlist_id();
+        return 'proiptv_epg_' . (empty($playlist_id) ? $this->get_active_playlist_id() : $playlist_id);
     }
 
     /**
@@ -4097,7 +4097,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                 $provider->check_config_values();
                 $provider_playlist_id = $provider->GetPlaylistIptvId();
-                hd_debug_print("Provider playlist: $provider_playlist_id", true);
+                hd_debug_print("Provider IPTV playlist: $provider_playlist_id", true);
+
+                $query = sprintf(self::CREATE_SELECTED_JSON_TABLE, self::SELECTED_JSON_TABLE);
+                $this->sql_playlist->exec($query);
+                $this->update_selected_json_source($provider);
             }
         }
 
@@ -4201,7 +4205,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // move selected xmltv sources to new database table
         if ($this->is_playlist_table_exists(self::SELECTED_XMLTV_TABLE)) {
             $table_name = self::SELECTED_XMLTV_TABLE;
-            $rows = $this->sql_playlist->fetch_single_array("SELECT hash FROM $table_name;", COLUMN_HASH);
+            $rows = $this->sql_playlist->fetch_array("SELECT hash FROM $table_name;", COLUMN_HASH);
             $query = '';
             foreach ($rows as $hash) {
                 $query .= "INSERT OR IGNORE INTO $table_name (playlist_id, hash) VALUES ('$playlist_id', '$hash');";
@@ -4256,5 +4260,38 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         return $this->vod_enabled;
+    }
+
+    /**
+     * @param api_default|null $provider
+     * @return void
+     */
+    public function update_selected_json_source($provider)
+    {
+        hd_debug_print(null, true);
+
+        if (is_null($provider)) {
+            return;
+        }
+
+        $playlist_id = $provider->get_provider_playlist_id();
+        $config_name = $this->get_active_epg_config($playlist_id);
+        // read existing order
+        $order = List_Utils::read_config_file($config_name);
+        $selected_json_table = self::SELECTED_JSON_TABLE;
+        $query = "DELETE FROM $selected_json_table;";
+        $this->sql_playlist->exec($query);
+        $query = '';
+        foreach ($this->get_provider_epg_presets($provider) as $id => $preset) {
+            if (!isset($order[$id])) {
+                $order[$id] = 1;
+            }
+            $query .= "INSERT INTO $selected_json_table (name, enabled) VALUES ('$id', $order[$id]);";
+        }
+
+        if (!empty($query)) {
+            $this->sql_playlist->exec($query);
+        }
+        safe_unlink(List_Utils::config_file_path($config_name));
     }
 }

@@ -171,6 +171,7 @@ const COLUMN_CHANNEL_ID = 'channel_id';
 const COLUMN_GROUP_ID = 'group_id';
 const COLUMN_GROUP_ORDER = 'group_order';
 const COLUMN_DISABLED = 'disabled';
+const COLUMN_ENABLED = 'enabled';
 const COLUMN_ICON = 'icon';
 const COLUMN_TITLE = 'title';
 const COLUMN_NAME = 'name';

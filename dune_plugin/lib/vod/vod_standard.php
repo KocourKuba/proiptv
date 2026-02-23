@@ -731,7 +731,7 @@ class vod_standard extends Abstract_Vod
         }
 
         $query = "SELECT DISTINCT group_id FROM " . M3uParser::VOD_TABLE . ";";
-        return $this->wrapper->fetch_single_array($query, COLUMN_GROUP_ID);
+        return $this->wrapper->fetch_array($query, COLUMN_GROUP_ID);
     }
 
     /**

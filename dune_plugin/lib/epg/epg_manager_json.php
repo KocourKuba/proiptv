@@ -129,7 +129,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 return $day_epg;
             }
 
-            $preset_order = List_Utils::get_enabled_order($this->plugin->get_active_epg_config(), array_keys($presets_ids));
+            $preset_order = $this->plugin->get_selected_json_sources(true);
             hd_debug_print("EPG servers order: " . json_format_unescaped($preset_order), true);
             foreach ($preset_order as $id) {
                 if (!isset($presets_ids[$id])) continue;

@@ -181,7 +181,7 @@ class Sql_Wrapper
         }
 
         $db_name = is_null($db_name) ? 'sqlite_master' : "$db_name.sqlite_master";
-        return $this->fetch_single_array("SELECT name FROM $db_name WHERE type='table';", 'name');
+        return $this->fetch_array("SELECT name FROM $db_name WHERE type='table';", 'name');
     }
 
     /**
@@ -388,40 +388,14 @@ class Sql_Wrapper
     }
 
     /**
-     * Fetch array of values
-     * fetch returns array of rows['column'] it will convert to simple array() of values row['column']
-     *
-     * @param string $query
-     * @param string $column
-     * @return array
-     */
-    public function fetch_single_array($query, $column)
-    {
-        $rows = array();
-        if (empty($query)) {
-            return $rows;
-        }
-
-        $result = $this->db->query($query);
-        if ($result) {
-            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-                $rows[] = $row[$column];
-            }
-        } else {
-            hd_debug_print();
-            hd_debug_print("failed to execute query: $query");
-        }
-
-        return $rows;
-    }
-
-    /**
      * Fetch array of rows that contains array of columns
+     * if column is null then returns array of rows['column'] it will convert to simple array() of values row['column']
      *
      * @param string $query
+     * @param string|null $column
      * @return array
      */
-    public function fetch_array($query)
+    public function fetch_array($query, $column = null)
     {
         $rows = array();
 
@@ -432,7 +406,7 @@ class Sql_Wrapper
         $result = $this->db->query($query);
         if ($result) {
             while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-                $rows[] = $row;
+                $rows[] = is_null($column) ? $row : $row[$column];
             }
         } else {
             hd_debug_print();

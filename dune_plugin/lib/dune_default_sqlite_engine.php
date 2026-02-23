@@ -28,6 +28,7 @@ class Dune_Default_Sqlite_Engine
     const PLAYLIST_XMLTV_TABLE = 'playlist_xmltv_sources';
     const SELECTED_XMLTV_TABLE = 'selected_xmltv';
     const VOD_LIST_TABLE = 'vod_list_orders';
+    const SELECTED_JSON_TABLE = 'selected_json_sources';
 
     const SETTINGS_TABLE = 'settings';
     const COOKIES_TABLE = 'cookies';
@@ -66,6 +67,7 @@ class Dune_Default_Sqlite_Engine
                                     (playlist_id TEXT NOT NULL, hash TEXT NOT NULL, type TEXT, name TEXT NOT NULL,
                                      uri TEXT NOT NULL, cache TEXT DEFAULT 'auto', UNIQUE(playlist_id, hash));";
     const CREATE_SELECTED_XMTLV_TABLE = "CREATE TABLE IF NOT EXISTS %s (playlist_id TEXT NOT NULL, hash TEXT NOT NULL, UNIQUE(playlist_id, hash));";
+    const CREATE_SELECTED_JSON_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT NOT NULL, enabled INTEGER DEFAULT 1, UNIQUE(name));";
     const CREATE_COOKIES_TABLE = "CREATE TABLE IF NOT EXISTS %s
                                     (param TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', time_stamp INTEGER DEFAULT 0);";
 
@@ -547,7 +549,7 @@ class Dune_Default_Sqlite_Engine
             }
             $query .= "SELECT hash FROM " . self::XMLTV_TABLE;
         }
-        return $this->sql_params->fetch_single_array($query, COLUMN_HASH);
+        return $this->sql_params->fetch_array($query, COLUMN_HASH);
     }
 
     /**
@@ -698,6 +700,36 @@ class Dune_Default_Sqlite_Engine
         $where = Sql_Wrapper::sql_make_where_clause($hash, COLUMN_HASH);
         $query = "DELETE FROM $table_name WHERE $where;";
         $this->sql_params->exec($query);
+    }
+
+    /**
+     * get selected json sources
+     *
+     * @param bool $only_enabled
+     * @return array
+     */
+    public function get_selected_json_sources($only_enabled)
+    {
+        hd_debug_print(null, true);
+
+        $where = '';
+        $column = null;
+        if ($only_enabled) {
+            $where = "WHERE enabled=1";
+            $column = COLUMN_NAME;
+        }
+        $table_name = self::SELECTED_JSON_TABLE;
+        $query = "SELECT * FROM $table_name $where ORDER by ROWID;";
+        $result = $this->sql_playlist->fetch_array($query, $column);
+        if ($only_enabled) {
+            return $result;
+        }
+
+        $json_sources = array();
+        foreach ($result as $item) {
+            $json_sources[$item[COLUMN_NAME]] = $item[COLUMN_ENABLED];
+        }
+        return $json_sources;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -1026,7 +1058,7 @@ class Dune_Default_Sqlite_Engine
 
         $table_name = self::get_table_full_name(CHANNELS_INFO);
         $query = "SELECT channel_id FROM $table_name WHERE $val ORDER BY ROWID;";
-        return $this->sql_playlist->fetch_single_array($query, COLUMN_CHANNEL_ID);
+        return $this->sql_playlist->fetch_array($query, COLUMN_CHANNEL_ID);
     }
 
     /**
@@ -1309,7 +1341,7 @@ class Dune_Default_Sqlite_Engine
             return array();
         }
         $table_name = self::get_table_full_name($group_id);
-        return $this->sql_playlist->fetch_single_array("SELECT channel_id FROM $table_name ORDER BY ROWID;", COLUMN_CHANNEL_ID);
+        return $this->sql_playlist->fetch_array("SELECT channel_id FROM $table_name ORDER BY ROWID;", COLUMN_CHANNEL_ID);
     }
 
     /**
@@ -1503,7 +1535,7 @@ class Dune_Default_Sqlite_Engine
 
         $table_name = self::get_table_full_name(CHANNELS_INFO);
         $query = "SELECT channel_id FROM $table_name WHERE $where;";
-        return $this->sql_playlist->fetch_single_array($query, COLUMN_CHANNEL_ID);
+        return $this->sql_playlist->fetch_array($query, COLUMN_CHANNEL_ID);
     }
 
     /**
@@ -1553,7 +1585,7 @@ class Dune_Default_Sqlite_Engine
     public function get_all_playlists_ids()
     {
         $table_name = self::PLAYLISTS_TABLE;
-        return $this->sql_params->fetch_single_array("SELECT playlist_id FROM $table_name ORDER BY ROWID;", COLUMN_PLAYLIST_ID);
+        return $this->sql_params->fetch_array("SELECT playlist_id FROM $table_name ORDER BY ROWID;", COLUMN_PLAYLIST_ID);
     }
 
     /**
@@ -2092,6 +2124,10 @@ class Dune_Default_Sqlite_Engine
 
             case self::SELECTED_XMLTV_TABLE:
                 $table_name = self::SELECTED_XMLTV_TABLE;
+                break;
+
+            case self::SELECTED_JSON_TABLE:
+                $table_name = self::SELECTED_JSON_TABLE;
                 break;
 
             case M3uParser::S_CHANNELS_TABLE:

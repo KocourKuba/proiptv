@@ -1189,7 +1189,7 @@ class Epg_Manager_Xmltv
 
         $table_channels = self::TABLE_CHANNELS;
         $query = "SELECT DISTINCT channel_id FROM $table_channels WHERE alias IN ($aliases);";
-        $channel_ids = $db_channels->fetch_single_array($query, COLUMN_CHANNEL_ID);
+        $channel_ids = $db_channels->fetch_array($query, COLUMN_CHANNEL_ID);
         if (empty($channel_ids)) {
             hd_debug_print("No channel_id found for aliases: $aliases");
             return $channel_positions;
