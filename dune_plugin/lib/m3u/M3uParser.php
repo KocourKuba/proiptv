@@ -169,15 +169,13 @@ class M3uParser extends Json_Serializer
     }
 
     /**
-     * @param array $params
+     * @param string $id_parser
+     * @param string $icon_replace_pattern
      */
-    public function setupParserParameters($params)
+    public function setupParserParameters($id_parser, $icon_replace_pattern)
     {
-        if (!empty($params)) {
-            $this->id_parser = safe_get_value($params, 'id_parser');
-            $this->icon_replace_pattern = safe_get_value($params, 'icon_replace_pattern');
-        }
-
+        $this->id_parser = $id_parser;
+        $this->icon_replace_pattern = $icon_replace_pattern;
         // replace patterns in playlist icon
         if (!empty($this->icon_replace_pattern)) {
             hd_debug_print("Using specific playlist icon replacement: " . json_format_unescaped($this->icon_replace_pattern), true);
