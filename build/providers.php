@@ -51,7 +51,7 @@ function isIpInNetArray($theip, $thearray)
         }
     }
 
-    return ($exit_c);
+    return $exit_c;
 }
 
 
@@ -67,7 +67,7 @@ function get_ip()
         "192.168.0.0/16",
     );
 
-    $ip = "unknown";
+    $ip = "127.0.0.1";
     $cad = "";
 
     if(!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
@@ -78,19 +78,31 @@ function get_ip()
     {
         $cad .= "," . $_SERVER['REMOTE_ADDR'];
     }
+    else
+    {
+        write_to_log("Can't detect IP from request: " . json_encode($_SERVER), 'error.log');
+    }
 
     $ip_array = explode(',', $cad);
 
     foreach($ip_array as $ip_s)
     {
-        if(!empty($ip_s) && !isIpInNetArray($ip_s, $ip_private_list))
+        if(!empty($ip_s))
         {
-            $ip = $ip_s;
+            if (isIpInNetArray($ip_s, $ip_private_list))
+            {
+                $ip = $_SERVER['SERVER_ADDR'];
+            }
+            else
+            {
+                $ip = $ip_s;
+            }
+
             break;
         }
     }
 
-    return ($ip);
+    return $ip;
 }
 
 function IP2Country($ip)
@@ -107,7 +119,7 @@ function IP2Country($ip)
     if($DB->connect()) {
         $DB->query($query);
         $row = $DB->fetch_row();
-        $country = $row['c2code'];
+        $country = isset($row['c2code']) ? $row['c2code'] : '';
     }
 
     if(empty($country)) {
@@ -218,6 +230,7 @@ if($DB->connect()) {
 
 $ver = explode('.', $version);
 $name ="providers_$ver[0].$ver[1].json";
+
 if (!in_array($serial, $white_list) && (!file_exists($name) || ($rev >= 21 && $rev <= 22 && $ver[0] == 5))) {
     $logbuf .= "disabled   : yes" . PHP_EOL;
     $name = "providers_disabled.json";
