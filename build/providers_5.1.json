@@ -1571,6 +1571,7 @@
       },
       "config": {
         "id_map": "tvg-id",
+        "ext_params": true,
         "servers": {
           "m3u.biluspeh.com/hls": "EU",
           "m3u.uspeh-bil.ru/ru": "Russia"
