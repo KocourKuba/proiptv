@@ -173,11 +173,9 @@ class api_default
         if ($this->hasApiCommand(API_COMMAND_GET_VOD)) {
             $vod_class = "vod_" . $this->getVod();
             if ($vod_class !== 'vod_' && class_exists($vod_class)) {
-                hd_debug_print("Used VOD class: $vod_class");
                 return $vod_class;
             }
 
-            hd_debug_print("Used VOD class: vod_standard");
             return "vod_standard";
         }
 

@@ -126,7 +126,7 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
         $items = array();
         /** @var api_default $provider */
         foreach ($this->plugin->get_providers() as $provider) {
-            $vod_type = ($provider->get_vod_class() === 'vod_standard')
+            $vod_type = Default_Dune_Plugin::is_m3u_vod($provider)
                 ? TR::load('plugin_vod_type_m3u')
                 : TR::load('plugin_vod_type_json');
 

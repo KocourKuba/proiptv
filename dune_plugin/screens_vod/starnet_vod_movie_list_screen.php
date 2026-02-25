@@ -52,7 +52,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
         $actions[GUI_EVENT_KEY_DUNE] = $add_to_favorite;
         $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SHOW_SEARCH_DLG, TR::t('search'));
 
-        if ($this->plugin->is_m3u_vod()) {
+        if (Default_Dune_Plugin::is_m3u_vod($this->plugin->get_active_provider())) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_TO_LIST, TR::t('add_to_list'));
         }
 
@@ -178,7 +178,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
 
         $sticker = Control_Factory::create_sticker(get_image_path('play_small.png'), -20, -12, "left");
         $fav_ids = $this->plugin->get_channels_order(VOD_FAV_GROUP_ID);
-        $list_ids = $this->plugin->is_m3u_vod() ? $this->plugin->get_channels_order(VOD_LIST_GROUP_ID) : array();
+        $list_ids = Default_Dune_Plugin::is_m3u_vod($this->plugin->get_active_provider()) ? $this->plugin->get_channels_order(VOD_LIST_GROUP_ID) : array();
         $items = array();
         if (isset($movie_range->short_movies)) {
             foreach ($movie_range->short_movies as $movie) {
