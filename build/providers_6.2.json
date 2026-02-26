@@ -1592,6 +1592,12 @@
       },
       "config": {
         "id_map": "tvg-id",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "uspeh"
+          }
+        ],
         "servers": {
           "m3u.biluspeh.com/hls": "EU",
           "m3u.uspeh-bil.ru/ru": "Russia"
