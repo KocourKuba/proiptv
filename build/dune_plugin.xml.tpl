@@ -215,7 +215,7 @@
         </entry_point>
         <entry_point>
             <parent_media_url>setup://applications</parent_media_url>
-            <media_url>setup</media_url>
+            <media_url>plugin_setup</media_url>
             <caption>ProIPTV</caption>
             <icon_url>plugin_file://icons/default_logo.png</icon_url>
             <actions>
