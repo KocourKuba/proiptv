@@ -209,8 +209,8 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 
                 $icon_replacements = $provider->getConfigValue(CONFIG_ICON_REPLACE);
                 if (!empty($icon_replacements)) {
-                    $icon_idx = $provider->GetProviderParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
-                    Control_Factory::add_combobox($defs, $this, PARAM_REPLACE_ICON, TR::t('setup_channels_square_icons'),
+                    $icon_idx = $provider->GetProviderParameter(PARAM_SQUARE_ICON, SwitchOnOff::on);
+                    Control_Factory::add_combobox($defs, $this, PARAM_SQUARE_ICON, TR::t('setup_channels_square_icons'),
                         $icon_idx, SwitchOnOff::$translated, Control_Factory::SCR_CONTROLS_WIDTH,
                         $params, true);
                 }
@@ -360,7 +360,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             case PARAM_PLAYLIST_IPTV_ID:
             case PARAM_PLAYLIST_VOD_ID:
             case PARAM_CUSTOM_PLAYLIST_IPTV:
-            case PARAM_REPLACE_ICON:
+            case PARAM_SQUARE_ICON:
             case PARAM_SELECTED_MIRROR:
                 $provider->SetProviderParameter($control_id, $user_input->{$control_id});
                 $this->force_parent_reload = true;

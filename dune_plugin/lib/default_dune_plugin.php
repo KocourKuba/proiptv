@@ -615,65 +615,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * Initialize and parse selected playlist
-     *
-     * @param array $playlist_params
-     * @return bool
-     */
-    public function init_playlist_parser($playlist_params)
-    {
-        hd_debug_print(null, true);
-
-        hd_debug_print("Using playlist params" . json_format_unescaped($playlist_params));
-
-        // $id_map available for all variants.
-        // In one case it set by config but in another by detecting m3u playlist
-        // $id_parser it's provider specific parameter
-
-        $id_parser = '';
-        $icon_replace_pattern = array();
-        if (safe_get_value($playlist_params, PARAM_TYPE) === PARAM_PROVIDER) {
-            $provider = $this->get_active_provider();
-            if (is_null($provider)) {
-                hd_debug_print("Unable to init provider");
-                return false;
-            }
-
-            $id_parser = $provider->getConfigValue(CONFIG_ID_PARSER);
-            $id_map = $provider->getConfigValue(CONFIG_ID_MAP);
-
-            $replace = SwitchOnOff::to_bool($provider->GetProviderParameter(PARAM_REPLACE_ICON, SwitchOnOff::on));
-            if (!$replace) {
-                $icon_replace_pattern = $provider->getConfigValue(CONFIG_ICON_REPLACE);
-            }
-        } else {
-            $id_map = safe_get_value($playlist_params, PARAM_ID_MAPPER, '');
-            hd_debug_print("ID mapper for playlist: $id_map", true);
-        }
-
-        $this->channel_id_map = ATTR_CHANNEL_HASH;
-
-        if (!empty($id_parser)) {
-            $this->channel_id_map = ATTR_PARSED_ID;
-            hd_debug_print("Using specific ID parser: $this->channel_id_map ($id_parser)", true);
-        }
-
-        if (!empty($id_map)) {
-            hd_debug_print("Using specific ID mapping: $id_map", true);
-            $this->channel_id_map = $id_map;
-        }
-
-        if (empty($id_parser) && empty($id_map)) {
-            hd_debug_print("No specific mapping set using HASH", true);
-        }
-
-        $this->iptv_m3u_parser->setupParserParameters($id_parser, $icon_replace_pattern);
-        hd_debug_print("Init playlist parser done!");
-
-        return true;
-    }
-
-    /**
      * @param string $channel_id
      * @param int $program_ts
      * @return mixed|null
@@ -725,10 +666,46 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 throw new Exception("Tv playlist not defined!");
             }
 
-            $params = $this->get_playlist_parameters($playlist_id);
-            if (!$this->init_playlist_parser($params)) {
-                throw new Exception("Playlist parser not inited!");
+            $playlist_params = $this->get_playlist_parameters($playlist_id);
+            hd_debug_print("Using playlist params" . json_format_unescaped($playlist_params));
+
+            // $id_map available for all variants.
+            // In one case it set by config but in another by detecting m3u playlist
+            // $id_parser it's provider specific parameter
+
+            $type = safe_get_value($playlist_params, PARAM_TYPE);
+            if ($type !== PARAM_PROVIDER) {
+                $this->channel_id_map = safe_get_value($playlist_params, PARAM_ID_MAPPER, '');
+                hd_debug_print("ID mapper for playlist: $this->channel_id_map", true);
+            } else {
+                $provider = $this->get_active_provider();
+                if (is_null($provider)) {
+                    hd_debug_print("Unable to init provider");
+                    throw new Exception("Unable to init provider!");
+                }
+
+                $id_parser = $provider->getConfigValue(CONFIG_ID_PARSER);
+                if (empty($id_parser)) {
+                    $this->channel_id_map = $provider->getConfigValue(CONFIG_ID_MAP);
+                } else {
+                    $this->channel_id_map = ATTR_PARSED_ID;
+                }
+
+                $icon_replace_pattern = array();
+                if ($provider->GetProviderParameter(PARAM_SQUARE_ICON, SwitchOnOff::on) !== SwitchOnOff::on) {
+                    // special case for iEdem
+                    $icon_replace_pattern = $provider->getConfigValue(CONFIG_ICON_REPLACE);
+                }
+                $this->iptv_m3u_parser->setupParserParameters($id_parser, $icon_replace_pattern);
+                hd_debug_print("Init playlist parser done!");
             }
+
+            if (empty($this->channel_id_map)) {
+                hd_debug_print("No specific mapping set using HASH", true);
+                $this->channel_id_map = ATTR_CHANNEL_HASH;
+            }
+
+            hd_debug_print("Using specific ID map: $this->channel_id_map", true);
 
             if (!$force) {
                 $is_expired = $this->is_playlist_cache_expired(true);
@@ -754,15 +731,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $perf = new Perf_Collector();
             $perf->reset('start_download_playlist');
 
-            $type = safe_get_value($params, PARAM_TYPE);
-            hd_debug_print("m3u playlist: {$params[PARAM_NAME]} ($playlist_id)");
+            hd_debug_print("m3u playlist: {$playlist_params[PARAM_NAME]} ($playlist_id)");
 
             if ($type === PARAM_PROVIDER) {
                 $provider = $this->get_active_provider();
-                if (is_null($provider)) {
-                    throw new Exception("Unable to init provider to download: " . json_encode($params));
-                }
-
                 hd_debug_print("Load provider playlist to: $m3u_file");
 
                 if ($provider->GetPlaylistIptvId() === DIRECT_FILE_PLAYLIST_ID) {
@@ -775,7 +747,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     }
                 } else {
                     if (!$provider->request_provider_token()) {
-                        throw new Exception("Unable to get provider info to download: " . json_encode($params));
+                        throw new Exception("Unable to get provider info to download: " . json_encode($playlist_params));
                     }
                     $cmd = API_COMMAND_GET_PLAYLIST;
                     $opts = $provider->getCurlOpts($cmd);
@@ -786,7 +758,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     }
                 }
             } else {
-                $uri = safe_get_value($params, PARAM_URI);
+                $uri = safe_get_value($playlist_params, PARAM_URI);
                 if (empty($uri)) {
                     throw new Exception("Empty url: $uri");
                 }
@@ -828,10 +800,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $contents = trim($contents, "\x0B\xEF\xBB\xBF");
             $encoding = HD::detect_encoding($contents);
-            if ($encoding !== 'utf-8') {
-                hd_debug_print("Playlist encoding: $encoding");
-                //$contents = iconv($encoding, 'utf-8', $contents);
-            }
+            hd_debug_print("Playlist encoding: $encoding");
+
             file_put_contents($m3u_file, $contents);
             $perf->setLabel('end_download_playlist');
 

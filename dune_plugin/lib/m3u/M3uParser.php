@@ -176,6 +176,10 @@ class M3uParser extends Json_Serializer
     {
         $this->id_parser = $id_parser;
         $this->icon_replace_pattern = $icon_replace_pattern;
+        if (!empty($this->id_parser)) {
+            hd_debug_print("Using ID parser regex: $this->id_parser", true);
+        }
+
         // replace patterns in playlist icon
         if (!empty($this->icon_replace_pattern)) {
             hd_debug_print("Using specific playlist icon replacement: " . json_format_unescaped($this->icon_replace_pattern), true);
