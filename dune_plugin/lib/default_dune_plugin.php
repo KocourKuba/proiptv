@@ -173,7 +173,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     ///////////////////////////////////////////////////////////////////////
 
-    protected function __construct()
+    public function __construct()
     {
         ini_set('memory_limit', '256M');
 
@@ -368,7 +368,7 @@ class Default_Dune_Plugin implements DunePlugin
                 $playlists->rewind();
                 $id = $playlists->key();
                 if (empty($id)) {
-                    /** @var $playlist Named_Storage */
+                    /** @var Named_Storage $playlist */
                     $playlist = $playlists->get($id);
                     hd_debug_print("empty id for: " . $playlist->name);
                 } else {
@@ -1559,7 +1559,7 @@ class Default_Dune_Plugin implements DunePlugin
         if ($playlists->has("")) {
             hd_debug_print("Playlist storage contains incorrect data. Fixing...");
             $new_playlists = new Hashed_Array();
-            /** @var  $value Named_Storage */
+            /** @var Named_Storage $value  */
             foreach ($playlists as $key => $value) {
                 if (empty($key)) {
                     $provider = $this->create_provider_class($value->params[PARAM_PROVIDER]);
@@ -3529,7 +3529,7 @@ class Default_Dune_Plugin implements DunePlugin
                     if (empty($line)) continue;
                     if (strpos($line, "Output") !== false) break;
                     if (strpos($line, "Stream") !== false) {
-                        $info .= preg_replace("/ \([\[].*\)| \[.*\]|, [0-9k\.]+ tb[rcn]|, q=[0-9\-]+/", "", $line) . PHP_EOL;
+                        $info .= preg_replace("/ \(\[.*\)| \[.*]|, [0-9k.]+ tb[rcn]|, q=[0-9\-]+/", "", $line) . PHP_EOL;
                     }
                 }
             }
@@ -3665,17 +3665,11 @@ class Default_Dune_Plugin implements DunePlugin
 
         $lang = strtolower(TR::get_current_language());
         if (empty($history_txt)) {
-            $doc = Curl_Wrapper::simple_download_content(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
-            if ($doc === false) {
-                hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
-                $path = get_install_path("changelog.$lang.md");
-                if (!file_exists($path)) {
-                    $path = get_install_path("changelog.english.md");
-                }
-                $doc = file_get_contents($path);
+            $path = get_install_path("changelog.$lang.md");
+            if (!file_exists($path)) {
+                $path = get_install_path("changelog.english.md");
             }
-
-            $history_txt = str_replace(array("###", "\r"), '', $doc);
+            $history_txt = str_replace(array("###", "\r"), '', file_get_contents($path));
         }
 
         $defs = array();
