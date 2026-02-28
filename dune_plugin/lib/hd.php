@@ -354,7 +354,7 @@ class HD
     /**
      * @param string $url
      * @param resource $in_file
-     * @param integer $in_file_size
+     * @param int $in_file_size
      * @return bool|string
      * @throws Exception
      */
@@ -723,7 +723,7 @@ class HD
 
     /**
      * @param string $path
-     * @param boolean $preserve_keys
+     * @param bool $preserve_keys
      * @return array|mixed
      */
     public static function get_data_items($path, $preserve_keys = true, $json = true)
@@ -733,7 +733,7 @@ class HD
 
     /**
      * @param string $path
-     * @param boolean $preserve_keys
+     * @param bool $preserve_keys
      * @return array|mixed
      */
     public static function get_items($path, $preserve_keys = true, $json = true)

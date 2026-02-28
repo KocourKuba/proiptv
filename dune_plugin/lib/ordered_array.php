@@ -53,7 +53,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
      */
     protected $saved_pos = 0;
     /**
-     * @var integer
+     * @var int
      */
     private $pos = 0;
 

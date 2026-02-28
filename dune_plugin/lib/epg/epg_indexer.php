@@ -533,7 +533,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      * @param Channel $channel
      * @return array
      */
-    abstract protected function load_program_index($channel);
+    abstract public function load_program_index($channel);
 
     ///////////////////////////////////////////////////////////////////////////////
     /// protected methods

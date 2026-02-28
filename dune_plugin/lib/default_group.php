@@ -74,12 +74,12 @@ class Default_Group extends Json_Serializer implements Group
     protected $_icon_url;
 
     /**
-     * @var boolean
+     * @var bool
      */
     protected $_adult;
 
     /**
-     * @var boolean
+     * @var bool
      */
     protected $_disabled;
 

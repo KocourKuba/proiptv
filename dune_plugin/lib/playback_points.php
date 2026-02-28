@@ -142,7 +142,7 @@ class Playback_Points
 
     /**
      * @param string $channel_id
-     * @param integer $archive_ts
+     * @param int $archive_ts
      */
     public function push_point($channel_id, $archive_ts)
     {

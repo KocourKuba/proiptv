@@ -59,7 +59,7 @@ class Entry extends Json_Serializer
     protected $group_title;
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function isM3U_Header()
     {

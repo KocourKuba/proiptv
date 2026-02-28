@@ -673,7 +673,7 @@ class Starnet_Tv implements User_Input_Handler
 
         // move group icons to orders
         if ($this->plugin->has_setting(PARAM_GROUPS_ICONS)) {
-            /** @var $old_group_icons Hashed_Array */
+            /** @var Hashed_Array $old_group_icons */
             $old_group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
             $this->plugin->remove_setting(PARAM_GROUPS_ICONS);
             if ($old_group_icons->size() !== 0) {
