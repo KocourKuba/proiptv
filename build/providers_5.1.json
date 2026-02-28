@@ -551,7 +551,7 @@
         },
         "domains": {
           "ottg.app": "ottg.app",
-          "ottg.cc": "ottg.cc"
+          "sprintplay.ru": "sprintplay.ru"
         },
         "playlists": {
           "standard": {
@@ -579,7 +579,12 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)(?:\\/.+\\.m3u8|\\.ts)$/",
-        "ignore_groups": ["Video on Demand","Сериалы"],
+        "ignore_groups": [
+          "Video on Demand",
+          "Кино по запросу",
+          "Сериалы",
+          "Шоу"
+        ],
         "epg_presets": [
           {
             "name": "sharaclub"
@@ -1143,11 +1148,10 @@
       "logo": "http://iptv.esalecrm.net/res/logo_satq.png",
       "provider_url": "https://satq.tv/",
       "api_commands": {
-        "get_playlist": "http://iptv11.com/1/{PASSWORD}.m3u8"
+        "get_playlist": "http://{DOMAIN_ID}/{PASSWORD}.m3u"
       },
       "config": {
-        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
-        "ext_params": true,
+        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+?token=(?<token>.+)$/",
         "epg_presets": [
           {
             "name": "drm",
@@ -1158,6 +1162,13 @@
         "url_subst": {
           "regex": "/^(.+\\/\\/).+(\\/[^\\/]+\\/[^\\/]+\\/.+)$/",
           "replace": "$1{SERVER_ID}$2"
+        },
+        "domains": {
+          "iptv11.com": "Germany",
+          "ru.iptv11.com": "Russia",
+          "ua.iptv11.com": "Ukraine",
+          "pl.itvago.com": "CDN1",
+          "satq.tv/iptv": "CDN2"
         },
         "servers": {
           "cdn.iptv11.com": "Germany",
@@ -1202,7 +1213,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_sharaclub.png",
       "provider_url": "https://shara.club/",
-      "api_url": "http://list.playtv.pro/api/players.php",
+      "api_url": "http://list.sharatv.pro/api/players.php",
       "api_commands": {
         "get_playlist": "http://{PLAYLIST}/tv_live-{STREAM_ID}/{LOGIN}-{PASSWORD}",
         "get_vod": "http://{PLAYLIST}/kino-full/{LOGIN}-{PASSWORD}",
@@ -1246,7 +1257,8 @@
           {
             "name": "drm",
             "title": "epg.drm-play",
-            "alias": "sharavoz"
+            "alias": "sharavoz",
+            "epg_map": "id"
           }
         ],
         "ext_params": true,
@@ -1290,7 +1302,7 @@
       "logo": "http://iptv.esalecrm.net/res/logo_shuratv.png",
       "provider_url": "http://shura.tv/b/",
       "api_commands": {
-        "get_playlist": "http://pl.tvshka.net/?uid={PASSWORD}&srv={SERVER_ID}&type=halva"
+        "get_playlist": "http://shura.tv/b/playlist.php?uid={PASSWORD}&srv=1&type=halva"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$/",
@@ -1299,11 +1311,6 @@
             "name": "shuratv"
           }
         ],
-        "ext_params": true,
-        "servers": {
-          "0": "Server 1",
-          "1": "Server 2"
-        },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1414,6 +1421,31 @@
     },
     {
       "enable": true,
+      "id": "tvboom",
+      "name": "TV Boom",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_tvboom.png",
+      "provider_url": "https://tvboom.vip/",
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
+        "epg_presets": [],
+        "playlists": {
+          "default": {
+            "name": "Default",
+            "url": "https://tvboom.vip/{LOGIN}/{PASSWORD}/hls{SERVER_ID}playlist.m3u8"
+          }
+        },
+        "servers": {
+          "/": "Germany",
+          "/rucdn/": "Russia 1",
+          "/rucdn2/": "Russia 2",
+          "/autocdn/": "Cloud"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "tvclub",
       "name": "TV Club",
       "type": "login",
@@ -1478,7 +1510,8 @@
         },
         "domains": {
           "tv.team": "tv.team",
-          "tvteam.eu": "tvteam.eu"
+          "tvteam.eu": "tvteam.eu",
+          "tvteam.pro": "tvteam.pro"
         },
         "streams": {
           "mono.m3u8": "HLS",
@@ -1534,11 +1567,22 @@
       "provider_url": "https://uspeh.tv/",
       "api_url": "https://m3u.admuspeh.my",
       "api_commands": {
-        "get_playlist": "{API}/hls/token={PASSWORD}"
+        "get_playlist": "https://{SERVER_ID}/token={PASSWORD}"
       },
       "config": {
         "id_map": "tvg-id",
-        "vod_parser": "/^(?<title>[^(]+)\\s\\((?<year>\\d{4})\\)$/",
+        "ext_params": true,
+        "epg_presets": [
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "uspeh"
+          }
+        ],
+        "servers": {
+          "m3u.biluspeh.com/hls": "EU",
+          "m3u.uspeh-bil.ru/ru": "Russia"
+        },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1637,6 +1681,16 @@
           }
         },
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>[^\\/]+)\\/(?<id>.+)\\/(?<var1>.+)\\.m3u8\\?token=(?<token>.+)$/",
+        "url_subst": {
+          "regex": "/^(.+:\\/\\/)[^\\/]+(.+)$/",
+          "replace": "$1{SERVER_ID}$2"
+        },
+        "servers": {
+          "ru.vivamax.pro": "Russia",
+          "msk.vivamax.pro": "Moscow",
+          "de.vivamax.pro": "Germany",
+          "fr.vivamax.pro": "France"
+        },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },

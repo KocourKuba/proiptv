@@ -15,10 +15,6 @@ popd
 del dune_plugin\changelog*.md   >nul 2>&1
 del dune_plugin\providers*.json >nul 2>&1
 
-echo copy to Diskstation
-copy /Y dune_plugin_proiptv.zip \\DISKSTATION\Downloads\ >nul
-echo.
-
 if '%1' == 'debug' goto :EOF
 
 choice /T 5 /D N /M "Upload"
@@ -29,7 +25,6 @@ git tag %VERSION%.%BUILD%
 git.exe push --force  --tags  -- "origin" master:master
 
 echo copy to Dropbox
-copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\ >nul
 copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
 copy /Y .\dune_plugin_proiptv.zip .\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
 copy /Y .\build\providers_%VERSION%.json .\providers_%VERSION%.json >nul
