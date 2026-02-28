@@ -1,31 +1,36 @@
 # ProIPTV
+**English version**
 
 Universal **Dune HD** plugin with M3U playlist and XMLTV EPG support. Also, it has many presets for the most popular IPTV providers.
 
 Minimal firmware revision supported by the current version of the plugin (7.x) is R22.
 
-For Dune HD ATV devices (Homatics, Boxy, Premier) there are some limitations like network access, Sleep timer, etc.
+For devices (Android-based), with a revision lower than R22, the latest version is [6.2.1358](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1358) Strongly recommend to update firmware to r22
 
-For devices (Android-based), with a revision lower than R22, the latest version is [6.2.1358](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1358)
+For old devices (Sigma chipset-based, non-Android), with a revision R11 or higher, the latest version is [5.1.1028](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1028)
 
-For old devices (Sigma chipset-based, non-Android), with a revision R11 or higher, the latest version is [5.1.1014](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1024)
+For Dune HD ATV devices (Homatics, Boxy, Premier) and Dune HD Whale TV there are some limitations like network access, Sleep timer, etc.
 
+---
+
+**Russian version**
 
 Универсальный плагин M3U плейлистов для плейеров **Dune HD**, с поддержкой XMLTV EPG. Так же поддерживаются наиболее известные провайдеры IPTV в виде готовых шаблонов.
 
 Минимальная версия прошивки поддерживаемая текущей версией плагина (7.x) - R22.
 
-Для приставок Dune HD на базе ATV (Homatics, Boxy, Premier) есть ограничения в функциональности. Сеть, таймер выключения.
+Для приставок (на Android) с ревизией прошивки меньше R22 - актуальная версия [6.2.1358](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1358) рекомендую обновить прошивку до r22
 
-Для приставок (на Android) с ревизией прошивки меньше R22 - актуальная версия [6.2.1358](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1358)
+Для старых приставок (на чипсете Sigma, не Android), с ревизией прошивки R11 и выше - актуальная версия [5.1.1028](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1028)
 
-Для старых приставок (на чипсете Sigma, не Android), с ревизией прошивки R11 и выше - актуальная версия [5.1.1024](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1024)
+Для приставок Dune HD на базе ATV (Homatics, Boxy, Premier) и Dune HD Whale TV есть ограничения в функциональности. Сеть, таймер выключения.
+
 <details>
 <summary><b>Supported IPTV providers/Поддерживаемые провайдеры IPTV</b></summary>
 
 01. [Antifriz](https://antifriz.tv/)
 02. [BCU Media](https://bcumedia.pro/)
-03. [iEdem](https://iedem.tv/) / [iLook](https://ilook.tv/) / [JinoPro](https://jinopro.net/)
+03. [iEdem](https://iedem.tv/) / [iLook](https://ilook.tv/) / [JinoPro](https://jinopro.net/) / [MeLord](https://melord.net/) / [TVLider](https://tvlider.net/)
 04. [Fox](http://info.fox-tv.fun/)
 05. [ITV Live](https://itv.live/)
 06. [Glanz](http://ottg.cc/)
