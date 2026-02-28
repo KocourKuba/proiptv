@@ -1,4 +1,7 @@
-﻿### Version 5.1.1024
+﻿### Version 5.1.1028
+- Added missing provider logos to the plugin delivery
+
+### Version 5.1.1024
 - Added missing icons to the plugin delivery
 - Updated default configuration
 - Fixed working with EPG Internet sources if EPG ID contains Cyrillic symbols
