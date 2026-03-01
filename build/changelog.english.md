@@ -1,4 +1,16 @@
-﻿### Version 7.1.1596
+﻿### Version 7.1.1620
+- Fixed a plugin crash when calling from the system settings section
+- Added support for multiple VOD playlists (for the future)
+- The setting for selecting Internet sources has been moved to the plugin settings database (now saved in the backup)
+- More information about the VOD type (Server/M3U)
+- Updated translation
+- Removed logos of providers no longer supported by the plugin
+- Configuration: New domains for Glanz
+- Configuration: Added EU/RU playlist mirrors for Uspeh (changed from switching server)
+- Configuration: Added Allway TV provider (https://allway.tv/) - a non-standard clone of Edem, but without a VPortal
+- Configuration: Added IPTV Cinema provider (https://iptvcinema.ru/)
+
+### Version 7.1.1596
 - The plugin interface settings window was not shown
 - Additional check for the path to the icon pointing to a local file
 
