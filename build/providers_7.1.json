@@ -1881,15 +1881,15 @@
             "alias": "uspeh"
           }
         ],
+        "playlist_mirrors": {
+          "EU": "https://m3u.biluspeh.com/hls",
+          "RU": "https://m3u.uspeh-bil.ru/ru"
+        },
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "https://{SERVER_ID}/token={PASSWORD}"
+            "url": "{MIRROR}/token={PASSWORD}"
           }
-        },
-        "servers": {
-          "m3u.biluspeh.com/hls": "EU",
-          "m3u.uspeh-bil.ru/ru": "Russia"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
