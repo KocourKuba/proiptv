@@ -263,10 +263,6 @@
           "mono.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
-        "xmltv_sources": [
-          "http://epg.team/tvteam.1.1.xml.gz",
-          "http://epg.team/tvteam.3.1.xml.tar.gz"
-        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
         "url_subst": {
           "regex": "/^(.+\\/)mono\\.m3u8(.+)$/",
@@ -311,6 +307,36 @@
           "ua.online24.pm": "Ukraine"
         },
         "vod_parser": "/^(?<title>[^|]+)\\s\\|(?<year>\\d+)\\|\\s?IMDB\\:(?<rating>.+)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "allwaytv",
+      "name": "Allway TV",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_allwaytv.png",
+      "provider_url": "https://allway.tv/",
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/.+\\/iptv\\/users\\/(?<login>.+)\\/(?<id>.+)\\.m3u8$/",
+        "epg_presets": [
+          {
+            "name": "drm-play",
+            "alias": "edem"
+          }
+        ],
+        "playlists": {
+          "default": {
+            "name": "Default",
+            "url": "http://allway.tv/iptv/users/{PASSWORD}/playlist.m3u"
+          }
+        },
+        "replace_icon_patterns": [
+          {
+            "search": "|/img/|",
+            "replace": "/img2/"
+          }
+        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -731,6 +757,28 @@
           "ca.seetv.cc": "Canada",
           "gr.seetv.cc": "Greece",
           "ukr.seetv.cc": "Ukraine"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "iptvcinema",
+      "name": "IPTV Cinema",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_iptvcinema.png",
+      "provider_url": "https://iptvcinema.ru/",
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
+        "playlists": {
+          "default": {
+            "name": "Default",
+            "url": "https://iptvcinema.ru/{LOGIN}/{PASSWORD}/playlist.{STREAM_ID}"
+          }
+        },
+        "streams": {
+          "m3u8": "HLS",
+          "m3u": "MPEG-TS"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }

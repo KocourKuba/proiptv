@@ -321,6 +321,34 @@
     },
     {
       "enable": true,
+      "id": "allwaytv",
+      "name": "Allway TV",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_allwaytv.png",
+      "provider_url": "https://allway.tv/",
+      "api_commands": {
+        "get_playlist": "http://allway.tv/iptv/users/{PASSWORD}/playlist.m3u"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/.+\\/iptv\\/users\\/(?<login>.+)\\/(?<id>.+)\\.m3u8$/",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "edem"
+          }
+        ],
+        "replace_icon_patterns": [
+          {
+            "search": "|/img/|",
+            "replace": "/img2/"
+          }
+        ],
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "bcumedia",
       "name": "BCU Media",
       "type": "pin",
@@ -635,6 +663,25 @@
           "ca.seetv.cc": "Canada",
           "gr.seetv.cc": "Greece",
           "ukr.seetv.cc": "Ukraine"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "iptvcinema",
+      "name": "IPTV Cinema",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_iptvcinema.png",
+      "provider_url": "https://iptvcinema.ru/",
+      "api_commands": {
+        "get_playlist": "https://iptvcinema.ru/{LOGIN}/{PASSWORD}/playlist.{STREAM_ID}"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
+        "streams": {
+          "m3u8": "HLS",
+          "m3u": "MPEG-TS"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }

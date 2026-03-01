@@ -80,6 +80,8 @@ For Dune HD ATV devices (Homatics, Boxy, Premier) and Dune HD Whale TV there are
 50. [2TV](https://2tv.biz/)
 51. [Skaz TV](https://skaz.tv/)
 52. [VivaMax](https://t.me/vivamax_portal/)
+53. [Allway TV](https://allway.tv/)
+54. [IPTV Cinema](https://iptvcinema.ru/)
 </details>
 
 ## Donate
