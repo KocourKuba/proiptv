@@ -703,7 +703,7 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "http://file.ipstr.im/iptv/m3u_plus-{PASSWORD}{STREAM_ID}"
+            "url": "http://list.ipstr.im/80/{STREAM_ID}_plus/{PASSWORD}?filter=only_live"
           }
         },
         "playlists_vod": {
@@ -713,8 +713,8 @@
           }
         },
         "streams": {
-          "-m3u8": "HLS",
-          "?": "MPEG-TS"
+          "m3u8": "HLS",
+          "m3u": "MPEG-TS"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
