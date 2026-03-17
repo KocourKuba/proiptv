@@ -1875,12 +1875,7 @@
       "provider_url": "https://uspeh.tv/",
       "config": {
         "id_map": "tvg-id",
-        "epg_presets": [
-          {
-            "name": "drm-play",
-            "alias": "uspeh"
-          }
-        ],
+        "epg_presets": [],
         "playlist_mirrors": {
           "EU": "https://m3u.biluspeh.com/hls",
           "RU": "https://m3u.uspeh-bil.ru/ru"
