@@ -128,9 +128,9 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_print("NewUI support:       " . var_export(HD::rows_api_support(), true));
         hd_print("NewUI enabled:       " . var_export(Starnet_Epfs_Handler::$enabled, true));
         hd_print("Ext EPG support:     " . var_export(is_ext_epg_supported(), true));
-        hd_print("Auto resume enabled: " . safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_RESUME));
-        hd_print("Auto play enabled:   " . safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_PLAY));
-        hd_print("Debug log enabled:   " . safe_get_value($plugin_cookies,PARAM_COOKIE_ENABLE_DEBUG));
+        hd_print("Auto resume enabled: " . safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_RESUME, SwitchOnOff::off));
+        hd_print("Auto play enabled:   " . safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_PLAY, SwitchOnOff::off));
+        hd_print("Debug log enabled:   " . safe_get_value($plugin_cookies,PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off));
         hd_print_separator();
 
         hd_debug_print("Plugin loading complete.");

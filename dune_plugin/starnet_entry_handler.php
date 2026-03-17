@@ -419,10 +419,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         $auto_play = false;
         $mandatory_playback = (int)safe_get_value($user_input, PARAM_MANDATORY_PLAYBACK);
-        $auto_resume = safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_RESUME);
+        $auto_resume = safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_RESUME, SwitchOnOff::off);
 
         if ($user_input->action_id === self::ACTION_LAUNCH) {
-            $auto_play = safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_PLAY);
+            $auto_play = safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_PLAY, SwitchOnOff::off);
             hd_debug_print("Play button used: $mandatory_playback");
             hd_debug_print("Auto play:        $auto_play");
 
