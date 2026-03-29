@@ -1,5 +1,5 @@
 ﻿<?php
-require_once("../shared_scripts/crm_settings.php");
+require_once("../shared_scripts/iptv_settings.php");
 require_once("../shared_scripts/MySQL.php");
 
 $DB = new db_driver();
@@ -13,7 +13,7 @@ if(!$DB->connect()) {
 
 $prev_day = date("m.d.Y");
 
-$res = $DB->query("SELECT model, count(model) AS cnt FROM statistics GROUP BY model ORDER BY model ASC");
+$res = $DB->query("SELECT model, count(model) AS cnt FROM statistics GROUP BY model ORDER BY model");
 if ($res) {
     $stat_all = '';
     while($row = $DB->fetch_row()) {

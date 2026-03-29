@@ -1,5 +1,6 @@
 <?php
-require_once($_SERVER["DOCUMENT_ROOT"] . "/shared_scripts/Utils.php");
+
+require_once($_SERVER["DOCUMENT_ROOT"] . "/shared_scripts/iptv_utils.php");
 
 $ip = get_ip();
 $country = IP2Country($ip);

@@ -1,7 +1,7 @@
 <?php
-require_once($_SERVER["DOCUMENT_ROOT"] . "/shared_scripts/Utils.php");
+require_once($_SERVER["DOCUMENT_ROOT"] . "/shared_scripts/iptv_utils.php");
 
-$white_list = array();
+$white_list = [];
 $file = file_get_contents("whitelist.txt");
 foreach (explode(PHP_EOL, $file) as $l) {
     if (!empty($l)) {
@@ -76,7 +76,7 @@ $DB->obj['sql_user'] = IPTV_USER;
 $DB->obj['sql_pass'] = IPTV_PASSWORD;
 
 if($DB->connect()) {
-    $data = array();
+    $data = [];
     $data['model'] = $model;
     $data['firmware'] = $firmware;
     $data['revision'] = $revision;
