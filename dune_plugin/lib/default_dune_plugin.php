@@ -3508,6 +3508,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $curl_wrapper = Curl_Wrapper::getInstance();
                 $curl_wrapper->set_options(array(CURLOPT_INFILE => $handle, CURLOPT_INFILESIZE => filesize($zip_file)));
                 $curl_wrapper->set_send_headers(array("accept: */*", "Expect: 100-continue", "Content-Type: application/zip"));
+                $curl_wrapper->set_download_timeout(300);
                 $content = $curl_wrapper->download_content($url);
 
                 $http_code = Curl_Wrapper::get_http_code();
