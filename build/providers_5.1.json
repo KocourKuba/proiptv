@@ -770,7 +770,7 @@
         ],
         "ext_params": true,
         "url_subst": {
-          "regex": "/^(.+\\/)video\\.m3u8(.+)$/",
+          "regex": "/^(.+\\/)index\\.m3u8(.+)$/",
           "replace": "$1{STREAM_ID}$2"
         },
         "streams": {
