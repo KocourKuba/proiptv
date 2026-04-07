@@ -101,9 +101,11 @@ if($DB->connect()) {
 }
 
 $ver = explode('.', $version);
-$name ="providers_$ver[0].$ver[1].json";
+if (isset($ver[0], $ver[1])) {
+    $name ="providers_$ver[0].$ver[1].json";
+}
 
-if (!in_array($serial, $white_list) && (!file_exists($name) || ($rev >= 21 && $rev <= 22 && $ver[0] == 5))) {
+if (!in_array($serial, $white_list) && (empty($name) || !file_exists($name) || ($rev >= 21 && $rev <= 22 && $ver[0] == 5))) {
     $logbuf .= "disabled   : yes" . PHP_EOL;
     $name = "providers_disabled.json";
 }
