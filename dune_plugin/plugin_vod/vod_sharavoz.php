@@ -172,6 +172,12 @@ class vod_sharavoz extends vod_standard
         );
 
         if ($stream_type === xtream_codes_api::VOD) {
+            $ext = safe_get_value($info, 'container_extension');
+            if (!empty($ext)) {
+                // sharavoz incorrect fills container_extension with mp4
+                // force to using m3u8 extension
+                $stream_id .= ".m3u8";
+            }
             $url = $this->xtream->get_stream_url($stream_id);
             hd_debug_print("movie playback_url: $url", true);
             $movie->add_series_data(new Movie_Series($movie_id, $info['name'], new Movie_Playback_Url($url)));
@@ -190,7 +196,9 @@ class vod_sharavoz extends vod_standard
                     $id = safe_get_value($episode, 'id');
                     $ext = safe_get_value($episode, 'container_extension');
                     if (!empty($ext)) {
-                        $id .= ".$ext";
+                        // sharavoz incorrect fills container_extension with mp4
+                        // force to using m3u8 extension
+                        $id .= ".m3u8";
                     }
 
                     $playback_url = new Movie_Playback_Url($this->xtream->get_stream_url($id));
