@@ -209,19 +209,9 @@ class vod_edem extends vod_standard
     public function getMovieList($query_id)
     {
         hd_debug_print(null, true);
-        hd_debug_print("getMovieList: $query_id");
 
-        $current_offset = $this->get_current_page_index($query_id);
-        if ($current_offset < 0) {
-            return array();
-        }
-
-        $post_params = array('cmd' => "flicks", 'fid' => (int)$query_id, 'limit' => 50, 'offset' => $current_offset);
-        $movies = $this->CollectQueryResult($query_id, $this->make_json_request($post_params));
-        if ($current_offset === $this->get_current_page_index($query_id)) {
-            $this->stop_page_index($query_id);
-        }
-        return $movies;
+        $post_params = array('cmd' => "flicks", 'fid' => (int)$query_id);
+        return $this->CollectQueryResult($query_id, $post_params);
     }
 
     /**
@@ -230,17 +220,9 @@ class vod_edem extends vod_standard
     public function getSearchList($keyword)
     {
         hd_debug_print(null, true);
-        hd_debug_print("getSearchList: $keyword");
 
-        if ($this->is_page_index_stopped($keyword)) {
-            return array();
-        }
-
-        $post_params = array('cmd' => "search", 'query' => $keyword);
-        $movies = $this->CollectQueryResult($keyword, $this->make_json_request($post_params, false));
-        // Search request return all found data without limit
-        $this->stop_page_index($keyword);
-        return $movies;
+        $post_params = array('cmd' => 'search', 'query' => $keyword);
+        return $this->CollectQueryResult($keyword, $post_params);
     }
 
     /**
@@ -249,7 +231,6 @@ class vod_edem extends vod_standard
     public function getFilterList($query_id)
     {
         hd_debug_print(null, true);
-        hd_debug_print("getFilterList: $query_id");
 
         $pairs = explode(",", $query_id);
         $post_params = array();
@@ -273,39 +254,41 @@ class vod_edem extends vod_standard
             return array();
         }
 
-        // Filter response limited by 30 items by default
-        $current_offset = $this->get_current_page_index($query_id);
-        if ($current_offset < 0) {
-            return array();
-        }
-
         $post_params['filter'] = 'on';
-        $post_params['limit'] = 50;
-        $post_params['offset'] = $current_offset;
-        $movies = $this->CollectQueryResult($query_id, $this->make_json_request($post_params, false));
-        if ($current_offset === $this->get_current_page_index($query_id)) {
-            $this->stop_page_index($query_id);
-        }
-        return $movies;
+        return $this->CollectQueryResult($query_id, $post_params);
     }
 
     ///////////////////////////////////////////////////////////////////////
 
     /**
      * @param string $query_id
-     * @param array $requestData
+     * @param array $post_params
      * @return array
      */
-    protected function CollectQueryResult($query_id, $requestData)
+    protected function CollectQueryResult($query_id, $post_params)
     {
         hd_debug_print("query_id: $query_id", true);
+
         $movies = array();
+        $current_offset = $this->get_current_page_index($query_id);
+        if ($current_offset < 0) {
+            return $movies;
+        }
+
+        $post_params['limit'] = 50;
+        $post_params['offset'] = $current_offset;
+
+        $requestData = $this->make_json_request($post_params);
+
         if ($requestData === false || $requestData === null) {
+            hd_debug_print("Bad json response with params: " . json_encode($post_params), true);
+            $this->stop_page_index($query_id);
             return $movies;
         }
 
         if (!isset($requestData['items'])) {
             hd_debug_print("No items in query! " . json_format_unescaped($requestData), true);
+            $this->stop_page_index($query_id);
             return $movies;
         }
 
@@ -330,6 +313,10 @@ class vod_edem extends vod_standard
                 $this->plugin->vod->set_cached_short_movie($movie);
                 $movies[] = $movie;
             }
+        }
+
+        if ($current_offset === $this->get_current_page_index($query_id)) {
+            $this->stop_page_index($query_id);
         }
 
         hd_debug_print("Movies found: " . count($movies));
