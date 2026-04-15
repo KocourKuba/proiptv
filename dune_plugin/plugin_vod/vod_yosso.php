@@ -205,7 +205,7 @@ class vod_yosso extends vod_standard
 
             $collection_type = safe_get_value($collection, 'CollectionType');
             hd_debug_print("Collection type: $collection_type");
-            if ($collection_type === jellyfin_api::TVSHOWS) {
+            if ($collection_type === jellyfin_api::TVSHOWS_TYPE) {
                 $sid .= '_' . jellyfin_api::SERIES;
             } else if (empty($collection_type) || $collection_type === jellyfin_api::MOVIES) {
                 $sid .= '_' . jellyfin_api::MOVIES;

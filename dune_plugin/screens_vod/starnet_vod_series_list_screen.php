@@ -105,6 +105,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_WATCHED, TR::t('vod_screen_viewed_not_viewed'));
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
         $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
+        $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
 
         return $actions;
     }
@@ -219,6 +220,9 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
                     array('external' => true));
 
                 return Action_Factory::show_popup_menu($menu_items);
+
+            case GUI_EVENT_KEY_INFO:
+                return $this->plugin->do_show_vod_info($selected_media_url);
 
             default:
         }

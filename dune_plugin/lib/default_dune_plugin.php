@@ -2099,7 +2099,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        if ($this->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
+        if (!is_null($channel_id) && $this->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
             $zoom_data = $this->get_channel_zoom($channel_id);
             if (!empty($zoom_data)) {
                 $dune_params[COLUMN_ZOOM] = $zoom_data;
@@ -2531,12 +2531,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $title .= " ({$provider->getName()})";
                 }
                 $icon_file = $provider->getLogo();
-            }
 
-            $playlists = $provider->GetPlaylistsIptv();
-            $provider_playlist_id = safe_get_value($playlist_parameters, PARAM_PLAYLIST_IPTV_ID);
-            if ($provider_playlist_id !== PARAM_DEFAULT_CONFIG_PLAYLIST_ID) {
-                $title .= " - {$playlists[$provider_playlist_id][COLUMN_NAME]}";
+                $playlists = $provider->GetPlaylistsIptv();
+                $provider_playlist_id = safe_get_value($playlist_parameters, PARAM_PLAYLIST_IPTV_ID);
+                if ($provider_playlist_id !== PARAM_DEFAULT_CONFIG_PLAYLIST_ID) {
+                    $title .= " - {$playlists[$provider_playlist_id][COLUMN_NAME]}";
+                }
             }
         }
 
@@ -2688,12 +2688,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 if ($title !== $provider->getName()) {
                     $title .= " ({$provider->getName()})";
                 }
-            }
 
-            $playlists = $provider->GetPlaylistsIptv();
-            $provider_playlist_id = safe_get_value($playlist_parameters, PARAM_PLAYLIST_IPTV_ID);
-            if ($provider_playlist_id !== PARAM_DEFAULT_CONFIG_PLAYLIST_ID) {
-                $title .= " - {$playlists[$provider_playlist_id][COLUMN_NAME]}";
+                $playlists = $provider->GetPlaylistsIptv();
+                $provider_playlist_id = safe_get_value($playlist_parameters, PARAM_PLAYLIST_IPTV_ID);
+                if ($provider_playlist_id !== PARAM_DEFAULT_CONFIG_PLAYLIST_ID) {
+                    $title .= " - {$playlists[$provider_playlist_id][COLUMN_NAME]}";
+                }
             }
         }
 
@@ -2898,6 +2898,79 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 GUI_EVENT_KEY_SUBTITLE, null, 'Show EPG',
                 null, Control_Factory::DLG_BUTTON_WIDTH, true);
         }
+
+        return Action_Factory::show_dialog($defs, TR::t('channel_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
+    }
+
+    /**
+     * @param MediaURL $media_url
+     * @return array|null
+     */
+    public function do_show_vod_info($media_url)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print($media_url, true);
+
+        $vod_info = $this->vod->get_vod_info($media_url);
+        if (empty($vod_info)) {
+            return null;
+        }
+
+        $idx = $vod_info[PluginVodInfo::initial_series_ndx];
+        $series = $vod_info[PluginVodInfo::series][$idx];
+        $stream_url = $series[PluginVodSeriesInfo::playback_url];
+
+        Control_Factory::add_vgap($defs, -20);
+        self::format_smart_label($defs, "ID:", $vod_info[PluginVodInfo::id]);
+        self::format_smart_label($defs, TR::load('name'), $series[PluginVodSeriesInfo::name]);
+
+        $dune_params_pos = strpos($stream_url, HD::DUNE_PARAMS_MAGIC);
+        if ($dune_params_pos !== false) {
+            $magic = substr($stream_url, $dune_params_pos + strlen(HD::DUNE_PARAMS_MAGIC));
+            $stream_url = substr($stream_url, 0, $dune_params_pos);
+            Control_Factory::add_vgap($defs, 10);
+            self::format_smart_label($defs, "dune_params:", $magic);
+        }
+
+        self::format_smart_label($defs, TR::load('url'), htmlspecialchars($stream_url));
+
+        if (!empty($stream_url) && !is_limited_apk()) {
+            $descriptors = array(
+                0 => array("pipe", "r"), // stdin
+                1 => array("pipe", "w"), // sdout
+                2 => array("pipe", "w"), // stderr
+            );
+
+            hd_debug_print("Get media info for: $stream_url");
+            /** @var array $pipes */
+            $process = proc_open(
+                get_install_path("bin/media_check.sh $stream_url"),
+                $descriptors,
+                $pipes);
+
+            if (is_resource($process)) {
+                $output = stream_get_contents($pipes[1]);
+
+                fclose($pipes[1]);
+                proc_close($process);
+
+                hd_debug_print($output, true);
+                Control_Factory::add_vgap($defs, 30);
+                foreach (explode("\n", $output) as $line) {
+                    $line = trim($line);
+                    if (empty($line)) continue;
+                    if (strpos($line, "Output") !== false) break;
+                    if (strpos($line, "Stream") !== false) {
+                        $line = substr($line, 7);
+                        $line = preg_replace("/ \(\[.*\)| \[.*]|, [0-9k.]+ tb[rcn]|, q=[0-9\-]+/", "", $line);
+                        self::format_smart_label($defs, TR::load('stream'), $line);
+                    }
+                }
+            }
+        }
+
+        Control_Factory::add_vgap($defs, 30);
+        Control_Factory::add_ok_button($defs, true);
 
         return Action_Factory::show_dialog($defs, TR::t('channel_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
     }

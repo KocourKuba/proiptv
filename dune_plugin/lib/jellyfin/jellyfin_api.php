@@ -5,7 +5,8 @@ class jellyfin_api
 {
     const MOVIES = "Movie";
     const SERIES = "Series";
-    const TVSHOWS = "tvshows";
+    const TVSHOWS_TYPE = "tvshows";
+    const MOVIES_TYPE = "movies";
 
     /**
      * @var string
@@ -101,11 +102,11 @@ class jellyfin_api
      */
     public function getUserViews($param = null)
     {
-        $query = 'UserViews';
+        $path = 'UserViews';
         if (!is_null($param)) {
-            $query .= "/$param";
+            $path .= "/$param";
         }
-        return $this->get($query, array('userId' => $this->userId));
+        return $this->get($path, array('userId' => $this->userId));
     }
 
     /**
@@ -119,6 +120,7 @@ class jellyfin_api
         if (isset($query['ParentId'])) {
             $query['ParentId'] = urlencode($query['ParentId']);
         }
+        $query['userId'] = $this->userId;
 
         return $this->get('Items', $query);
     }
@@ -188,8 +190,7 @@ class jellyfin_api
      */
     public function getPlayUrl($itemId, $media_source = array(), $audioIndex = -1)
     {
-        $query['DeviceId'] = $this->deviceId;
-        $query['apiKey'] = $this->accessToken;
+        $this->updateQuery($query);
         $query['MediaSourceId'] = isset($media_source['Id']) ? $media_source['Id'] : $itemId;
         if ($audioIndex !== -1) {
             $query['AudioStreamIndex'] = $audioIndex;
@@ -198,15 +199,33 @@ class jellyfin_api
     }
 
     /**
-     * get play url
+     * get download url
      *
      * @param string $itemId
      * @return string
      */
     public function getDownloadUrl($itemId)
     {
-        $query['apiKey'] = $this->accessToken;
+        $this->updateQuery($query);
         return $this->baseUrl . '/Items/' . urlencode($itemId) . '/Download?' . http_build_query($query);
+    }
+
+    /**
+     * get play url
+     *
+     * @param string $itemId
+     * @param array $media_source
+     * @param int $audioIndex
+     * @return string
+     */
+    public function getStreamUrl($itemId, $media_source = array(), $audioIndex = -1)
+    {
+        $this->updateQuery($query);
+        $query['MediaSourceId'] = isset($media_source['Id']) ? $media_source['Id'] : $itemId;
+        if ($audioIndex !== -1) {
+            $query['AudioStreamIndex'] = $audioIndex;
+        }
+        return $this->baseUrl . '/Videos/' . urlencode($itemId) . '/stream.mp4?' . http_build_query($query);
     }
 
     // ---------------- Internal ----------------
@@ -220,6 +239,19 @@ class jellyfin_api
     public function getFilters($query = array())
     {
         return $this->get('Items/Filters', $query);
+    }
+
+    /**
+     * Update query for necessary items
+     *
+     * @param array $query
+     * @return void
+     */
+    private function updateQuery(&$query)
+    {
+        $query['DeviceId'] = $this->deviceId;
+        $query['apiKey'] = $this->accessToken;
+        $query['userId'] = $this->userId;
     }
 
     /**
