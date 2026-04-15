@@ -2685,6 +2685,27 @@ function json_format($content, $options = 0)
 }
 
 /**
+ * return wrapped string as array
+ *
+ * @param string $long_string
+ * @param int $max_chars
+ * @param string $separator
+ * @return array
+ */
+function wrap_string_to_array($long_string, $max_chars, $separator = PHP_EOL)
+{
+    return array_slice(
+        explode(PHP_EOL,
+            iconv('Windows-1251', 'UTF-8',
+                wordwrap(iconv('UTF-8', 'Windows-1251',
+                    trim(preg_replace('/([!?])\.+\s*$/Uu', '$1', $long_string))),
+                    $max_chars, $separator, true))
+        ),
+        0, 15
+    );
+}
+
+/**
  * return wrapped string
  *
  * @param string $long_string
@@ -2694,17 +2715,7 @@ function json_format($content, $options = 0)
  */
 function wrap_string_to_lines($long_string, $max_chars, $separator = PHP_EOL)
 {
-    $lines = array_slice(
-        explode(PHP_EOL,
-            iconv('Windows-1251', 'UTF-8',
-                wordwrap(iconv('UTF-8', 'Windows-1251',
-                    trim(preg_replace('/([!?])\.+\s*$/Uu', '$1', $long_string))),
-                    $max_chars, $separator, true))
-        ),
-        0, 15
-    );
-
-    return implode(PHP_EOL, $lines);
+    return implode(PHP_EOL, wrap_string_to_array($long_string, $max_chars, $separator));
 }
 
 function is_assoc_array($array)

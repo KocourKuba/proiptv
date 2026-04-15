@@ -69,6 +69,7 @@ scroll_page = Seite scrollen
 change_group_icon = Kategoriesymbole ändern
 change_background = Hintergrundbild ändern
 channel_info_dlg = Kanalinformationen (INFO)
+vod_info_dlg = VOD-Informationen (INFO)
 channel_epg_dlg = Kanal EPG (SUBTITLE)
 xmltv_info_dlg = Informationen zur XMLTV-Quelle (INFO)
 select_folder = Ordner auswählen

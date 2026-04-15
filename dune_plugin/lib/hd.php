@@ -840,13 +840,19 @@ class HD
         return $url;
     }
 
-    public static function fix_double_scheme_url($url)
+    public static function strip_ts($url)
+    {
+        return preg_replace("#(https?://)((mp4|ts)://)#", '\1', $url);
+    }
+
+    public static function strip_dune_params($url)
     {
         $pos = strpos($url, self::DUNE_PARAMS_MAGIC);
-        if ($pos !== false && $pos > 0)
+        if ($pos !== false && $pos > 0) {
             $url = substr($url, 0, $pos);
+        }
 
-        return preg_replace("#(https?://)((mp4|ts)://)#", '\1', $url);
+        return $url;
     }
 
     public static function array_unshift_assoc(&$arr, $key, $val)

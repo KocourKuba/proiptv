@@ -61,20 +61,8 @@ ProcessURL()
 
 echo "Started: `date`" >$LOG_FILE
 
-export LD_LIBRARY_PATH="$FS_PREFIX/firmware/lib:$LD_LIBRARY_PATH"
-
-if [ -e $FS_PREFIX/firmware/bin/ffmpeg ]; then
-  FFMPEG_PATH="$FS_PREFIX/firmware/bin/ffmpeg"
-elif [ -f /config/ffmpeg_path.env ]; then
-  source /config/ffmpeg_path.env
-  if [ "$FFMPEG_PATH" = "" ]; then
-    echo "FFMPEG_PATH not set in /config/ffmpeg_path.env" >>$LOG_FILE
-    exit 1
-  fi
-else
-  echo "ffmpeg not found" >>$LOG_FILE
-  exit 1
-fi
+#export LD_LIBRARY_PATH="$FS_PREFIX/firmware/lib:$LD_LIBRARY_PATH"
+FFMPEG_PATH="$plugin_root/bin/ffmpeg-7.1.3"
 
 if [ "$#" -gt 0 ]; then
   while [ "$#" -gt 0 ]; do

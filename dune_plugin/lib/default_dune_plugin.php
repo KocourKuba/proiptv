@@ -2804,8 +2804,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $defs = array();
 
         Control_Factory::add_vgap($defs, -20);
-        self::format_smart_label($defs, TR::load('number'), $channel_row[COLUMN_CH_NUMBER]);
-        self::format_smart_label($defs, "ID:", $channel_row[COLUMN_CHANNEL_ID]);
+        self::format_smart_label($defs, TR::load('number') . " и ID", "{$channel_row[COLUMN_CH_NUMBER]} ({$channel_row[COLUMN_CHANNEL_ID]})");
         self::format_smart_label($defs, TR::load('name'), $channel_row[COLUMN_TITLE]);
         self::format_smart_label($defs, TR::load('group'), $channel_row[COLUMN_GROUP_ID]);
         self::format_smart_label($defs, TR::load('archive'), $channel_row[COLUMN_ARCHIVE] . ' ' . TR::load('days'));
@@ -2819,7 +2818,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $epg_shift = format_duration_minutes((int)$channel_row[COLUMN_EPG_SHIFT]);
             self::format_smart_label($defs, TR::load('setup_epg_shift'), $epg_shift . ' ' . TR::load('hours'));
         }
-        Control_Factory::add_vgap($defs, 30);
+        Control_Factory::add_vgap($defs, 15);
 
         $icon = $this->get_channel_picon($channel_row, $is_classic);
         self::format_smart_label($defs, TR::load('icon'), $icon);
@@ -2830,7 +2829,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        Control_Factory::add_vgap($defs, 30);
+        Control_Factory::add_vgap($defs, 15);
 
         try {
             $live_url = $this->generate_stream_url($channel_row, -1, true);
@@ -2853,45 +2852,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $ext_params = safe_get_value($channel_row, COLUMN_EXT_PARAMS);
         $dune_params = $this->generate_dune_params($channel_id, json_decode($ext_params, true));
         if (!empty($dune_params)) {
-            Control_Factory::add_vgap($defs, 30);
+            Control_Factory::add_vgap($defs, 15);
             self::format_smart_label($defs, "dune_params:", $dune_params);
         }
 
         if (!empty($live_url) && !is_limited_apk()) {
-            $descriptors = array(
-                0 => array("pipe", "r"), // stdin
-                1 => array("pipe", "w"), // sdout
-                2 => array("pipe", "w"), // stderr
-            );
-
-            hd_debug_print("Get media info for: $live_url");
-            /** @var array $pipes */
-            $process = proc_open(
-                get_install_path("bin/media_check.sh $live_url"),
-                $descriptors,
-                $pipes);
-
-            if (is_resource($process)) {
-                $output = stream_get_contents($pipes[1]);
-
-                fclose($pipes[1]);
-                proc_close($process);
-
-                Control_Factory::add_vgap($defs, 30);
-                foreach (explode("\n", $output) as $line) {
-                    $line = trim($line);
-                    if (empty($line)) continue;
-                    if (strpos($line, "Output") !== false) break;
-                    if (strpos($line, "Stream") !== false) {
-                        $line = substr($line, 7);
-                        $line = preg_replace("/ \(\[.*\)| \[.*]|, [0-9k.]+ tb[rcn]|, q=[0-9\-]+/", "", $line);
-                        self::format_smart_label($defs, TR::load('stream'), $line);
-                    }
+            $streams = $this->get_streams_info($live_url);
+            if (!empty($streams)) {
+                Control_Factory::add_vgap($defs, 15);
+                foreach ($streams as $stream) {
+                    self::format_smart_label($defs, TR::load('stream'), $stream);
                 }
             }
         }
 
-        Control_Factory::add_vgap($defs, 30);
+        Control_Factory::add_vgap($defs, 15);
         Control_Factory::add_ok_button($defs, true);
         if ($handler) {
             Control_Factory::add_button($defs, $handler,
@@ -2927,44 +2902,20 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $dune_params_pos = strpos($stream_url, HD::DUNE_PARAMS_MAGIC);
         if ($dune_params_pos !== false) {
             $magic = substr($stream_url, $dune_params_pos + strlen(HD::DUNE_PARAMS_MAGIC));
-            $stream_url = substr($stream_url, 0, $dune_params_pos);
+            $stream_url = HD::strip_dune_params($stream_url);
             Control_Factory::add_vgap($defs, 10);
             self::format_smart_label($defs, "dune_params:", $magic);
         }
 
         self::format_smart_label($defs, TR::load('url'), htmlspecialchars($stream_url));
 
+        $stream_url = HD::strip_ts($stream_url);
         if (!empty($stream_url) && !is_limited_apk()) {
-            $descriptors = array(
-                0 => array("pipe", "r"), // stdin
-                1 => array("pipe", "w"), // sdout
-                2 => array("pipe", "w"), // stderr
-            );
-
-            hd_debug_print("Get media info for: $stream_url");
-            /** @var array $pipes */
-            $process = proc_open(
-                get_install_path("bin/media_check.sh $stream_url"),
-                $descriptors,
-                $pipes);
-
-            if (is_resource($process)) {
-                $output = stream_get_contents($pipes[1]);
-
-                fclose($pipes[1]);
-                proc_close($process);
-
-                hd_debug_print($output, true);
+            $streams = $this->get_streams_info($stream_url);
+            if (!empty($streams)) {
                 Control_Factory::add_vgap($defs, 30);
-                foreach (explode("\n", $output) as $line) {
-                    $line = trim($line);
-                    if (empty($line)) continue;
-                    if (strpos($line, "Output") !== false) break;
-                    if (strpos($line, "Stream") !== false) {
-                        $line = substr($line, 7);
-                        $line = preg_replace("/ \(\[.*\)| \[.*]|, [0-9k.]+ tb[rcn]|, q=[0-9\-]+/", "", $line);
-                        self::format_smart_label($defs, TR::load('stream'), $line);
-                    }
+                foreach ($streams as $stream) {
+                    self::format_smart_label($defs, TR::load('stream'), $stream);
                 }
             }
         }
@@ -2972,7 +2923,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         Control_Factory::add_vgap($defs, 30);
         Control_Factory::add_ok_button($defs, true);
 
-        return Action_Factory::show_dialog($defs, TR::t('channel_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
+        return Action_Factory::show_dialog($defs, TR::t('vod_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
     }
 
     /**
@@ -4042,18 +3993,23 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
     }
 
-    protected static function format_smart_label(&$defs, $name, $text)
+    protected static function format_smart_label(&$defs, $name, $text, $max_string_length = 100)
     {
+        $lines = wrap_string_to_array($text, $max_string_length);
         if ($name === null) {
-            Control_Factory::add_smart_label($defs, null,
-                sprintf("<text color=%s size=small>%s</text>", DEF_LABEL_TEXT_COLOR_WHITE, $text),  -30);
+            foreach ($lines as $line) {
+                Control_Factory::add_smart_label($defs, null,
+                    sprintf("<text color=%s size=small>%s</text>", DEF_LABEL_TEXT_COLOR_WHITE, $line),  -30);
+            }
         } else {
-            Control_Factory::add_smart_label($defs, null,
-                sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>",
-                    DEF_LABEL_TEXT_COLOR_GOLD, $name,
-                    DEF_LABEL_TEXT_COLOR_WHITE, $text),
-                -30
-            );
+            $i = 0;
+            foreach ($lines as $line) {
+                Control_Factory::add_smart_label($defs, null,
+                    sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>",
+                        $i++ ? DEF_LABEL_TEXT_COLOR_BLACK : DEF_LABEL_TEXT_COLOR_GOLD, $name, DEF_LABEL_TEXT_COLOR_WHITE, $line),
+                    -30
+                );
+            }
         }
     }
 
@@ -4309,5 +4265,47 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->sql_playlist->exec($query);
         }
         safe_unlink(List_Utils::config_file_path($config_name));
+    }
+
+    /**
+     * @param $stream_url
+     * @return array
+     */
+    protected function get_streams_info($stream_url)
+    {
+        $descriptors = array(
+            0 => array("pipe", "r"), // stdin
+            1 => array("pipe", "w"), // sdout
+            2 => array("pipe", "w"), // stderr
+        );
+
+        hd_debug_print("Get media info for: $stream_url");
+        /** @var array $pipes */
+        $process = proc_open(
+            get_install_path("bin/media_check.sh") . " '$stream_url'",
+            $descriptors,
+            $pipes);
+
+        $streams = array();
+        if (is_resource($process)) {
+            $output = stream_get_contents($pipes[1]);
+
+            fclose($pipes[1]);
+            proc_close($process);
+
+            foreach (explode("\n", $output) as $line) {
+                $line = trim($line);
+                if (empty($line)) continue;
+                if (strpos($line, "Output") !== false) break;
+                if (strpos($line, "Stream mapping") !== false) break;
+                if (strpos($line, "Stream #") !== false) {
+                    $line = substr($line, 7);
+                    $line = preg_replace("/ \(\[.*\)| \[.*]|, [0-9k.]+ tb[rcn]|, q=[0-9\-]+/", "", $line);
+                    $streams[] = $line;
+                }
+            }
+        }
+
+        return $streams;
     }
 }

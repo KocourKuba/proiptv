@@ -219,6 +219,8 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
                     'play.png',
                     array('external' => true));
 
+                    $menu_items[] = $this->plugin->create_menu_item($this, GUI_EVENT_KEY_INFO, TR::t('vod_info_dlg'), "info.png");
+
                 return Action_Factory::show_popup_menu($menu_items);
 
             case GUI_EVENT_KEY_INFO:
@@ -272,7 +274,6 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
             return array();
         }
 
-        hd_debug_print("Series movie: " . $movie, true);
         $items = array();
         foreach ($movie->get_series_list() as $series_id => $episode) {
             if (isset($media_url->season_id) && $media_url->season_id !== $episode->season_id) continue;

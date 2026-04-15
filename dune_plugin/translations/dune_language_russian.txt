@@ -69,6 +69,7 @@ scroll_page = Прокрутка страницы
 change_group_icon = Изменить иконку категории
 change_background = Изменить обои
 channel_info_dlg = Информация о канале (INFO)
+vod_info_dlg = Информация о фильме (INFO)
 channel_epg_dlg = Текущая передача (SUBTITLE)
 xmltv_info_dlg = Информация о XMLTV источнике (INFO)
 select_folder = Выбрать папку

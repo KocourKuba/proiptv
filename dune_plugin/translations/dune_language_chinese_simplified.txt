@@ -69,6 +69,7 @@ scroll_page = 翻页
 change_group_icon = 修改分类图标
 change_background = 修改背景图片
 channel_info_dlg = 频道信息 (INFO)
+vod_info_dlg = 点播信息 (INFO)
 channel_epg_dlg = 频道节目单 (SUBTITLE)
 xmltv_info_dlg = XMLTV信息 (INFO)
 select_folder = 选择文件夹
