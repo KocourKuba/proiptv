@@ -90,7 +90,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 );
             }
 
-            foreach (array(1, 2, 3, 6, 12) as $hour) {
+            foreach (array(1, 2, 3, 6, 12, 24, 48, 72, 96, 120, 144, 168) as $hour) {
                 $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
             }
             $cache_time = $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1);
