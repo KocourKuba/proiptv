@@ -2026,10 +2026,10 @@
       "vod": "yosso",
       "logo": "http://iptv.esalecrm.net/res/logo_yosso.png",
       "provider_url": "https://streaming-elbrus.su/",
-      "api_url": "https://streaming-elbrus.su",
+      "api_url": "https://{SERVER_ID}",
       "vod_api_url": "http://jeleyka.balelbrus.com",
       "config": {
-        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/balancer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
+        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/ottplayer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
         "epg_presets": [
           {
             "name": "drm-play"
@@ -2038,7 +2038,7 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "{API}/p12/{LOGIN}/{PASSWORD}/BL/playlist.m3u8"
+            "url": "{API}/p12/{LOGIN}/{PASSWORD}/BLOF/playlist.m3u8"
           }
         },
         "playlists_vod": {
@@ -2047,10 +2047,11 @@
             "url": "{VOD_API}"
           }
         },
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
-        "xmltv_sources": [
-          "http://epg.streaming-elbrus.su/xmltv/epg.xml.gz"
-        ]
+        "servers": {
+          "streaming-elbrus.su": "streaming-elbrus.su",
+          "p.rapidnas.org": "p.rapidnas.org"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     }
   ]
