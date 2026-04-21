@@ -72,6 +72,7 @@ channel_info_dlg = 频道信息 (INFO)
 vod_info_dlg = 点播信息 (INFO)
 channel_epg_dlg = 频道节目单 (SUBTITLE)
 xmltv_info_dlg = XMLTV信息 (INFO)
+show_epg = 节目EPG
 select_folder = 选择文件夹
 select_file = 选择文件
 add_to_list = 添加到列表

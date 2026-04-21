@@ -2873,7 +2873,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         Control_Factory::add_ok_button($defs, true);
         if ($handler) {
             Control_Factory::add_button($defs, $handler,
-                GUI_EVENT_KEY_SUBTITLE, null, 'Show EPG',
+                GUI_EVENT_KEY_SUBTITLE, null, TR::t('show_epg'),
                 null, Control_Factory::DLG_BUTTON_WIDTH, true);
         }
 

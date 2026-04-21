@@ -72,6 +72,7 @@ channel_info_dlg = Kanalinformationen (INFO)
 vod_info_dlg = VOD-Informationen (INFO)
 channel_epg_dlg = Kanal EPG (SUBTITLE)
 xmltv_info_dlg = Informationen zur XMLTV-Quelle (INFO)
+show_epg = Show EPG
 select_folder = Ordner auswählen
 select_file = Datei aussuchen
 add_to_list = Zur Liste hinzufügen
