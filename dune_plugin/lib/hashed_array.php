@@ -103,7 +103,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      * return value associated with key
      *
      * @param string $key
-     * @return TValue|mixed
+     * @return TValue|string|mixed|null
      */
     public function get($key)
     {

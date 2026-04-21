@@ -171,6 +171,7 @@ define ('GUI_EVENT_KEY_REPEAT',                          'key_repeat');
 define ('GUI_EVENT_KEY_AUDIO',                           'key_audio');
 define ('GUI_EVENT_KEY_REC',                             'key_rec');
 define ('GUI_EVENT_KEY_DUNE',                            'key_dune');
+define ('GUI_EVENT_KEY_FAVORITES',                       'key_favorites');
 define ('GUI_EVENT_KEY_URL',                             'key_url');
 define ('GUI_EVENT_KEY_0',                               'key_0');
 define ('GUI_EVENT_KEY_1',                               'key_1');
@@ -215,6 +216,7 @@ define ('GUI_EVENT_GOING_TO_RELOAD_ALL_FOLDERS',         'going_to_reload_all_fo
 define ('GUI_EVENT_FAVORITES_UPDATED',                   'favorites_updated');
 define ('GUI_EVENT_NETWORK_CHANGE',                      'network_change');
 define ('GUI_EVENT_SETTINGS_UPDATED',                    'settings_updated');
+define ('GUI_EVENT_CONFIRM_UPDATE',                      'confirm_update');
 define ('GUI_EVENT_SHUTDOWN',                            'shutdown');
 
 # enum PluginEpgMode
@@ -331,6 +333,7 @@ define ('PLUGIN_UPDATE_OSD_ACTION_ID',                   'plugin_update_osd');
 define ('PLUGIN_UPDATE_ROWS_INFO_ACTION_ID',             'plugin_update_rows_info');
 define ('PLUGIN_UPDATE_ROWS_MENU_ACTION_ID',             'plugin_update_rows_menu');
 define ('PLUGIN_UPDATE_STICKER_ACTION_ID',               'plugin_update_sticker');
+define ('PLUGIN_UPDATE_TV_INFO_ACTION_ID',               'plugin_update_tv_info');
 define ('PLUGIN_VOD_PLAY_ACTION_ID',                     'plugin_vod_play');
 define ('REMOVE_FROM_FAVORITES_ACTION_ID',               'remove_from_favorites');
 define ('RENAME_MENU_ITEM_ACTION_ID',                    'rename_menu_item');
@@ -545,6 +548,7 @@ class DownloadAndInstallApkActionData
 {
     const /* (char *)                         */ caption                          = 'caption';
     const /* (char *)                         */ package                          = 'package';
+    const /* (char *)                         */ src                              = 'src';
     const /* bool                             */ from_market                      = 'from_market';
     const /* (MY_StringArray *)               */ urls                             = 'urls';
     const /* bool                             */ indirect                         = 'indirect';
@@ -607,6 +611,7 @@ class FileChooserUiParams
 {
     const /* bool                             */ with_favorite_folders            = 'with_favorite_folders';
     const /* int                              */ details_width                    = 'details_width';
+    const /* (char *)                         */ dialog_title                     = 'dialog_title';
 }
 
 class FileMovieInfo
@@ -1076,6 +1081,7 @@ class PluginInvalidateFoldersActionData
 {
     const /* (MY_StringArray *)               */ media_urls                       = 'media_urls';
     const /* bool                             */ all_except                       = 'all_except';
+    const /* bool                             */ repopulate                       = 'repopulate';
     const /* (GuiAction *)                    */ post_action                      = 'post_action';
 }
 
@@ -1240,6 +1246,7 @@ class PluginRegularItemVariableParams
     const /* int                              */ dx                               = 'dx';
     const /* int                              */ icon_width                       = 'icon_width';
     const /* int                              */ icon_height                      = 'icon_height';
+    const /* int                              */ icon_keep_aspect_ratio           = 'icon_keep_aspect_ratio';
     const /* int                              */ icon_dy                          = 'icon_dy';
     const /* int                              */ caption_dy                       = 'caption_dy';
     const /* (char *)                         */ caption_color                    = 'caption_color';
@@ -1410,6 +1417,9 @@ class PluginTvChannel
     const /* int                              */ buffering_ms                     = 'buffering_ms';
     const /* int                              */ timeshift_hours                  = 'timeshift_hours';
     const /* PluginEpgMode                    */ epg_mode                         = 'epg_mode';
+    const /* int                              */ epg_normal_refresh_sec           = 'epg_normal_refresh_sec';
+    const /* int                              */ epg_fast_refresh_sec             = 'epg_fast_refresh_sec';
+    const /* int                              */ epg_fast_refresh_timeout         = 'epg_fast_refresh_timeout';
     const /* int                              */ past_epg_days                    = 'past_epg_days';
     const /* int                              */ future_epg_days                  = 'future_epg_days';
     const /* (char *)                         */ ext_epg_id                       = 'ext_epg_id';
@@ -1423,6 +1433,12 @@ class PluginTvChannel
     const /* int                              */ archive_past_sec                 = 'archive_past_sec';
     const /* int                              */ archive_delay_sec                = 'archive_delay_sec';
     const /* MY_Bool                          */ playback_url_is_stream_url       = 'playback_url_is_stream_url';
+}
+
+class PluginTvChannelChange
+{
+    const /* (char *)                         */ id                               = 'id';
+    const /* (char *)                         */ icon_url                         = 'icon_url';
 }
 
 class PluginTvEpgProgram
@@ -1567,6 +1583,7 @@ class PluginUpdateRowsInfoActionData
 
 class PluginUpdateRowsMenuActionData
 {
+    const /* bool                             */ reload_topmenu                   = 'reload_topmenu';
     const /* (GuiAction *)                    */ post_action                      = 'post_action';
 }
 
@@ -1574,6 +1591,12 @@ class PluginUpdateStickerActionData
 {
     const /* (char *)                         */ sticker                          = 'sticker';
     const /* (char *)                         */ ep_media_url                     = 'ep_media_url';
+    const /* (GuiAction *)                    */ post_action                      = 'post_action';
+}
+
+class PluginUpdateTvInfoActionData
+{
+    const /* (PluginTvChannelChangeList *)    */ channel_changes                  = 'channel_changes';
     const /* (GuiAction *)                    */ post_action                      = 'post_action';
 }
 
@@ -1659,6 +1682,7 @@ class ResetControlsActionData
 class RestartActionData
 {
     const /* bool                             */ reboot                           = 'reboot';
+    const /* bool                             */ factory_reset                    = 'factory_reset';
 }
 
 class RunBuiltinActionData
@@ -1721,6 +1745,7 @@ class ShowGCompsDialogActionData
     const /* (GuiActionMap *)                 */ actions                          = 'actions';
     const /* (GuiTimerDef *)                  */ timer                            = 'timer';
     const /* (MY_Properties *)                */ params                           = 'params';
+    const /* bool                             */ async_icon_loading               = 'async_icon_loading';
 }
 
 class ShowMainScreenActionData
@@ -1784,6 +1809,7 @@ class SyncMyCollectionActionData
 class UninstallApkActionData
 {
     const /* (char *)                         */ package                          = 'package';
+    const /* (char *)                         */ src                              = 'src';
     const /* (GuiAction *)                    */ post_action                      = 'post_action';
 }
 

@@ -431,7 +431,7 @@ class DuneIrControl
         GUI_EVENT_KEY_KEYBRD            => 'FC03CFCF', // not works when sent to /proc/ir/button
         GUI_EVENT_KEY_DUNE              => '9E61CFCF', //FAV1
         GUI_EVENT_KEY_RECENT            => '9E61CFCF', //FAV1
-        GUI_EVENT_KEY_FAVORITES         => '8B74CFCF', //FAV2 not implemented yet in firmware
+        GUI_EVENT_KEY_FAVORITES         => '8B74CFCF', //FAV2 not implemented yet in firmware lower r24
         GUI_EVENT_KEY_TV                => '9C63CFCF',
         GUI_EVENT_KEY_MUSIC             => 'A758CFCF',
         GUI_EVENT_KEY_MOVIES            => 'B847CFCF',

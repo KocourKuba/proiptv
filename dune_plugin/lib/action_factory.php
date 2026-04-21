@@ -740,7 +740,30 @@ class Action_Factory
             GuiAction::data => array(UpdateTvInfoActionData::post_action => $post_action)
         );
     }
+/*
+    // available from r24
+    public static function choose_file($title, $ext, $is_dir = false, $check_writeable = false, $with_fav = false, $post_action = null)
+    {
+        if (!defined('CHOOSE_FILE_ACTION_ID')) {
+            return null;
+        }
 
+        return array(
+            GuiAction::handler_string_id => CHOOSE_FILE_ACTION_ID,
+            GuiAction::data => array(
+                ChooseFileActionData::filter => array(
+                    FileChooserFilter::file_type_dir => $is_dir,
+                    FileChooserFilter::file_extensions => $ext,
+                    FileChooserFilter::check_writable => $check_writeable),
+                ChooseFileActionData::ui_params => array(
+                    FileChooserUiParams::with_favorite_folders => $with_fav,
+                    FileChooserUiParams::details_width => 60,
+                    FileChooserUiParams::dialog_title => $title),
+                ChooseFileActionData::post_action => $post_action,
+            )
+        );
+    }
+*/
     /**
      * @param array &$comps
      * @param string $image_url
