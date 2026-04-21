@@ -361,7 +361,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
         Control_Factory::add_label($defs, "Dune Firmware:", get_raw_firmware_version());
         Control_Factory::add_label($defs, TR::t('download_link'), "");
         Control_Factory::add_vgap($defs, 20);
-        Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
+        Control_Factory::add_smart_label($defs, "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
         Control_Factory::add_vgap($defs, 450);
         return Action_Factory::show_dialog($defs, $title);
     }

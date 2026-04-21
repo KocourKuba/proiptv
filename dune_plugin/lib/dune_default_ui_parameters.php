@@ -265,7 +265,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         if (!file_exists($qr_code)) {
             $res = Curl_Wrapper::getInstance()->download_file(self::RESOURCE_URL . "TG.jpg", $qr_code);
             if ($res) {
-                Control_Factory::add_smart_label($defs, "", "<gap width=1400/><icon dy=-10 width=100 height=100>$qr_code</icon>");
+                Control_Factory::add_smart_label($defs, "<gap width=1400/><icon dy=-10 width=100 height=100>$qr_code</icon>");
                 Control_Factory::add_vgap($defs, 15);
             }
         }
@@ -280,7 +280,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             DEF_LABEL_TEXT_COLOR_SILVER,
             TR::load('scroll_page')
         );
-        Control_Factory::add_smart_label($defs, '', $text);
+        Control_Factory::add_smart_label($defs, $text);
         Control_Factory::add_vgap($defs, -80);
 
         Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_DONATE_DLG, TR::t('setup_donate_title'));
@@ -301,8 +301,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             $curl_wrapper->download_file(self::RESOURCE_URL . "QR_PP.png", $img_pp, Curl_Wrapper::CACHE_RESPONSE);
 
             Control_Factory::add_vgap($defs, 50);
-            Control_Factory::add_smart_label($defs, "", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");
-            Control_Factory::add_smart_label($defs, "", "<icon>$img_ym</icon><gap width=140/><icon>$img_pp</icon>");
+            Control_Factory::add_smart_label($defs, '<text>YooMoney</text><gap width=400/><text>PayPal</text>');
+            Control_Factory::add_smart_label($defs, "<icon>$img_ym</icon><gap width=140/><icon>$img_pp</icon>");
             Control_Factory::add_vgap($defs, 450);
 
             $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
@@ -346,7 +346,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 TR::load('live'),
                 format_duration_seconds($diff)
             );
-            Control_Factory::add_smart_label($defs, null, $elapsed_text);
+            Control_Factory::add_smart_label($defs, $elapsed_text);
 
             // Progress bar placed after elapsed time on the same line
             Control_Factory::add_vgap($defs, -64);
@@ -361,7 +361,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 DEF_LABEL_TEXT_COLOR_TURQUOISE,
                 $pos_percent);
             Control_Factory::add_vgap($defs, -74);
-            Control_Factory::add_smart_label($defs, null, $percent_text);
+            Control_Factory::add_smart_label($defs, $percent_text);
 
             // EPG description
             Control_Factory::add_multiline_label($defs, null, $prog_info[PluginTvEpgProgram::description], 12);
@@ -375,7 +375,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 DEF_LABEL_TEXT_COLOR_SILVER,
                 TR::load('scroll_page')
             );
-            Control_Factory::add_smart_label($defs, '', $help_text);
+            Control_Factory::add_smart_label($defs, $help_text);
             Control_Factory::add_vgap($defs, -80);
         }
 

@@ -108,7 +108,7 @@ class Control_Factory
      * @param string $text
      * @param int $vgap_after
      */
-    public static function add_smart_label(&$defs, $title, $text, $vgap_after = false)
+    public static function add_smart_label_with_caption(&$defs, $title, $text, $vgap_after = false)
     {
         $defs[] = array(
             GuiControlDef::name => '',
@@ -119,6 +119,53 @@ class Control_Factory
         );
         if ($vgap_after !== false) {
             self::add_vgap($defs, $vgap_after);
+        }
+    }
+
+    /**
+     * @param array &$defs
+     * @param string $text
+     * @param int $vgap_after
+     */
+    public static function add_smart_label(&$defs, $text, $vgap_after = false)
+    {
+        $defs[] = array(
+            GuiControlDef::name => '',
+            GuiControlDef::title => null,
+            GuiControlDef::kind => GUI_CONTROL_LABEL,
+            GuiControlDef::specific_def => array(GuiLabelDef::caption => $text),
+            GuiControlDef::params => array('smart' => true),
+        );
+        if ($vgap_after !== false) {
+            self::add_vgap($defs, $vgap_after);
+        }
+    }
+
+    /**
+     * @param array $defs
+     * @param string $name
+     * @param string $text
+     * @param int $max_string_length
+     * @return void
+     */
+    public static function format_smart_label(&$defs, $name, $text, $max_string_length = 100)
+    {
+        $lines = wrap_string_to_array($text, $max_string_length);
+        if ($name === null) {
+            foreach ($lines as $line) {
+                Control_Factory::add_smart_label($defs,
+                    sprintf("<text color=%s size=small>%s</text>", DEF_LABEL_TEXT_COLOR_WHITE, $line),
+                    -30);
+            }
+        } else {
+            $i = 0;
+            foreach ($lines as $line) {
+                Control_Factory::add_smart_label($defs,
+                    sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>",
+                        $i++ ? DEF_LABEL_TEXT_COLOR_BLACK : DEF_LABEL_TEXT_COLOR_GOLD, $name, DEF_LABEL_TEXT_COLOR_WHITE, $line),
+                    -30
+                );
+            }
         }
     }
 
@@ -239,7 +286,7 @@ class Control_Factory
         );
 
         self::add_vgap($defs, -65);
-        self::add_smart_label($defs, null, "<gap width=15/><icon dy='-2'>$image</icon><gap width=20/><text dy='-2'>$caption</text>");
+        self::add_smart_label($defs, "<gap width=15/><icon dy='-2'>$image</icon><gap width=20/><text dy='-2'>$caption</text>");
 
         if (isset($add_params[PARAM_RETURN_INDEX])) {
             $add_params[PARAM_RETURN_INDEX] += 2;

@@ -174,13 +174,13 @@ class Control_Factory_Ext extends Control_Factory
      */
     protected static function set_controls($defs, $viewport_width, $height)
     {
-        self::add_smart_label($defs, null, '<gap width=5/><icon dy=8 width=' . ($viewport_width - 10) . ' height=' . ($height - 10) . '>' . self::$instance->sandwich_cover_center . '</icon>');
+        self::add_smart_label($defs, '<gap width=5/><icon dy=8 width=' . ($viewport_width - 10) . ' height=' . ($height - 10) . '>' . self::$instance->sandwich_cover_center . '</icon>');
         self::add_vgap($defs, -69);
-        self::add_smart_label($defs, null, '<icon>' . self::sandwich_cover_top_left . '</icon><icon width=' . ($viewport_width - self::$instance->sandwich_cover_manifest['left'] - self::$instance->sandwich_cover_manifest['right']) . ' height=' . self::$instance->sandwich_cover_manifest['top'] . '>' . self::sandwich_cover_top . '</icon><icon>' . self::sandwich_cover_top_right . '</icon>');
+        self::add_smart_label($defs, '<icon>' . self::sandwich_cover_top_left . '</icon><icon width=' . ($viewport_width - self::$instance->sandwich_cover_manifest['left'] - self::$instance->sandwich_cover_manifest['right']) . ' height=' . self::$instance->sandwich_cover_manifest['top'] . '>' . self::sandwich_cover_top . '</icon><icon>' . self::sandwich_cover_top_right . '</icon>');
         self::add_vgap($defs, self::$instance->sandwich_cover_manifest['top'] - 69);
-        self::add_smart_label($defs, null, '<icon width=' . self::$instance->sandwich_cover_manifest['left'] . ' height=' . ($height - self::$instance->sandwich_cover_manifest['top'] - self::$instance->sandwich_cover_manifest['bottom']) . '>' . self::sandwich_cover_left . '</icon><gap width=' . ($viewport_width - self::$instance->sandwich_cover_manifest['left'] - self::$instance->sandwich_cover_manifest['right']) . '/><icon width=' . self::$instance->sandwich_cover_manifest['right'] . ' height=' . ($height - self::$instance->sandwich_cover_manifest['top'] - self::$instance->sandwich_cover_manifest['bottom']) . '>' . self::sandwich_cover_right . '</icon>');
+        self::add_smart_label($defs, '<icon width=' . self::$instance->sandwich_cover_manifest['left'] . ' height=' . ($height - self::$instance->sandwich_cover_manifest['top'] - self::$instance->sandwich_cover_manifest['bottom']) . '>' . self::sandwich_cover_left . '</icon><gap width=' . ($viewport_width - self::$instance->sandwich_cover_manifest['left'] - self::$instance->sandwich_cover_manifest['right']) . '/><icon width=' . self::$instance->sandwich_cover_manifest['right'] . ' height=' . ($height - self::$instance->sandwich_cover_manifest['top'] - self::$instance->sandwich_cover_manifest['bottom']) . '>' . self::sandwich_cover_right . '</icon>');
         self::add_vgap($defs, -self::$instance->sandwich_cover_manifest['top'] - self::$instance->sandwich_cover_manifest['bottom'] + $height - 69);
-        self::add_smart_label($defs, null, '<icon>' . self::sandwich_cover_bottom_left . '</icon><icon width=' . ($viewport_width - self::$instance->sandwich_cover_manifest['left'] - self::$instance->sandwich_cover_manifest['right']) . ' height=' . self::$instance->sandwich_cover_manifest['bottom'] . '>' . self::sandwich_cover_bottom . '</icon><icon>' . self::sandwich_cover_bottom_right . '</icon>');
+        self::add_smart_label($defs, '<icon>' . self::sandwich_cover_bottom_left . '</icon><icon width=' . ($viewport_width - self::$instance->sandwich_cover_manifest['left'] - self::$instance->sandwich_cover_manifest['right']) . ' height=' . self::$instance->sandwich_cover_manifest['bottom'] . '>' . self::sandwich_cover_bottom . '</icon><icon>' . self::sandwich_cover_bottom_right . '</icon>');
         self::add_vgap($defs, self::$instance->sandwich_cover_manifest['bottom'] - $height - 69 + 20);
         return $defs;
     }
@@ -209,11 +209,11 @@ class Control_Factory_Ext extends Control_Factory
             }
 
             if (empty($path)) {
-                self::add_smart_label($defs, null, '<gap width=20/><icon>' . get_image_path('drive.png') . '</icon><text size=small> ' . $dir . '</text>');
+                self::add_smart_label($defs, '<gap width=20/><icon>' . get_image_path('drive.png') . '</icon><text size=small> ' . $dir . '</text>');
             } else {
                 if ((($c - $i + (int)!empty($n)) > $max_visible_lines)) {
                     if (empty($n)) {
-                        self::add_smart_label($defs, null, '<gap width=50/><icon>' . get_image_path('pass.png') . '</icon><text size=small> </text>');
+                        self::add_smart_label($defs, '<gap width=50/><icon>' . get_image_path('pass.png') . '</icon><text size=small> </text>');
                         self::add_vgap($defs, -34);
                     }
 
@@ -222,7 +222,7 @@ class Control_Factory_Ext extends Control_Factory
                     continue;
                 }
 
-                self::add_smart_label($defs, null, '<gap width=' . (20 + 35 * ($i - $n)) . '/><icon>' . get_image_path((($i < $c - 1) ? 'folder.png' : 'file.png')) . '</icon><text size=small>' . $dir . '</text>');
+                self::add_smart_label($defs, '<gap width=' . (20 + 35 * ($i - $n)) . '/><icon>' . get_image_path((($i < $c - 1) ? 'folder.png' : 'file.png')) . '</icon><text size=small>' . $dir . '</text>');
             }
 
             self::add_vgap($defs, -34);
@@ -251,7 +251,7 @@ class Control_Factory_Ext extends Control_Factory
         $viewport_width = max(300, $viewport_width);
         $border_thickness = min(30, max(1, $border_thickness));
 
-        self::add_smart_label($defs, null,
+        self::add_smart_label($defs,
             sprintf("%s<icon width=50 height=%s>%s</icon>%s<icon width=%s height=%s>%s</icon>",
                 empty($dx) ? '' : "<gap width=$dx/>",
                 $border_thickness, self::$instance->dots[$border_color_index],
@@ -267,7 +267,7 @@ class Control_Factory_Ext extends Control_Factory
         }
 
         $h = $height + $border_thickness;
-        self::add_smart_label($defs, null,
+        self::add_smart_label($defs,
             sprintf("%s<icon width=%s height=%s dy=%s>%s</icon><icon width=%s height=%s dy=%s>%s</icon><icon width=%s height=%s dy=%s>%s</icon>",
                 empty($dx) ? '' : "<gap width=$dx/>",
                 $border_thickness, -$h, $h, self::$instance->dots[$border_color_index],
@@ -294,7 +294,7 @@ class Control_Factory_Ext extends Control_Factory
             }
         }
 
-        self::add_smart_label($defs, null,
+        self::add_smart_label($defs,
             sprintf("<gap width=%s/><icon>%s</icon><icon width=%s height=%s>%s</icon><icon>%s</icon>",
                 $dx + self::$instance->progressbar_outer_manifest['left_extent'],
                 self::progressbar_outer_left,
@@ -309,7 +309,7 @@ class Control_Factory_Ext extends Control_Factory
 
         if ($inner_width > 0) {
             self::add_vgap($defs, -69 - self::$instance->progressbar_inner_manifest['top_extent']);
-            self::add_smart_label($defs, null,
+            self::add_smart_label($defs,
                 sprintf("<gap width=%s/><icon>%s</icon><icon width=%s height=%s>%s</icon><icon>%s</icon>",
                     $dx - self::$instance->progressbar_outer_manifest['left_extent'] - self::$instance->progressbar_inner_manifest['left_extent'],
                     self::progressbar_inner_left,
@@ -343,11 +343,11 @@ class Control_Factory_Ext extends Control_Factory
         $outer_height = $height - self::$instance->scrollbar_outer_manifest['top'] - self::$instance->scrollbar_outer_manifest['bottom'] + self::$instance->scrollbar_outer_manifest['top_extent'] + self::$instance->scrollbar_outer_manifest['bottom_extent'];
 
         self::add_vgap($defs, $padding_top - $height);
-        self::add_smart_label($defs, null, '<gap width=' . $gap . '/><icon>' . self::scrollbar_outer_top . '</icon>');
+        self::add_smart_label($defs, '<gap width=' . $gap . '/><icon>' . self::scrollbar_outer_top . '</icon>');
         self::add_vgap($defs, self::$instance->scrollbar_outer_manifest['top'] - 69);
-        self::add_smart_label($defs, null, '<gap width=' . $gap . '/><icon width=' . self::$instance->scrollbar_outer_manifest['width'] . ' height=' . $outer_height . '>' . self::scrollbar_outer_center . '</icon>');
+        self::add_smart_label($defs, '<gap width=' . $gap . '/><icon width=' . self::$instance->scrollbar_outer_manifest['width'] . ' height=' . $outer_height . '>' . self::scrollbar_outer_center . '</icon>');
         self::add_vgap($defs, $outer_height - 69);
-        self::add_smart_label($defs, null, '<gap width=' . $gap . '/><icon>' . self::scrollbar_outer_bottom . '</icon>');
+        self::add_smart_label($defs, '<gap width=' . $gap . '/><icon>' . self::scrollbar_outer_bottom . '</icon>');
         self::add_vgap($defs, self::$instance->scrollbar_outer_manifest['bottom'] + $padding_bottom - 69);
 
         $padding_top = self::$instance->scrollbar_inner_manifest['top_extent'];
@@ -359,11 +359,11 @@ class Control_Factory_Ext extends Control_Factory
         $vgap_inner = round(($slider_step * $scroll_position) - $inner_height);
 
         self::add_vgap($defs, $vgap_inner + $padding_top - self::$instance->scrollbar_inner_manifest['top'] - self::$instance->scrollbar_inner_manifest['bottom']);
-        self::add_smart_label($defs, null, '<gap width=' . $gap . '/><icon>' . self::scrollbar_inner_top . '</icon>');
+        self::add_smart_label($defs, '<gap width=' . $gap . '/><icon>' . self::scrollbar_inner_top . '</icon>');
         self::add_vgap($defs, self::$instance->scrollbar_inner_manifest['top'] - 69);
-        self::add_smart_label($defs, null, '<gap width=' . $gap . '/><icon width=' . self::$instance->scrollbar_inner_manifest['width'] . ' height=' . $slider_height . '>' . self::scrollbar_inner_center . '</icon>');
+        self::add_smart_label($defs, '<gap width=' . $gap . '/><icon width=' . self::$instance->scrollbar_inner_manifest['width'] . ' height=' . $slider_height . '>' . self::scrollbar_inner_center . '</icon>');
         self::add_vgap($defs, $slider_height - 69);
-        self::add_smart_label($defs, null, '<gap width=' . $gap . '/><icon>' . self::scrollbar_inner_bottom . '</icon>');
+        self::add_smart_label($defs, '<gap width=' . $gap . '/><icon>' . self::scrollbar_inner_bottom . '</icon>');
         self::add_vgap($defs, abs($vgap_inner) - $slider_height - 69 - $padding_bottom + self::$instance->scrollbar_inner_manifest['bottom']);
     }
 }

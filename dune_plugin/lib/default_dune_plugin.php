@@ -2804,28 +2804,31 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $defs = array();
 
         Control_Factory::add_vgap($defs, -20);
-        self::format_smart_label($defs, TR::load('number') . " и ID", "{$channel_row[COLUMN_CH_NUMBER]} ({$channel_row[COLUMN_CHANNEL_ID]})");
-        self::format_smart_label($defs, TR::load('name'), $channel_row[COLUMN_TITLE]);
-        self::format_smart_label($defs, TR::load('group'), $channel_row[COLUMN_GROUP_ID]);
-        self::format_smart_label($defs, TR::load('archive'), $channel_row[COLUMN_ARCHIVE] . ' ' . TR::load('days'));
-        self::format_smart_label($defs, TR::load('adult'), $channel_row[COLUMN_ADULT] ? TR::load('yes') : TR::load('no'));
-        self::format_smart_label($defs, "EPG IDs:", $epg_id);
+        Control_Factory::format_smart_label($defs, TR::load('number') . " (ID):",
+            "{$channel_row[COLUMN_CH_NUMBER]} ({$channel_row[COLUMN_CHANNEL_ID]})");
+        Control_Factory::format_smart_label($defs, TR::load('name'), $channel_row[COLUMN_TITLE]);
+        Control_Factory::format_smart_label($defs, TR::load('group'), $channel_row[COLUMN_GROUP_ID]);
+        Control_Factory::format_smart_label($defs, TR::load('archive'), $channel_row[COLUMN_ARCHIVE] . ' ' . TR::load('days'));
+        Control_Factory::format_smart_label($defs, TR::load('adult'),
+            $channel_row[COLUMN_ADULT] ? TR::load('yes') : TR::load('no'));
+        Control_Factory::format_smart_label($defs, "EPG IDs:", $epg_id);
 
         if ($channel_row[COLUMN_TIMESHIFT] != 0) {
-            self::format_smart_label($defs, TR::load('time_shift'), $channel_row[COLUMN_TIMESHIFT] . ' ' . TR::load('hours'));
+            Control_Factory::format_smart_label($defs, TR::load('time_shift'),
+                $channel_row[COLUMN_TIMESHIFT] . ' ' . TR::load('hours'));
         }
         if ($channel_row[COLUMN_EPG_SHIFT] != 0) {
             $epg_shift = format_duration_minutes((int)$channel_row[COLUMN_EPG_SHIFT]);
-            self::format_smart_label($defs, TR::load('setup_epg_shift'), $epg_shift . ' ' . TR::load('hours'));
+            Control_Factory::format_smart_label($defs, TR::load('setup_epg_shift'), $epg_shift . ' ' . TR::load('hours'));
         }
         Control_Factory::add_vgap($defs, 15);
 
         $icon = $this->get_channel_picon($channel_row, $is_classic);
-        self::format_smart_label($defs, TR::load('icon'), $icon);
+        Control_Factory::format_smart_label($defs, TR::load('icon'), $icon);
 
         foreach ($epg_urls as $epg_url) {
             if (!empty($epg_url)) {
-                self::format_smart_label($defs, TR::load('epg_url'), $epg_url);
+                Control_Factory::format_smart_label($defs, TR::load('epg_url'), $epg_url);
             }
         }
 
@@ -2834,7 +2837,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         try {
             $live_url = $this->generate_stream_url($channel_row, -1, true);
             $live_url = htmlspecialchars($live_url);
-            self::format_smart_label($defs, TR::load('live_url'), $live_url);
+            Control_Factory::format_smart_label($defs, TR::load('live_url'), $live_url);
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
         }
@@ -2843,7 +2846,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             try {
                 $archive_url = $this->generate_stream_url($channel_row, time() - 3600, true);
                 $archive_url = htmlspecialchars($archive_url);
-                self::format_smart_label($defs, TR::load('archive_url'), $archive_url);
+                Control_Factory::format_smart_label($defs, TR::load('archive_url'), $archive_url);
             } catch (Exception $ex) {
                 print_backtrace_exception($ex);
             }
@@ -2853,7 +2856,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $dune_params = $this->generate_dune_params($channel_id, json_decode($ext_params, true));
         if (!empty($dune_params)) {
             Control_Factory::add_vgap($defs, 15);
-            self::format_smart_label($defs, "dune_params:", $dune_params);
+            Control_Factory::format_smart_label($defs, "dune_params:", $dune_params);
         }
 
         if (!empty($live_url) && !is_limited_apk()) {
@@ -2861,7 +2864,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             if (!empty($streams)) {
                 Control_Factory::add_vgap($defs, 15);
                 foreach ($streams as $stream) {
-                    self::format_smart_label($defs, TR::load('stream'), $stream);
+                    Control_Factory::format_smart_label($defs, TR::load('stream'), $stream);
                 }
             }
         }
@@ -2896,18 +2899,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $stream_url = $series[PluginVodSeriesInfo::playback_url];
 
         Control_Factory::add_vgap($defs, -20);
-        self::format_smart_label($defs, "ID:", $vod_info[PluginVodInfo::id]);
-        self::format_smart_label($defs, TR::load('name'), $series[PluginVodSeriesInfo::name]);
+        Control_Factory::format_smart_label($defs, "ID:", $vod_info[PluginVodInfo::id]);
+        Control_Factory::format_smart_label($defs, TR::load('name'), $series[PluginVodSeriesInfo::name]);
 
         $dune_params_pos = strpos($stream_url, HD::DUNE_PARAMS_MAGIC);
         if ($dune_params_pos !== false) {
             $magic = substr($stream_url, $dune_params_pos + strlen(HD::DUNE_PARAMS_MAGIC));
             $stream_url = HD::strip_dune_params($stream_url);
             Control_Factory::add_vgap($defs, 10);
-            self::format_smart_label($defs, "dune_params:", $magic);
+            Control_Factory::format_smart_label($defs, "dune_params:", $magic);
         }
 
-        self::format_smart_label($defs, TR::load('url'), htmlspecialchars($stream_url));
+        Control_Factory::format_smart_label($defs, TR::load('url'), htmlspecialchars($stream_url));
 
         $stream_url = HD::strip_ts($stream_url);
         if (!empty($stream_url) && !is_limited_apk()) {
@@ -2915,7 +2918,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             if (!empty($streams)) {
                 Control_Factory::add_vgap($defs, 30);
                 foreach ($streams as $stream) {
-                    self::format_smart_label($defs, TR::load('stream'), $stream);
+                    Control_Factory::format_smart_label($defs, TR::load('stream'), $stream);
                 }
             }
         }
@@ -3786,7 +3789,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $cookies_table = self::COOKIES_TABLE;
-        $tokens = array(PARAM_TOKEN => "$playlist_id.token", PARAM_REFRESH_TOKEN => "$playlist_id.refresh_token", PARAM_SESSION_ID => "{$playlist_id}_session_id");
+        $tokens = array(PARAM_TOKEN => "$playlist_id.token",
+            PARAM_REFRESH_TOKEN => "$playlist_id.refresh_token",
+            PARAM_SESSION_ID => "{$playlist_id}_session_id");
         foreach ($tokens as $key => $value) {
             $token_path = get_data_path("$playlist_id.$key");
             if (file_exists($token_path)) {
@@ -3989,26 +3994,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             HD::put_items($vod_history_filename, $history, false);
             foreach ($history as $type => $param) {
                 hd_debug_print("!!!!! Vod history $type is not imported: " . (is_array($param) ? json_format_unescaped($param) : $param), true);
-            }
-        }
-    }
-
-    protected static function format_smart_label(&$defs, $name, $text, $max_string_length = 100)
-    {
-        $lines = wrap_string_to_array($text, $max_string_length);
-        if ($name === null) {
-            foreach ($lines as $line) {
-                Control_Factory::add_smart_label($defs, null,
-                    sprintf("<text color=%s size=small>%s</text>", DEF_LABEL_TEXT_COLOR_WHITE, $line),  -30);
-            }
-        } else {
-            $i = 0;
-            foreach ($lines as $line) {
-                Control_Factory::add_smart_label($defs, null,
-                    sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>",
-                        $i++ ? DEF_LABEL_TEXT_COLOR_BLACK : DEF_LABEL_TEXT_COLOR_GOLD, $name, DEF_LABEL_TEXT_COLOR_WHITE, $line),
-                    -30
-                );
             }
         }
     }
