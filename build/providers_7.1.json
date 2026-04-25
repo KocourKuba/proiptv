@@ -811,8 +811,6 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm-play",
-            "alias": "iptv.online"
           }
         ],
         "playlists": {
