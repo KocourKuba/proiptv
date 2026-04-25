@@ -88,7 +88,7 @@ class vod_mirkino extends vod_standard
         hd_debug_print("movie type: $movie_type", true);
         if ($movie_type === jellyfin_api::MOVIES) {
             $name = safe_get_value($movie_item, 'Name', 'no name');
-            $default_url = new Movie_Playback_Url($this->jfc->getStreamUrl($real_id));
+            $default_url = new Movie_Playback_Url($this->jfc->getPlayUrlMain($real_id));
             $movie_series = new Movie_Series($real_id, $name, $default_url);
             $movie->add_series_data($this->fill_series($movie_series, $real_id, safe_get_value($movie_item, 'MediaSources', array())));
             $qualities_str = implode(', ', $movie->get_qualities($real_id));
@@ -113,7 +113,7 @@ class vod_mirkino extends vod_standard
                     hd_debug_print("episode id: $season_id", true);
                     $episode_item = $this->jfc->getItemInfo($episode_id);
 
-                    $default_url = $this->jfc->getStreamUrl($episode_id);
+                    $default_url = $this->jfc->getPlayUrlMain($episode_id);
                     hd_debug_print("episode playback_url: $default_url", true);
                     $movie_series = new Movie_Series($episode_id,
                         TR::t('vod_screen_series__1', safe_get_value($episode, 'Name', 'no name')),
@@ -397,7 +397,7 @@ class vod_mirkino extends vod_standard
             foreach (safe_get_value($source, 'MediaStreams', array()) as $stream) {
                 if (strcasecmp(safe_get_value($stream, 'Type'), 'Video') === 0) {
                     $name = safe_get_value($stream, 'DisplayTitle');
-                    $quality = new Movie_Variant($name, new Movie_Playback_Url($this->jfc->getStreamUrl($real_id, array('Id' => $stream_id))));
+                    $quality = new Movie_Variant($name, new Movie_Playback_Url($this->jfc->getPlayUrlMain($real_id, array('Id' => $stream_id))));
                     // default playback url for quality
                     if ($stream_id == $real_id) {
                         $movie_series->add_variant_data('auto', $quality);

@@ -188,7 +188,7 @@ class jellyfin_api
      * @param int $audioIndex
      * @return string
      */
-    public function getPlayUrl($itemId, $media_source = array(), $audioIndex = -1)
+    public function getPlayUrlMaster($itemId, $media_source = array(), $audioIndex = -1)
     {
         $this->updateQuery($query);
         $query['MediaSourceId'] = isset($media_source['Id']) ? $media_source['Id'] : $itemId;
@@ -196,6 +196,16 @@ class jellyfin_api
             $query['AudioStreamIndex'] = $audioIndex;
         }
         return $this->baseUrl . '/Videos/' . urlencode($itemId) . '/master.m3u8?' . http_build_query($query);
+    }
+
+    public function getPlayUrlMain($itemId, $media_source = array(), $audioIndex = -1)
+    {
+        $this->updateQuery($query);
+        $query['MediaSourceId'] = isset($media_source['Id']) ? $media_source['Id'] : $itemId;
+        if ($audioIndex !== -1) {
+            $query['AudioStreamIndex'] = $audioIndex;
+        }
+        return $this->baseUrl . '/Videos/' . urlencode($itemId) . '/main.m3u8?' . http_build_query($query);
     }
 
     /**

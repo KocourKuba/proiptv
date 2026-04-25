@@ -1011,7 +1011,7 @@
       }
     },
     {
-      "enable": false,
+      "enable": true,
       "id": "mirkino",
       "name": "Mir Kino",
       "type": "login",

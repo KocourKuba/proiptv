@@ -88,7 +88,7 @@ class vod_yosso extends vod_standard
         hd_debug_print("movie type: $movie_type", true);
         if ($movie_type === jellyfin_api::MOVIES) {
             $name = safe_get_value($movie_item, 'Name', 'no name');
-            $default_url = new Movie_Playback_Url($this->jfc->getPlayUrl($real_id));
+            $default_url = new Movie_Playback_Url($this->jfc->getDownloadUrl($real_id));
             $movie_series = new Movie_Series($real_id, $name, $default_url);
             $movie->add_series_data($this->fill_series($movie_series, $real_id, safe_get_value($movie_item, 'MediaSources', array())));
             $qualities_str = implode(', ', $movie->get_qualities($real_id));
@@ -113,7 +113,7 @@ class vod_yosso extends vod_standard
                     hd_debug_print("episode id: $season_id", true);
                     $episode_item = $this->jfc->getItemInfo($episode_id);
 
-                    $default_url = $this->jfc->getPlayUrl($episode_id);
+                    $default_url = $this->jfc->getDownloadUrl($episode_id);
                     hd_debug_print("episode playback_url: $default_url", true);
                     $movie_series = new Movie_Series($episode_id,
                         TR::t('vod_screen_series__1', safe_get_value($episode, 'Name', 'no name')),
