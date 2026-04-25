@@ -1,4 +1,17 @@
-﻿### Version 7.1.1620
+﻿### Version 7.1.1640
+- Added support for VOD provider Mir Kino (https://mir-kino.pp.ru/) (Former BCU Media VOD)
+- Added external ffmpeg to correctly determine information about streams. Therefore, the plugin has become "fatter". The system ffmpeg has problem with https links. As soon as they add a new version to the firmware, I will remove it. 
+- Added the ability to view stream information for VOD
+- Improved display of channel/VOD information in the window
+- The caching range of the Internet EPG source has been expanded to 7 days. For example, drm-play gives all the information for several days, i.e. all from original XMLTV. Therefore, you can check and pull the server less often. 
+- Added a new playlist server for Yosso
+- Changed playlist link for IPStream provider
+- Removed Internet EPG sources for Uspeh and IPTV Online (drm-play no longer supports them)
+- Updated configuration for ITV Live
+- Increased the timeout for sending the log to the developer (my current server is a little slow)
+- Removed extension detection for Sharavoz VOD stream (Server is configured incorrectly and external players are going crazy)
+
+- ### Version 7.1.1620
 - Fixed a plugin crash when calling from the system settings section
 - Added support for multiple VOD playlists (for the future)
 - The setting for selecting Internet sources has been moved to the plugin settings database (now saved in the backup)
