@@ -32,7 +32,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     const CONTROL_ZOOM = 'zoom_select';
     const CONTROL_EXTERNAL_PLAYER = 'use_external_player';
 
-    const EPG_PROGRESS_WIDTH = 750;
+    const EPG_PROGRESS_WIDTH = 900;
 
     /**
      * @var array
@@ -352,12 +352,12 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             Control_Factory::add_vgap($defs, -64);
             $pos_percent = round(100 * $diff / ($prog_info[PluginTvEpgProgram::end_tm_sec] - $prog_info[PluginTvEpgProgram::start_tm_sec]));
             Control_Factory_Ext::add_progress_bar_ext($defs,
-                Action_Factory::MID_DLG_WIDTH - self::EPG_PROGRESS_WIDTH - 150,
+                Action_Factory::MAX_DLG_WIDTH - self::EPG_PROGRESS_WIDTH - 200,
                 self::EPG_PROGRESS_WIDTH, $pos_percent);
 
             // Elapsed percent placed after elapsed time on the same line
             $percent_text = sprintf("<gap width=%s/><text color=%s size=normal>%s%%</text>",
-                Action_Factory::MID_DLG_WIDTH - 100,
+                Action_Factory::MAX_DLG_WIDTH - 100,
                 DEF_LABEL_TEXT_COLOR_TURQUOISE,
                 $pos_percent);
             Control_Factory::add_vgap($defs, -74);
@@ -368,8 +368,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             Control_Factory::add_vgap($defs, 30);
 
             // help line if description more than dialog height
-            $help_text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-                Action_Factory::MID_DLG_WIDTH - 1050,
+            $help_text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><gap width=10/><text color=%s size=small>%s</text>",
+                Action_Factory::MAX_DLG_WIDTH - 800,
                 get_image_path('page_plus_btn.png'),
                 get_image_path('page_minus_btn.png'),
                 DEF_LABEL_TEXT_COLOR_SILVER,
@@ -385,7 +385,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
         Control_Factory::add_vgap($defs, 10);
 
-        return Action_Factory::show_dialog($defs, $title, Action_Factory::MID_DLG_WIDTH, true, $attrs);
+        return Action_Factory::show_dialog($defs, $title, Action_Factory::MAX_DLG_WIDTH, true, $attrs);
     }
 
     public function do_edit_channel_parameters($handler, $channel_id)
