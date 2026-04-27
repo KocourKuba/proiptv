@@ -48,7 +48,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_CALL_SEND_LOG = 'call_send_log'; // this action coded in manifest
     const ACTION_CONFIRM_BACKUP_DLG = 'create_backup';
     const ACTION_RUN_PLAYLIST_SCREEN = 'playlist_screen';
-    const OLD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0di9yZWxlYXNlcy9kb3dubG9hZC81LjEuOTYyL2R1bmVfcGx1Z2luX3Byb2lwdHYuNS4xLjk2Mi56aXA=";
+    const OLD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0dg==";
 
     private $plugin;
 
@@ -352,7 +352,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
     private function show_old_player($title) {
         $qr_code = get_temp_path("link_to_old.jpg");
-        $url = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode(base64_decode(self::OLD_LINK));
+        $url = "http://api.qrserver.com/v1/create-qr-code/?size=450x450&format=png&data=" . urlencode(base64_decode(self::OLD_LINK));
         Curl_Wrapper::getInstance()->download_file($url, $qr_code);
 
         $defs = array();
