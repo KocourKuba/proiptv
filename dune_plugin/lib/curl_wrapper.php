@@ -449,7 +449,6 @@ class Curl_Wrapper
      */
     private function exec_php_curl($url, $save_file, $cache_opts = 0)
     {
-        hd_debug_print("exec_php_curl: url: '$url'", true);
         if ($save_file === false) {
             hd_debug_print("exec_php_curl: request only headers", true);
         }
@@ -579,7 +578,7 @@ class Curl_Wrapper
 
         if (self::$http_code < 200 || (self::$http_code >= 300 && self::$http_code != 301 && self::$http_code != 304)) {
             hd_debug_print("HTTP request failed (" . self::$http_code . ")");
-            hd_debug_print("HTTP response " . $content);
+            hd_debug_print("HTTP response: " . $content);
             return false;
         }
 
