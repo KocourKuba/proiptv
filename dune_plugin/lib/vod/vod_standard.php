@@ -346,25 +346,30 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param array $vod_info
-     * @param bool $is_external
+     * @param object $user_input
      * @return array|null
      */
-    public function vod_player_exec($vod_info, $is_external)
+    public function vod_player_exec($user_input)
     {
+        $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+        $is_external = isset($user_input->external);
+        $vod_info = $this->get_vod_info($selected_media_url);
         if (!isset($vod_info[PluginVodInfo::initial_series_ndx], $vod_info[PluginVodInfo::series][$vod_info[PluginVodInfo::initial_series_ndx]])) {
             return null;
         }
+
+        $idx = $vod_info[PluginVodInfo::initial_series_ndx];
+        $url = $vod_info[PluginVodInfo::series][$idx][PluginVodSeriesInfo::playback_url];
+
+        hd_debug_print("Play url ($idx): $url", true);
+        $data = Curl_Wrapper::getInstance()->download_content(HD::strip_dune_params($url));
+        hd_debug_print($data, true);
 
         if (!$is_external) {
             return Action_Factory::vod_play($vod_info);
         }
 
-        $series = $vod_info[PluginVodInfo::series];
-        $idx = $vod_info[PluginVodInfo::initial_series_ndx];
-        $url = $series[$idx][PluginVodSeriesInfo::playback_url];
-        $param_pos = strpos($url, '|||dune_params');
-        $url = $param_pos !== false ? substr($url, 0, $param_pos) : $url;
+        $url = HD::strip_dune_params($url);
         $cmd = 'am start -d "' . $url . '" -t "video/*" -a android.intent.action.VIEW 2>&1';
         hd_debug_print("play movie in the external player: $cmd");
         /** @var array $output */

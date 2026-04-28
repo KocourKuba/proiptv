@@ -47,10 +47,18 @@ class vod_yosso extends vod_standard
             $this->jfc = new jellyfin_api();
             $this->jfc->init($this->plugin, $vod_url, $this->plugin->plugin_info['app_version']);
 
-            $login = $this->provider->GetProviderParameter(MACRO_LOGIN);
-            $pass = $this->provider->GetProviderParameter(MACRO_PASSWORD);
+            $access_info = array(
+                MACRO_LOGIN => $this->provider->GetProviderParameter(MACRO_LOGIN),
+                MACRO_PASSWORD => $this->provider->GetProviderParameter(MACRO_PASSWORD),
+                PARAM_TOKEN => $this->plugin->get_cookie(PARAM_TOKEN),
+                PARAM_USER_ID => $this->plugin->get_cookie(PARAM_USER_ID)
+            );
 
-            return $this->jfc->login($login, $pass);
+            if ($this->jfc->login($access_info) !== false) {
+                $this->plugin->set_cookie(PARAM_TOKEN, $this->jfc->get_access_token());
+                $this->plugin->set_cookie(PARAM_USER_ID, $this->jfc->get_user_id());
+                return true;
+            }
         }
 
         return false;
@@ -90,7 +98,7 @@ class vod_yosso extends vod_standard
             $name = safe_get_value($movie_item, 'Name', 'no name');
             $default_url = new Movie_Playback_Url($this->jfc->getDownloadUrl($real_id));
             $movie_series = new Movie_Series($real_id, $name, $default_url);
-            $movie->add_series_data($this->fill_series($movie_series, $real_id, safe_get_value($movie_item, 'MediaSources', array())));
+            $movie->add_series_data($this->fill_series($movie_series, $real_id, safe_get_value($movie_item, 'MediaSources')));
             $qualities_str = implode(', ', $movie->get_qualities($real_id));
         } else if ($movie_type === jellyfin_api::SERIES) {
             $seasons = $this->jfc->getSeasons($real_id);
@@ -120,7 +128,7 @@ class vod_yosso extends vod_standard
                         new Movie_Playback_Url($default_url), $season_id
                     );
                     $movie_series->poster = $this->jfc->getItemImageUrl($episode_id);
-                    $movie->add_series_data($this->fill_series($movie_series, $real_id, safe_get_value($episode_item, 'MediaSources', array())));
+                    $movie->add_series_data($this->fill_series($movie_series, $real_id, safe_get_value($episode_item, 'MediaSources')));
 
                     if (empty($quality_str)) {
                         $qualities_str = implode(', ', $movie->get_qualities($episode_id));
@@ -212,10 +220,10 @@ class vod_yosso extends vod_standard
             }
 
             $name = safe_get_value($collection, 'Name', 'no name');
-            $exist_filters['source']['values'][$id] = $name;
             $icon = $this->jfc->getItemImageUrl($id, 'Primary', 400, 0, 'Jpg');
             $this->category_index[$id] = new Vod_Category($sid, $name . " ($movie_count)", null, $icon);
 
+            $exist_filters['source']['values'][$id] = $name;
             $query_params = array('ParentId' => $id, 'recursive' => 'true');
             $jsonData = $this->jfc->getFilters($query_params);
 

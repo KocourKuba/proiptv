@@ -103,6 +103,15 @@ class Movie_Series
     }
 
     /**
+     * @param Movie_Variant[] $variants
+     * @return void
+     */
+    public function set_variants($variants)
+    {
+        $this->variants = $variants;
+    }
+
+    /**
      * @param string $id
      * @return Movie_Variant|null
      */

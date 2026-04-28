@@ -1008,7 +1008,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return true;
         }
 
-        $plugin_cookies->toggle_move = false;
+        if (isset($plugin_cookies->toggle_move)) {
+            $plugin_cookies->toggle_move = false;
+        }
 
         $this->init_plugin();
 

@@ -106,8 +106,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
                     }
                     $this->plugin->vod->set_cached_movie($list_movie);
 
-                    $vod_info = $this->plugin->vod->get_vod_info($selected_media_url);
-                    $post_action = $this->plugin->vod->vod_player_exec($vod_info, isset($user_input->external));
+                    $post_action = $this->plugin->vod->vod_player_exec($user_input);
                 } catch (Exception $ex) {
                     hd_debug_print("Movie can't played");
                     print_backtrace_exception($ex);

@@ -54,12 +54,24 @@ class jellyfin_api
     /**
      * Authentication
      *
-     * @param string $username
-     * @param string $password
+     * @param array $access_info
      * @return bool
      */
-    public function login($username, $password)
+    public function login($access_info)
     {
+        $username = safe_get_value($access_info, MACRO_LOGIN);
+        $password = safe_get_value($access_info, MACRO_PASSWORD);
+        $this->accessToken = safe_get_value($access_info, PARAM_TOKEN);
+        $this->userId = safe_get_value($access_info, PARAM_USER_ID);
+
+        if (!empty($this->accessToken) && !empty($this->userId)) {
+            $response = $this->get_info();
+            if ($response !== false) {
+                return true;
+            }
+        }
+
+        hd_debug_print("Performing login to '$this->baseUrl'");
         $curl_wrapper = $this->plugin->setup_curl();
         $curl_wrapper->set_post();
         $curl_wrapper->set_post_data(array('Username' => $username, 'Pw' => $password));
@@ -74,7 +86,7 @@ class jellyfin_api
             return false;
         }
 
-        $this->userId = safe_get_value($response, array('User', 'Id'));
+        $this->userId = safe_get_value($response, array('SessionInfo', 'UserId'));
         $this->accessToken = safe_get_value($response, 'AccessToken');
         if (!empty($this->accessToken) && !empty($this->userId)) {
             return true;
@@ -96,6 +108,40 @@ class jellyfin_api
     }
 
     /**
+     * Get server Info
+     * @return array|bool
+     */
+    public function get_info()
+    {
+        $curl_wrapper = $this->plugin->setup_curl();
+        $curl_wrapper->set_send_headers($this->buildHeaders(true));
+        $response = $curl_wrapper->download_content($this->baseUrl . '/System/Info', Curl_Wrapper::RET_ARRAY);
+        if (empty($response)) {
+            hd_debug_print("Unauthorized");
+            return false;
+        }
+
+        hd_debug_print("Auth response: " . json_encode($response), true);
+        return $response;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function get_user_id()
+    {
+        return $this->userId;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function get_access_token()
+    {
+        return $this->accessToken;
+    }
+
+    /**
      * Get User View
      *
      * @return array
@@ -106,7 +152,12 @@ class jellyfin_api
         if (!is_null($param)) {
             $path .= "/$param";
         }
-        return $this->get($path, array('userId' => $this->userId));
+
+        $query = array();
+        if (!empty($this->userId)) {
+            $query['userId'] = $this->userId;
+        }
+        return $this->get($path, $query);
     }
 
     /**
@@ -190,21 +241,21 @@ class jellyfin_api
      */
     public function getPlayUrlMaster($itemId, $media_source = array(), $audioIndex = -1)
     {
-        $this->updateQuery($query);
         $query['MediaSourceId'] = isset($media_source['Id']) ? $media_source['Id'] : $itemId;
         if ($audioIndex !== -1) {
             $query['AudioStreamIndex'] = $audioIndex;
         }
+        $this->updateQuery($query);
         return $this->baseUrl . '/Videos/' . urlencode($itemId) . '/master.m3u8?' . http_build_query($query);
     }
 
     public function getPlayUrlMain($itemId, $media_source = array(), $audioIndex = -1)
     {
-        $this->updateQuery($query);
         $query['MediaSourceId'] = isset($media_source['Id']) ? $media_source['Id'] : $itemId;
         if ($audioIndex !== -1) {
             $query['AudioStreamIndex'] = $audioIndex;
         }
+        $this->updateQuery($query);
         return $this->baseUrl . '/Videos/' . urlencode($itemId) . '/main.m3u8?' . http_build_query($query);
     }
 
@@ -230,11 +281,11 @@ class jellyfin_api
      */
     public function getStreamUrl($itemId, $media_source = array(), $audioIndex = -1)
     {
-        $this->updateQuery($query);
         $query['MediaSourceId'] = isset($media_source['Id']) ? $media_source['Id'] : $itemId;
         if ($audioIndex !== -1) {
             $query['AudioStreamIndex'] = $audioIndex;
         }
+        $this->updateQuery($query);
         return $this->baseUrl . '/Videos/' . urlencode($itemId) . '/stream.mp4?' . http_build_query($query);
     }
 
@@ -248,6 +299,7 @@ class jellyfin_api
      */
     public function getFilters($query = array())
     {
+        $this->updateQuery($query);
         return $this->get('Items/Filters', $query);
     }
 
@@ -259,8 +311,8 @@ class jellyfin_api
      */
     private function updateQuery(&$query)
     {
-        $query['DeviceId'] = $this->deviceId;
         $query['apiKey'] = $this->accessToken;
+        $query['DeviceId'] = $this->deviceId;
         $query['userId'] = $this->userId;
     }
 

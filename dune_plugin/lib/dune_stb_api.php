@@ -2800,7 +2800,7 @@ function dune_params_to_array($str)
     $params_array = array();
     $dune_params = explode(',', $str);
     foreach ($dune_params as $param) {
-        $param_pair = explode(':', $param);
+        $param_pair = explode(':', $param, 2);
         if (empty($param_pair) || count($param_pair) < 2) continue;
 
         $param_pair[0] = trim($param_pair[0]);

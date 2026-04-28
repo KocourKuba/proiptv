@@ -503,7 +503,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
      */
     public function collect_all_qualities($season_id)
     {
-        hd_debug_print("season_id: $season_id", true);
+        hd_debug_print("season_id: '$season_id'", true);
         $series_quality = array();
         foreach ($this->series_list as $series_id => $episode) {
             if (!is_null($season_id) && $season_id !== $episode->season_id) continue;
@@ -657,12 +657,9 @@ class Movie extends Json_Serializer implements User_Input_Handler
             $dune_params = $this->plugin->collect_dune_params();
             if (!empty($dune_params)) {
                 $magic = str_replace('=', ':', http_build_query($dune_params, null, ','));
-                hd_debug_print("dune_params: $magic");
                 $vod_url .= HD::DUNE_PARAMS_MAGIC . $magic;
             }
 
-            hd_debug_print("Url: $vod_url", true);
-            hd_debug_print("Playback movie: $media_url->movie_id, episode: $series->id ($def_q_variant)", true);
             $series_array[] = array(
                 PluginVodSeriesInfo::name => $name,
                 PluginVodSeriesInfo::playback_url => $vod_url,
