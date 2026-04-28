@@ -4237,15 +4237,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $config_name = $this->get_active_epg_config($playlist_id);
         // read existing order
         $order = List_Utils::read_config_file($config_name);
+        hd_debug_print("new order: " . json_format_unescaped($order), true);
         $selected_json_table = self::SELECTED_JSON_TABLE;
         $query = "DELETE FROM $selected_json_table;";
         $this->sql_playlist->exec($query);
-        $query = '';
         foreach ($this->get_provider_epg_presets($provider) as $id => $preset) {
             if (!isset($order[$id])) {
                 $order[$id] = 1;
             }
-            $query .= "INSERT INTO $selected_json_table (name, enabled) VALUES ('$id', $order[$id]);";
+        }
+
+        $query = '';
+        foreach ($order as $id => $enabled) {
+            $query .= "INSERT INTO $selected_json_table (name, enabled) VALUES ('$id', $enabled);";
         }
 
         if (!empty($query)) {

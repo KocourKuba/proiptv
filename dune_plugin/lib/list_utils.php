@@ -39,6 +39,7 @@ class List_Utils
     public static function read_config_file($config_id)
     {
         $path = self::config_file_path($config_id);
+        hd_debug_print("Read config file: $path", true);
 
         $cfg = array();
         if (!is_file($path)) {
@@ -82,8 +83,9 @@ class List_Utils
      */
     public static function write_config_file($config_id, $cfg)
     {
-        hd_debug_print("Write config file: " . json_format_unescaped($cfg), true);
         $cfg_path = self::config_file_path($config_id);
+        hd_debug_print("Write config file: $cfg_path", true);
+        hd_debug_print("Config: " . json_format_unescaped($cfg), true);
         $enabled = '';
         $ordering = '';
         foreach ($cfg as $key => $value) {
