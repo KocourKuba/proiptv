@@ -68,7 +68,7 @@ class Curl_Wrapper
     /**
      * @var string
      */
-    private $file_cache_time = 3600;
+    private $file_cache_time = 1;
 
     /**
      * @var string
@@ -111,7 +111,6 @@ class Curl_Wrapper
      */
     public function reset()
     {
-        hd_debug_print(null, true);
         self::$http_response_headers = null;
         self::$error_no = 0;
         self::$error_desc = '';

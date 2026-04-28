@@ -614,17 +614,6 @@ class Movie extends Json_Serializer implements User_Input_Handler
                 }
             }
 
-            if ($playback_info->is_stream_url) {
-                $vod_url = $playback_info->url;
-            } else {
-                hd_debug_print("Request playback url for $series->id", true);
-                $vod_url = $this->plugin->vod->get_vod_playback_url($series->id, $def_q_variant, $def_a_variant);
-                if (empty($vod_url)) {
-                    hd_debug_print("no valid playback url for '$series->id' skipping");
-                    continue;
-                }
-            }
-
             if (!is_null($sel_id) && $series->id === $sel_id) {
                 $initial_series_ndx = $counter;
             }
@@ -638,6 +627,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
             } else {
                 $viewed_params = $this->plugin->get_vod_history_params($movie_id, $series->id);
             }
+
             if (!empty($viewed_params) && $viewed_params[COLUMN_WATCHED] == 0 && $viewed_params[COLUMN_DURATION] != -1) {
                 $name .= " [" . format_duration($viewed_params[COLUMN_POSITION]) . "]";
 
@@ -652,18 +642,22 @@ class Movie extends Json_Serializer implements User_Input_Handler
             }
 
             $initial_start_array[$counter] = $pos * 1000;
-            $vod_url = HD::make_ts($vod_url);
 
-            $dune_params = $this->plugin->collect_dune_params();
-            if (!empty($dune_params)) {
-                $magic = str_replace('=', ':', http_build_query($dune_params, null, ','));
-                $vod_url .= HD::DUNE_PARAMS_MAGIC . $magic;
+            if ($playback_info->is_stream_url) {
+                $vod_url = HD::make_ts($playback_info->url);
+                $dune_params = $this->plugin->collect_dune_params();
+                if (!empty($dune_params)) {
+                    $magic = str_replace('=', ':', http_build_query($dune_params, null, ','));
+                    $vod_url .= HD::DUNE_PARAMS_MAGIC . $magic;
+                }
+            } else {
+                $vod_url = $playback_info->url;
             }
 
             $series_array[] = array(
                 PluginVodSeriesInfo::name => $name,
                 PluginVodSeriesInfo::playback_url => $vod_url,
-                PluginVodSeriesInfo::playback_url_is_stream_url => true,
+                PluginVodSeriesInfo::playback_url_is_stream_url => $playback_info->is_stream_url,
             );
 
             $counter++;

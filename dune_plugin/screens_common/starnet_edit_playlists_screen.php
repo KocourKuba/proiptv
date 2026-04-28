@@ -730,7 +730,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 hd_debug_print("Problem importing '$file' " . $ex->getMessage());
             }
         }
-        $actions[] = Action_Factory::show_title_dialog(TR::t('information'), TR::t('edit_list_added__2', $this->plugin->get_all_playlists_count() - $old_count, count($files)));
+
+        $new_count = $this->plugin->get_all_playlists_count();
+        $actions[] = Action_Factory::show_title_dialog(TR::t('information'), TR::t('edit_list_added__2', $new_count - $old_count, count($files)));
         $actions[] = Action_Factory::close_and_run();
         $actions[] = Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('setup_channels_src_edit_playlists'));
         return Action_Factory::composite($actions);

@@ -334,18 +334,6 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param string $series_id
-     * @param string $quality
-     * @param string $audio
-     * @return null
-     * @noinspection PhpUnusedParameterInspection
-     */
-    public function get_vod_playback_url($series_id, $quality = 'auto', $audio = 'auto')
-    {
-        return null;
-    }
-
-    /**
      * @param object $user_input
      * @return array|null
      */
@@ -362,9 +350,6 @@ class vod_standard extends Abstract_Vod
         $url = $vod_info[PluginVodInfo::series][$idx][PluginVodSeriesInfo::playback_url];
 
         hd_debug_print("Play url ($idx): $url", true);
-        $data = Curl_Wrapper::getInstance()->download_content(HD::strip_dune_params($url));
-        hd_debug_print($data, true);
-
         if (!$is_external) {
             return Action_Factory::vod_play($vod_info);
         }
