@@ -406,12 +406,16 @@
       "api_url": "http://protected-api.com",
       "api_commands": {
         "account_info": "{API}/auth/info",
-        "get_playlist": "http://248on.com/playlist/{PASSWORD}_otp_dev{DEVICE_ID}.m3u8",
+        "get_playlist": "http://{DOMAIN_ID}/x/{PASSWORD}.m3u8",
         "get_vod": "{API}",
         "get_servers": "{API}/servers"
       },
       "config": {
         "id_map": "tvg-id",
+        "domains": {
+          "248on.com": "EU",
+          "ru.248on.com": "RU"
+        },
         "epg_presets": [
           {
             "name": "cbilling"
@@ -425,11 +429,6 @@
         "url_subst": {
           "regex": "/^(https?:\\/\\/).+(:.+)$/",
           "replace": "$1{SERVER_ID}$2"
-        },
-        "devices": {
-          "1": "1",
-          "2": "2",
-          "3": "3"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
