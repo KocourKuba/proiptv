@@ -128,8 +128,8 @@ class api_iptvonline extends api_default
                 $data = safe_get_value($response, 'data');
                 if (empty($data)) break;
 
-                $curl_wrapper = $this->plugin->setup_curl();
-                return $curl_wrapper->download_file($data, $file);
+                $this->plugin->reset_curl($this->curl_wrapper);
+                return $this->curl_wrapper->download_file($data, $file);
 
             case API_COMMAND_GET_DEVICE:
                 hd_debug_print("GetServers: " . json_format_unescaped($response), true);

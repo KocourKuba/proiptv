@@ -95,7 +95,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     protected $epg_manager;
 
     /**
-     * @var Hashed_Array
+     * @var Hashed_Array<string, api_default>
      */
     protected $providers;
 
@@ -239,7 +239,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             throw new Exception('TV is not supported');
         }
 
-        return $media_url;
+        return $this->iptv->get_tv_stream_url($media_url, $plugin_cookies);
     }
 
     /**
@@ -529,14 +529,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @override DunePlugin
      * @param string $media_url
      * @param object $plugin_cookies
-     * @return string
+     * @return string|null
+     * @throws Exception
      */
     public function get_vod_stream_url($media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print("VOD is not supported");
 
-        return '';
+        if (is_null($this->vod)) {
+            print_backtrace();
+            throw new Exception('VOD is not supported');
+        }
+
+        return $this->vod->get_vod_stream_url($media_url, $plugin_cookies);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -776,7 +781,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         throw new Exception("Incorrect playlist url: $uri");
                     }
 
-                    $curl_wrapper = $this->setup_curl();
+                    $curl_wrapper = Curl_Wrapper::getInstance($playlist_id);
+                    $this->reset_curl($curl_wrapper);
                     $res = $curl_wrapper->download_file($uri, $m3u_file, Curl_Wrapper::CACHE_RESPONSE);
                     $logfile = "Error code: " . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc();
                 } else {
@@ -1016,8 +1022,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if ($reload_playlist) {
             // need to fully reset plugin and clear cache
+            $playlist_id = $this->get_active_playlist_id();
             $this->reset_channels();
-            $curl_wrapper = $this->setup_curl();
+            $curl_wrapper = Curl_Wrapper::getInstance($playlist_id);
+            $this->reset_curl($curl_wrapper);
             $curl_wrapper->clear_cache();
         } else {
             hd_debug_print("Channels loaded: " . var_export($this->channels_loaded, true));
@@ -1372,14 +1380,23 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function setup_curl()
     {
         $curl_wrapper = Curl_Wrapper::getInstance($this->get_active_playlist_id());
-        $curl_wrapper->set_connect_timeout($this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
-        $curl_wrapper->set_download_timeout($this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
-        $curl_wrapper->set_file_cache_time($this->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 1));
+        $this->reset_curl($curl_wrapper);
         return $curl_wrapper;
     }
 
     /**
-     * @param Hashed_Array $sources
+     * @param Curl_Wrapper $curl_wrapper
+     */
+    public function reset_curl($curl_wrapper)
+    {
+        $curl_wrapper->reset();
+        $curl_wrapper->set_connect_timeout($this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
+        $curl_wrapper->set_download_timeout($this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
+        $curl_wrapper->set_file_cache_time($this->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 1));
+    }
+
+    /**
+     * @param Hashed_Array<string, array> $sources
      * @param int $indexing_flag
      * @param $plugin_cookies
      * @return void
@@ -1580,7 +1597,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @return Hashed_Array<array>
+     * @return Hashed_Array<string, array>
      */
     public function get_epg_presets()
     {
@@ -1638,7 +1655,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @return Hashed_Array<api_default>
+     * @return Hashed_Array<string, api_default>
      */
     public function get_providers()
     {
@@ -1685,6 +1702,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return null;
         }
 
+        /** @var api_default $api_class */
         $api_class = $this->providers->get($name);
         return is_null($api_class) ? null : clone $api_class;
     }
@@ -2290,7 +2308,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @return Hashed_Array
+     * @return Hashed_Array<string, array>
      */
     public function get_image_libs()
     {
@@ -2963,7 +2981,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @return Hashed_Array<array>
+     * @return Hashed_Array<string, array>
      */
     public function get_active_sources()
     {
@@ -3661,7 +3679,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     /**
      * @param $playlist_id
-     * @return Hashed_Array
+     * @return Hashed_Array<string, array>
      */
     protected function upgrade_settings($playlist_id)
     {
@@ -3812,7 +3830,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     /**
      * @param string $playlist_id
-     * @param Hashed_Array $group_icons
+     * @param Hashed_Array<string, array> $group_icons
      * @return void
      */
     protected function upgrade_orders($playlist_id, $group_icons)

@@ -107,7 +107,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
         switch ($user_input->control_id) {
             case ACTION_PLAY_ITEM:
                 try {
-                    $post_action = $this->plugin->vod->vod_player_exec($user_input);
+                    $post_action = $this->plugin->vod->vod_player_exec($user_input, $plugin_cookies);
                 } catch (Exception $ex) {
                     hd_debug_print("Movie can't played");
                     print_backtrace_exception($ex);

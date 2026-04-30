@@ -67,6 +67,46 @@ class vod_mirkino extends vod_standard
     /**
      * @inheritDoc
      */
+    public function get_vod_stream_url($playback_url, $plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("Playback url: $playback_url", true);
+
+        $media_url = MediaURL::decode($playback_url);
+
+        $query = array();
+        if (isset($media_url->stream_id)) {
+            $query['MediaSourceId'] = $media_url->stream_id;
+        }
+
+        if (isset($media_url->audio_index)) {
+            $query['AudioStreamIndex'] = $media_url->audio_index;
+        }
+
+        $info = $this->jfc->getItemPlaybackInfo($media_url->id, $query);
+        if ($info === false) {
+            hd_debug_print("Can't get response on Playback info");
+        }
+        if (isset($info['PlaySessionId'])) {
+            $query['PlaySessionId'] = $info['PlaySessionId'];
+        }
+
+        $url = $this->jfc->getPlayUrlMaster($media_url->id, $query);
+        hd_debug_print("vod stream url: $url", true);
+
+        $vod_url = HD::make_ts($url);
+        $dune_params = $this->plugin->collect_dune_params();
+        if (!empty($dune_params)) {
+            $magic = str_replace('=', ':', http_build_query($dune_params, null, ','));
+            $vod_url .= HD::DUNE_PARAMS_MAGIC . $magic;
+        }
+
+        return $vod_url;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function TryLoadMovie($movie_id)
     {
         hd_debug_print(null, true);
@@ -77,15 +117,15 @@ class vod_mirkino extends vod_standard
             return null;
         }
 
-        list($real_id, $category_type) = explode('_', $movie_id) + array('', jellyfin_api::MOVIES);
-        if (empty($real_id)) {
+        list($item_id, $category_type) = explode('_', $movie_id) + array('', jellyfin_api::MOVIES);
+        if (empty($item_id)) {
             hd_debug_print("Real movie ID is empty!");
             return null;
         }
 
-        $movie_item = $this->jfc->getItemInfo($real_id);
+        $movie_item = $this->jfc->getItemInfo($item_id);
         if (empty($movie_item)) {
-            hd_debug_print("Failed to load movie: $real_id from: $category_type");
+            hd_debug_print("Failed to load movie: $item_id from: $category_type");
             return null;
         }
 
@@ -96,12 +136,12 @@ class vod_mirkino extends vod_standard
         hd_debug_print("movie type: $movie_type", true);
         if ($movie_type === jellyfin_api::MOVIES) {
             $name = safe_get_value($movie_item, 'Name', 'no name');
-            $default_url = new Movie_Playback_Url($this->jfc->getPlayUrlMaster($real_id));
-            $movie_series = new Movie_Series($real_id, $name, $default_url);
-            $movie->add_series_data($this->fill_series($movie_series, $real_id, safe_get_value($movie_item, 'MediaSources')));
-            $qualities_str = implode(', ', $movie->get_qualities($real_id));
+            $default_url = new Movie_Playback_Url(MediaURL::encode(array('id' => $item_id)), false);
+            $movie_series = new Movie_Series($item_id, $name, $default_url);
+            $movie->add_series_data($this->fill_series($movie_series, $item_id, safe_get_value($movie_item, 'MediaSources')));
+            $qualities_str = implode(', ', $movie->get_qualities($item_id));
         } else if ($movie_type === jellyfin_api::SERIES) {
-            $seasons = $this->jfc->getSeasons($real_id);
+            $seasons = $this->jfc->getSeasons($item_id);
             $season_idx = 0;
             foreach (safe_get_value($seasons, 'Items', array()) as $season) {
                 $season_id = safe_get_value($season, 'Id');
@@ -113,7 +153,7 @@ class vod_mirkino extends vod_standard
                 $movie_season->poster = $this->jfc->getItemImageUrl($season_id);
                 $movie->add_season_data($movie_season);
 
-                $episodes = $this->jfc->getEpisodes($real_id, $season_id);
+                $episodes = $this->jfc->getEpisodes($item_id, $season_id);
                 foreach (safe_get_value($episodes, 'Items', array()) as $episode) {
                     $episode_id = $episode['Id'];
                     if (empty($episode_id)) continue;
@@ -121,7 +161,7 @@ class vod_mirkino extends vod_standard
                     hd_debug_print("episode id: $season_id", true);
                     $episode_item = $this->jfc->getItemInfo($episode_id);
 
-                    $default_url = $this->jfc->getPlayUrlMaster($episode_id);
+                    $default_url = new Movie_Playback_Url(MediaURL::encode(array('id' => $episode_id)), false);
                     $movie_series = new Movie_Series($episode_id,
                         TR::t('vod_screen_series__1', safe_get_value($episode, 'Name', 'no name')),
                         new Movie_Playback_Url($default_url), $season_id
@@ -158,7 +198,7 @@ class vod_mirkino extends vod_standard
             safe_get_value($movie_item, 'Name'), // name,
             safe_get_value($movie_item, 'OriginalTitle'), // name_original,
             safe_get_value($movie_item, 'Overview'),  // description,
-            $this->jfc->getItemImageUrl($real_id),  // poster_url,
+            $this->jfc->getItemImageUrl($item_id),  // poster_url,
             '', // length_min,
             safe_get_value($movie_item, 'ProductionYear'), // year,
             implode(', ', safe_get_value($persons, 'Director', array())),
@@ -396,11 +436,11 @@ class vod_mirkino extends vod_standard
 
     /**
      * @param Movie_Series $movie_series
-     * @param string $real_id
+     * @param string $item_id
      * @param array $media_sources
      * @return Movie_Series
      */
-    protected function fill_series($movie_series, $real_id, $media_sources)
+    protected function fill_series($movie_series, $item_id, $media_sources)
     {
         /** @var Movie_Variant[] $qualities */
         $qualities = array();
@@ -414,17 +454,19 @@ class vod_mirkino extends vod_standard
             foreach (safe_get_value($source, 'MediaStreams', array()) as $stream) {
                 if (strcasecmp(safe_get_value($stream, 'Type'), 'Video') === 0) {
                     $q_name = safe_get_value($stream, 'DisplayTitle');
-                    $quality = new Movie_Variant($q_name, new Movie_Playback_Url($this->jfc->getPlayUrlMaster($real_id, array('Id' => $stream_id))));
+                    $media_url = MediaURL::encode(array('id' => $item_id, 'stream_id' => $stream_id));
+                    $quality = new Movie_Variant($q_name, new Movie_Playback_Url($media_url, false));
                     $qualities[$q_name] = $quality;
                     // default playback url for quality
-                    if ($stream_id == $real_id) {
+                    if ($stream_id == $item_id) {
                         $qualities['auto'] = $quality;
                     }
                 } else if (strcasecmp(safe_get_value($stream, 'Type'), 'Audio') === 0) {
                     $a_name = safe_get_value($stream, 'DisplayTitle');
                     $index = safe_get_value($stream, 'Index');
                     $is_default = safe_get_value($stream, 'IsDefault');
-                    $audio = new Movie_Variant($a_name, new Movie_Playback_Url($this->jfc->getPlayUrlMaster($real_id, array('Id' => $stream_id), $index)));
+                    $media_url = MediaURL::encode(array('id' => $item_id, 'stream_id' => $stream_id, 'audio_index' => $index));
+                    $audio = new Movie_Variant($a_name, new Movie_Playback_Url($media_url, false));
                     $audios[$index] = $audio;
                     if ($is_default) {
                         $audios['auto'] = $audio;

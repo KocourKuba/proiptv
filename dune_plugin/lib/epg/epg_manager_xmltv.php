@@ -88,7 +88,7 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * @param Hashed_Array $sources
+     * @param Hashed_Array<string, array> $sources
      * @return void
      */
     public static function update_active_sources($sources)
@@ -259,7 +259,7 @@ class Epg_Manager_Xmltv
     /// public static methods
 
     /**
-     * @return Hashed_Array
+     * @return Hashed_Array<string, array>
      */
     public static function get_sources()
     {
@@ -269,7 +269,7 @@ class Epg_Manager_Xmltv
     /**
      * Set active sources (Hashed_Array of url params)
      *
-     * @param Hashed_Array<array> $sources
+     * @param Hashed_Array<string, array> $sources
      * @return void
      */
     public static function set_xmltv_sources($sources)

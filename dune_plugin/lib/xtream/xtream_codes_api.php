@@ -52,6 +52,11 @@ class xtream_codes_api
      */
     private $plugin;
 
+    /**
+     * @var Curl_Wrapper
+     */
+    private $curl_wrapper;
+
     ///////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -68,6 +73,7 @@ class xtream_codes_api
         $this->base_url = $base_url;
         $this->username = $username;
         $this->password = $password;
+        $this->curl_wrapper = $plugin->setup_curl();
     }
 
     /**
@@ -165,6 +171,7 @@ class xtream_codes_api
 
     protected function json_request($url)
     {
-        return $this->plugin->setup_curl()->download_content($url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+        $this->plugin->reset_curl($this->curl_wrapper);
+        return $this->curl_wrapper->download_content($url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
     }
 }

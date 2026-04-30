@@ -43,6 +43,8 @@ require_once 'json_serializer.php';
  * @property string|null genre_id // Movie Genre ID
  * @property string|null name // search name
  * @property string|null return_index // return index
+ * @property string|null $stream_id // stream id (used in jellyfin)
+ * @property string|null $audio_index // audio index (used in jellyfin)
  */
 class MediaURL extends Json_Serializer
 {
@@ -96,12 +98,12 @@ class MediaURL extends Json_Serializer
 
     /**
      * @param array $m
-     * @param bool $raw_encode
+     * @param bool $pretty_encode
      * @return false|string
      */
-    public static function encode($m, $raw_encode = false)
+    public static function encode($m, $pretty_encode = false)
     {
-        return $raw_encode ? json_format_unescaped($m) : json_encode($m);
+        return $pretty_encode ? json_format_unescaped($m) : json_encode($m);
     }
 
     /**

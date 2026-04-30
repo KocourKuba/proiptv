@@ -100,10 +100,19 @@ class Curl_Wrapper
      */
     protected function __construct($cache_subdir = 'common')
     {
+        $this->set_cache_path($cache_subdir);
+        $this->reset();
+    }
+
+    public static function getInstance($cache_subdir = 'common')
+    {
+        return new self($cache_subdir);
+    }
+
+    public function set_cache_path($cache_subdir)
+    {
         $this->file_cache_path = get_slash_trailed_path(get_data_path(CURL_CACHE_SUBDIR . '/' . $cache_subdir));
         create_path($this->file_cache_path);
-        hd_debug_print("File cache path: $this->file_cache_path", true);
-        $this->reset();
     }
 
     /**
@@ -118,11 +127,6 @@ class Curl_Wrapper
         $this->send_headers = array();
         $this->is_post = false;
         $this->post_data = null;
-    }
-
-    public static function getInstance($cache_subdir = 'common')
-    {
-        return new self($cache_subdir);
     }
 
     /**
@@ -206,8 +210,9 @@ class Curl_Wrapper
     /**
      * @param array $data
      */
-    public function set_post_data($data)
+    public function set_post_data($data, $is_post = true)
     {
+        $this->is_post = $is_post;
         $this->post_data = $data;
     }
 
@@ -423,18 +428,8 @@ class Curl_Wrapper
         file_put_contents(get_data_path(self::CACHE_TAG_FILE), json_encode($cache_db));
     }
 
-    /**
-     * @return string
-     */
-    protected function create_cache_path()
-    {
-        create_path($this->file_cache_path);
-        return $this->file_cache_path;
-    }
-
     /////////////////////////////////////////////////////////////
     /// private functions
-
 
     /**
      * if $save_file == null return content of request
@@ -595,8 +590,7 @@ class Curl_Wrapper
         }
 
         if ($cache_opts & self::CACHE_RESPONSE && $save_file === null && !empty($content)) {
-            $cache_path = $this->create_cache_path();
-            $path = $cache_path . $hash;
+            $path = $this->file_cache_path . $hash;
             hd_debug_print("Save response to $path", true);
             file_put_contents($path, $content);
         }

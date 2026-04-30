@@ -52,6 +52,15 @@ abstract class Abstract_Vod extends vod_pagination
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @param string $playback_url
+     * @param $plugin_cookies
+     * @return string|null
+     */
+    public abstract function get_vod_stream_url($playback_url, $plugin_cookies);
+
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
      * @param Movie $movie
      */
     public function set_cached_movie(Movie $movie)

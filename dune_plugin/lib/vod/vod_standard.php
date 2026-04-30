@@ -63,7 +63,7 @@ class vod_standard extends Abstract_Vod
 
     /**
      * @template Group
-     * @var Hashed_Array<Group>
+     * @var Hashed_Array<string, Group>
      */
     protected $special_groups;
 
@@ -212,7 +212,7 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @return Hashed_Array
+     * @return Hashed_Array<string, array>
      */
     public function get_special_groups()
     {
@@ -334,10 +334,19 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
+     * @inheritDoc
+     */
+    public function get_vod_stream_url($playback_url, $plugin_cookies)
+    {
+        return null;
+    }
+
+    /**
      * @param object $user_input
+     * @param $plugin_cookies
      * @return array|null
      */
-    public function vod_player_exec($user_input)
+    public function vod_player_exec($user_input, &$plugin_cookies)
     {
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
         $is_external = isset($user_input->external);
@@ -347,11 +356,14 @@ class vod_standard extends Abstract_Vod
         }
 
         $idx = $vod_info[PluginVodInfo::initial_series_ndx];
-        $url = $vod_info[PluginVodInfo::series][$idx][PluginVodSeriesInfo::playback_url];
-
-        hd_debug_print("Play url ($idx): $url", true);
+        $series = $vod_info[PluginVodInfo::series][$idx];
+        $url = $series[PluginVodSeriesInfo::playback_url];
         if (!$is_external) {
             return Action_Factory::vod_play($vod_info);
+        }
+
+        if (!$series[PluginVodSeriesInfo::playback_url_is_stream_url]) {
+            $url = $this->get_vod_stream_url($url, $plugin_cookies);
         }
 
         $url = HD::strip_dune_params($url);

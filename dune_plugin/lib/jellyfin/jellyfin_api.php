@@ -39,6 +39,11 @@ class jellyfin_api
     private $plugin;
 
     /**
+     * @var Curl_Wrapper
+     */
+    private $curl_wrapper;
+
+    /**
      * @param Default_Dune_Plugin $plugin
      * @param string $baseUrl
      * @param string $appVersion
@@ -49,6 +54,7 @@ class jellyfin_api
         $this->deviceId = get_serial_number();
         $this->baseUrl = rtrim($baseUrl, '/');
         $this->base_auth_string = sprintf('MediaBrowser Client="ProIPTV", Device="dunehd", DeviceId="%s", Version="%s"', $this->deviceId, $appVersion);
+        $this->curl_wrapper = $plugin->setup_curl();
     }
 
     /**
@@ -65,22 +71,22 @@ class jellyfin_api
         $this->userId = safe_get_value($access_info, PARAM_USER_ID);
 
         if (!empty($this->accessToken) && !empty($this->userId)) {
-            $response = $this->get_info();
+            $response = $this->systemInfo();
             if ($response !== false) {
                 return true;
             }
         }
 
         hd_debug_print("Performing login to '$this->baseUrl'");
-        $curl_wrapper = $this->plugin->setup_curl();
-        $curl_wrapper->set_post();
-        $curl_wrapper->set_post_data(array('Username' => $username, 'Pw' => $password));
         $headers = $this->buildHeaders(false);
         $headers[] = CONTENT_TYPE_JSON;
-        $curl_wrapper->set_send_headers($headers);
+
+        $this->plugin->reset_curl($this->curl_wrapper);
+        $this->curl_wrapper->set_post_data(array('Username' => $username, 'Pw' => $password));
+        $this->curl_wrapper->set_send_headers($headers);
 
         $command_url = $this->baseUrl . '/Users/AuthenticateByName';
-        $response = $curl_wrapper->download_content($command_url, Curl_Wrapper::RET_ARRAY);
+        $response = $this->curl_wrapper->download_content($command_url, Curl_Wrapper::RET_ARRAY);
         if ($response === false) {
             hd_debug_print("Can't get response on request: $command_url");
             return false;
@@ -101,21 +107,21 @@ class jellyfin_api
      */
     public function logout()
     {
-        $curl_wrapper = $this->plugin->setup_curl();
-        $curl_wrapper->set_post();
-        $curl_wrapper->set_send_headers($this->buildHeaders(true));
-        $curl_wrapper->download_content($this->baseUrl . '/Sessions/Logout');
+        $this->plugin->reset_curl($this->curl_wrapper);
+        $this->curl_wrapper->set_post();
+        $this->curl_wrapper->set_send_headers($this->buildHeaders(true));
+        $this->curl_wrapper->download_content($this->baseUrl . '/Sessions/Logout');
     }
 
     /**
      * Get server Info
      * @return array|bool
      */
-    public function get_info()
+    public function systemInfo()
     {
-        $curl_wrapper = $this->plugin->setup_curl();
-        $curl_wrapper->set_send_headers($this->buildHeaders(true));
-        $response = $curl_wrapper->download_content($this->baseUrl . '/System/Info', Curl_Wrapper::RET_ARRAY);
+        $this->plugin->reset_curl($this->curl_wrapper);
+        $this->curl_wrapper->set_send_headers($this->buildHeaders(true));
+        $response = $this->curl_wrapper->download_content($this->baseUrl . '/System/Info', Curl_Wrapper::RET_ARRAY);
         if (empty($response)) {
             hd_debug_print("Unauthorized");
             return false;
@@ -123,6 +129,34 @@ class jellyfin_api
 
         hd_debug_print("Auth response: " . json_encode($response), true);
         return $response;
+    }
+
+    /**
+     * @param string $id
+     * @param array $query
+     * @return array|false
+     */
+    public function getItemPlaybackInfo($id, $query)
+    {
+        $post_data['UserId'] = $this->userId;
+        $post_data['MediaSourceId'] = $query['MediaSourceId'];
+        $post_data['AudioStreamIndex'] = $query['AudioStreamIndex'];
+        $post_data['IsPlayback'] = true;
+        $post_data['EnableDirectPlay'] = true;
+        $post_data['EnableDirectStream'] = true;
+        $post_data['EnableTranscoding'] = false;
+        $post_data['AllowVideoStreamCopy'] = true;
+        $post_data['AllowAudioStreamCopy'] = true;
+
+        $headers = $this->buildHeaders(true);
+        $headers[] = CONTENT_TYPE_JSON;
+
+        $this->plugin->reset_curl($this->curl_wrapper);
+        $this->curl_wrapper->set_post_data($post_data);
+        $this->curl_wrapper->set_send_headers($headers);
+
+        $command_url = $this->baseUrl . "/Items/$id/PlaybackInfo";
+        return $this->curl_wrapper->download_content($command_url, Curl_Wrapper::RET_ARRAY);
     }
 
     /**
@@ -232,35 +266,33 @@ class jellyfin_api
     // ---------------- Playback helpers ----------------
 
     /**
-     * get play url
+     * get master.m3u8 HLS manifest
      *
      * @param string $itemId
-     * @param array $media_source
-     * @param int $audioIndex
+     * @param array $query
      * @return string
      */
-    public function getPlayUrlMaster($itemId, $media_source = array(), $audioIndex = -1)
+    public function getPlayUrlMaster($itemId, $query = array())
     {
-        $query['MediaSourceId'] = isset($media_source['Id']) ? $media_source['Id'] : $itemId;
-        if ($audioIndex !== -1) {
-            $query['AudioStreamIndex'] = $audioIndex;
-        }
         $this->updateQuery($query);
         return $this->baseUrl . '/Videos/' . urlencode($itemId) . '/master.m3u8?' . http_build_query($query);
     }
 
-    public function getPlayUrlMain($itemId, $media_source = array(), $audioIndex = -1)
+    /**
+     * get main.m3u8 play url (contains media segments )
+     *
+     * @param string $itemId
+     * @param array $query
+     * @return string
+     */
+    public function getPlayUrlMain($itemId, $query = array())
     {
-        $query['MediaSourceId'] = isset($media_source['Id']) ? $media_source['Id'] : $itemId;
-        if ($audioIndex !== -1) {
-            $query['AudioStreamIndex'] = $audioIndex;
-        }
         $this->updateQuery($query);
         return $this->baseUrl . '/Videos/' . urlencode($itemId) . '/main.m3u8?' . http_build_query($query);
     }
 
     /**
-     * get download url
+     * get download url (streams entire file)
      *
      * @param string $itemId
      * @return string
@@ -269,24 +301,6 @@ class jellyfin_api
     {
         $this->updateQuery($query);
         return $this->baseUrl . '/Items/' . urlencode($itemId) . '/Download?' . http_build_query($query);
-    }
-
-    /**
-     * get play url
-     *
-     * @param string $itemId
-     * @param array $media_source
-     * @param int $audioIndex
-     * @return string
-     */
-    public function getStreamUrl($itemId, $media_source = array(), $audioIndex = -1)
-    {
-        $query['MediaSourceId'] = isset($media_source['Id']) ? $media_source['Id'] : $itemId;
-        if ($audioIndex !== -1) {
-            $query['AudioStreamIndex'] = $audioIndex;
-        }
-        $this->updateQuery($query);
-        return $this->baseUrl . '/Videos/' . urlencode($itemId) . '/stream.mp4?' . http_build_query($query);
     }
 
     // ---------------- Internal ----------------
@@ -327,17 +341,18 @@ class jellyfin_api
             return array();
         }
 
-        $curl_wrapper = $this->plugin->setup_curl();
         $headers = $this->buildHeaders(true);
         $headers[] = CONTENT_TYPE_JSON;
-        $curl_wrapper->set_send_headers($headers);
+
+        $this->plugin->reset_curl($this->curl_wrapper);
+        $this->curl_wrapper->set_send_headers($headers);
 
         $command_url = $this->baseUrl . '/' . ltrim($path, '/');
         if (!empty($query)) {
             $command_url .= '?' . http_build_query($query);
         }
 
-        $response = $curl_wrapper->download_content($command_url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+        $response = $this->curl_wrapper->download_content($command_url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
         if ($response !== false) {
             return $response;
         }

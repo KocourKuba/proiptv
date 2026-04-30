@@ -143,6 +143,11 @@ class api_default
     protected $plugin;
 
     /**
+     * @var Curl_Wrapper
+     */
+    protected $curl_wrapper;
+
+    /**
      * @var array
      */
     protected $servers = array();
@@ -376,6 +381,8 @@ class api_default
     public function set_provider_playlist_id($playlist_id)
     {
         $this->playlist_id = $playlist_id;
+        $this->curl_wrapper = Curl_Wrapper::getInstance($this->playlist_id);
+        $this->plugin->reset_curl($this->curl_wrapper);
     }
 
     /**
@@ -513,7 +520,7 @@ class api_default
         }
 
         hd_debug_print("ApiCommandUrl: $command_url", true);
-        $curl_wrapper = $this->plugin->setup_curl();
+        $this->plugin->reset_curl($this->curl_wrapper);
 
         $add_headers = $this->get_additional_headers($command);
 
@@ -526,29 +533,29 @@ class api_default
         }
 
         if (!empty($curl_opt[CURLOPT_HTTPHEADER])) {
-            $curl_wrapper->set_send_headers($curl_opt[CURLOPT_HTTPHEADER]);
-        }
-
-        if (isset($curl_opt[CURLOPT_POST])) {
-            $curl_wrapper->set_post($curl_opt[CURLOPT_POST]);
+            $this->curl_wrapper->set_send_headers($curl_opt[CURLOPT_HTTPHEADER]);
         }
 
         if (isset($curl_opt[CURLOPT_POSTFIELDS])) {
-            $curl_wrapper->set_post_data($curl_opt[CURLOPT_POSTFIELDS]);
+            $this->curl_wrapper->set_post_data($curl_opt[CURLOPT_POSTFIELDS]);
+        }
+
+        if (isset($curl_opt[CURLOPT_POST])) {
+            $this->curl_wrapper->set_post($curl_opt[CURLOPT_POST]);
         }
 
         if (isset($curl_opt[CURLOPT_TIMEOUT])) {
-            $curl_wrapper->set_download_timeout($curl_opt[CURLOPT_TIMEOUT]);
+            $this->curl_wrapper->set_download_timeout($curl_opt[CURLOPT_TIMEOUT]);
         }
 
         if (isset($curl_opt[CURLOPT_CONNECTTIMEOUT])) {
-            $curl_wrapper->set_connect_timeout($curl_opt[CURLOPT_CONNECTTIMEOUT]);
+            $this->curl_wrapper->set_connect_timeout($curl_opt[CURLOPT_CONNECTTIMEOUT]);
         }
 
         if (is_null($file)) {
-            $response = $curl_wrapper->download_content($command_url, $cache_opt);
+            $response = $this->curl_wrapper->download_content($command_url, $cache_opt);
         } else {
-            $response = $curl_wrapper->download_file($command_url, $file);
+            $response = $this->curl_wrapper->download_file($command_url, $file);
         }
 
         if ($response === false) {
