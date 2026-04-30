@@ -66,7 +66,9 @@ class TR
     }
 
     /**
-     * @param string $string_key
+     * Load translation by key and format it if additional arguments passed as parameters
+     *
+     * @param string $string_key can be as format
      * @return string constant in the system language by key
      */
     public static function load($string_key)
@@ -76,14 +78,39 @@ class TR
             return '';
         }
 
+        static $lang_txt = '';
+        if (empty($lang_txt)) {
+            $lang_txt = file_get_contents($lang_file);
+            hd_debug_print("Loaded language file $lang_file, size: " . strlen($lang_txt));
+        }
+
         /** @var array $m */
-        if (($lang_txt = file_get_contents($lang_file)) && preg_match("/^$string_key\\s*=(.*)$/m", $lang_txt, $m)) {
+        if (preg_match("/^$string_key\\s*=(.*)$/m", $lang_txt, $m)) {
             $args = func_get_args();
             array_shift($args);
             return vsprintf(trim($m[1]), $args);
         }
 
+        hd_debug_print("not found: $string_key");
         return $string_key;
+    }
+
+    /**
+     * Convert internal DuneHD translation format string to translated string
+     * if format string contains arguments they must passed as parameters
+     *
+     * @param string $tr_fmt
+     * @return string
+     */
+    public static function translate($tr_fmt)
+    {
+        if (strpos($tr_fmt, '%ext%') === false && strpos($tr_fmt, '%tr%') === false) {
+            return $tr_fmt;
+        }
+
+        $xml = simplexml_load_string(self::strip_param($tr_fmt));
+        $ar = (array)$xml;
+        return self::load((string)$xml, $ar['p']);
     }
 
     protected static function get_translation_filename($lang)

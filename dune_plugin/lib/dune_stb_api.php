@@ -494,8 +494,9 @@ function print_backtrace()
     hd_print("Back trace:");
     foreach (debug_backtrace() as $f) {
         if (!isset($f['file'], $f['line'])) {
-            hd_print($f['function'] . ": " . json_encode($f));
-            hd_print("  - " . json_encode($f));
+            $str = json_encode($f);
+            hd_print("{$f['function']}: $str");
+            hd_print("  - $str");
             continue;
         }
 
