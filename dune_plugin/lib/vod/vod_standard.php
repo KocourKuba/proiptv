@@ -349,26 +349,28 @@ class vod_standard extends Abstract_Vod
     public function vod_player_exec($user_input, &$plugin_cookies)
     {
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
-        $is_external = isset($user_input->external);
         $vod_info = $this->get_vod_info($selected_media_url);
+
+        if (!isset($user_input->external)) {
+            return Action_Factory::vod_play($vod_info);
+        }
+
         if (!isset($vod_info[PluginVodInfo::initial_series_ndx], $vod_info[PluginVodInfo::series][$vod_info[PluginVodInfo::initial_series_ndx]])) {
             return null;
         }
 
-        $idx = $vod_info[PluginVodInfo::initial_series_ndx];
-        $series = $vod_info[PluginVodInfo::series][$idx];
+        $series = $vod_info[PluginVodInfo::series][$vod_info[PluginVodInfo::initial_series_ndx]];
         $url = $series[PluginVodSeriesInfo::playback_url];
-        if (!$is_external) {
-            return Action_Factory::vod_play($vod_info);
-        }
 
         if (!$series[PluginVodSeriesInfo::playback_url_is_stream_url]) {
             $url = $this->get_vod_stream_url($url, $plugin_cookies);
         }
 
-        $url = HD::strip_dune_params($url);
-        $cmd = 'am start -d "' . $url . '" -t "video/*" -a android.intent.action.VIEW 2>&1';
-        hd_debug_print("play movie in the external player: $cmd");
+        $url = HD::strip_dune_params(HD::strip_ts($url));
+
+        $cmd = "am start -a android.intent.action.VIEW -t \"video/*\" -d \"$url\" 2>&1";
+        hd_debug_print("play movie by the external player: $cmd");
+
         /** @var array $output */
         exec($cmd, $output);
         hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
@@ -842,7 +844,9 @@ class vod_standard extends Abstract_Vod
                     if (empty($uri)) {
                         throw new Exception("Empty playlist url");
                     }
-                    $curl_wrapper = $this->plugin->setup_curl();
+
+                    $curl_wrapper = Curl_Wrapper::getInstance($playlist_id);
+                    $this->plugin->reset_curl($curl_wrapper);
                     $res = $curl_wrapper->download_file($uri, $m3u_file);
                     if ($res === false) {
                         $msg = sprintf("%s\nError code: %s\n%s",
