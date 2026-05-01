@@ -855,6 +855,17 @@ class HD
         return $url;
     }
 
+    public static function extract_dune_params($url)
+    {
+        $pos = strpos($url, self::DUNE_PARAMS_MAGIC);
+        $dune_magic = '';
+        if ($pos !== false && $pos > 0) {
+            $dune_magic = substr($url, $pos + strlen(self::DUNE_PARAMS_MAGIC));
+        }
+
+        return $dune_magic;
+    }
+
     public static function array_unshift_assoc(&$arr, $key, $val)
     {
         $arr = array_reverse($arr, true);

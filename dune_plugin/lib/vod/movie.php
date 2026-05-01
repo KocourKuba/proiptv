@@ -591,9 +591,9 @@ class Movie extends Json_Serializer implements User_Input_Handler
         $sel_id = safe_get_value($media_url, 'episode_id');
         $series_array = array();
         $initial_series_ndx = 0;
-        $def_q_variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_QUALITY, 'auto');
+        $def_q_variant = $this->plugin->get_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
         hd_debug_print("default quality: $def_q_variant", true);
-        $def_a_variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_AUDIO, 'auto');
+        $def_a_variant = $this->plugin->get_setting(PARAM_VOD_SELECTED_AUDIO, 'auto');
         hd_debug_print("default audio: $def_a_variant", true);
         $counter = 0; // series index. Not the same as the key of series list
         $initial_start_array = array();
@@ -629,8 +629,6 @@ class Movie extends Json_Serializer implements User_Input_Handler
             }
 
             if (!empty($viewed_params) && $viewed_params[COLUMN_WATCHED] == 0 && $viewed_params[COLUMN_DURATION] != -1) {
-                $name .= " [" . format_duration($viewed_params[COLUMN_POSITION]) . "]";
-
                 $pos = $viewed_params[COLUMN_POSITION];
                 if ($pos < 0) {
                     $pos = 0;

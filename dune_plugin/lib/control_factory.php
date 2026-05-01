@@ -148,7 +148,7 @@ class Control_Factory
      * @param int $max_string_length
      * @return void
      */
-    public static function format_smart_label(&$defs, $name, $text, $max_string_length = 100)
+    public static function format_smart_label(&$defs, $name, $text, $max_string_length = 105)
     {
         $lines = wrap_string_to_array($text, $max_string_length);
         if ($name === null) {

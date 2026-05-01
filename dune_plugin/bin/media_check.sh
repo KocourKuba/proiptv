@@ -45,10 +45,10 @@ ProcessURL()
   # ...
 
   URL="$1"
-  FFMPEG_TIMEOUT_USEC=5000000
+  FFMPEG_TIMEOUT_USEC=10000000
   rm -rf $RESULT_FILE
 
-  RunWithTimeout "$FFMPEG_TIMEOUT_USEC" "$FFMPEG_PATH" -hide_banner -i "$URL" -vframes 0 -f null /dev/null >"$RESULT_FILE" 2>&1
+  RunWithTimeout "$FFMPEG_TIMEOUT_USEC" "$FFMPEG_PATH" -hide_banner -i "$URL" -vframes 0 -aframes 0 -f null /dev/null >"$RESULT_FILE" 2>&1
 
   STATUS="$?"
   cat "$RESULT_FILE"

@@ -141,12 +141,7 @@ class jellyfin_api
         $post_data['UserId'] = $this->userId;
         $post_data['MediaSourceId'] = $query['MediaSourceId'];
         $post_data['AudioStreamIndex'] = $query['AudioStreamIndex'];
-        $post_data['IsPlayback'] = true;
-        $post_data['EnableDirectPlay'] = true;
-        $post_data['EnableDirectStream'] = true;
         $post_data['EnableTranscoding'] = false;
-        $post_data['AllowVideoStreamCopy'] = true;
-        $post_data['AllowAudioStreamCopy'] = true;
 
         $headers = $this->buildHeaders(true);
         $headers[] = CONTENT_TYPE_JSON;

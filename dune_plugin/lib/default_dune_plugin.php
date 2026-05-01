@@ -2824,9 +2824,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $defs = array();
 
         Control_Factory::add_vgap($defs, -20);
-        Control_Factory::format_smart_label($defs, TR::load('number') . " (ID):",
-            "{$channel_row[COLUMN_CH_NUMBER]} ({$channel_row[COLUMN_CHANNEL_ID]})");
-        Control_Factory::format_smart_label($defs, TR::load('name'), $channel_row[COLUMN_TITLE]);
+        $title = sprintf("%s (ID) %s", rtrim(TR::load('number'), ':'), TR::load('name'));
+        Control_Factory::format_smart_label($defs, $title,
+            "{$channel_row[COLUMN_CH_NUMBER]} ({$channel_row[COLUMN_CHANNEL_ID]}) '{$channel_row[COLUMN_TITLE]}'");
         Control_Factory::format_smart_label($defs, TR::load('group'), $channel_row[COLUMN_GROUP_ID]);
         Control_Factory::format_smart_label($defs, TR::load('archive'), $channel_row[COLUMN_ARCHIVE] . ' ' . TR::load('days'));
         Control_Factory::format_smart_label($defs, TR::load('adult'),
@@ -2881,10 +2881,20 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if (!empty($live_url) && !is_limited_apk()) {
             $streams = $this->get_streams_info($live_url);
-            if (!empty($streams)) {
+            $out = null;
+            $title = '';
+            if (!empty($streams['streams'])) {
+                $out = $streams['streams'];
+                $title = TR::load('stream');
+            } else if (!empty($streams['log'])) {
+                $out = $streams['log'];
+            }
+
+            if (!empty($out)) {
                 Control_Factory::add_vgap($defs, 15);
-                foreach ($streams as $stream) {
-                    Control_Factory::format_smart_label($defs, TR::load('stream'), $stream);
+                Control_Factory::format_smart_label($defs, 'ffmpeg info:', '');
+                foreach ($out as $line) {
+                    Control_Factory::format_smart_label($defs, $title, $line);
                 }
             }
         }
@@ -2904,7 +2914,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param MediaURL $media_url
      * @return array|null
      */
-    public function do_show_vod_info($media_url)
+    public function do_show_vod_info($media_url, $plugin_cookies)
     {
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
@@ -2917,28 +2927,41 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $idx = $vod_info[PluginVodInfo::initial_series_ndx];
         $series = $vod_info[PluginVodInfo::series][$idx];
         $stream_url = $series[PluginVodSeriesInfo::playback_url];
+        if (!$series[PluginVodSeriesInfo::playback_url_is_stream_url]) {
+            hd_debug_print("NonStream Url: $stream_url");
+            $stream_url = $this->vod->get_vod_stream_url($stream_url, $plugin_cookies);
+        }
+
+        $stream_url = HD::strip_ts($stream_url);
+        $magic = HD::extract_dune_params($stream_url);
+        $stream_url = HD::strip_dune_params($stream_url);
 
         Control_Factory::add_vgap($defs, -20);
-        Control_Factory::format_smart_label($defs, "ID:", $vod_info[PluginVodInfo::id]);
         Control_Factory::format_smart_label($defs, TR::load('name'), $series[PluginVodSeriesInfo::name]);
 
-        $dune_params_pos = strpos($stream_url, HD::DUNE_PARAMS_MAGIC);
-        if ($dune_params_pos !== false) {
-            $magic = substr($stream_url, $dune_params_pos + strlen(HD::DUNE_PARAMS_MAGIC));
-            $stream_url = HD::strip_dune_params($stream_url);
+        if (!empty($magic)) {
             Control_Factory::add_vgap($defs, 10);
             Control_Factory::format_smart_label($defs, "dune_params:", $magic);
         }
 
         Control_Factory::format_smart_label($defs, TR::load('url'), htmlspecialchars($stream_url));
 
-        $stream_url = HD::strip_ts($stream_url);
         if (!empty($stream_url) && !is_limited_apk()) {
-            $streams = $this->get_streams_info($stream_url);
-            if (!empty($streams)) {
+            $info = $this->get_streams_info($stream_url);
+            $out = null;
+            $title = '';
+            if (!empty($info['streams'])) {
+                $out = $info['streams'];
+                $title = TR::load('stream');
+            } else if (!empty($info['log'])) {
+                $out = $info['log'];
+            }
+
+            if (!empty($out)) {
                 Control_Factory::add_vgap($defs, 30);
-                foreach ($streams as $stream) {
-                    Control_Factory::format_smart_label($defs, TR::load('stream'), $stream);
+                Control_Factory::format_smart_label($defs, 'ffmpeg info:', '');
+                foreach ($out as $line) {
+                    Control_Factory::format_smart_label($defs, $title, $line);
                 }
             }
         }
@@ -4295,7 +4318,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $descriptors,
             $pipes);
 
-        $streams = array();
+        $out = array();
         if (is_resource($process)) {
             $output = stream_get_contents($pipes[1]);
 
@@ -4310,11 +4333,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 if (strpos($line, "Stream #") !== false) {
                     $line = substr($line, 7);
                     $line = preg_replace("/ \(\[.*\)| \[.*]|, [0-9k.]+ tb[rcn]|, q=[0-9\-]+/", "", $line);
-                    $streams[] = $line;
+                    $out['streams'][] = $line;
                 }
             }
         }
 
-        return $streams;
+        $ffmpeg_log = get_temp_path('ffmpeg.log');
+        if (file_exists($ffmpeg_log)) {
+            $content = file_get_contents($ffmpeg_log);
+            foreach (explode(PHP_EOL, $content) as $line) {
+                if (preg_match('/\[.+]\s(.+)/', $line, $m)) {
+                    $out['log'][] = $m[1];
+                }
+            }
+        }
+
+        return $out;
     }
 }

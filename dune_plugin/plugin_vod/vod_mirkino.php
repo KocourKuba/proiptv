@@ -87,12 +87,12 @@ class vod_mirkino extends vod_standard
         if ($info === false) {
             hd_debug_print("Can't get response on Playback info");
         }
+
         if (isset($info['PlaySessionId'])) {
             $query['PlaySessionId'] = $info['PlaySessionId'];
         }
 
         $url = $this->jfc->getPlayUrlMaster($media_url->id, $query);
-        hd_debug_print("vod stream url: $url", true);
 
         $vod_url = HD::make_ts($url);
         $dune_params = $this->plugin->collect_dune_params();
@@ -451,6 +451,7 @@ class vod_mirkino extends vod_standard
             /** @var Movie_Variant[] $audios */
             $audios = array();
             $q_name = '';
+            $default_audio = safe_get_value($source, 'DefaultAudioStreamIndex');
             foreach (safe_get_value($source, 'MediaStreams', array()) as $stream) {
                 if (strcasecmp(safe_get_value($stream, 'Type'), 'Video') === 0) {
                     $q_name = safe_get_value($stream, 'DisplayTitle');
@@ -464,11 +465,10 @@ class vod_mirkino extends vod_standard
                 } else if (strcasecmp(safe_get_value($stream, 'Type'), 'Audio') === 0) {
                     $a_name = safe_get_value($stream, 'DisplayTitle');
                     $index = safe_get_value($stream, 'Index');
-                    $is_default = safe_get_value($stream, 'IsDefault');
                     $media_url = MediaURL::encode(array('id' => $item_id, 'stream_id' => $stream_id, 'audio_index' => $index));
                     $audio = new Movie_Variant($a_name, new Movie_Playback_Url($media_url, false));
                     $audios[$index] = $audio;
-                    if ($is_default) {
+                    if ($default_audio === $index) {
                         $audios['auto'] = $audio;
                     }
                 }
