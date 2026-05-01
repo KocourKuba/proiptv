@@ -415,7 +415,6 @@ vod_screen_viewed_not_viewed = (Not) Viewed
 vod_screen_age_limit = Age limit:
 vod_screen_quality = Quality
 vod_screen_quality__1 = Quality - %s
-vod_screen_audio__1 = Audio - %s
 vod_screen_all_movies = All movies
 vod_screen_all_serials = All TV Series
 vod_screen_all_movies__1 = All movies %s

@@ -415,7 +415,6 @@ vod_screen_viewed_not_viewed = (未) 观看
 vod_screen_age_limit = 年龄分级:
 vod_screen_quality = 画质
 vod_screen_quality__1 = 画质 - %s
-vod_screen_audio__1 = 音频 - %s
 vod_screen_all_movies = 全部电影
 vod_screen_all_serials = 全部电视剧
 vod_screen_all_movies__1 = 全部电影 %s
