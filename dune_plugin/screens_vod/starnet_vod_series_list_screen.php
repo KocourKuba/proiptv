@@ -142,7 +142,10 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
             case self::ACTION_QUALITY_SELECTED:
                 $this->plugin->set_setting(PARAM_VOD_SELECTED_QUALITY, $user_input->quality);
                 $parent_url = MediaURL::decode($user_input->parent_media_url);
-                return Action_Factory::change_behaviour($this->do_get_action_map($parent_url));
+                return Action_Factory::invalidate_folders(
+                    array($user_input->parent_media_url),
+                    Action_Factory::change_behaviour($this->do_get_action_map($parent_url))
+                );
 
             case self::ACTION_AUDIO_SELECTED:
                 hd_debug_print("Set Audio: $user_input->audio");
@@ -266,6 +269,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
             if (isset($media_url->season_id) && $media_url->season_id !== $episode->season_id) continue;
 
             hd_debug_print("series_id: $series_id episode_name: " . TR::translate($episode->name), true);
+            hd_debug_print("Episode info: " . json_format_unescaped($episode), true);
             $viewed_params = $this->plugin->get_vod_history_params($media_url->movie_id, $series_id);
             $color = 15;
             $info = $episode->name;
@@ -284,12 +288,30 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $color = 5;
             }
 
-            if (!empty($episode->qualities)) {
-                $this->qualities = $episode->qualities;
+            $skip_variant['auto'] = '';
+
+            $description = empty($episode->description) ? $episode->name : $episode->description;
+            $description .= '||';
+            $this->qualities = array_diff_key($episode->get_qualities(), $skip_variant);
+            hd_debug_print("Qualities: " . json_format_unescaped($this->qualities), true);
+            if (!empty($this->qualities)) {
+                $qualities_str = implode('|', $this->qualities);
+                if (!empty($description)) {
+                    $description .= '||';
+                }
+                $description .= TR::load('vod_screen_qualities__1', $qualities_str);
             }
 
-            if (!empty($episode->audios)) {
-                $this->audios[$episode->id] = $episode->audios;
+            $q_variant = $this->plugin->get_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
+            hd_debug_print("selected audio: $q_variant");
+            $this->audios = array_diff_key($episode->get_audios($q_variant), $skip_variant);
+            hd_debug_print("Audios: " . json_format_unescaped($this->audios), true);
+            if (!empty($this->audios)) {
+                $audios_str = implode('|', $this->audios);
+                if (!empty($description)) {
+                    $description .= '||';
+                }
+                $description .= TR::load('vod_screen_audios__1', $audios_str);
             }
 
             $items[] = array(
@@ -297,7 +319,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
                 PluginRegularFolderItem::caption => $info,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => 'gui_skin://small_icons/movie.aai',
-                    ViewItemParams::item_detailed_info => empty($episode->description) ? $episode->name : $episode->description,
+                    ViewItemParams::item_detailed_info => empty($description) ? $episode->name : $description,
                     ViewItemParams::item_detailed_icon_path => empty($episode->poster) ? 'gui_skin://large_icons/movie.aai' : $episode->poster,
                     ViewItemParams::item_caption_color => $color,
                 ),

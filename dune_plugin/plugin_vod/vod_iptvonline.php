@@ -75,7 +75,7 @@ class vod_iptvonline extends vod_standard
 
             $playback_url = new Movie_Playback_Url($url);
             $movie_series = new Movie_Series($arr[1], $medias['title'], $playback_url);
-            $quality = new Movie_Variant($medias['title'], $playback_url);
+            $quality = new Movie_Variant('auto', $playback_url);
             foreach (safe_get_value($medias, 'audios', array()) as $item) {
                 $key = safe_get_value($item, 'translate');
                 if (!empty($key)) {
@@ -104,16 +104,16 @@ class vod_iptvonline extends vod_standard
                     $series_name = TR::load('vod_screen_series__1', $episode['episode']);
                     $playback_url = new Movie_Playback_Url($url);
                     $movie_series = new Movie_Series($series_id, $series_name, $playback_url, $season['season']);
-                    $qualty = new Movie_Variant($series_name, $playback_url);
+                    $quality = new Movie_Variant('auto', $playback_url);
                     foreach (safe_get_value($episode, 'audios', array()) as $item) {
                         $key = safe_get_value($item, 'translate');
                         if (!empty($key)) {
                             hd_debug_print("url for audio '$key' - {$item['url']}", true);
-                            $qualty->add_variant_data($key, new Movie_Variant($key, new Movie_Playback_Url($item['url'])));
+                            $quality->add_variant_data($key, new Movie_Variant($key, new Movie_Playback_Url($item['url'])));
                         }
                     }
                     $movie_season->description = safe_get_value($episode, 'title');
-                    $movie_series->add_variant_data($series_id, $qualty);
+                    $movie_series->add_variant_data($series_id, $quality);
                     $movie->add_series_data($movie_series);
                 }
             }

@@ -119,4 +119,43 @@ class Movie_Series
     {
         return isset($this->variants[$id]) ? $this->variants[$id] : null;
     }
+
+    /**
+     * @return array
+     */
+    public function get_qualities()
+    {
+        if (empty($this->variants)) {
+            return array();
+        }
+
+        return array_map(function ($variant) {
+            return $variant->name;
+        }, $this->variants);
+    }
+
+    /**
+     * @param string $quality_id
+     * @return array
+     */
+    public function get_audios($quality_id)
+    {
+        if (empty($this->variants)) {
+            return array();
+        }
+
+        $q_variant = $this->get_variant($quality_id);
+        if (empty($q_variant)) {
+            return array();
+        }
+
+        $a_variants = $q_variant->get_variants();
+        if (empty($a_variants)) {
+            return array();
+        }
+
+        return array_map(function ($variant) {
+            return $variant->name;
+        }, $a_variants);
+    }
 }

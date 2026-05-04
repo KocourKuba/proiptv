@@ -333,7 +333,6 @@ class vod_edem extends vod_standard
         hd_debug_print("Default playback_url for {$movieData['title']}: {$movieData['url']}");
         $movie_serie = new Movie_Series($movie_id, $movieData['title'], new Movie_Playback_Url($movieData['url']));
         $variants = safe_get_value($movieData, 'variants', array());
-        $movie_serie->description = TR::load('vod_screen_quality') . '|' . implode(',', array_diff(array_keys($variants), array('auto')));
         foreach ($variants as $key => $url) {
             if ($key !== 'auto') {
                 $movie_serie->add_variant_data($key, new Movie_Variant($key, new Movie_Playback_Url($url)));
