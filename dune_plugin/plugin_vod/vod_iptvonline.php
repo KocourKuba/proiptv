@@ -59,7 +59,7 @@ class vod_iptvonline extends vod_standard
         }
         hd_debug_print("TryLoadMovie: category: movies, id: $arr[1]");
 
-        $json = $this->make_json_request("/movies/$arr[1]", Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+        $json = $this->make_json_request("/movies/$arr[1]");
 
         if (empty($json) || safe_get_value($json, "success", true) === false) {
             hd_debug_print("failed to load movie: $movie_id");
@@ -161,7 +161,7 @@ class vod_iptvonline extends vod_standard
         $this->category_index[API_ACTION_SERIAL] = new Vod_Category(API_ACTION_SERIAL, TR::t('vod_screen_all_serials'));
 
         $exist_filters = array();
-        $data = $this->make_json_request('/' . API_ACTION_FILTERS, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+        $data = $this->make_json_request('/' . API_ACTION_FILTERS);
         if (empty($data) || !isset($data['data']['filter_by'])) {
             hd_debug_print("Wrong response on filter request: " . json_format_unescaped($data));
             return false;
@@ -209,8 +209,12 @@ class vod_iptvonline extends vod_standard
 
         // page index start from 1
         $page_idx = $this->get_current_page_index($query_id, 1);
+        if ($page_idx < 0) {
+            return array();
+        }
+
         $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, $query_id);
-        return $this->CollectQueryResult($query_id, $this->make_json_request($url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE));
+        return $this->CollectQueryResult($query_id, $this->make_json_request($url));
     }
 
     /**
@@ -230,7 +234,7 @@ class vod_iptvonline extends vod_standard
         $page_idx = $this->get_current_page_index($page_id, 1);
         if ($page_idx >= 0) {
             $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, API_ACTION_MOVIE);
-            $searchRes = $this->make_json_request($url, Curl_Wrapper::RET_ARRAY, $payload);
+            $searchRes = $this->make_json_request($url, false, $payload);
             $movies = $this->CollectQueryResult(API_ACTION_MOVIE, $searchRes, API_ACTION_SEARCH);
         }
 
@@ -241,7 +245,7 @@ class vod_iptvonline extends vod_standard
         }
 
         $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, API_ACTION_SERIAL);
-        $searchRes = $this->make_json_request($url, Curl_Wrapper::RET_ARRAY, $payload);
+        $searchRes = $this->make_json_request($url, false, $payload);
         $serials = $this->CollectQueryResult(API_ACTION_SERIAL, $searchRes, API_ACTION_SEARCH);
 
         return safe_merge_array($movies, $serials);
@@ -314,18 +318,18 @@ class vod_iptvonline extends vod_standard
         // Using method GET! but send parameters via POST fields
         $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, $query_id);
         $payload = array('features_hash' => $param_str);
-        return $this->CollectQueryResult($query_id, $this->make_json_request($url, Curl_Wrapper::RET_ARRAY, $payload), API_ACTION_FILTER);
+        return $this->CollectQueryResult($query_id, $this->make_json_request($url, false, $payload), API_ACTION_FILTER);
     }
 
     ///////////////////////////////////////////////////////////////////////
 
     /**
      * @param string $url
-     * @param int $decode
+     * @param bool $cache_response
      * @param array|null $payload
      * @return bool|array
      */
-    protected function make_json_request($url, $decode, $payload = null)
+    protected function make_json_request($url, $cache_response = true, $payload = null)
     {
         $curl_opt = array();
 
@@ -336,6 +340,11 @@ class vod_iptvonline extends vod_standard
         if (!empty($payload)) {
             $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
             $curl_opt[CURLOPT_POSTFIELDS] = $payload;
+        }
+
+        $decode = Curl_Wrapper::RET_ARRAY;
+        if ($cache_response) {
+            $decode |= Curl_Wrapper::CACHE_RESPONSE;
         }
 
         $data = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, $decode);
@@ -399,6 +408,8 @@ class vod_iptvonline extends vod_standard
         if ($page === $current_idx) {
             hd_debug_print("Last page: $page");
             $this->stop_page_index($page_id);
+        } else {
+            $this->shift_next_page_index($query_id);
         }
 
         hd_debug_print("Movies found: " . count($movies));

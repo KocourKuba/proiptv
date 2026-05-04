@@ -180,6 +180,12 @@ class Starnet_Tv implements User_Input_Handler
 
     ///////////////////////////////////////////////////////////////////////
 
+    /**
+     * @param $playback_url
+     * @param $plugin_cookies
+     * @return mixed
+     * @noinspection PhpUnusedParameterInspection
+     */
     public function get_tv_stream_url($playback_url, &$plugin_cookies)
     {
         return $playback_url;
