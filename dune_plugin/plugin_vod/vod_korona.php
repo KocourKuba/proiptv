@@ -26,6 +26,11 @@
 
 require_once 'lib/vod/vod_standard.php';
 
+/**
+ * Own API
+ * server support pagination, search
+ * TV Shows can contain seasons
+ */
 class vod_korona extends vod_standard
 {
     /**

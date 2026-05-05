@@ -26,10 +26,14 @@
 require_once 'lib/vod/vod_standard.php';
 require_once 'lib/jellyfin/jellyfin_api.php';
 
+/**
+ * JellyFin API
+ * API support pagination, search
+ * allow to select quality and one audio track
+ * TV Shows can contain seasons
+ */
 class vod_mirkino extends vod_standard
 {
-    const PAGE_LIMIT = 50;
-
     /**
      * @var jellyfin_api
      */

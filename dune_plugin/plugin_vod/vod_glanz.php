@@ -26,6 +26,10 @@
 
 require_once 'lib/vod/vod_standard.php';
 
+/**
+ * Returns entire VOD in one json file
+ * internal support filter, search
+ */
 class vod_glanz extends vod_standard
 {
     /**

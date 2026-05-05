@@ -26,6 +26,11 @@
 
 require_once 'lib/vod/vod_standard.php';
 
+/**
+ * VPortal API
+ * server support pagination, filter, search
+ * Allow to select quality
+ */
 class vod_edem extends vod_standard
 {
     /**
@@ -275,7 +280,7 @@ class vod_edem extends vod_standard
             return $movies;
         }
 
-        $post_params['limit'] = 50;
+        $post_params['limit'] = self::PAGE_LIMIT;
         $post_params['offset'] = $current_offset;
 
         $requestData = $this->make_json_request($post_params);

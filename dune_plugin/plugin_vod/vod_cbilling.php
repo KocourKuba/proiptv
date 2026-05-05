@@ -26,6 +26,11 @@
 
 require_once 'lib/vod/vod_standard.php';
 
+/**
+ * Own API
+ * server support pagination, search
+ * TV Shows can contain seasons
+ */
 class vod_cbilling extends vod_standard
 {
     /**
@@ -74,8 +79,7 @@ class vod_cbilling extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("Try Load Movie: $movie_id");
 
-        $params[API_COMMAND_ADD_PARAMS] = "/video/$movie_id";
-        $response = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+        $response = $this->make_json_request("/video/$movie_id");
         $movieData = safe_get_value($response, 'data');
         if (empty($movieData)) {
             return null;
@@ -165,7 +169,7 @@ class vod_cbilling extends vod_standard
     {
         hd_debug_print(null, true);
 
-        $jsonItems = $this->provider->execApiCommandResponseNoOpt(API_COMMAND_GET_VOD, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+        $jsonItems = $this->make_json_request(null);
         if ($jsonItems === false) {
             $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
             hd_debug_print($exception_msg);
@@ -185,8 +189,7 @@ class vod_cbilling extends vod_standard
             $total += $count;
 
             // fetch genres for category
-            $params[API_COMMAND_ADD_PARAMS] = "/cat/$id/genres";
-            $genreData = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+            $genreData = $this->make_json_request("/cat/$id/genres");
             if ($genreData === false) {
                 continue;
             }
@@ -224,15 +227,14 @@ class vod_cbilling extends vod_standard
         }
 
         if ($query_id === Vod_Category::FLAG_ALL_MOVIES) {
-            $params[API_COMMAND_ADD_PARAMS] = "/filter/new?page=$page_idx&per_page=50";
+            $url = "/filter/new?page=$page_idx&per_page=" .  self::PAGE_LIMIT;
         } else {
             $arr = explode("_", $query_id);
             $genre_id = safe_get_value($arr, 1, $query_id);
-            $params[API_COMMAND_ADD_PARAMS] = "/genres/$genre_id?page=$page_idx&per_page=50";
+            $url = "/genres/$genre_id?page=$page_idx&per_page=" . self::PAGE_LIMIT;
         }
 
-        return $this->CollectQueryResult($query_id,
-            $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE));
+        return $this->CollectQueryResult($query_id, $this->make_json_request($url));
     }
 
     /**
@@ -249,11 +251,38 @@ class vod_cbilling extends vod_standard
             return array();
         }
 
-        $params[API_COMMAND_ADD_PARAMS] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx&per_page=50";
-        return $this->CollectQueryResult($keyword, $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $params, Curl_Wrapper::RET_ARRAY));
+        $url = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx&per_page=" . self::PAGE_LIMIT;
+        return $this->CollectQueryResult($keyword, $this->make_json_request($url, false));
     }
 
     ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param string $url
+     * @param bool $cache_response
+     * @return bool|array
+     */
+    protected function make_json_request($url, $cache_response = true)
+    {
+        $curl_opt = array();
+
+        if (!empty($url)) {
+            $curl_opt[API_COMMAND_ADD_PARAMS] = $url;
+        }
+
+        $decode = Curl_Wrapper::RET_ARRAY;
+        if ($cache_response) {
+            $decode |= Curl_Wrapper::CACHE_RESPONSE;
+        }
+
+        $data = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, $decode);
+        if (!isset($data['success'], $data['status']) || !$data['success'] || $data['status'] !== 200) {
+            hd_debug_print("Wrong response: " . json_format_unescaped($data));
+            return false;
+        }
+
+        return $data;
+    }
 
     /**
      * @param string $query_id

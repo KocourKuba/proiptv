@@ -44,6 +44,10 @@ require_once 'screens_vod/starnet_vod_movie_list_screen.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
+/**
+ * Returns entire VOD in one m3u file
+ * internal support filter, search
+ */
 class vod_standard extends Abstract_Vod
 {
     /**

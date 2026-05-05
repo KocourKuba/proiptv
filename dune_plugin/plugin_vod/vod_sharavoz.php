@@ -26,6 +26,11 @@
 require_once 'lib/vod/vod_standard.php';
 require_once 'lib/xtream/xtream_codes_api.php';
 
+/**
+ * xtream codes API
+ * API support pagination, search
+ * TV Shows can contain seasons
+ */
 class vod_sharavoz extends vod_standard
 {
     /**

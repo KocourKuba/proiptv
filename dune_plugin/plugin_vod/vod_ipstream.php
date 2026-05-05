@@ -26,6 +26,11 @@
 
 require_once 'lib/vod/vod_standard.php';
 
+/**
+ * Returns entire VOD in one json file
+ * internal support filter, search
+ * TV Shows can contain seasons
+ */
 class vod_ipstream extends vod_standard
 {
     /**

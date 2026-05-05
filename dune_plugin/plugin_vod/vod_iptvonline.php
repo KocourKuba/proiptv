@@ -26,9 +26,15 @@
 
 require_once 'lib/vod/vod_standard.php';
 
+/**
+ * Own API
+ * server support pagination, search
+ * allow to select audio track
+ * TV Shows can contain seasons
+ */
 class vod_iptvonline extends vod_standard
 {
-    const REQUEST_TEMPLATE = "/movies?page=%s&limit=50&category=%s";
+    const REQUEST_TEMPLATE = "/movies?page=%s&category=%s&limit=%s";
 
     /**
      * @inheritDoc
@@ -213,7 +219,7 @@ class vod_iptvonline extends vod_standard
             return array();
         }
 
-        $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, $query_id);
+        $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, $query_id, self::PAGE_LIMIT);
         return $this->CollectQueryResult($query_id, $this->make_json_request($url));
     }
 
@@ -233,7 +239,7 @@ class vod_iptvonline extends vod_standard
         // page index start from 1
         $page_idx = $this->get_current_page_index($page_id, 1);
         if ($page_idx >= 0) {
-            $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, API_ACTION_MOVIE);
+            $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, API_ACTION_MOVIE, self::PAGE_LIMIT);
             $searchRes = $this->make_json_request($url, false, $payload);
             $movies = $this->CollectQueryResult(API_ACTION_MOVIE, $searchRes, API_ACTION_SEARCH);
         }
@@ -244,7 +250,7 @@ class vod_iptvonline extends vod_standard
             return $movies;
         }
 
-        $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, API_ACTION_SERIAL);
+        $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, API_ACTION_SERIAL, self::PAGE_LIMIT);
         $searchRes = $this->make_json_request($url, false, $payload);
         $serials = $this->CollectQueryResult(API_ACTION_SERIAL, $searchRes, API_ACTION_SEARCH);
 
@@ -316,7 +322,7 @@ class vod_iptvonline extends vod_standard
         hd_debug_print("filter page_idx:  $page_idx");
 
         // Using method GET! but send parameters via POST fields
-        $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, $query_id);
+        $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, $query_id, self::PAGE_LIMIT);
         $payload = array('features_hash' => $param_str);
         return $this->CollectQueryResult($query_id, $this->make_json_request($url, false, $payload), API_ACTION_FILTER);
     }
