@@ -479,7 +479,7 @@ class Curl_Wrapper
         }
 
         $opts[CURLOPT_HTTPHEADER][] = "Accept: */*";
-        $opts[CURLOPT_HTTPHEADER][] = "Cache-Control: no-cache";
+        $opts[CURLOPT_HTTPHEADER][] = "Pragma: no-cache";
         $parsed_url = parse_url($url);
         if (isset($parsed_url['host'])) {
             $opts[CURLOPT_HTTPHEADER][] = "Host: {$parsed_url['host']}";

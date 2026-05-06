@@ -49,6 +49,12 @@ class vod_cbilling extends vod_standard
     public function init_vod($provider)
     {
         if (parent::init_vod($provider)) {
+            $this->vod_filters = array('year_from', 'year_to');
+            $filter_types = array();
+            $filter_types['year_from'] = array('title' => TR::t('year_from'), 'text' => true);
+            $filter_types['year_to'] = array('title' => TR::t('year_to'), 'text' => true);
+            $this->set_filter_types($filter_types);
+
             $acc_data = $provider->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_ARRAY);
             if (isset($acc_data['data'])) {
                 $info_data = safe_get_value($acc_data, 'data');
@@ -255,6 +261,46 @@ class vod_cbilling extends vod_standard
         return $this->CollectQueryResult($keyword, $this->make_json_request($url, false));
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getFilterList($query_id)
+    {
+        hd_debug_print(null, true);
+
+        $pairs = explode(",", $query_id);
+        $filter_params = array();
+        $cur_year = date('Y', time());
+        foreach ($pairs as $pair) {
+            /** @var array $m */
+            if (!preg_match("/^(.+):(.+)$/", $pair, $m)) continue;
+            $filter = $this->get_filter_type($m[1]);
+            if (isset($filter['text'])) {
+                if ((int)$m[2] <= 0) {
+                    $filter_params[$m[1]] = 1;
+                } else if ((int)$m[2] > $cur_year) {
+                    $filter_params[$m[1]] = $cur_year;
+                } else {
+                    $filter_params[$m[1]] = (int)$m[2];
+                }
+            }
+        }
+
+        // page index start from 1
+        $page_idx = $this->get_current_page_index($query_id, 1);
+        if ($page_idx < 0) {
+            return array();
+        }
+
+        $start = empty($filter_params['year_from']) ? 1900 : $filter_params['year_from'];
+        $end = $filter_params['year_to'];
+        if (empty($end)) {
+            $url = "/filter/year/$start?page=$page_idx&per_page=" . self::PAGE_LIMIT;
+        } else {
+            $url = "/filter/year/$start/$end?page=$page_idx&per_page=" . self::PAGE_LIMIT;
+        }
+        return $this->CollectQueryResult($query_id, $this->make_json_request($url, false));
+    }
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -275,13 +321,7 @@ class vod_cbilling extends vod_standard
             $decode |= Curl_Wrapper::CACHE_RESPONSE;
         }
 
-        $data = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, $decode);
-        if (!isset($data['success'], $data['status']) || !$data['success'] || $data['status'] !== 200) {
-            hd_debug_print("Wrong response: " . json_format_unescaped($data));
-            return false;
-        }
-
-        return $data;
+        return $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, $decode);
     }
 
     /**
