@@ -1,4 +1,18 @@
-﻿### Version 7.1.1640
+﻿### Version 7.1.1660
+- Updated Sharaclub API
+- Added support for filter by year for Cbilling/Antifriz
+- Minor fixes to the location of elements in the EPG display dialog
+- Updated playlist links for CBilling
+- Changed the mechanism for selecting audio streams in VOD (via the context menu) for providers who support it
+- Added the ability to select an audio stream for Mir Kino
+- Episode/movie selection screen shows information about the available quality and audio stream options for it
+- Fixed a bug loading the list of movies in VOD for IPTV Online
+- Fixed a bug with sorting Internet EPG sources
+- Fixed a bug with passing a link for an external player
+- Fixes and additions to the channel information/VOD dialog
+- Remaining problems. For Mir Kino provider, the server does not always returns a 1080p video stream if it is selected by default (perhaps no one has requested it before you). Alternatively, switch to 2060p and start playing, or for non-ATV devices, request information about the movie by pressing the Info button. After that, switch back to 1080p and everything will continue to work as expected. The problem is definitely on the server side and their admins have been informed of this. Until they fix it, dance with a tambourine. ;)
+
+### Version 7.1.1640
 - Added support for VOD provider Mir Kino (https://mir-kino.pp.ru/) (Former BCU Media VOD)
 - Added external ffmpeg to correctly determine information about streams. Therefore, the plugin has become "fatter". The system ffmpeg has problem with https links. As soon as they add a new version to the firmware, I will remove it. 
 - Added the ability to view stream information for VOD
