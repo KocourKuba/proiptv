@@ -25,7 +25,7 @@
   },
   "epg_presets": {
     "cbilling": {
-      "json_source": "{API}/epg/{EPG_ID}/?date=",
+      "json_source": "http://protected-api.com/epg/{EPG_ID}/?date=",
       "parser": {
         "epg_root": "",
         "epg_name": "name",
@@ -44,7 +44,7 @@
       }
     },
     "itvlive": {
-      "json_source": "{API}/epg/{EPG_ID}",
+      "json_source": "http://api.itv.live/epg/{EPG_ID}",
       "parser": {
         "epg_root": "res",
         "epg_name": "title",
@@ -1369,6 +1369,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_russkoetv.png",
       "provider_url": "https://russkoetv.shop/",
+      "api_url": "http://protected-api.com",
       "config": {
         "id_map": "tvg-id",
         "epg_presets": [
