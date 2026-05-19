@@ -238,6 +238,17 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_URL_DLG_APPLY: // handle streaming settings dialog result
                 return $this->apply_edit_url_dlg($user_input, $plugin_cookies);
 
+            case ACTION_ADD_PRESET:
+                $presets = $this->plugin->get_xmltv_presets();
+                $menu_items = array();
+                foreach ($presets as $key => $preset) {
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ADD_SELECTED_PRESET, $key, null, $preset);
+                }
+                return Action_Factory::show_popup_menu($menu_items);
+
+            case ACTION_ADD_SELECTED_PRESET:
+                return $this->apply_add_preset($user_input, $plugin_cookies);
+
             case ACTION_EXPORT:
                 return $this->plugin->show_export_dialog($this, 'xmltv_sources_list.txt');
 
@@ -292,6 +303,9 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CLEAR_CACHE, TR::t('entry_epg_cache_clear'), 'brush.png');
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CALL_CLEAR_ALL_EPG, TR::t('entry_epg_cache_clear_all'), 'brush.png');
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+
+        // Add Preset
+        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ADD_PRESET, TR::t('edit_list_add_preset'), "epg.png");
 
         // Add URL
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ADD_URL_DLG, TR::t('edit_list_add_url'), "link.png");
@@ -435,6 +449,33 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[] = Action_Factory::change_behaviour($this->do_get_action_map());
         $actions[] = $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $idx);
         $actions[] = User_Input_Handler_Registry::create_action($this, ACTION_INDEX_EPG);
+        return Action_Factory::composite($actions);
+    }
+
+    /**
+     * @param object $user_input
+     * @param object $plugin_cookies
+     * @return array|null
+     */
+    protected function apply_add_preset($user_input, $plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $id = Hashed_Array::hash($user_input->{CONTROL_URL_PATH});
+        if ($this->plugin->get_all_xmltv_sources($this->plugin->get_active_playlist_id())->get_idx($id) !== false) {
+            return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_already_exist'));
+        }
+        $item[PARAM_TYPE] = PARAM_LINK;
+        $item[PARAM_NAME] = $user_input->{COLUMN_NAME};
+        $item[PARAM_URI] = $user_input->{CONTROL_URL_PATH};
+        $item[PARAM_HASH] = $id;
+        $item[PARAM_CACHE] = $user_input->{self::CONTROL_CACHE_TIME};
+
+        $this->plugin->set_xmltv_source(null, $item);
+        $idx = $this->plugin->get_all_xmltv_sources($this->plugin->get_active_playlist_id())->get_idx($id);
+
+        $actions[] = Action_Factory::change_behaviour($this->do_get_action_map());
+        $actions[] = $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $idx);
         return Action_Factory::composite($actions);
     }
 

@@ -107,6 +107,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @var Hashed_Array
      */
+    protected $epg_xmltv_presets;
+
+    /**
+     * @var Hashed_Array
+     */
     protected $image_libs;
 
     /**
@@ -135,6 +140,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $this->providers = new Hashed_Array();
         $this->epg_presets = new Hashed_Array();
+        $this->epg_xmltv_presets = new Hashed_Array();
         $this->image_libs = new Hashed_Array();
         $this->iptv_m3u_parser = new M3uParser();
     }
@@ -1605,6 +1611,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * @return Hashed_Array<string, array>
+     */
+    public function get_epg_xmltv_presets()
+    {
+        return $this->epg_xmltv_presets;
+    }
+
+    /**
      * @param array $provider_preset
      * @return array|false
      */
@@ -1652,6 +1666,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $mapped_presets[$key] = $preset;
         }
         return $mapped_presets;
+    }
+
+    /**
+     * @return Hashed_Array<string, array>
+     */
+    public function get_xmltv_presets()
+    {
+        return $this->epg_xmltv_presets;
     }
 
     /**
