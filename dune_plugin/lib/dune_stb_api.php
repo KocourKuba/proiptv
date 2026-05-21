@@ -1973,6 +1973,11 @@ function is_ext_epg_supported()
     return (defined('PluginTvInfo::ext_epg_channel_ids_url') && is_file( "$apk_subst/firmware_ext/plugins/ext_epg/dune_plugin.xml"));
 }
 
+function is_delay_load_supported()
+{
+    return defined('PluginUpdateTvInfoActionData::channel_changes');
+}
+
 function normalizePath($path) {
     return str_replace(array('\\', '/'), DIRECTORY_SEPARATOR, $path);
 }

@@ -729,41 +729,44 @@ class Action_Factory
         return $defs;
     }
 
-    /**
-     * @param array $post_action
-     * @return array
-     */
-    public static function update_tv_info($post_action = null)
+    public static function update_tv_info($channels, $post_action = null)
     {
-        return array(
-            GuiAction::handler_string_id => UPDATE_TV_INFO_ACTION_ID,
-            GuiAction::data => array(UpdateTvInfoActionData::post_action => $post_action)
-        );
+        if (is_delay_load_supported()) {
+            return array(
+                GuiAction::handler_string_id => PLUGIN_UPDATE_TV_INFO_ACTION_ID,
+                GuiAction::data => array(
+                    PluginUpdateTvInfoActionData::channel_changes => $channels,
+                    PluginUpdateTvInfoActionData::post_action => $post_action
+                )
+            );
+        }
+
+        return $post_action;
     }
-/*
+
     // available from r24
     public static function choose_file($title, $ext, $is_dir = false, $check_writeable = false, $with_fav = false, $post_action = null)
     {
-        if (!defined('CHOOSE_FILE_ACTION_ID')) {
-            return null;
+        if (defined('ChooseFileActionData::filter')) {
+            return array(
+                GuiAction::handler_string_id => CHOOSE_FILE_ACTION_ID,
+                GuiAction::data => array(
+                    ChooseFileActionData::filter => array(
+                        FileChooserFilter::file_type_dir => $is_dir,
+                        FileChooserFilter::file_extensions => $ext,
+                        FileChooserFilter::check_writable => $check_writeable),
+                    ChooseFileActionData::ui_params => array(
+                        FileChooserUiParams::with_favorite_folders => $with_fav,
+                        FileChooserUiParams::details_width => 60,
+                        FileChooserUiParams::dialog_title => $title),
+                    ChooseFileActionData::post_action => $post_action,
+                )
+            );
         }
 
-        return array(
-            GuiAction::handler_string_id => CHOOSE_FILE_ACTION_ID,
-            GuiAction::data => array(
-                ChooseFileActionData::filter => array(
-                    FileChooserFilter::file_type_dir => $is_dir,
-                    FileChooserFilter::file_extensions => $ext,
-                    FileChooserFilter::check_writable => $check_writeable),
-                ChooseFileActionData::ui_params => array(
-                    FileChooserUiParams::with_favorite_folders => $with_fav,
-                    FileChooserUiParams::details_width => 60,
-                    FileChooserUiParams::dialog_title => $title),
-                ChooseFileActionData::post_action => $post_action,
-            )
-        );
+        return null;
     }
-*/
+
     /**
      * @param array &$comps
      * @param string $image_url

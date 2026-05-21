@@ -85,9 +85,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     private $picons_source = PLAYLIST_PICONS;
 
     /**
-     * @var string
+     * @var bool
      */
     private $use_xmltv = false;
+
+    /**
+     * @var bool
+     */
+    private $delay_load_picons = false;
 
     /**
      * @var Epg_Manager_Xmltv|Epg_Manager_Json
@@ -563,11 +568,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $this->channels_loaded = false;
     }
 
-    public function is_use_xmltv()
-    {
-        return $this->use_xmltv;
-    }
-
     /**
      * @return void
      */
@@ -611,6 +611,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
 
         $this->epg_manager = null;
+        $this->delay_load_picons = is_delay_load_supported() && $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false);
         $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
         if ($engine === ENGINE_JSON && count($this->get_provider_epg_presets())) {
             hd_debug_print("Using 'Epg_Manager_Json' cache engine");
@@ -1079,7 +1080,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $all_sources = $this->get_active_sources();
             if ($all_sources->size() === 0) {
                 hd_debug_print("No active XMLTV sources found to collect playlist icons...");
-            } else {
+            } else if (!$this->delay_load_picons) {
+                // if delay load is not enabled need to download and index xmltv source for channels at this time
                 foreach ($all_sources as $params) {
                     $flag = Epg_Manager_Xmltv::check_xmltv_source($params, INDEXING_CHANNELS);
                     if ($flag !== 0) {
@@ -1094,7 +1096,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if (!$reload_playlist && $this->channels_loaded) {
             // If not force to reload playlist just enough to load it from database
             $this->channels_loaded = true;
-            $this->check_and_run_bg_indexing($this->get_active_sources(), INDEXING_ENTRIES, $plugin_cookies);
+            $this->check_and_run_bg_indexing($this->get_active_sources(), $plugin_cookies);
             return true;
         }
 
@@ -1340,9 +1342,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $this->channels_loaded = true;
 
-        if ($this->use_xmltv) {
-            $this->check_and_run_bg_indexing($this->get_active_sources(), INDEXING_ENTRIES, $plugin_cookies);
-        }
+        $this->check_and_run_bg_indexing($this->get_active_sources(), $plugin_cookies);
 
         return true;
     }
@@ -1403,13 +1403,26 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     /**
      * @param Hashed_Array<string, array> $sources
-     * @param int $indexing_flag
      * @param $plugin_cookies
      * @return void
      */
-    public function check_and_run_bg_indexing($sources, $indexing_flag, $plugin_cookies)
+    public function check_and_run_bg_indexing($sources, $plugin_cookies)
     {
         hd_debug_print(null, true);
+
+        $indexing_flag = 0;
+        if (!$this->delay_load_picons && !$this->use_xmltv) {
+            // no need to perform xmltv source checking
+            return;
+        }
+
+        if ($this->delay_load_picons) {
+            $indexing_flag |= INDEXING_CHANNELS;
+        }
+
+        if ($this->use_xmltv) {
+            $indexing_flag |= INDEXING_ENTRIES;
+        }
 
         $to_index = array();
         foreach ($sources as $source_id => $params) {
@@ -1441,7 +1454,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
 
-        $allow_index |= $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false);
+        $allow_index |= (is_delay_load_supported() && $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false));
         $allow_index |= $this->use_xmltv;
         if (!$allow_index) {
             return false;
@@ -1697,7 +1710,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return is_ext_epg_supported() && $this->get_bool_setting(PARAM_SHOW_EXT_EPG);
     }
 
-    public function get_default_channel_icon($is_classic = true)
+    public function get_default_channel_icon($is_classic)
     {
         if ($is_classic) {
             if (empty($this->default_channel_icon_classic)) {
@@ -2393,8 +2406,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $placeHolders = Sql_Wrapper::sql_make_list_from_values(array_unique($picon_ids));
             foreach (Epg_Manager_Xmltv::get_sources() as $key => $params) {
-                if (Epg_Manager_Xmltv::is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_CHANNELS)) continue;
-
                 $xmltv_icon_url = Epg_Manager_Xmltv::get_picon($key, $placeHolders);
                 if (!empty($xmltv_icon_url)) break;
             }
@@ -3454,6 +3465,31 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg,
                             $post_action, $this->is_ext_epg_enabled() && !empty($day_epg));
                     }
+                }
+
+                $show_adult = $this->get_bool_setting(PARAM_SHOW_ADULT);
+                $groups_order = $this->get_groups_by_order();
+                $channels_changed = array();
+                $default_icon = $this->get_default_channel_icon(true);
+                foreach ($groups_order as $group_row) {
+                    if ($group_row[COLUMN_ADULT] && !$show_adult) continue;
+
+                    $group_id = $group_row[COLUMN_GROUP_ID];
+                    $channels_rows = $this->get_channels_by_order($group_id);
+                    foreach ($channels_rows as $channel_row) {
+                        if (!$show_adult && $channel_row[COLUMN_ADULT] !== 0) continue;
+
+                        $url = $this->get_channel_picon($channel_row, true);
+                        if ($url === $default_icon) continue;
+
+                        $channels_changed[] = array(
+                            'id' => $channel_row[COLUMN_CHANNEL_ID],
+                            'icon_url' => $url);
+                    }
+                }
+
+                if (!empty($channels_changed) && is_delay_load_supported()) {
+                    $post_action = Action_Factory::update_tv_info($channels_changed, $post_action);
                 }
 
                 return $post_action;

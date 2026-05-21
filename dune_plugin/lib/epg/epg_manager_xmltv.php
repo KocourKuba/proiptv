@@ -293,7 +293,10 @@ class Epg_Manager_Xmltv
     public static function get_picon($db_name, $placeHolders)
     {
         if (self::is_index_locked($db_name, INDEXING_DOWNLOAD | INDEXING_CHANNELS)) {
-            hd_debug_print("File is indexing or downloading, skipped");
+            return false;
+        }
+
+        if (!Epg_Manager_Xmltv::is_all_indexes_valid($db_name, array(self::TABLE_CHANNELS))) {
             return false;
         }
 
@@ -391,7 +394,7 @@ class Epg_Manager_Xmltv
      * or -1 in case of error
      *
      * @param array $params
-     * @param int $index_flag
+     * @param int $index_flag index to be checked
      * @return int
      */
     public static function check_xmltv_source($params, $index_flag)
@@ -422,6 +425,7 @@ class Epg_Manager_Xmltv
         hd_debug_print_separator();
         hd_debug_print("Checking '$hash' cached xmltv file: $cached_file", true);
         hd_debug_print("Index flag: $index_flag", true);
+
         $expired = true;
         if (!file_exists($cached_file) || !file_exists($cached_db)) {
             hd_debug_print("Cached xmltv file not exist");
@@ -458,9 +462,10 @@ class Epg_Manager_Xmltv
             }
         }
 
+        $new_index_flag = 0;
         if ($expired) {
             self::clear_epg_files($hash);
-            $index_flag |= INDEXING_DOWNLOAD;
+            $new_index_flag |= INDEXING_DOWNLOAD;
             hd_debug_print("Xmltv cache '$hash' expired. Indexing flags: " . $index_flag, true);
             $channels_valid = false;
             $entries_valid = false;
@@ -472,35 +477,26 @@ class Epg_Manager_Xmltv
             $entries_valid = ($indexed[self::TABLE_ENTRIES] !== -1);
         }
 
-
-        if ($channels_valid) {
-            if (($index_flag & INDEXING_ENTRIES) === 0) {
-                hd_debug_print("Xmltv channels index '$hash' is valid");
-                self::clear_log($hash);
-                return 0;
-            }
-
-            if ($entries_valid) {
-                hd_debug_print("Xmltv channels and entries index '$hash' are valid");
-                self::clear_log($hash);
-                return 0;
-            }
+        if (!$entries_valid && ($index_flag & INDEXING_ENTRIES) !== 0) {
+            hd_debug_print("Xmltv entries '$hash' not valid");
+            $new_index_flag |= INDEXING_ENTRIES;
         }
 
         if (!$channels_valid) {
             hd_debug_print("Xmltv channels '$hash' not valid");
-            $index_flag |= INDEXING_CHANNELS;
+            $new_index_flag |= INDEXING_CHANNELS;
         }
 
-        if (!$entries_valid && ($index_flag & INDEXING_ENTRIES) !== 0) {
-            hd_debug_print("Xmltv entries '$hash' not valid");
-            $index_flag |= INDEXING_ENTRIES;
+        if ($new_index_flag === 0) {
+            hd_debug_print("Xmltv channels and entries index '$hash' are valid");
+            self::clear_log($hash);
+            return 0;
         }
 
         // downloaded xmltv file exists, not expired but indexes for channels, picons and positions not exists
         hd_debug_print("Result index flag: $index_flag for '$hash'");
         hd_debug_print_separator();
-        return $index_flag;
+        return $new_index_flag;
     }
 
     /**
@@ -1161,7 +1157,7 @@ class Epg_Manager_Xmltv
     {
         $channel_positions = array();
 
-        if (!self::is_all_indexes_valid($params, array(self::TABLE_CHANNELS, self::TABLE_ENTRIES))) {
+        if (!self::is_all_indexes_valid($params[PARAM_HASH], array(self::TABLE_CHANNELS, self::TABLE_ENTRIES))) {
             hd_debug_print("EPG for {$params[PARAM_URI]} not indexed!");
             return $channel_positions;
         }
@@ -1220,23 +1216,19 @@ class Epg_Manager_Xmltv
     /**
      * Check is all indexes is valid
      *
-     * @param array $params
+     * @param string $hash
      * @param array $names
      * @return bool
      */
-    protected static function is_all_indexes_valid($params, $names)
+    protected static function is_all_indexes_valid($hash, $names)
     {
-        hd_debug_print(null, true);
-
         foreach ($names as $name) {
-            $db = self::open_sqlite_db($params[PARAM_HASH], $name, true);
+            $db = self::open_sqlite_db($hash, $name, true);
             if ($db === false) {
-                hd_debug_print("Database not exist");
                 return false;
             }
 
             if (!$db->is_table_exists($name)) {
-                hd_debug_print("Table '$name' not exist");
                 return false;
             }
         }
@@ -1337,7 +1329,6 @@ class Epg_Manager_Xmltv
         $db_file = self::$cache_dir . $db_name . ".db";
         // in read-only database can't be created
         if ($readonly && !file_exists($db_file)) {
-            hd_debug_print("File '$db_file' for '$db_name' not found");
             return false;
         }
 
