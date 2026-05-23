@@ -73,15 +73,24 @@ class TR
      */
     public static function load($string_key)
     {
-        $lang_file = self::get_translation_filename(self::get_current_language());
+        static $lang_file = '';
         if (empty($lang_file)) {
-            return '';
+            $lang_file = self::get_translation_filename(self::get_current_language());
+            if (empty($lang_file)) {
+                hd_debug_print("Error loading language file $lang_file");
+                $lang_file = 'x';
+            }
         }
 
         static $lang_txt = '';
         if (empty($lang_txt)) {
             $lang_txt = file_get_contents($lang_file);
-            hd_debug_print("Loaded language file $lang_file, size: " . strlen($lang_txt));
+            if (empty($lang_txt)) {
+                hd_debug_print("Error loading language file $lang_file");
+                $lang_txt = 'x';
+            } else {
+                hd_debug_print("Loaded language file $lang_file, size: " . strlen($lang_txt));
+            }
         }
 
         /** @var array $m */
@@ -91,7 +100,7 @@ class TR
             return vsprintf(trim($m[1]), $args);
         }
 
-        hd_debug_print("not found: $string_key");
+        hd_debug_print("Not found value for key '$string_key' in '$lang_file'!");
         return $string_key;
     }
 
@@ -139,6 +148,34 @@ class TR
         }
 
         return $lang;
+    }
+
+    public static function get_system_language_string_value($string_key)
+    {
+        # Returns a string constant in the system language by key
+
+        $lang = self::get_current_language();
+        static $lang_txt = '';
+        if (empty($lang_txt)) {
+            $lang_file = "/firmware/translations/dune_language_$lang.txt";
+            $lang_txt = file_get_contents($lang_file);
+            if (empty($lang_txt)) {
+                hd_debug_print("Error loading language file $lang_file");
+                $lang_txt = 'x';
+            } else {
+                hd_debug_print("Loaded language file $lang_file, size: " . strlen($lang_txt));
+            }
+        }
+
+        /** @var array $m */
+        if (preg_match("/^$string_key\\s*=(.*)$/m", $lang_txt, $m)) {
+            $args = func_get_args();
+            array_shift($args);
+            return vsprintf(trim($m[1]), $args);
+        }
+
+        hd_debug_print("Not found value for key '$string_key'!");
+        return '';
     }
 
     private static function strip_param($v)

@@ -723,7 +723,7 @@ class Action_Factory
             )
         );
 
-        if (defined('PluginUpdateEpgActionData::ext_epg_enabled')) {
+        if (is_ext_epg_enabled()) {
             $defs[GuiAction::data]['PluginUpdateEpgActionData::ext_epg_enabled'] = $ext_epg_enabled;
         }
         return $defs;
@@ -747,7 +747,7 @@ class Action_Factory
     // available from r24
     public static function choose_file($title, $ext, $is_dir = false, $check_writeable = false, $with_fav = false, $post_action = null)
     {
-        if (defined('ChooseFileActionData::filter')) {
+        if (is_choose_file_supported()) {
             return array(
                 GuiAction::handler_string_id => CHOOSE_FILE_ACTION_ID,
                 GuiAction::data => array(

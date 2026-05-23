@@ -1973,9 +1973,19 @@ function is_ext_epg_supported()
     return (defined('PluginTvInfo::ext_epg_channel_ids_url') && is_file( "$apk_subst/firmware_ext/plugins/ext_epg/dune_plugin.xml"));
 }
 
+function is_ext_epg_enabled()
+{
+    return defined('PluginUpdateEpgActionData::ext_epg_enabled');
+}
+
 function is_delay_load_supported()
 {
     return defined('PluginUpdateTvInfoActionData::channel_changes');
+}
+
+function is_choose_file_supported()
+{
+    return defined('ChooseFileActionData::filter');
 }
 
 function normalizePath($path) {
@@ -2020,7 +2030,7 @@ function get_paved_path($path, $dir_mode = 0777)
         hd_debug_print("Directory '$path' was not created");
     }
 
-    return rtrim($path, '/');
+    return get_noslash_trailed_path($path);
 }
 
 function get_slash_trailed_path($path)
@@ -2217,26 +2227,6 @@ function get_canonize_string($str, $encoding = 'UTF-8')
         array('а', 'в', 'е', 'к', 'м', 'н', 'о', 'р', 'с', 'т', 'у', 'х'),
         array('a', 'b', 'e', 'k', 'm', 'h', 'o', 'p', 'c', 't', 'y', 'x'),
         mb_strtolower(trim($str), $encoding));
-}
-
-function get_system_language_string_value($string_key)
-{
-    # Returns a string constant in the system language by key
-
-    if ($sys_settings = parse_ini_file('/config/settings.properties', false, INI_SCANNER_RAW)) {
-        $sys_lang = file_exists("/firmware/translations/dune_language_{$sys_settings['interface_language']}.txt")
-            ? $sys_settings['interface_language']
-            : 'english';
-
-        /** @var array $m */
-        if (($lang_txt = file_get_contents("/firmware/translations/dune_language_$sys_lang.txt")) &&
-            preg_match("/^$string_key\\s*=(.*)$/m", $lang_txt, $m)) {
-            return trim($m[1]);
-        }
-    }
-
-    hd_debug_print("Error in class " . __METHOD__ . " ! Not found value for key '$string_key'!");
-    return '';
 }
 
 function debug_print(/*mixed $var1, $var2...*/)
