@@ -870,7 +870,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             hd_debug_print("Database attached: $database_attached");
             $count = $this->iptv_m3u_parser->parseIptvPlaylist($this->sql_playlist);
             if (!$count) {
-                $contents = @file_get_contents($m3u_file);
                 $exception_msg = TR::load('err_load_playlist') . " Empty playlist!\n\n$contents";
                 throw new Exception($exception_msg);
             }
