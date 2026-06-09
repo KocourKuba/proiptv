@@ -195,20 +195,20 @@ class M3uParser extends Json_Serializer
      */
     public function parseHeader($global = true)
     {
-        hd_debug_print();
-        if (!file_exists($this->file_name)) {
-            hd_debug_print("Can't read file: $this->file_name");
+        $file_handle = self::open_m3u($this->file_name);
+        if ($file_handle === false) {
             return new Entry();
         }
 
         $this->clear_data();
 
-        hd_debug_print("Open: $this->file_name");
-        $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
         $m3u_info = null;
         $entry = new Entry();
-        foreach ($lines as $line) {
+
+        while (!feof($file_handle)) {
+            $line = fgets($file_handle);
+            if ($line === false) continue;
+
             $res = $this->parseLine($line, $entry);
             if ($res === -1) continue;
             if (!$entry->isM3U_Header()) break;
@@ -229,6 +229,7 @@ class M3uParser extends Json_Serializer
 
             $entry = new Entry();
         }
+        fclose($file_handle);
 
         $m3u_info = is_null($m3u_info) ? new Entry() : $m3u_info;
         if ($global) {
@@ -247,7 +248,10 @@ class M3uParser extends Json_Serializer
      */
     public function parseIptvPlaylist($db)
     {
-        hd_debug_print();
+        $file_handle = self::open_m3u($this->file_name);
+        if ($file_handle === false) {
+            return false;
+        }
 
         $this->clear_data();
         if (!$db || !$db->is_valid()) {
@@ -292,30 +296,20 @@ class M3uParser extends Json_Serializer
             return false;
         }
 
-        if (empty($this->file_name)) {
-            hd_debug_print("Empty playlist file name");
-            return false;
-        }
-
-        if (!file_exists($this->file_name)) {
-            hd_debug_print("Can't read file: $this->file_name");
-            return false;
-        }
-
         $stm_channels = $db->prepare_bind("INSERT OR IGNORE", $this->channels_table, array_keys($init_channels));
         if ($stm_channels === false) {
             hd_debug_print("Can't prepare bind statement");
             return false;
         }
 
-        hd_debug_print("Open: $this->file_name");
-        $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
-        $db->exec('BEGIN;');
-
         $groups_cache = array();
         $entry = new Entry();
-        foreach ($lines as $line) {
+
+        $db->exec('BEGIN;');
+        while (!feof($file_handle)) {
+            $line = fgets($file_handle);
+            if ($line === false) continue;
+
             // if parsed line is not path or is not header tag parse next line
             switch ($this->parseLine($line, $entry)) {
                 case 1: // parse done
@@ -375,8 +369,8 @@ class M3uParser extends Json_Serializer
                     break;
             }
         }
-
         $db->exec('COMMIT;');
+        fclose($file_handle);
 
         $stm_groups = $db->prepare_bind("INSERT OR IGNORE", $this->groups_table, array_keys($init_groups));
         $db->exec('BEGIN;');
@@ -405,13 +399,8 @@ class M3uParser extends Json_Serializer
      */
     public function parseVodPlaylist($db)
     {
-        if (empty($this->file_name)) {
-            hd_debug_print("Empty playlist file name");
-            return false;
-        }
-
-        if (!file_exists($this->file_name)) {
-            hd_debug_print("Can't read file: $this->file_name");
+        $file_handle = self::open_m3u($this->file_name);
+        if ($file_handle === false) {
             return false;
         }
 
@@ -431,14 +420,12 @@ class M3uParser extends Json_Serializer
         $db->exec($query);
 
         $stm_index = $db->prepare_bind("INSERT OR IGNORE", $this->vod_table, array_keys($init_vod));
-
-        hd_debug_print("Open: $this->file_name");
-        $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
         $db->exec('BEGIN;');
-
         $entry = new Entry();
-        foreach ($lines as $line) {
+        while (!feof($file_handle)) {
+            $line = fgets($file_handle);
+            if ($line === false) continue;
+
             $res = $this->parseLineFast($line, $entry);
             switch ($res) {
                 case 1:
@@ -460,9 +447,9 @@ class M3uParser extends Json_Serializer
                     break;
             }
         }
+        fclose($file_handle);
 
         $db->exec('COMMIT;');
-        $lines = null;
 
         return true;
     }
@@ -680,5 +667,29 @@ class M3uParser extends Json_Serializer
     public static function is_valid_m3u($contents)
     {
         return !($contents === false || (strpos($contents, TAG_EXTM3U) == false && strpos($contents, TAG_EXTINF) === false));
+    }
+
+    protected static function open_m3u($filename)
+    {
+        if (!file_exists($filename)) {
+            hd_debug_print("File not exist: $filename");
+            return false;
+        }
+
+        hd_debug_print("Open: $filename");
+        $file_handle = fopen($filename, 'r');
+        if (!$file_handle) {
+            hd_debug_print("Can't open file: $filename");
+            return false;
+        }
+
+        $bom = fread($file_handle, 3);
+
+        if ($bom !== "\xEF\xBB\xBF") {
+            // If it's not a BOM, reset the stream pointer back to the exact start
+            fseek($file_handle, 0);
+        }
+
+        return $file_handle;
     }
 }
