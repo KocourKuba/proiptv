@@ -1398,6 +1398,10 @@
           "default": {
             "name": "Default",
             "url": "{API}/{LOGIN}/{PASSWORD}/vod.m3u"
+          },
+          "With Adult": {
+            "name": "Default",
+            "url": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
           }
         },
         "vod_parser": "/^(?<title>[^\\/]+)\\s\\((?:(?<country>.+)\\s)?(?<year>\\d+)\\)$/",
