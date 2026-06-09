@@ -611,7 +611,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
 
         $this->epg_manager = null;
-        $this->delay_load_picons = is_delay_load_supported() && $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false);
+        $this->delay_load_picons = is_delay_load_supported()
+            && $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)
+            && $this->get_bool_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) != PLAYLIST_PICONS;
+
         $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
         if ($engine === ENGINE_JSON && count($this->get_provider_epg_presets())) {
             hd_debug_print("Using 'Epg_Manager_Json' cache engine");
