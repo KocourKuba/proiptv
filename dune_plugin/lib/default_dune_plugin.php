@@ -805,17 +805,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 throw new Exception($exception_msg);
             }
 
-            $contents = file_get_contents($m3u_file);
+            $contents = file_get_contents($m3u_file, false, null, 0, 1024);
             if (!M3uParser::is_valid_m3u($contents)) {
                 $exception_msg = TR::load('err_bad_m3u_file') . "\n\n$contents";
                 throw new Exception($exception_msg);
             }
 
-            $contents = trim($contents, "\x0B\xEF\xBB\xBF");
-            $encoding = HD::detect_encoding($contents);
-            hd_debug_print("Playlist encoding: $encoding");
-
-            file_put_contents($m3u_file, $contents);
             $perf->setLabel('end_download_playlist');
 
             $perf->setLabel('start_parse_playlist');
@@ -926,7 +921,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param api_default $provider
      * @return bool
      */
-    public static function is_m3u_vod($provider)
+    public static function is_provider_m3u_vod($provider)
     {
         return $provider->get_vod_class() === 'vod_standard';
     }
@@ -4170,7 +4165,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 VOD_SEARCH_LIST => 'item',
                 VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID,
             );
-            if (self::is_m3u_vod($this->get_active_provider())) {
+
+            if (!empty($provider) && self::is_provider_m3u_vod($provider)) {
                 $tables[VOD_LIST_GROUP_ID] = COLUMN_CHANNEL_ID;
             }
 

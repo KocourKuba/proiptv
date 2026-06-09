@@ -191,7 +191,8 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                             break;
 
                         case VOD_LIST_GROUP_ID:
-                            if (!Default_Dune_Plugin::is_m3u_vod($this->plugin->get_active_provider())) {
+                            $provider = $this->plugin->get_active_provider();
+                            if (empty($provider) || !Default_Dune_Plugin::is_provider_m3u_vod($provider)) {
                                 $skip = true;
                                 break;
                             }
