@@ -262,7 +262,7 @@ class vod_standard extends Abstract_Vod
         hd_debug_print($movie_id);
 
         if (empty($movie_id)) {
-            hd_debug_print("Movie ID is empty!");
+            hd_debug_print('Movie ID is empty!');
             return null;
         }
 
@@ -292,7 +292,7 @@ class vod_standard extends Abstract_Vod
 
         $entry = $this->getVod($movie_id);
         if (empty($entry)) {
-            hd_debug_print("Movie not found");
+            hd_debug_print('Movie not found');
             $movie = null;
         } else {
             $logo = $entry[COLUMN_ICON];
@@ -377,7 +377,7 @@ class vod_standard extends Abstract_Vod
 
         /** @var array $output */
         exec($cmd, $output);
-        hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
+        hd_debug_print('external player exec result code' . HD::ArrayToStr($output));
         return null;
     }
 
@@ -393,7 +393,7 @@ class vod_standard extends Abstract_Vod
         }
 
         if (!$this->init_vod_m3u_playlist()) {
-            hd_debug_print("VOD not available");
+            hd_debug_print('VOD not available');
             return false;
         }
 
@@ -402,7 +402,7 @@ class vod_standard extends Abstract_Vod
             $perf->reset('start');
 
             if ($this->vod_m3u_parser->parseVodPlaylist($this->wrapper) === false) {
-                hd_debug_print("Parse VOD failed");
+                hd_debug_print('Parse VOD failed');
                 return false;
             }
 
@@ -430,7 +430,7 @@ class vod_standard extends Abstract_Vod
             $count = $this->getVodCount($group);
             if ($count === 0) continue;
 
-            $category_count++;
+            ++$category_count;
             $this->category_index[$group] = new Vod_Category($group, "$group ($count)");
         }
 
@@ -464,7 +464,7 @@ class vod_standard extends Abstract_Vod
         hd_debug_print("getMovieList: $query_id");
 
         $movies = array();
-        $arr = explode("_", $query_id);
+        $arr = explode('_', $query_id);
         $category_id = ($arr === false) ? $query_id : $arr[0];
 
         $page_idx = $this->get_current_page_index($query_id);
@@ -481,7 +481,7 @@ class vod_standard extends Abstract_Vod
 
         $pos = $page_idx;
         foreach ($entries as $entry) {
-            $pos++;
+            ++$pos;
 
             $title = $entry[COLUMN_TITLE];
             /** @var array $m */
@@ -532,7 +532,7 @@ class vod_standard extends Abstract_Vod
         $perf->setLabel('end');
         $report = $perf->getFullReport();
 
-        hd_debug_print("Movies found: " . count($movies));
+        hd_debug_print('Movies found: ' . count($movies));
         hd_debug_print("Search time: {$report[Perf_Collector::TIME]} secs");
 
         return $movies;
@@ -582,7 +582,7 @@ class vod_standard extends Abstract_Vod
 
             // fill get value from already set user filter
             if (!empty($user_filter)) {
-                $pairs = explode(",", $user_filter);
+                $pairs = explode(',', $user_filter);
                 foreach ($pairs as $pair) {
                     /** @var array $m */
                     if (strpos($pair, $name . ":") !== false && preg_match("/^$name:(.+)/", $pair, $m)) {
@@ -765,7 +765,7 @@ class vod_standard extends Abstract_Vod
     protected function get_filter_params($query_id)
     {
         $filter_params = array();
-        foreach (explode(",", $query_id) as $pair) {
+        foreach (explode(',', $query_id) as $pair) {
             /** @var array $m */
             if (preg_match("/^(.+):(.+)$/", $pair, $m)) {
                 $filter = $this->get_filter_type($m[1]);
@@ -791,7 +791,7 @@ class vod_standard extends Abstract_Vod
 
         $playlist_id = $this->plugin->get_active_playlist_id();
         if (!$this->plugin->is_playlist_entry_exist($playlist_id)) {
-            hd_debug_print("Playlist not defined");
+            hd_debug_print('Playlist not defined');
             return false;
         }
 
@@ -802,16 +802,16 @@ class vod_standard extends Abstract_Vod
         if ($type === PARAM_PROVIDER) {
             $provider = $this->plugin->get_active_provider();
             if (is_null($provider)) {
-                hd_debug_print("Unknown provider");
+                hd_debug_print('Unknown provider');
                 return false;
             }
 
             if (!$provider->hasApiCommand(API_COMMAND_GET_VOD)) {
-                hd_debug_print("Failed to get VOD playlist from provider");
+                hd_debug_print('Failed to get VOD playlist from provider');
                 return false;
             }
         } else if ($pl_type !== CONTROL_PLAYLIST_VOD) {
-            hd_debug_print("Playlist is not VOD type");
+            hd_debug_print('Playlist is not VOD type');
             return false;
         }
 
@@ -824,7 +824,7 @@ class vod_standard extends Abstract_Vod
             if ($reload_playlist || $this->vod_m3u_parser->get_filename() !== $m3u_file) {
                 $uri = safe_get_value($params, PARAM_URI);
                 if ($type === PARAM_PROVIDER) {
-                    hd_debug_print("download provider vod");
+                    hd_debug_print('download provider vod');
                     if ($provider->execApiCommandFile(API_COMMAND_GET_VOD, $m3u_file) === false) {
                         $msg = sprintf("%s\nError code: %s\n%s",
                             TR::load('err_load_vod'), Curl_Wrapper::get_error_no(), Curl_Wrapper::get_error_desc());
@@ -833,7 +833,7 @@ class vod_standard extends Abstract_Vod
                 } else if ($type === PARAM_FILE) {
                     hd_debug_print("m3u copy local file: $uri to $m3u_file");
                     if (empty($uri)) {
-                        throw new Exception("Empty playlist path");
+                        throw new Exception('Empty playlist path');
                     }
 
                     $res = copy($uri, $m3u_file);
@@ -846,7 +846,7 @@ class vod_standard extends Abstract_Vod
                 } else if ($type === PARAM_LINK || $type === PARAM_CONF) {
                     hd_debug_print("m3u download link: $uri");
                     if (empty($uri)) {
-                        throw new Exception("Empty playlist url");
+                        throw new Exception('Empty playlist url');
                     }
 
                     $curl_wrapper = Curl_Wrapper::getInstance($playlist_id);
@@ -858,7 +858,7 @@ class vod_standard extends Abstract_Vod
                         throw new Exception($msg);
                     }
                 } else {
-                    throw new Exception("Unknown playlist type");
+                    throw new Exception('Unknown playlist type');
                 }
 
                 $playlist_file = file_get_contents($m3u_file);
@@ -872,14 +872,14 @@ class vod_standard extends Abstract_Vod
                 $this->vod_m3u_parser->setVodPlaylist($m3u_file, $db_file);
             }
         } catch (Exception $ex) {
-            hd_debug_print("Unable to load VOD playlist");
+            hd_debug_print('Unable to load VOD playlist');
             Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $ex->getMessage());
             print_backtrace_exception($ex);
             safe_unlink($m3u_file);
             return false;
         }
 
-        hd_debug_print("Init VOD playlist done!");
+        hd_debug_print('Init VOD playlist done!');
         return true;
     }
 }

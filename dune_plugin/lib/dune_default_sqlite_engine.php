@@ -116,7 +116,7 @@ class Dune_Default_Sqlite_Engine
     {
         hd_debug_print(null, true);
 
-        $this->sql_params = new Sql_Wrapper(get_data_path("common.db"));
+        $this->sql_params = new Sql_Wrapper(get_data_path('common.db'));
         if (!$this->sql_params->is_valid()) {
             return;
         }
@@ -228,7 +228,7 @@ class Dune_Default_Sqlite_Engine
             }
             $this->sql_params->exec_transaction($query);
             if (empty($parameters)) {
-                safe_unlink(get_data_path("common.settings"));
+                safe_unlink(get_data_path('common.settings'));
             }
             foreach ($parameters as $key => $value) {
                 hd_debug_print("!!!!! Parameter $key is not imported: " . $value);
@@ -807,7 +807,7 @@ class Dune_Default_Sqlite_Engine
         if ($this->sql_playlist) {
             $this->sql_playlist->exec("INSERT OR REPLACE INTO $table_name (name, value, type) VALUES ('$name', $q_value, '$type');");
         } else {
-            hd_debug_print("Playlist db not set. Setting not saved", true);
+            hd_debug_print('Playlist db not set. Setting not saved', true);
         }
     }
 
@@ -1074,7 +1074,7 @@ class Dune_Default_Sqlite_Engine
         }
 
         $table_name = self::get_table_full_name(CHANNELS_INFO);
-        $cond = is_null($channel_id) ? "" : ("AND channel_id = " . Sql_Wrapper::sql_quote($channel_id));
+        $cond = is_null($channel_id) ? "" : ('AND channel_id = ' . Sql_Wrapper::sql_quote($channel_id));
         $query = "SELECT COUNT(*) FROM $table_name WHERE $val $cond;";
 
         return (int)$this->sql_playlist->query_value($query);

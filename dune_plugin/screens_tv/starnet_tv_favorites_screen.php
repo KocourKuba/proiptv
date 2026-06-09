@@ -99,7 +99,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         if (!isset($user_input->selected_media_url)) {
-            hd_debug_print("user input selected media url not set", true);
+            hd_debug_print('user input selected media url not set', true);
             return null;
         }
 
@@ -115,7 +115,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
                 $actions[] = Action_Factory::close_and_run();
                 if ($this->force_parent_reload) {
                     $this->force_parent_reload = false;
-                    hd_debug_print("Force parent reload", true);
+                    hd_debug_print('Force parent reload', true);
                     $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_INVALIDATE);
                 }
                 return Action_Factory::composite($actions);
@@ -136,8 +136,8 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
 
             case PARAM_EPG_SHIFT_HOURS:
             case PARAM_EPG_SHIFT_MINS:
-                hd_debug_print("Applying epg shift hours: " . $user_input->{PARAM_EPG_SHIFT_HOURS}, true);
-                hd_debug_print("Applying epg shift mins: " . $user_input->{PARAM_EPG_SHIFT_MINS}, true);
+                hd_debug_print('Applying epg shift hours: ' . $user_input->{PARAM_EPG_SHIFT_HOURS}, true);
+                hd_debug_print('Applying epg shift mins: ' . $user_input->{PARAM_EPG_SHIFT_MINS}, true);
                 $this->plugin->set_channel_epg_shift($channel_id, $user_input->{PARAM_EPG_SHIFT_HOURS}, $user_input->{PARAM_EPG_SHIFT_MINS});
                 if (isset($new_value)) {
                     $attrs['initial_sel_ndx'] = $user_input->control_id === PARAM_EPG_SHIFT_HOURS ? 0 : 1;
@@ -190,7 +190,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEM_DOWN:
                 $cnt = $this->plugin->get_order_count($fav_id) - 1;
-                $sel_ndx++;
+                ++$sel_ndx;
                 if ($sel_ndx > $cnt) {
                     return null;
                 }
@@ -249,7 +249,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::composite($actions);
 
             case ACTION_RELOAD:
-                hd_debug_print("Action reload", true);
+                hd_debug_print('Action reload', true);
                 $actions[] = Action_Factory::close_and_run();
                 $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD);
                 return Action_Factory::composite($actions);

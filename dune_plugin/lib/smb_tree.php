@@ -54,9 +54,9 @@ class smb_tree
     {
         $this->descriptor_spec = array
         (
-            0 => array("pipe", "r"),
-            1 => array("pipe", "w"),
-            2 => array("pipe", "w")
+            0 => array('pipe', 'r'),
+            1 => array('pipe', 'w'),
+            2 => array('pipe', 'w')
         );
     }
 
@@ -144,7 +144,7 @@ class smb_tree
                 $wr = self::write_request('network_manager', 'mount', $n,
                     array(
                         'type' => 'smb',
-                        'server' => str_replace("//", "", $path_parts['dirname']),
+                        'server' => str_replace('//', "", $path_parts['dirname']),
                         'dir' => $path_parts['basename'],
                         'user_name' => $username,
                         'password' => $password,
@@ -197,7 +197,7 @@ class smb_tree
     public static function get_df_smb()
     {
         $df_smb = array();
-        $out_mount = file_get_contents("/proc/mounts");
+        $out_mount = file_get_contents('/proc/mounts');
         /** @var array $m */
         if (preg_match_all('|(.+)/tmp/mnt/smb/(.+?) |', $out_mount, $m)) {
             foreach ($m[2] as $k => $v) {
@@ -296,7 +296,7 @@ class smb_tree
                     if (!create_path($fn)) {
                         hd_debug_print("Directory '$fn' was not created");
                     }
-                    $q = shell_exec("mount -t nfs -o " . $vel[self::PARAM_PROTOCOL] . " $k $fn 2>&1");
+                    $q = shell_exec('mount -t nfs -o ' . $vel[self::PARAM_PROTOCOL] . " $k $fn 2>&1");
                 } else {
                     $fn = $wr;
                 }
@@ -342,7 +342,7 @@ class smb_tree
             $network = parse_ini_file(self::NETWORK_CONFIG, true);
             foreach ($network as $k => $v) {
                 /** @var array $m */
-                if (preg_match("/(.*)\.(.*)/", $k, $m)) {
+                if (preg_match('/(.*)\.(.*)/', $k, $m)) {
                     $network_folder[$m[2]][$m[1]] = $v;
                 }
             }
@@ -353,7 +353,7 @@ class smb_tree
     public static function get_df_nfs()
     {
         $df_nfs = array();
-        $out_mount = file_get_contents("/proc/mounts");
+        $out_mount = file_get_contents('/proc/mounts');
         /** @var array $m */
         if (preg_match_all('|(.+) /tmp/mnt/network/(.+?) |', $out_mount, $m)) {
             foreach ($m[2] as $k => $v) {
@@ -435,10 +435,10 @@ class smb_tree
     public static function get_nmblookup_path()
     {
         $cmd = '&&$FS_PREFIX/firmware_ext/smbserver/bin/nmblookup --configfile=$FS_PREFIX/etc/samba/smb.conf';
-        if (file_exists("/firmware_ext/smbserver/lib")) {
+        if (file_exists('/firmware_ext/smbserver/lib')) {
             // android
             $path = 'export LD_LIBRARY_PATH=$FS_PREFIX/firmware_ext/smbserver/lib:$FS_PREFIX/firmware/lib:$LD_LIBRARY_PATH';
-        } else if (file_exists("/firmware/bin/nmblookup")) {
+        } else if (file_exists('/firmware/bin/nmblookup')) {
             // sigma
             $path = 'export LD_LIBRARY_PATH=/firmware/lib:$LD_LIBRARY_PATH';
             $cmd = '&&/firmware/bin/nmblookup';

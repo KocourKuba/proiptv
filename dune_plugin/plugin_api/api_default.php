@@ -447,18 +447,18 @@ class api_default
     public function request_provider_info($force = false)
     {
         hd_debug_print(null, true);
-        hd_debug_print("force request_provider_info: " . var_export($force, true), true);
+        hd_debug_print('force request_provider_info: ' . var_export($force, true), true);
 
         if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
             $account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_ARRAY);
             if ($account_info === false) {
-                hd_debug_print("Failed to request_provider_info");
+                hd_debug_print('Failed to request_provider_info');
             } else if (isset($account_info['error'])) {
                 hd_debug_print("request_provider_info: Server return error: {$account_info['error']}");
             } else {
-                hd_debug_print("request_provider_info: " . json_format_unescaped($account_info), true);
+                hd_debug_print('request_provider_info: ' . json_format_unescaped($account_info), true);
                 $this->account_info = $account_info;
             }
         }
@@ -1167,7 +1167,7 @@ class api_default
                 hd_debug_print("command_url: $command_url", true);
 
                 $config_pl_domains = $this->getConfigValue(CONFIG_PL_DOMAINS);
-                hd_debug_print("pl_domains: " . json_format_unescaped($config_pl_domains), true);
+                hd_debug_print('pl_domains: ' . json_format_unescaped($config_pl_domains), true);
                 if (!empty($config_pl_domains) && count($config_pl_domains) > 1 && strpos($command_url, MACRO_PL_DOMAIN_ID) !== false) {
                     $idx = key($config_pl_domains);
                     Control_Factory::add_combobox($defs, $handler, self::CONTROL_PL_DOMAIN, TR::t('pl_domain'),
@@ -1175,7 +1175,7 @@ class api_default
                 }
 
                 $config_api_domains = $this->getConfigValue(CONFIG_API_DOMAINS);
-                hd_debug_print("api_domains: " . json_format_unescaped($config_pl_domains), true);
+                hd_debug_print('api_domains: ' . json_format_unescaped($config_pl_domains), true);
                 if (!empty($config_api_domains) && count($config_api_domains) > 1) {
                     $idx = key($config_api_domains);
                     Control_Factory::add_combobox($defs, $handler, self::CONTROL_API_DOMAIN, TR::t('api_domain'),
@@ -1183,7 +1183,7 @@ class api_default
                 }
 
                 $config_servers = $this->getConfigValue(CONFIG_SERVERS);
-                hd_debug_print("servers: " . json_format_unescaped($config_servers), true);
+                hd_debug_print('servers: ' . json_format_unescaped($config_servers), true);
                 if (!empty($config_servers) && count($config_servers) > 1 && strpos($command_url, MACRO_SERVER_ID) !== false) {
                     $idx = key($config_servers);
                     Control_Factory::add_combobox($defs, $handler, self::CONTROL_SERVER, TR::t('server'),
@@ -1191,7 +1191,7 @@ class api_default
                 }
 
                 $config_qialities = $this->getConfigValue(CONFIG_QUALITIES);
-                hd_debug_print("qualities: " . json_format_unescaped($config_qialities), true);
+                hd_debug_print('qualities: ' . json_format_unescaped($config_qialities), true);
                 if (!empty($config_qialities) && count($config_qialities) > 1 && strpos($command_url, MACRO_QUALITY_ID) !== false) {
                     $idx = key($config_qialities);
                     Control_Factory::add_combobox($defs, $handler, self::CONTROL_QUALITY, TR::t('quality'),
@@ -1222,13 +1222,13 @@ class api_default
 
         $is_new = empty($user_input->{CONTROL_EDIT_ITEM});
         if ($is_new) {
-            hd_debug_print("Create new provider info", true);
+            hd_debug_print('Create new provider info', true);
             $params[PARAM_TYPE] = PARAM_PROVIDER;
             $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
         } else {
             hd_debug_print("load info for existing playlist id: $this->playlist_id", true);
             $params = $this->plugin->get_playlist_parameters($this->playlist_id);
-            hd_debug_print("provider info: " . json_format_unescaped($params), true);
+            hd_debug_print('provider info: ' . json_format_unescaped($params), true);
         }
 
         if (safe_get_value($params, PARAM_NAME) !== $user_input->{CONTROL_EDIT_NAME}) {

@@ -64,7 +64,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         if (!isset($user_input->selected_media_url)) {
-            hd_debug_print("user input selected media url not set", true);
+            hd_debug_print('user input selected media url not set', true);
             return null;
         }
 
@@ -79,7 +79,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
                 }
 
                 $this->force_parent_reload = false;
-                hd_debug_print("Force parent reload", true);
+                hd_debug_print('Force parent reload', true);
                 return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_screen_action(
                         Starnet_Vod_Category_List_Screen::ID,
@@ -91,7 +91,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
                 try {
                     $list_movie = $this->plugin->vod->get_loaded_movie(VOD_LIST_GROUP_ID);
                     if (empty($list_movie)) {
-                        throw new Exception("vod list movie not found");
+                        throw new Exception('vod list movie not found');
                     }
 
                     $list_movie->clear_series_data();
@@ -126,7 +126,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEM_DOWN:
                 $cnt = $this->plugin->get_order_count(VOD_LIST_GROUP_ID) - 1;
-                $sel_ndx++;
+                ++$sel_ndx;
                 hd_debug_print("Cnt: $cnt, sel_ndx: $sel_ndx");
                 if ($sel_ndx > $cnt) {
                     return null;
@@ -217,7 +217,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
             $caption = $movie_info[PluginMovie::name];
             $color = DEF_LABEL_TEXT_COLOR_WHITE;
             foreach ($movie_history as $history) {
-                $view_date = format_datetime("d.m.Y H:i", $history[COLUMN_TIMESTAMP]);
+                $view_date = format_datetime('d.m.Y H:i', $history[COLUMN_TIMESTAMP]);
                 if ($history[COLUMN_WATCHED] || $history[COLUMN_DURATION] === -1) {
                     $detailed_info = TR::t('vod_screen_all_viewed__2', $caption, $view_date);
                     $color = DEF_LABEL_TEXT_COLOR_SKYBLUE;

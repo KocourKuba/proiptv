@@ -31,7 +31,7 @@ class TR
         $arg_list = func_get_args();
         if ($num_args > 1) {
             $params = '';
-            for ($i = 1; $i < $num_args; $i++) {
+            for ($i = 1; $i < $num_args; ++$i) {
                 $params .= "<p>" . self::strip_param($arg_list[$i]) . "</p>";
             }
             $str = "%ext%<key_local>$arg_list[0]$params</key_local>";
@@ -52,7 +52,7 @@ class TR
         $arg_list = func_get_args();
         if ($num_args > 1) {
             $params = '';
-            for ($i = 1; $i < $num_args; $i++) {
+            for ($i = 1; $i < $num_args; ++$i) {
                 $params .= "<p>" . self::strip_param($arg_list[$i]) . "</p>";
             }
             $str = "%ext%<key_global>$arg_list[0]$params</key_global>";
@@ -129,7 +129,7 @@ class TR
             return $lang_file;
         }
 
-        $lang_file = get_install_path("translations/dune_language_english.txt");
+        $lang_file = get_install_path('translations/dune_language_english.txt');
         if (file_exists($lang_file)) {
             return $lang_file;
         }

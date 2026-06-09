@@ -72,7 +72,7 @@ class vod_edem extends vod_standard
         hd_debug_print("Try Load Movie: $movie_id");
 
         if (empty($movie_id)) {
-            hd_debug_print("Movie ID is empty!");
+            hd_debug_print('Movie ID is empty!');
             return null;
         }
 
@@ -97,7 +97,7 @@ class vod_edem extends vod_standard
 
                 $post_params['fid'] = $fid;
                 $episodeData = $this->make_json_request($post_params);
-                hd_debug_print("Episode data: " . json_format_unescaped($episodeData));
+                hd_debug_print('Episode data: ' . json_format_unescaped($episodeData));
                 if (!empty($episodeData)) {
                     $movie->add_series_data(self::fill_variants($fid, $episodeData));
                     if (empty($quality_str)) {
@@ -166,13 +166,13 @@ class vod_edem extends vod_standard
 
         $jsonData = $this->make_json_request(null);
         if (empty($jsonData)) {
-            hd_debug_print("Broken response");
+            hd_debug_print('Broken response');
             Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, "Unknown response from server!");
             return false;
         }
 
         if (safe_get_value($jsonData, 'type') === 'error') {
-            hd_debug_print("Error response: " . json_format_unescaped($jsonData), true);
+            hd_debug_print('Error response: ' . json_format_unescaped($jsonData), true);
             Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, safe_get_value($jsonData, 'description'));
         }
 
@@ -203,8 +203,8 @@ class vod_edem extends vod_standard
 
         $this->set_filter_types($exist_filters);
 
-        hd_debug_print("Categories read: " . count($this->category_index));
-        hd_debug_print("Filters count: " . count($exist_filters));
+        hd_debug_print('Categories read: ' . count($this->category_index));
+        hd_debug_print('Filters count: ' . count($exist_filters));
         return true;
     }
 
@@ -237,7 +237,7 @@ class vod_edem extends vod_standard
     {
         hd_debug_print(null, true);
 
-        $pairs = explode(",", $query_id);
+        $pairs = explode(',', $query_id);
         $post_params = array();
         foreach ($pairs as $pair) {
             /** @var array $m */
@@ -286,13 +286,13 @@ class vod_edem extends vod_standard
         $requestData = $this->make_json_request($post_params);
 
         if ($requestData === false || $requestData === null) {
-            hd_debug_print("Bad json response with params: " . json_encode($post_params), true);
+            hd_debug_print('Bad json response with params: ' . json_encode($post_params), true);
             $this->stop_page_index($query_id);
             return $movies;
         }
 
         if (!isset($requestData['items'])) {
-            hd_debug_print("No items in query! " . json_format_unescaped($requestData), true);
+            hd_debug_print('No items in query! ' . json_format_unescaped($requestData), true);
             $this->stop_page_index($query_id);
             return $movies;
         }
@@ -324,7 +324,7 @@ class vod_edem extends vod_standard
             $this->stop_page_index($query_id);
         }
 
-        hd_debug_print("Movies found: " . count($movies));
+        hd_debug_print('Movies found: ' . count($movies));
         return $movies;
     }
 

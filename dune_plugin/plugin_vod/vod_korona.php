@@ -42,13 +42,13 @@ class vod_korona extends vod_standard
         hd_debug_print("Try Load Movie: $movie_id");
 
         if (empty($movie_id)) {
-            hd_debug_print("Movie ID is empty!");
+            hd_debug_print('Movie ID is empty!');
             return null;
         }
 
         // movies_84636 or serials_84636
         hd_debug_print("TryLoadMovie: $movie_id");
-        $arr = explode("_", $movie_id);
+        $arr = explode('_', $movie_id);
         $season_id = safe_get_value($arr, 1, $movie_id);
 
         $json = $this->make_json_request("/video/$season_id");
@@ -119,7 +119,7 @@ class vod_korona extends vod_standard
     {
         hd_debug_print(null, true);
 
-        $jsonItems = $this->make_json_request("/cat");
+        $jsonItems = $this->make_json_request('/cat');
         if ($jsonItems === false || empty($jsonItems->data)) {
             return false;
         }
@@ -148,7 +148,7 @@ class vod_korona extends vod_standard
             $this->category_index[$category->get_id()] = $category;
         }
 
-        hd_debug_print("Categories read: " . count($this->category_index));
+        hd_debug_print('Categories read: ' . count($this->category_index));
         return true;
     }
 
@@ -160,7 +160,7 @@ class vod_korona extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getMovieList: $query_id");
 
-        $arr = explode("_", $query_id);
+        $arr = explode('_', $query_id);
         $genre_id = safe_get_value($arr, 1, $query_id);
         return $this->CollectQueryResult($query_id, $this->make_json_request("/genres/$genre_id?page=1&per_page=999999999"));
     }
@@ -185,7 +185,7 @@ class vod_korona extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getFilterList: $query_id");
 
-        $pairs = explode(",", $query_id);
+        $pairs = explode(',', $query_id);
         $filter_params = array();
         foreach ($pairs as $pair) {
             // country:USA
@@ -234,7 +234,7 @@ class vod_korona extends vod_standard
         }
 
         $page_id = $query_id . "_" . API_ACTION_FILTER;
-        return $this->CollectQueryResult($page_id, $this->make_json_request("/filter", false));
+        return $this->CollectQueryResult($page_id, $this->make_json_request('/filter', false));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -264,7 +264,7 @@ class vod_korona extends vod_standard
             }
             $name = safe_get_value($entry, 'name');
             if (!empty($name)) {
-                $genre_str = implode(", ", $genresArray);
+                $genre_str = implode(', ', $genresArray);
                 $movie = new Short_Movie(
                     safe_get_value($entry, 'id'),
                     $name,
@@ -281,7 +281,7 @@ class vod_korona extends vod_standard
             }
         }
 
-        hd_debug_print("Movies found: " . count($movies));
+        hd_debug_print('Movies found: ' . count($movies));
         $this->stop_page_index($query_id);
 
         return $movies;
@@ -295,7 +295,7 @@ class vod_korona extends vod_standard
                 $genres[] = safe_get_value($genre, 'title');
             }
         }
-        return implode(", ", $genres);
+        return implode(', ', $genres);
     }
 
     /**

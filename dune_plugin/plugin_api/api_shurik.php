@@ -34,13 +34,13 @@ class api_shurik extends api_default
     public function request_provider_info($force = false)
     {
         hd_debug_print(null, true);
-        hd_debug_print("force request_provider_info: " . var_export($force, true), true);
+        hd_debug_print('force request_provider_info: ' . var_export($force, true), true);
 
         if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
             $this->account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_ARRAY);
-            hd_debug_print("request_provider_info: " . json_format_unescaped($this->account_info), true);
+            hd_debug_print('request_provider_info: ' . json_format_unescaped($this->account_info), true);
         }
     }
 
@@ -64,7 +64,7 @@ class api_shurik extends api_default
             }
             if (isset($info['expired'])) {
                 Control_Factory::add_label($defs, TR::t('end_date'),
-                    gmdate("d.m.Y  H:i", substr($info['expired'], 0, -3)),
+                    gmdate('d.m.Y  H:i', substr($info['expired'], 0, -3)),
                     -15);
             }
         }

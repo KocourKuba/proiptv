@@ -92,7 +92,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         if (!isset($user_input->selected_media_url)) {
-            hd_debug_print("user input selected media url not set", true);
+            hd_debug_print('user input selected media url not set', true);
             return null;
         }
 
@@ -106,7 +106,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
                 $actions[] = Action_Factory::close_and_run();
                 if ($this->force_parent_reload) {
                     $this->force_parent_reload = false;
-                    hd_debug_print("Force parent reload", true);
+                    hd_debug_print('Force parent reload', true);
                     $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_INVALIDATE);
                 }
                 return Action_Factory::composite($actions);
@@ -183,7 +183,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::composite($actions);
 
             case ACTION_RELOAD:
-                hd_debug_print("Action reload", true);
+                hd_debug_print('Action reload', true);
                 $actions[] = Action_Factory::close_and_run();
                 $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD);
                 return Action_Factory::composite($actions);
@@ -217,7 +217,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
                     $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
                     if ($channel_ts >= $now - $channel_row[COLUMN_ARCHIVE] * 86400 - 60) {
                         $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2))) * 100;
-                        $title = "$title | " . date("j.m H:i", $channel_ts) . " [$progress%]";
+                        $title = "$title | " . date('j.m H:i', $channel_ts) . " [$progress%]";
                         $description = "{$channel_row[COLUMN_TITLE]}|{$prog_info[PluginTvEpgProgram::description]}";
                     }
                 }

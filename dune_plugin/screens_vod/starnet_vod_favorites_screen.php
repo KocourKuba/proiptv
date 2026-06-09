@@ -67,7 +67,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         if (!isset($user_input->selected_media_url)) {
-            hd_debug_print("user input selected media url not set", true);
+            hd_debug_print('user input selected media url not set', true);
             return null;
         }
 
@@ -82,7 +82,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
                 }
 
                 $this->force_parent_reload = false;
-                hd_debug_print("Force parent reload", true);
+                hd_debug_print('Force parent reload', true);
                 return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_screen_action(
                         Starnet_Vod_Category_List_Screen::ID,
@@ -104,7 +104,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEM_DOWN:
                 $cnt = $this->plugin->get_order_count(VOD_FAV_GROUP_ID) - 1;
-                $sel_ndx++;
+                ++$sel_ndx;
                 if ($sel_ndx > $cnt) {
                     return null;
                 }

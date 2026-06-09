@@ -54,7 +54,7 @@ class vod_glanz extends vod_standard
         hd_debug_print("Try Load Movie: $movie_id");
 
         if (empty($movie_id)) {
-            hd_debug_print("Movie ID is empty!");
+            hd_debug_print('Movie ID is empty!');
             return null;
         }
 
@@ -196,8 +196,8 @@ class vod_glanz extends vod_standard
         $perf->setLabel('end');
         $report = $perf->getFullReport();
 
-        hd_debug_print("Categories read: " . count($this->category_index));
-        hd_debug_print("Total items loaded: " . count($this->vod_items));
+        hd_debug_print('Categories read: ' . count($this->category_index));
+        hd_debug_print('Total items loaded: ' . count($this->vod_items));
         hd_debug_print("Load time: {$report[Perf_Collector::TIME]} secs");
         hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
         hd_print_separator();
@@ -216,7 +216,7 @@ class vod_glanz extends vod_standard
         $movies = array();
 
         if (empty($this->vod_items)) {
-            hd_debug_print("failed to load movies");
+            hd_debug_print('failed to load movies');
             return $movies;
         }
 
@@ -256,7 +256,7 @@ class vod_glanz extends vod_standard
 
         $movies = array();
         if (empty($this->vod_items)) {
-            hd_debug_print("failed to load movies");
+            hd_debug_print('failed to load movies');
             return $movies;
         }
 
@@ -278,7 +278,7 @@ class vod_glanz extends vod_standard
 
         $this->stop_page_index($keyword);
 
-        hd_debug_print("Movies found: " . count($movies));
+        hd_debug_print('Movies found: ' . count($movies));
         return $movies;
     }
 
@@ -293,7 +293,7 @@ class vod_glanz extends vod_standard
         $movies = array();
 
         if (empty($this->vod_items)) {
-            hd_debug_print("failed to load movies");
+            hd_debug_print('failed to load movies');
             return $movies;
         }
 
@@ -338,7 +338,7 @@ class vod_glanz extends vod_standard
 
         $this->stop_page_index($query_id);
 
-        hd_debug_print("Movies found: " . count($movies));
+        hd_debug_print('Movies found: ' . count($movies));
         return $movies;
     }
 
@@ -363,7 +363,7 @@ class vod_glanz extends vod_standard
                 $genres[] = $title;
             }
         }
-        $genres_str = implode(", ", $genres);
+        $genres_str = implode(', ', $genres);
 
         $name = safe_get_value($movieData, 'name');
         $movie = new Short_Movie(

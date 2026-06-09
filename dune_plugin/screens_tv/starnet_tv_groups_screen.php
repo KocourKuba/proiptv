@@ -91,7 +91,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         if (!isset($user_input->parent_media_url)) {
-            hd_debug_print("user input parent media url not set", true);
+            hd_debug_print('user input parent media url not set', true);
             return null;
         }
 
@@ -108,7 +108,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 }
 
                 $this->force_parent_reload = false;
-                hd_debug_print("Force parent reload", true);
+                hd_debug_print('Force parent reload', true);
                 return User_Input_Handler_Registry::create_action($this, self::ACTION_CONFIRM_EXIT_DLG_APPLY);
 
             case GUI_EVENT_TIMER:
@@ -163,7 +163,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEM_DOWN:
                 $max_sel = $this->get_visible_groups_count(true) - 1;
-                $sel_ndx++;
+                ++$sel_ndx;
                 if ($sel_ndx > $max_sel) {
                     return null;
                 }
@@ -281,7 +281,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
             case self::ACTION_CONFIRM_EXIT_DLG_APPLY:
                 $this->force_parent_reload = false;
-                hd_debug_print("Force parent reload", true);
+                hd_debug_print('Force parent reload', true);
                 return Action_Factory::invalidate_epfs_folders($plugin_cookies, Action_Factory::close_and_run());
 
             case ACTION_PLUGIN_INFO:
@@ -314,7 +314,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
 
             case ACTION_EPG_CACHE_ENGINE:
-                hd_debug_print("Start event popup menu for epg source", true);
+                hd_debug_print('Start event popup menu for epg source', true);
                 return User_Input_Handler_Registry::create_action(
                     $this,
                     GUI_EVENT_KEY_POPUP_MENU,
@@ -342,7 +342,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case ACTION_SORT_POPUP:
-                hd_debug_print("Start event popup menu for playlist", true);
+                hd_debug_print('Start event popup menu for playlist', true);
                 return User_Input_Handler_Registry::create_action(
                     $this,
                     GUI_EVENT_KEY_POPUP_MENU,
@@ -370,7 +370,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
                 $cached_image_name = $this->plugin->get_active_playlist_id() . '_' . $data->{PARAM_CAPTION};
                 $cached_image_path = get_cached_image_path($cached_image_name);
-                hd_print("copy from: " . $data->{PARAM_FILEPATH} . " to: $cached_image_path");
+                hd_print('copy from: ' . $data->{PARAM_FILEPATH} . " to: $cached_image_path");
                 if (!copy($data->{PARAM_FILEPATH}, $cached_image_path)) {
                     return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_copy'));
                 }
@@ -459,7 +459,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::composite($actions);
 
             case ACTION_RELOAD:
-                hd_debug_print("Action reload", true);
+                hd_debug_print('Action reload', true);
 
                 $this->force_parent_reload = true;
                 if (!$this->plugin->load_channels($plugin_cookies, isset($user_input->{PARAM_CLEAR_PLAYLIST}))) {
@@ -489,7 +489,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
 
         if (!$this->plugin->is_channels_loaded()) {
-            hd_debug_print("Channels not loaded!");
+            hd_debug_print('Channels not loaded!');
             return array();
         }
 
@@ -643,7 +643,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             switch ($group_id) {
                 case TV_ALL_CHANNELS_GROUP_ID:
                     if ($this->plugin->get_bool_setting(PARAM_SHOW_ALL)) {
-                        $visible++;
+                        ++$visible;
                     }
                     break;
 
@@ -651,7 +651,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     if ($this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) {
                         $channels_cnt = $this->plugin->get_channels_by_order_cnt($this->plugin->get_fav_id());
                         if ($channels_cnt) {
-                            $visible++;
+                            ++$visible;
                         }
                     }
                     break;
@@ -660,7 +660,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     if ($this->plugin->get_bool_setting(PARAM_SHOW_HISTORY)) {
                         $channels_cnt = $this->plugin->get_tv_history_count();
                         if ($channels_cnt) {
-                            $visible++;
+                            ++$visible;
                         }
                     }
                     break;
@@ -669,14 +669,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     if ($this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS)) {
                         $has_changes = $this->plugin->get_changed_channels_count(PARAM_CHANGED);
                         if ($has_changes) {
-                            $visible++;
+                            ++$visible;
                         }
                     }
                     break;
 
                 case VOD_GROUP_ID:
                     if ($this->plugin->is_vod_enabled() && $this->plugin->get_bool_setting(PARAM_SHOW_VOD)) {
-                        $visible++;
+                        ++$visible;
                     }
                     break;
             }

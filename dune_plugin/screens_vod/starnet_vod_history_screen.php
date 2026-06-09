@@ -67,7 +67,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         if (!isset($user_input->selected_media_url)) {
-            hd_debug_print("user input selected media url not set", true);
+            hd_debug_print('user input selected media url not set', true);
             return null;
         }
 
@@ -82,7 +82,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen
                 }
 
                 $this->force_parent_reload = false;
-                hd_debug_print("Force parent reload", true);
+                hd_debug_print('Force parent reload', true);
                 return Action_Factory::invalidate_folders(
                     array(
                         self::make_group_media_url_str(VOD_HISTORY_GROUP_ID),
@@ -144,7 +144,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen
         foreach ($this->plugin->get_all_vod_history() as $movie_info) {
             if (empty($movie_info)) continue;
 
-            hd_debug_print("history info: " . json_format_unescaped($movie_info), true);
+            hd_debug_print('history info: ' . json_format_unescaped($movie_info), true);
             $movie_id = $movie_info['movie_id'];
             $movie = $this->plugin->vod->get_loaded_movie($movie_id);
             if (is_null($movie)) continue;
@@ -159,7 +159,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen
                 $history_cnt = $this->plugin->get_vod_history_count($movie_id);
                 $caption = $short_movie->name;
                 if ($history_cnt === 1) {
-                    $view_date = format_datetime("d.m.Y H:i", $movie_info[COLUMN_TIMESTAMP]);
+                    $view_date = format_datetime('d.m.Y H:i', $movie_info[COLUMN_TIMESTAMP]);
                     if ($movie_info[COLUMN_WATCHED] || $movie_info[COLUMN_DURATION] === -1) {
                         $detailed_info = TR::t('vod_screen_all_viewed__2', $caption, $view_date);
                     } else {
@@ -180,7 +180,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen
                         }
                     }
 
-                    $view_date = format_datetime("d.m.Y H:i", $recent_timestamp);
+                    $view_date = format_datetime('d.m.Y H:i', $recent_timestamp);
                     if ($all_watched) {
                         $detailed_info = TR::t('vod_screen_all_viewed__2', $short_movie->name, $view_date);
                     } else {

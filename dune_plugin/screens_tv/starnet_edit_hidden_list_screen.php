@@ -84,13 +84,13 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen
                 if ($parent_media_url->{self::PARAM_EDIT_LIST} === self::PARAM_HIDDEN_CHANNELS) {
                     $this->plugin->set_channel_visible($selected_id, true);
                     $force_return = $this->plugin->get_channels_count($parent_media_url->group_id, PARAM_DISABLED) === 0;
-                    hd_debug_print("restore channel: " . $selected_id, true);
+                    hd_debug_print("restore channel: $selected_id", true);
                 } else if ($parent_media_url->{self::PARAM_EDIT_LIST} === self::PARAM_HIDDEN_GROUPS) {
                     $this->plugin->set_groups_visible($selected_id, true);
                     $force_return = !$this->plugin->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
-                    hd_debug_print("restore group: " . $selected_id, true);
+                    hd_debug_print("restore group: $selected_id", true);
                 } else {
-                    hd_debug_print("unknown edit list");
+                    hd_debug_print('unknown edit list');
                     return null;
                 }
 

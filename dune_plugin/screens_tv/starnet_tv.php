@@ -93,7 +93,7 @@ class Starnet_Tv implements User_Input_Handler
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         if (!isset($user_input->control_id)) {
-            hd_debug_print("user input control id not set", true);
+            hd_debug_print('user input control id not set', true);
             return null;
         }
 
@@ -198,7 +198,7 @@ class Starnet_Tv implements User_Input_Handler
     public function get_tv_info(MediaURL $media_url)
     {
         if (!$this->plugin->is_channels_loaded()) {
-            hd_debug_print("Channels not loaded!");
+            hd_debug_print('Channels not loaded!');
             return array();
         }
 
@@ -327,10 +327,10 @@ class Starnet_Tv implements User_Input_Handler
                 $content .= sprintf("%s=%s-%s", $k, $playlist_id, Hashed_Array::hash($k)) . PHP_EOL;
             }
 
-            if (!empty($content) && file_put_contents(get_temp_path("channel_ids.txt"), $content) !== false) {
+            if (!empty($content) && file_put_contents(get_temp_path('channel_ids.txt'), $content) !== false) {
                 $tv_info[PluginTvInfo::ext_epg_enabled] = true;
                 $tv_info[PluginTvInfo::ext_epg_base_url] = get_noslash_trailed_path(get_plugin_cgi_url());
-                $tv_info[PluginTvInfo::ext_epg_channel_ids_url] = get_plugin_cgi_url("channels");
+                $tv_info[PluginTvInfo::ext_epg_channel_ids_url] = get_plugin_cgi_url('channels');
             }
         }
 

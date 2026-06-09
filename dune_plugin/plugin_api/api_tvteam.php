@@ -103,14 +103,14 @@ class api_tvteam extends api_default
     public function request_provider_info($force = false)
     {
         hd_debug_print(null, true);
-        hd_debug_print("force request_provider_info: " . var_export($force, true), true);
+        hd_debug_print('force request_provider_info: ' . var_export($force, true), true);
 
         if (empty($this->account_info)) {
             $force = true;
         }
 
         if (!$this->request_provider_token($force)) {
-            hd_debug_print("Failed to get provider token");
+            hd_debug_print('Failed to get provider token');
         }
     }
 
@@ -120,14 +120,14 @@ class api_tvteam extends api_default
     public function request_provider_token($force = false)
     {
         hd_debug_print(null, true);
-        hd_debug_print("force request provider token: " . var_export($force, true));
+        hd_debug_print('force request provider token: ' . var_export($force, true));
 
         $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID, true);
         $userToken = $this->plugin->get_cookie(PARAM_TOKEN);
         $expired = empty($session_id) || empty($userToken);
 
         if (!$force && !$expired) {
-            hd_debug_print("request not required", true);
+            hd_debug_print('request not required', true);
             return true;
         }
 
@@ -150,14 +150,14 @@ class api_tvteam extends api_default
             $status = safe_get_value($response, 'status');
             $error = safe_get_value($response, 'error');
             if (empty($status) || !empty($error)) {
-                hd_debug_print("request provider token bad response: " . json_format_unescaped($response), true);
+                hd_debug_print('request provider token bad response: ' . json_format_unescaped($response), true);
                 Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, $error);
                 break;
             }
 
             $session_id = safe_get_value($response, array('data', 'sessionId'));
             if (empty($session_id)) {
-                hd_debug_print("Empty session id in response: " . json_format_unescaped($response), true);
+                hd_debug_print('Empty session id in response: ' . json_format_unescaped($response), true);
                 break;
             }
 
@@ -176,7 +176,7 @@ class api_tvteam extends api_default
                 $status = (int)safe_get_value($response, 'status');
                 $error = safe_get_value($response, 'error');
                 if ($status !== 1 || !empty($error)) {
-                    hd_debug_print("request_provider_info error response: " . json_format_unescaped($response), true);
+                    hd_debug_print('request_provider_info error response: ' . json_format_unescaped($response), true);
                 }
 
                 $this->account_info = $response;
@@ -238,7 +238,7 @@ class api_tvteam extends api_default
                     $this->SetProviderParameter(MACRO_SERVER_ID, $groupId);
                 }
             } else {
-                hd_debug_print("GetServers failed response: " . json_format_unescaped($response), true);
+                hd_debug_print('GetServers failed response: ' . json_format_unescaped($response), true);
             }
         }
 
@@ -254,7 +254,7 @@ class api_tvteam extends api_default
 
         $curl_opt[CURLOPT_TIMEOUT] = 30;
         $response = $this->execApiCommandResponse(API_COMMAND_SET_SERVER, $curl_opt, Curl_Wrapper::RET_ARRAY);
-        hd_debug_print("SetServer: " . json_format_unescaped($response), true);
+        hd_debug_print('SetServer: ' . json_format_unescaped($response), true);
         $status = (int)safe_get_value($response, 'status');
         if ($status === 1) {
             $this->account_info = null;

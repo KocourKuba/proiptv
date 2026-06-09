@@ -127,7 +127,7 @@ if (!defined('GUI_EVENT_KEY_APP_CUSTOM')) define('GUI_EVENT_KEY_APP_CUSTOM', 'ke
 
 if (!defined('PHP_INT_MIN')) define('PHP_INT_MIN', ~PHP_INT_MAX);
 
-if (!defined('JSON_UNESCAPED_SLASHES')) define("JSON_UNESCAPED_SLASHES", 64);
+if (!defined('JSON_UNESCAPED_SLASHES')) define('JSON_UNESCAPED_SLASHES', 64);
 if (!defined('JSON_PRETTY_PRINT')) define('JSON_PRETTY_PRINT', 128);
 if (!defined('JSON_UNESCAPED_UNICODE')) define('JSON_UNESCAPED_UNICODE', 256);
 
@@ -491,7 +491,7 @@ class DuneIrControl
 
 function print_backtrace()
 {
-    hd_print("Back trace:");
+    hd_print('Back trace:');
     foreach (debug_backtrace() as $f) {
         if (!isset($f['file'], $f['line'])) {
             $str = json_encode($f);
@@ -630,7 +630,7 @@ function hd_debug_print($val = null, $is_debug = false)
 
 function hd_print_separator()
 {
-    hd_print(str_repeat("-", 80));
+    hd_print(str_repeat('-', 80));
 }
 
 function hd_debug_print_separator()
@@ -647,7 +647,7 @@ function hd_debug_print_separator()
  */
 function is_apk()
 {
-    return (bool)getenv("HD_APK");
+    return (bool)getenv('HD_APK');
 }
 
 /**
@@ -656,7 +656,7 @@ function is_apk()
  */
 function is_fw_apk()
 {
-    return (bool)getenv("HD_FW_APK");
+    return (bool)getenv('HD_FW_APK');
 }
 
 /**
@@ -739,7 +739,7 @@ function get_platform_php()
         } else {
             $php = getenv('PHP_EXTERNAL');
             if (empty($php)) {
-                hd_debug_print("Please define PHP_EXTERNAL environment variable that point to system PHP interpreter!");
+                hd_debug_print('Please define PHP_EXTERNAL environment variable that point to system PHP interpreter!');
             }
         }
         hd_debug_print("used php interpreter: $php", true);
@@ -758,7 +758,7 @@ function get_product_id()
 
     if (is_null($result)) {
         /** @var array $m */
-        if (preg_match("/^product_id:(.*)/m", file_get_contents(getenv('FS_PREFIX') . "/tmp/sysinfo.txt"), $m) > 0) {
+        if (preg_match('/^product_id:(.*)/m', file_get_contents(getenv('FS_PREFIX') . '/tmp/sysinfo.txt'), $m) > 0) {
             $result = trim($m[1]);
         } else {
             $result = "Not detected";
@@ -778,10 +778,10 @@ function get_raw_firmware_version()
 
     if (is_null($result)) {
         /** @var array $m */
-        if (preg_match("/^firmware_version:(.*)/m", file_get_contents(getenv('FS_PREFIX') . "/tmp/sysinfo.txt"), $m) > 0) {
+        if (preg_match('/^firmware_version:(.*)/m', file_get_contents(getenv('FS_PREFIX') . '/tmp/sysinfo.txt'), $m) > 0) {
             $result = trim($m[1]);
         } else {
-            $result = "Not detected";
+            $result = 'Not detected';
         }
     }
 
@@ -794,7 +794,7 @@ function get_raw_firmware_version()
  */
 function set_debug_log($is_debug)
 {
-    hd_print("Set debug logging: " . var_export($is_debug, true));
+    hd_print('Set debug logging: ' . var_export($is_debug, true));
     LogSeverity::$is_debug = $is_debug;
 }
 
@@ -835,7 +835,7 @@ function get_serial_number()
 
     /** @var array $m */
     if (is_null($result)
-        && preg_match("/^serial_number:(.*)/m", file_get_contents(getenv('FS_PREFIX') . "/tmp/sysinfo.txt"), $m) > 0) {
+        && preg_match('/^serial_number:(.*)/m', file_get_contents(getenv('FS_PREFIX') . '/tmp/sysinfo.txt'), $m) > 0) {
         $result = trim($m[1]);
     }
 
@@ -871,8 +871,8 @@ function get_dns_address()
         $dns = explode(PHP_EOL, shell_exec('getprop | grep "net.dns"'));
         foreach ($dns as $key => $server) {
             /** @var array $m */
-            if (preg_match("|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|", $server, $m)) {
-                $addr .= "nameserver" . ($key + 1) . ": " . $m[1] . ", ";
+            if (preg_match('|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|', $server, $m)) {
+                $addr .= 'nameserver' . ($key + 1) . ': ' . $m[1] . ', ';
             }
         }
     }
@@ -995,7 +995,7 @@ function getTimeZone()
  */
 function is_android()
 {
-    return is_file("/system/dunehd/init");
+    return is_file('/system/dunehd/init');
 }
 
 /**
@@ -1107,7 +1107,7 @@ function send_ir_code($key)
         return shell_exec('echo ' . DuneIrControl::$key_codes[$key] . ' > /proc/ir/button');
     }
 
-    hd_debug_print("Error in class " . get_class($this) . "::" . __FUNCTION__ . "! Code of key '$key' not found in base!");
+    hd_debug_print('Error in class ' . get_class($this) . '::' . __FUNCTION__ . "! Code of key '$key' not found in base!");
     return '0';
 }
 
@@ -1124,7 +1124,7 @@ function send_ir_code_return_status($key)
         return get_shell_exec($cmd);
     }
 
-    hd_debug_print("Error in class " . get_class($this) . "::" . __FUNCTION__ . "! Code of key '$key' not found in base!");
+    hd_debug_print('Error in class ' . get_class($this) . '::' . __FUNCTION__ . "! Code of key '$key' not found in base!");
     return '0';
 }
 
@@ -1852,12 +1852,12 @@ function get_plugin_name()
 
 function export_DuneSystem()
 {
-    putenv("PLUGIN_NAME=" . DuneSystem::$properties['plugin_name']);
-    putenv("PLUGIN_INSTALL_DIR_PATH=" . DuneSystem::$properties['install_dir_path']);
-    putenv("PLUGIN_DATA_DIR_PATH=" . DuneSystem::$properties['data_dir_path']);
-    putenv("PLUGIN_TMP_DIR_PATH=" . DuneSystem::$properties['tmp_dir_path']);
-    putenv("PLUGIN_WWW_URL=" . DuneSystem::$properties['plugin_www_url']);
-    putenv("PLUGIN_CGI_URL=" . DuneSystem::$properties['plugin_cgi_url']);
+    putenv('PLUGIN_NAME=' . DuneSystem::$properties['plugin_name']);
+    putenv('PLUGIN_INSTALL_DIR_PATH=' . DuneSystem::$properties['install_dir_path']);
+    putenv('PLUGIN_DATA_DIR_PATH=' . DuneSystem::$properties['data_dir_path']);
+    putenv('PLUGIN_TMP_DIR_PATH=' . DuneSystem::$properties['tmp_dir_path']);
+    putenv('PLUGIN_WWW_URL=' . DuneSystem::$properties['plugin_www_url']);
+    putenv('PLUGIN_CGI_URL=' . DuneSystem::$properties['plugin_cgi_url']);
 }
 
 /**
@@ -1866,7 +1866,7 @@ function export_DuneSystem()
  */
 function get_image_path($image = '')
 {
-    return get_install_path("img/" . ltrim($image, "/"));
+    return get_install_path('img/' . ltrim($image, '/'));
 }
 
 /**
@@ -1893,14 +1893,14 @@ function get_plugin_manifest_info()
 {
     $result = array();
     try {
-        $manifest_path = get_install_path("dune_plugin.xml");
+        $manifest_path = get_install_path('dune_plugin.xml');
         if (!file_exists($manifest_path)) {
-            throw new Exception("Plugin manifest not found!");
+            throw new Exception('Plugin manifest not found!');
         }
 
         $xml = parse_xml_file($manifest_path);
         if ($xml === null) {
-            throw new Exception("Empty plugin manifest!");
+            throw new Exception('Empty plugin manifest!');
         }
 
         $result['app_name'] = (string)$xml->name;
@@ -2004,7 +2004,7 @@ function get_active_skin_path()
         return getenv('FS_PREFIX') . rtrim(trim(preg_replace('/^.*=/', '', file_get_contents($skin_path))), '/');
     }
 
-    hd_debug_print("Error in class " . __METHOD__ . " ! Can not determine the path to the active skin. $skin_path");
+    hd_debug_print('Error in class ' . __METHOD__ . " ! Can not determine the path to the active skin. $skin_path");
     return '';
 }
 
@@ -2109,7 +2109,7 @@ function print_sysinfo()
         'libCURL Version' => "{$values['version']} ({$values['host']}) {$values['ssl_version']} zlib/{$values['libz_version']})",
     );
 
-    if (class_exists("SQLite3")) {
+    if (class_exists('SQLite3')) {
         $sqlite_ver = SQLite3::version();
         $table['SQLite3 Version'] = $sqlite_ver['versionString'];
     }
@@ -2244,7 +2244,7 @@ function debug_print(/*mixed $var1, $var2...*/)
             }
         }
 
-        hd_debug_print("Debug alert! " . rtrim($chain, '->') . (empty($var) ? '' : ' >> ') . ltrim($var, "\n"));
+        hd_debug_print('Debug alert! ' . rtrim($chain, '->') . (empty($var) ? '' : ' >> ') . ltrim($var, "\n"));
     }
 }
 
@@ -2262,7 +2262,7 @@ function dump_input_handler($user_input, $force = false)
     hd_debug_print();
 
     foreach ($user_input as $key => $value) {
-        $decoded_value = html_entity_decode(preg_replace("/(\\\u([0-9A-Fa-f]{4}))/", "&#x\\2;", $value), ENT_NOQUOTES, 'UTF-8');
+        $decoded_value = html_entity_decode(preg_replace('/(\\\u([0-9A-Fa-f]{4}))/', '&#x\\2;', $value), ENT_NOQUOTES, 'UTF-8');
         hd_print("  $key => $decoded_value");
     }
 }
@@ -2510,7 +2510,7 @@ function parse_xml_document($doc)
     $xml = simplexml_load_string($doc);
 
     if ($xml === false) {
-        hd_debug_print("Error: can not parse XML document.");
+        hd_debug_print('Error: can not parse XML document.');
         hd_debug_print("XML-text: $doc.");
         throw new Exception('Illegal XML document');
     }
@@ -2543,7 +2543,7 @@ function parse_xml_file($path)
 function store_to_json_file($path, $content)
 {
     if (empty($path)) {
-        hd_debug_print("Path not set");
+        hd_debug_print('Path not set');
     } else {
         file_put_contents($path, json_encode($content));
     }
@@ -2597,7 +2597,7 @@ function json_format($content, $options = 0)
     $buffer = '';
     $noescape = true;
 
-    for ($i = 0; $i < $strLen; $i++) {
+    for ($i = 0; $i < $strLen; ++$i) {
         // take the next character in the string
         $char = $json_str[$i];
 
@@ -2665,7 +2665,7 @@ function json_format($content, $options = 0)
             $result .= $newLine;
 
             if ('{' === $char || '[' === $char) {
-                $pos++;
+                ++$pos;
             }
             $result .= str_repeat($indentStr, $pos);
         }
@@ -2801,9 +2801,9 @@ function dune_params_to_array($str)
 
         $param_pair[0] = trim($param_pair[0]);
         if (strpos($param_pair[1], ",,") !== false) {
-            $param_pair[1] = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $param_pair[1]);
+            $param_pair[1] = str_replace(array(',,', ',', '%2C%2C'), array('%2C%2C', ',,', ',,'), $param_pair[1]);
         } else {
-            $param_pair[1] = str_replace(",", ",,", $param_pair[1]);
+            $param_pair[1] = str_replace(',', ',,', $param_pair[1]);
         }
 
         $params_array[$param_pair[0]] = $param_pair[1];
@@ -2826,7 +2826,7 @@ function dune_params_array_to_string($value)
 }
 
 function send_process_signal($pid, $sig_num) {
-    if (function_exists("posix_kill")) {
+    if (function_exists('posix_kill')) {
         return posix_kill($pid, $sig_num);
     }
     /** @var array $out */
@@ -2974,12 +2974,12 @@ function color_palette_restore()
     $backup_storage_path = get_data_path('skin_backup');
 
     if (!file_exists($skin_config)) {
-        hd_debug_print("Skin config file does not exist!");
+        hd_debug_print('Skin config file does not exist!');
         return null;
     }
 
     if (!file_exists($backup_storage_path)) {
-        hd_debug_print("Backup storage path does not exist!");
+        hd_debug_print('Backup storage path does not exist!');
         return null;
     }
 

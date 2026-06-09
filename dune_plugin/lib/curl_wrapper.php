@@ -167,7 +167,7 @@ class Curl_Wrapper
         }
 
         if ($contents === false) {
-            hd_debug_print("failed to decode json");
+            hd_debug_print('failed to decode json');
             hd_debug_print("doc: $res", true);
             return false;
         }
@@ -342,7 +342,7 @@ class Curl_Wrapper
             return $contents;
         }
 
-        hd_debug_print("failed to decode json");
+        hd_debug_print('failed to decode json');
         hd_debug_print("doc: $data", true);
 
         return false;
@@ -444,7 +444,7 @@ class Curl_Wrapper
     private function exec_php_curl($url, $save_file, $cache_opts = 0)
     {
         if ($save_file === false) {
-            hd_debug_print("exec_php_curl: request only headers", true);
+            hd_debug_print('exec_php_curl: request only headers', true);
         }
 
         self::$http_code = 0;
@@ -487,7 +487,7 @@ class Curl_Wrapper
 
         $etag = '';
         if ($cache_opts & self::USE_ETAG) {
-            hd_debug_print("cache opts: Use ETag capability", true);
+            hd_debug_print('cache opts: Use ETag capability', true);
             $etag = self::get_cached_etag($url);
             if (!empty($etag)) {
                 $opts[CURLOPT_HTTPHEADER][] = "If-None-Match: $etag";
@@ -526,7 +526,7 @@ class Curl_Wrapper
                 $now = time();
                 $mtime = filemtime($path);
                 $cache_expired_in = $mtime + $this->file_cache_time * 3600;
-                hd_debug_print("Cache expiration time: " . format_datetime("Y-m-d H:i", $cache_expired_in), true);
+                hd_debug_print('Cache expiration time: ' . format_datetime('Y-m-d H:i', $cache_expired_in), true);
                 if ($now < $cache_expired_in) {
                     hd_debug_print("Response read from cache $path", true);
                     return file_get_contents($path);
@@ -563,16 +563,16 @@ class Curl_Wrapper
         }
 
         if (!empty(self::$http_response_headers) && LogSeverity::$is_debug) {
-            hd_debug_print("---------  Response headers start ---------");
+            hd_debug_print('---------  Response headers start ---------');
             foreach (self::$http_response_headers as $key => $header) {
                 hd_debug_print("$key: $header");
             }
-            hd_debug_print("---------   Response headers end  ---------");
+            hd_debug_print('---------   Response headers end  ---------');
         }
 
         if (self::$http_code < 200 || (self::$http_code >= 300 && self::$http_code != 301 && self::$http_code != 304)) {
-            hd_debug_print("HTTP request failed (" . self::$http_code . ")");
-            hd_debug_print("HTTP response: " . $content);
+            hd_debug_print('HTTP request failed (' . self::$http_code . ')');
+            hd_debug_print('HTTP response: ' . $content);
             return false;
         }
 

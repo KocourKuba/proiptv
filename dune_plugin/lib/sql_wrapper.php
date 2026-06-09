@@ -17,7 +17,7 @@ class Sql_Wrapper
     {
         try {
             $this->db = new SQLite3($db_name, $flags, '');
-            $this->db->exec("PRAGMA journal_mode=MEMORY;");
+            $this->db->exec('PRAGMA journal_mode=MEMORY;');
             $this->open_mode = $flags;
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
@@ -64,7 +64,7 @@ class Sql_Wrapper
         hd_debug_print("Trying to attach: as '$name' db: '$db_filename'", true);
         $result = $this->is_database_attached($name, $db_filename);
         if ($result === 2) {
-            hd_debug_print("Already attached", true);
+            hd_debug_print('Already attached', true);
             return $result;
         }
 
@@ -74,7 +74,7 @@ class Sql_Wrapper
 
         $this->exec("ATTACH DATABASE '$db_filename' AS $name;");
         $result = $this->is_database_attached($name, $db_filename);
-        hd_debug_print("Attach: " . ($result ? 'success' : 'fail'), true);
+        hd_debug_print('Attach: ' . ($result ? 'success' : 'fail'), true);
         return $result;
     }
 
@@ -91,7 +91,7 @@ class Sql_Wrapper
             hd_debug_print("Trying to detach: '$name'", true);
             $this->exec("DETACH DATABASE '$name';");
             $result = $this->is_database_attached($name) === 0;
-            hd_debug_print("Detach: " . ($result ? 'success' : 'fail'), true);
+            hd_debug_print('Detach: ' . ($result ? 'success' : 'fail'), true);
             return $result;
         }
         return true;
@@ -110,12 +110,12 @@ class Sql_Wrapper
     public function is_database_attached($db_name, $db_filename = null)
     {
         if (!$this->is_valid()) {
-            hd_debug_print("Sqlite wrapper db not inited!");
+            hd_debug_print('Sqlite wrapper db not inited!');
             return 0;
         }
 
         $result = 0;
-        foreach ($this->fetch_array("PRAGMA database_list") as $database) {
+        foreach ($this->fetch_array('PRAGMA database_list') as $database) {
             if ($database['name'] !== $db_name) continue;
 
             if ($db_filename == null) {
@@ -426,12 +426,12 @@ class Sql_Wrapper
     public function exec_transaction($query)
     {
         if (!empty($query)) {
-            $query = "BEGIN;" . $query . "COMMIT;" ;
+            $query = 'BEGIN;' . $query . 'COMMIT;' ;
             if (!$this->db->exec($query)) {
                 hd_debug_print();
-                hd_debug_print("Error commit transaction!");
+                hd_debug_print('Error commit transaction!');
                 hd_debug_print($query);
-                $this->db->exec("ROLLBACK;");
+                $this->db->exec('ROLLBACK;');
                 return false;
             }
         }

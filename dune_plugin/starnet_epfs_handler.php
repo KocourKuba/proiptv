@@ -151,7 +151,7 @@ class Starnet_Epfs_Handler
         if (is_file(self::first_run_path())) {
             $first_run = true;
             unlink(self::first_run_path());
-            hd_debug_print("First run", true);
+            hd_debug_print('First run', true);
         }
 
         if ($first_run || !is_file(self::get_epfs_path(self::$no_internet_epfs))) {

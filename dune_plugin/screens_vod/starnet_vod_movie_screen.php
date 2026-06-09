@@ -63,7 +63,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
         $movie = $this->plugin->vod->get_loaded_movie($media_url->movie_id);
         if (is_null($movie)) {
             $movie = new Movie($media_url->movie_id, $this->plugin);
-            hd_debug_print("empty movie or no series data");
+            hd_debug_print('empty movie or no series data');
             $movie_info = $movie->get_movie_info();
             $movie_info[PluginMovie::description] = TR::t('warn_msg5');
             return array(

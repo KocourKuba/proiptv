@@ -101,7 +101,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         if (!isset($user_input->selected_media_url)) {
-            hd_debug_print("user input selected media url not set", true);
+            hd_debug_print('user input selected media url not set', true);
             return null;
         }
 
@@ -178,7 +178,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $movie = $this->plugin->vod->get_loaded_movie($selected_media_url->movie_id);
                 if (is_null($movie)) break;
 
-                hd_debug_print("Loaded movie " . $movie);
+                hd_debug_print('Loaded movie ' . $movie);
                 $cur_quality = $this->plugin->get_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
                 hd_debug_print("Current quality: $cur_quality");
 
@@ -269,20 +269,20 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
             if (isset($media_url->season_id) && $media_url->season_id !== $episode->season_id) continue;
 
             hd_debug_print("series_id: $series_id episode_name: " . TR::translate($episode->name), true);
-            hd_debug_print("Episode info: " . json_format_unescaped($episode), true);
+            hd_debug_print('Episode info: ' . json_format_unescaped($episode), true);
             $viewed_params = $this->plugin->get_vod_history_params($media_url->movie_id, $series_id);
             $color = 15;
             $info = $episode->name;
             if (!empty($viewed_params)) {
                 if ($viewed_params[COLUMN_WATCHED]) {
-                    $date = format_datetime("d.m.Y H:i", $viewed_params[COLUMN_TIMESTAMP]);
+                    $date = format_datetime('d.m.Y H:i', $viewed_params[COLUMN_TIMESTAMP]);
                     $info = TR::t('vod_screen_viewed__2', $episode->name, $date);
                 } else if ($viewed_params[COLUMN_DURATION] !== -1) {
                     $info = TR::t('vod_screen_viewed__4',
                         $episode->name,
                         format_duration_seconds($viewed_params[COLUMN_POSITION]),
                         format_duration_seconds($viewed_params[COLUMN_DURATION]),
-                        format_datetime("d.m.Y H:i", $viewed_params[COLUMN_TIMESTAMP])
+                        format_datetime('d.m.Y H:i', $viewed_params[COLUMN_TIMESTAMP])
                     );
                 }
                 $color = 5;
@@ -293,7 +293,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
             $description = empty($episode->description) ? $episode->name : $episode->description;
             $description .= '||';
             $this->qualities = array_diff_key($episode->get_qualities(), $skip_variant);
-            hd_debug_print("Qualities: " . json_format_unescaped($this->qualities), true);
+            hd_debug_print('Qualities: ' . json_format_unescaped($this->qualities), true);
             if (!empty($this->qualities)) {
                 $qualities_str = implode('|', $this->qualities);
                 if (!empty($description)) {
@@ -305,7 +305,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
             $q_variant = $this->plugin->get_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
             hd_debug_print("selected audio: $q_variant");
             $this->audios = array_diff_key($episode->get_audios($q_variant), $skip_variant);
-            hd_debug_print("Audios: " . json_format_unescaped($this->audios), true);
+            hd_debug_print('Audios: ' . json_format_unescaped($this->audios), true);
             if (!empty($this->audios)) {
                 $audios_str = implode('|', $this->audios);
                 if (!empty($description)) {

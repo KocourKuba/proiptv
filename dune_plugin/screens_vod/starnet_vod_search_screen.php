@@ -153,7 +153,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen
 
                     case ACTION_ITEM_DOWN:
                         $max_sel = $this->plugin->get_order_count(VOD_SEARCH_LIST) + 1;
-                        $sel_ndx++;
+                        ++$sel_ndx;
                         if ($sel_ndx > $max_sel) {
                             return null;
                         }

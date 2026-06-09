@@ -167,7 +167,7 @@ class api_edem extends api_default
     {
         if (empty($this->playlist_id)) {
             $is_new = true;
-            hd_debug_print("Create new provider info", true);
+            hd_debug_print('Create new provider info', true);
             $params[PARAM_TYPE] = PARAM_PROVIDER;
             $params[PARAM_NAME] = $user_input->{CONTROL_EDIT_NAME};
             $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
@@ -175,7 +175,7 @@ class api_edem extends api_default
             $is_new = false;
             hd_debug_print("load info for existing playlist id: $this->playlist_id", true);
             $params = $this->plugin->get_playlist_parameters($this->playlist_id);
-            hd_debug_print("provider info: " . json_format_unescaped($params), true);
+            hd_debug_print('provider info: ' . json_format_unescaped($params), true);
         }
 
         if (safe_get_value($params, PARAM_NAME) !== $user_input->{CONTROL_EDIT_NAME}) {

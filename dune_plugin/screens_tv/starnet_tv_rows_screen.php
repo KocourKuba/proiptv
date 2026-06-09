@@ -196,7 +196,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 );
 
             case ACTION_SORT_POPUP:
-                hd_debug_print("Start event popup menu for playlist", true);
+                hd_debug_print('Start event popup menu for playlist', true);
                 return User_Input_Handler_Registry::create_action(
                     $this,
                     GUI_EVENT_KEY_POPUP_MENU,
@@ -205,7 +205,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 );
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                hd_debug_print("Start event popup menu");
+                hd_debug_print('Start event popup menu');
                 return Action_Factory::show_popup_menu($this->do_popup_menu($user_input));
 
             case PLUGIN_FAVORITES_OP_ADD:
@@ -301,22 +301,22 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 return Action_Factory::invalidate_all_folders($plugin_cookies);
 
             case ACTION_ITEM_DELETE:
-                hd_debug_print("MediaURL: " . $media_url);
+                hd_debug_print('MediaURL: ' . $media_url);
                 if ($is_sel_channel) {
-                    hd_debug_print("Hide channel: " . $media_url->channel_id);
+                    hd_debug_print('Hide channel: ' . $media_url->channel_id);
                     $this->plugin->set_channel_visible($media_url->channel_id, false);
                 } else {
                     if ($media_url->group_id === TV_CHANGED_CHANNELS_GROUP_ID || $media_url->group_id === TV_HISTORY_GROUP_ID) {
                         return User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR);
                     }
-                    hd_debug_print("Hide group: " . $media_url->group_id);
+                    hd_debug_print('Hide group: ' . $media_url->group_id);
                     $this->plugin->set_groups_visible($media_url->group_id, false);
                 }
 
                 return Action_Factory::invalidate_epfs_folders($plugin_cookies);
 
             case ACTION_EPG_CACHE_ENGINE:
-                hd_debug_print("Start event popup menu for epg source", true);
+                hd_debug_print('Start event popup menu for epg source', true);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_EPG_CACHE_ENGINE => true));
 
             case ENGINE_XMLTV:
@@ -372,7 +372,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_RELOAD:
-                hd_debug_print("Action reload", true);
+                hd_debug_print('Action reload', true);
                 if (!$this->plugin->load_channels($plugin_cookies, isset($user_input->{PARAM_CLEAR_PLAYLIST}))) {
                     $actions[] = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
                 }
@@ -437,7 +437,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         $defs[] = GComps_Factory::label_v2(GComp_Geom::place_center(), null, $message, 1, "#AFAFA0FF", 60);
 
         $rows[] = Rows_Factory::vgap_row(50);
-        $rows[] = Rows_Factory::gcomps_row("single_row", $defs, null, 1920, 500);
+        $rows[] = Rows_Factory::gcomps_row('single_row', $defs, null, 1920, 500);
 
         return Rows_Factory::pane($rows);
     }
@@ -497,7 +497,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         }
 
         if (empty($all_rows)) {
-            hd_debug_print("no category rows");
+            hd_debug_print('no category rows');
             return $this->get_empty_rows_pane();
         }
 
@@ -677,7 +677,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             $title = $channel_row[COLUMN_TITLE];
             // program epg available
             if ($channel_ts > 0) {
-                $title = format_datetime("d.m H:i", $channel_ts);
+                $title = format_datetime('d.m H:i', $channel_ts);
                 if ($start_tm === 0 || $end_tm === 0) {
                     $prog_info = $this->plugin->get_epg_info($channel_id, $channel_ts);
                     $start_tm = $prog_info[PluginTvEpgProgram::start_tm_sec];
@@ -744,7 +744,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         );
 
         if (!empty($rows)) {
-            hd_debug_print("added history: " . count($rows) . " rows", true);
+            hd_debug_print('added history: ' . count($rows) . ' rows', true);
         }
     }
 
@@ -783,7 +783,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         );
 
         if (!empty($rows)) {
-            hd_debug_print("added favorites: " . count($rows) . " rows", true);
+            hd_debug_print('added favorites: ' . count($rows) . ' rows', true);
         }
     }
 
@@ -856,7 +856,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         );
 
         if (!empty($rows)) {
-            hd_debug_print("added changed channels: " . count($rows) . " rows", true);
+            hd_debug_print('added changed channels: ' . count($rows) . ' rows', true);
         }
     }
 
@@ -906,7 +906,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         );
 
         if (!empty($rows)) {
-            hd_debug_print("added all channels: " . count($rows) . " rows", true);
+            hd_debug_print('added all channels: ' . count($rows) . ' rows', true);
         }
     }
 
@@ -961,7 +961,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         }
 
         if (!empty($rows)) {
-            hd_debug_print("added group channels: " . count($rows) . " rows", true);
+            hd_debug_print('added group channels: ' . count($rows) . ' rows', true);
             return true;
         }
 
@@ -1053,7 +1053,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         $epg_data = $this->plugin->get_epg_info($channel_id, $archive_tm);
         $desc = safe_get_value($epg_data, PluginTvEpgProgram::description);
         if (!isset($epg_data[PluginTvEpgProgram::start_tm_sec])) {
-            hd_debug_print("no epg data");
+            hd_debug_print('no epg data');
             if (!empty($desc)) {
                 $geom = GComp_Geom::place_top_left(PaneParams::info_width, -1, 0, $next_pos_y);
                 $defs[] = GComps_Factory::label($geom,
@@ -1300,7 +1300,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
             $menu_items = $this->plugin->epg_engine_menu($this);
         } else if (isset($user_input->{ACTION_SORT_POPUP})) {
-            hd_debug_print("create sort menu", true);
+            hd_debug_print('create sort menu', true);
             if (isset($media_url->group_id)) {
                 hd_debug_print("sort group: $media_url->group_id", true);
                 if ($this->plugin->get_group($media_url->group_id, PARAM_GROUP_ORDINARY) !== null) {
@@ -1320,12 +1320,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             }
         } else if (isset($user_input->selected_item_id)) {
             // popup menu for selected chennel in row
-            hd_debug_print("in channels rows", true);
+            hd_debug_print('in channels rows', true);
             if ($media_url->group_id === TV_HISTORY_GROUP_ID) {
-                hd_debug_print("in history rows", true);
+                hd_debug_print('in history rows', true);
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_REMOVE, TR::t('delete'), "remove.png");
             } else if ($media_url->group_id === $fav_id && $this->plugin->is_full_size_remote()) {
-                hd_debug_print("in favorites rows", true);
+                hd_debug_print('in favorites rows', true);
                 $menu_items[] = $this->plugin->create_menu_item($this, PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete_from_favorite'), "star.png");
             } else {
                 hd_debug_print("Selected channel in row: $media_url->channel_id", true);
@@ -1361,7 +1361,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             }
         } else {
             // popup menu for left side list
-            hd_debug_print("in menu side", true);
+            hd_debug_print('in menu side', true);
             $refresh_menu = $this->plugin->refresh_playlist_menu($this);
             $group_id = safe_get_value($media_url, COLUMN_GROUP_ID);
             $menu_items = array_merge($refresh_menu, $menu_items, $this->plugin->common_categories_menu($this, $group_id, false));

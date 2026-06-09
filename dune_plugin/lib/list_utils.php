@@ -85,7 +85,7 @@ class List_Utils
     {
         $cfg_path = self::config_file_path($config_id);
         hd_debug_print("Write config file: $cfg_path", true);
-        hd_debug_print("Config: " . json_format_unescaped($cfg), true);
+        hd_debug_print('Config: ' . json_format_unescaped($cfg), true);
         $enabled = '';
         $ordering = '';
         foreach ($cfg as $key => $value) {

@@ -164,7 +164,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
                 $is_old_default = $this->plugin->is_background_image_default();
                 $cached_image = get_cached_image_path($this->plugin->get_active_playlist_id() . '_' . $data->{PARAM_CAPTION});
 
-                hd_print("copy from: " . $data->{PARAM_FILEPATH} . " to: $cached_image");
+                hd_print('copy from: ' . $data->{PARAM_FILEPATH} . " to: $cached_image");
                 if (!copy($data->{PARAM_FILEPATH}, $cached_image)) {
                     return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_copy'));
                 }
@@ -182,7 +182,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
                 return Action_Factory::composite($actions);
 
             case self::ACTION_BG_RESET_DEFAULT:
-                hd_debug_print("Background set to default");
+                hd_debug_print('Background set to default');
                 $this->plugin->set_background_image(null);
                 $this->plugin->init_screen_view_parameters($this->plugin->plugin_info['app_background']);
 

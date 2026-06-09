@@ -148,7 +148,7 @@ class api_tvclub extends api_default
 
         if (empty($this->servers)) {
             $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
-            hd_debug_print("GetServers: " . json_format_unescaped($response), true);
+            hd_debug_print('GetServers: ' . json_format_unescaped($response), true);
             foreach (safe_get_value($response, 'servers', array()) as $server) {
                 if (isset($server['id'])) {
                     $this->servers[(int)$server['id']] = safe_get_value($server, 'name', 'unknown');

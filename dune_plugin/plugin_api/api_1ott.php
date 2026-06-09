@@ -32,11 +32,11 @@ class api_1ott extends api_default
     public function request_provider_token($force = false)
     {
         hd_debug_print(null, true);
-        hd_debug_print("force request provider token: " . var_export($force, true));
+        hd_debug_print('force request provider token: ' . var_export($force, true));
 
         $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID, true);
         if (!$force && !empty($session_id)) {
-            hd_debug_print("request not required", true);
+            hd_debug_print('request not required', true);
             return true;
         }
 

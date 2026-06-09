@@ -48,13 +48,13 @@ class api_cbilling extends api_default
     public function request_provider_info($force = false)
     {
         hd_debug_print(null, true);
-        hd_debug_print("force request_provider_info: " . var_export($force, true), true);
+        hd_debug_print('force request_provider_info: ' . var_export($force, true), true);
 
         if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
             $this->account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_ARRAY);
-            hd_debug_print("request_provider_info: " . json_format_unescaped($this->account_info), true);
+            hd_debug_print('request_provider_info: ' . json_format_unescaped($this->account_info), true);
         }
     }
 
@@ -107,7 +107,7 @@ class api_cbilling extends api_default
 
         if (empty($this->servers)) {
             $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
-            hd_debug_print("GetServers: " . json_format_unescaped($response), true);
+            hd_debug_print('GetServers: ' . json_format_unescaped($response), true);
             foreach (safe_get_value($response, 'data', array()) as $server) {
                 if (isset($server['name'])) {
                     $this->servers[$server['name']] = safe_get_value($server, 'country', 'unknown');
@@ -132,7 +132,7 @@ class api_cbilling extends api_default
     protected function get_additional_headers($command)
     {
         if ($command === API_COMMAND_ACCOUNT_INFO) {
-            return array($this->replace_macros("x-public-key: {PASSWORD}"));
+            return array($this->replace_macros('x-public-key: {PASSWORD}'));
         }
 
         return array();

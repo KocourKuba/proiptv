@@ -106,7 +106,7 @@ foreach ($files_to_check as $php_file) {
             }
             foreach ($translations as $lang_name => $lang) {
                 if (isset($lang[$tr])) {
-                    $usage[$lang_name][$tr]++;
+                    ++$usage[$lang_name][$tr];
                 } else {
                     echo "$lang_name: Unknown translation '$tr' for  in file: $php_file, line: $line_num" . PHP_EOL;
                 }

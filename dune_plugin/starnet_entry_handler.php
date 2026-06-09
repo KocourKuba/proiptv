@@ -80,17 +80,17 @@ class Starnet_Entry_Handler implements User_Input_Handler
         dump_input_handler($user_input, true);
 
         if (!isset($user_input->control_id)) {
-            hd_debug_print("user input control id not set");
+            hd_debug_print('user input control id not set');
             return null;
         }
 
         if (!is_r22_or_higher()) {
-            hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
+            hd_debug_print('Too old Dune HD firmware! ' . get_raw_firmware_version());
             return $this->show_old_player(TR::t('err_too_old_player'));
         }
 
         if (!class_exists('SQLite3')) {
-            hd_debug_print("No SQLite3 support! " . get_raw_firmware_version());
+            hd_debug_print('No SQLite3 support! ' . get_raw_firmware_version());
             return $this->show_old_player(TR::t('err_no_sqlite'));
         }
 
@@ -175,7 +175,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case ACTION_FORCE_OPEN:
                 hd_print_separator();
-                hd_debug_print("FORCE LANUCH PLUGIN");
+                hd_debug_print('FORCE LANUCH PLUGIN');
                 hd_print_separator();
 
                 if (!$this->plugin->load_channels($plugin_cookies)) {
@@ -190,14 +190,14 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     return Action_Factory::composite($actions);
                 }
 
-                hd_debug_print("action: launch open", true);
+                hd_debug_print('action: launch open', true);
                 $actions[] = Action_Factory::refresh_entry_points();
                 $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                 $actions[] = Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
                 return Action_Factory::composite($actions);
 
             case self::ACTION_CONFIRM_BACKUP_DLG:
-                hd_debug_print("Call select backup folder");
+                hd_debug_print('Call select backup folder');
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                     array(
                         PARAM_END_ACTION => self::ACTION_PLUGIN_ENTRY,
@@ -231,7 +231,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 }
 
                 if (!$this->plugin->load_channels($plugin_cookies)) {
-                    hd_debug_print("Failed to load channels!");
+                    hd_debug_print('Failed to load channels!');
                     return Action_Factory::show_title_dialog(
                         TR::t('err_load_playlist'),
                         Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST),
@@ -247,7 +247,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 $action = color_palette_restore();
                 if ($action === null) break;
 
-                hd_debug_print("Palette restored");
+                hd_debug_print('Palette restored');
                 return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), TR::t('setup_patch_success'));
 
             case self::ACTION_PLUGIN_ENTRY:
@@ -269,7 +269,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         hd_print_separator();
-                        hd_debug_print("LANUCH PLUGIN VOD");
+                        hd_debug_print('LANUCH PLUGIN VOD');
                         hd_print_separator();
 
                         $this->plugin->init_plugin(true);
@@ -293,7 +293,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         if (!$this->plugin->load_channels($plugin_cookies)) {
-                            hd_debug_print("Failed to load channels!");
+                            hd_debug_print('Failed to load channels!');
                             return Action_Factory::show_title_dialog(
                                 TR::t('err_load_playlist'),
                                 Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST),
@@ -351,8 +351,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
     }
 
     private function show_old_player($title) {
-        $qr_code = get_temp_path("link_to_old.jpg");
-        $url = "http://api.qrserver.com/v1/create-qr-code/?size=450x450&format=png&data=" . urlencode(base64_decode(self::OLD_LINK));
+        $qr_code = get_temp_path('link_to_old.jpg');
+        $url = 'http://api.qrserver.com/v1/create-qr-code/?size=450x450&format=png&data=' . urlencode(base64_decode(self::OLD_LINK));
         Curl_Wrapper::getInstance()->download_file($url, $qr_code);
 
         $defs = array();
@@ -397,11 +397,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
         }
 
         hd_print_separator();
-        hd_debug_print("LANUCH PLUGIN");
+        hd_debug_print('LANUCH PLUGIN');
 
         $this->plugin->init_plugin(true);
         if ($this->plugin->get_all_playlists_count() === 0) {
-            hd_debug_print("No playlists found. Open playlists page");
+            hd_debug_print('No playlists found. Open playlists page');
             return $this->open_playlist_screen($plugin_cookies);
         }
 
@@ -427,19 +427,19 @@ class Starnet_Entry_Handler implements User_Input_Handler
             hd_debug_print("Auto play:        $auto_play");
 
             if ($mandatory_playback !== 1 && !SwitchOnOff::to_bool($auto_play)) {
-                hd_debug_print("action: launch open", true);
+                hd_debug_print('action: launch open', true);
                 return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
             }
         } else if ($user_input->action_id === self::ACTION_AUTO_RESUME) {
-            hd_debug_print("LANUCH PLUGIN AUTO RESUME MODE");
+            hd_debug_print('LANUCH PLUGIN AUTO RESUME MODE');
             hd_debug_print("Auto resume:      $auto_resume");
             if (!SwitchOnOff::to_bool($auto_resume)) {
-                hd_debug_print("auto resume disabled");
+                hd_debug_print('auto resume disabled');
                 return null;
             }
         }
 
-        hd_debug_print("launch resume state", true);
+        hd_debug_print('launch resume state', true);
         // $user_input:
         // handler_id => entry_handler
         // control_id => plugin_entry
@@ -460,7 +460,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
         // orig_selected_media_url => tv_groups
 
         $is_playlist_changed = !isset($plugin_cookies->current_playlist) || $plugin_cookies->current_playlist !== $this->plugin->get_active_playlist_id();
-        hd_debug_print("current playlist changed: " . var_export($is_playlist_changed, true));
+        hd_debug_print('current playlist changed: ' . var_export($is_playlist_changed, true));
         $mode = safe_get_value($user_input, 'resume_mode');
         $resume_owner = strpos(safe_get_value($user_input, 'plugin_name', ''), get_plugin_name()) !== false;
         $media_url = MediaURL::decode();
@@ -471,7 +471,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
         $media_url->archive_tm = ((time() - $archive_tm) < 259200) ? $archive_tm : -1;
         // Check if previous state is TV playback
         if (!$is_playlist_changed && $resume_owner && $mode === "PLUGIN_TV_PLAYBACK") {
-            hd_debug_print("Resumed media url: " . $media_url);
+            hd_debug_print('Resumed media url: ' . $media_url);
             return Action_Factory::tv_play($media_url);
         }
 
@@ -486,7 +486,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return Action_Factory::tv_play($media_url);
         }
 
-        hd_debug_print("action: launch open", true);
+        hd_debug_print('action: launch open', true);
         return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
     }
 }

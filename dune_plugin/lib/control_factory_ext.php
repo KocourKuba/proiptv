@@ -143,7 +143,7 @@ class Control_Factory_Ext extends Control_Factory
             if (!file_exists(self::$instance->sandwich_cover_center)) {
                 $argb = str_split($center_color, 2);
 
-                if (false === file_put_contents(self::$instance->sandwich_cover_center, pack("V2C4", 1, 1, hexdec($argb[4]), hexdec($argb[3]), hexdec($argb[2]), hexdec($argb[1])))) {
+                if (false === file_put_contents(self::$instance->sandwich_cover_center, pack('V2C4', 1, 1, hexdec($argb[4]), hexdec($argb[3]), hexdec($argb[2]), hexdec($argb[1])))) {
                     throw new Exception(get_class(self::$instance) . ': Attempt to write to the system drive failed!');
                 }
             }
@@ -156,12 +156,12 @@ class Control_Factory_Ext extends Control_Factory
                 $argb = str_split($argb_color, 2);
                 self::$instance->dots[$idx] = $dots_path . "/$argb_color.aai";
 
-                if (false === file_put_contents(self::$instance->dots[$idx], pack("V2C4", 1, 1, hexdec($argb[4]), hexdec($argb[3]), hexdec($argb[2]), hexdec($argb[1])))) {
+                if (false === file_put_contents(self::$instance->dots[$idx], pack('V2C4', 1, 1, hexdec($argb[4]), hexdec($argb[3]), hexdec($argb[2]), hexdec($argb[1])))) {
                     throw new Exception(get_class(self::$instance) . ': Attempt to write to the system drive failed!');
                 }
             } else {
                 unset($indexed_colors_map[$idx]);
-                hd_debug_print("Warning in " . get_class(self::$instance) . "! Wrong colors map value $argb_color, color index $idx is skipped.");
+                hd_debug_print('Warning in ' . get_class(self::$instance) . "! Wrong colors map value $argb_color, color index $idx is skipped.");
             }
         }
     }
@@ -217,7 +217,7 @@ class Control_Factory_Ext extends Control_Factory
                         self::add_vgap($defs, -34);
                     }
 
-                    $n++;
+                    ++$n;
                     $path .= '/' . $dir;
                     continue;
                 }
@@ -289,7 +289,7 @@ class Control_Factory_Ext extends Control_Factory
             {
                 self::init();
             } catch (Exception $e) {
-                hd_debug_print("Failed to add progressbar_ext: " . $e->getMessage());
+                hd_debug_print('Failed to add progressbar_ext: ' . $e->getMessage());
                 return;
             }
         }

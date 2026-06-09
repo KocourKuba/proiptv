@@ -146,7 +146,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEM_DOWN:
                 $max_sel = $this->plugin->get_all_playlists_count() - 1;
-                $sel_idx++;
+                ++$sel_idx;
                 if ($sel_idx > $max_sel) {
                     return null;
                 }
@@ -274,7 +274,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 return $this->do_select_folder($user_input);
 
             case self::ACTION_ASSIGN_SHORTCUT_POPUP:
-                hd_debug_print("Start event popup menu for assign shortcut", true);
+                hd_debug_print('Start event popup menu for assign shortcut', true);
                 return User_Input_Handler_Registry::create_action($this,
                     GUI_EVENT_KEY_POPUP_MENU,
                     null,
@@ -552,7 +552,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
             $post_action = $this->add_playlist($uri, PARAM_LINK, $name, $detect_id, $pl_type);
         } catch (Exception $ex) {
-            hd_debug_print("Problem with download playlist");
+            hd_debug_print('Problem with download playlist');
             print_backtrace_exception($ex);
             $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $ex->getMessage());
         }
@@ -617,7 +617,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
             $post_action = $this->add_playlist($file_path, PARAM_FILE, $name, $detect_id, $pl_type);
         } catch (Exception $ex) {
-            hd_debug_print("Problem with download playlist");
+            hd_debug_print('Problem with download playlist');
             print_backtrace_exception($ex);
             $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $ex->getMessage());
         }
@@ -630,7 +630,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
 
-        hd_debug_print("Choosed file: " . $selected_media_url->{PARAM_FILEPATH}, true);
+        hd_debug_print('Choosed file: ' . $selected_media_url->{PARAM_FILEPATH}, true);
         $lines = file($selected_media_url->{PARAM_FILEPATH}, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         if ($lines === false || (count($lines) === 1 && trim($lines[0]) === '')) {
             return Action_Factory::show_title_dialog(TR::t('error'), TR::t('edit_list_empty_file'));
@@ -648,7 +648,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 hd_debug_print("import link: '$uri'", true);
                 try {
                     $this->add_playlist($uri, PARAM_LINK, '', CONTROL_DETECT_ID, CONTROL_PLAYLIST_IPTV);
-                    $new_count++;
+                    ++$new_count;
                 } catch (Exception $ex) {
                     hd_debug_print("Problem importing '$uri' " . $ex->getMessage());
                 }
@@ -679,8 +679,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 continue;
             }
 
-            $new_count++;
-            hd_debug_print("imported playlist: " . $params, true);
+            ++$new_count;
+            hd_debug_print('imported playlist: ' . $params, true);
             $this->plugin->set_playlist_parameters($playlist_id, $params);
         }
 
@@ -852,7 +852,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $parser = new M3uParser();
         $parser->setPlaylistFile($tmp_file, true);
         $pl_header = $parser->parseHeader(false);
-        hd_debug_print("Playlist info: " . $pl_header);
+        hd_debug_print('Playlist info: ' . $pl_header);
         unset($tmp_file);
 
         $saved_source = new Hashed_Array();
@@ -922,8 +922,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 if (is_null($provider)) {
                     $missed = true;
                     $title = "Unknown provider - $playlist_id";
-                    $icon_file = get_image_path("iptv.png");
-                    $detailed_info = TR::load("err_error_no_data");
+                    $icon_file = get_image_path('iptv.png');
+                    $detailed_info = TR::load('err_error_no_data');
                 } else {
                     if ($title !== $provider->getName()) {
                         $title .= " ({$provider->getName()})";

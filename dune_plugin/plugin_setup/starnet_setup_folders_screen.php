@@ -101,7 +101,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
             case GUI_EVENT_KEY_RETURN:
                 if ($this->force_parent_reload) {
                     $this->force_parent_reload = false;
-                    hd_debug_print("Force parent reload", true);
+                    hd_debug_print('Force parent reload', true);
                     $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                 }
 
@@ -132,7 +132,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                 break;
 
             case self::ACTION_HISTORY_RESET_DEFAULT:
-                hd_debug_print("do set history folder to default: " . get_data_path());
+                hd_debug_print('do set history folder to default: ' . get_data_path());
                 $this->plugin->set_history_path();
                 $post_action = Action_Factory::show_title_dialog(
                     TR::t('folder_screen_selected_folder__1', ''),

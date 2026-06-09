@@ -236,7 +236,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
             $dir[] = $filepath;
         }
 
-        hd_debug_print("dir: " . json_format_unescaped($dir), true);
+        hd_debug_print('dir: ' . json_format_unescaped($dir), true);
         $show_empty = !safe_get_value($media_url, self::PARAM_CHOOSE_FILE, false);
         $files_list = $this->get_file_list($plugin_cookies, $dir, $show_empty);
 
@@ -328,7 +328,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                     $info = TR::t('folder_screen_select_file__2', $caption, $size);
                     $detailed_icon = $icon_file;
 
-                    if (!isset($path_parts[PARAM_EXTENSION]) || !preg_match("/^" . $new_media_url->{PARAM_EXTENSION} . "$/i", $path_parts[PARAM_EXTENSION])) {
+                    if (!isset($path_parts[PARAM_EXTENSION]) || !preg_match('/^' . $new_media_url->{PARAM_EXTENSION} . '$/i', $path_parts[PARAM_EXTENSION])) {
                         // skip extension not in allowed list
                         continue;
                     }
@@ -432,13 +432,13 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                 }
 
                 $s[self::SELECTED_TYPE_SMB] = $smb_shares->get_mount_all_smb($info);
-                hd_debug_print("smb: " . json_format_unescaped($s), true);
+                hd_debug_print('smb: ' . json_format_unescaped($s), true);
                 return $s;
             }
 
             if ($dir === self::NETWORK_MOUNT_PATH) {
                 $s[self::SELECTED_TYPE_NFS] = smb_tree::get_mount_nfs();
-                hd_debug_print("nfs: " . json_format_unescaped($s), true);
+                hd_debug_print('nfs: ' . json_format_unescaped($s), true);
                 return $s;
             }
 
@@ -531,9 +531,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
             $folder_icon = get_image_path('nfs_folder.png');
         } else if ($folder_type === self::SELECTED_TYPE_IMAGE_LIB) {
             $folder_icon = get_image_path('image_folder.png');
-        } else if (preg_match("|" . self::STORAGE_MOUNT_PATH . "/usb_storage_[^/]+$|", $filepath)) {
+        } else if (preg_match('|' . self::STORAGE_MOUNT_PATH . '/usb_storage_[^/]+$|', $filepath)) {
             $folder_icon = get_image_path('usb_device.png');
-        } else if (preg_match("|" . self::STORAGE_MOUNT_PATH . "/[^/]+$|", $filepath)) {
+        } else if (preg_match('|' . self::STORAGE_MOUNT_PATH . '/[^/]+$|', $filepath)) {
             $folder_icon = get_image_path('hdd_device.png');
         } else {
             $folder_icon = get_image_path('folder_icon.png');
@@ -766,16 +766,16 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
         if (preg_match($storage_pattern, $path)) {
             $path = preg_replace($storage_pattern, 'storage_name://', $path);
         } else if (isset($parent_url->{smb_tree::PARAM_IP_PATH})) {
-            if (preg_match("|^" . self::SMB_MOUNT_PATH . "/|", $path)) {
+            if (preg_match('|^' . self::SMB_MOUNT_PATH . '/|', $path)) {
                 if ($parent_url->{smb_tree::PARAM_USER} !== false && $parent_url->{smb_tree::PARAM_PASSWORD} !== false) {
                     $smb_path = preg_replace($smb_pattern, str_replace('//', '', $parent_url->{smb_tree::PARAM_IP_PATH}), $path);
                     $path = "smb://" . $parent_url->{smb_tree::PARAM_USER} . ':' . $parent_url->{smb_tree::PARAM_PASSWORD} . "@$smb_path";
                 } else {
                     $path = "smb:" . preg_replace($smb_pattern, $parent_url->{smb_tree::PARAM_IP_PATH}, $path);
                 }
-            } else if ($parent_url->{smb_tree::PARAM_NFS_PROTOCOL} !== false && preg_match("|^" . self::NETWORK_MOUNT_PATH . "/|", $path)) {
+            } else if ($parent_url->{smb_tree::PARAM_NFS_PROTOCOL} !== false && preg_match('|^' . self::NETWORK_MOUNT_PATH . '/|', $path)) {
                 $prot = ($parent_url->{smb_tree::PARAM_NFS_PROTOCOL} === smb_tree::PROTOCOL_TCP) ? 'nfs-tcp://' : 'nfs-udp://';
-                $path = $prot . preg_replace("|^" . self::NETWORK_MOUNT_PATH . "/\d|", $parent_url->{smb_tree::PARAM_IP_PATH} . ':/', $path);
+                $path = $prot . preg_replace('|^' . self::NETWORK_MOUNT_PATH . '/\d|', $parent_url->{smb_tree::PARAM_IP_PATH} . ':/', $path);
             }
         }
 

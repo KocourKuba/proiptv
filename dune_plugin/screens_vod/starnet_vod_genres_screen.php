@@ -55,7 +55,7 @@ class Starnet_Vod_Genres_Screen extends Abstract_Preloaded_Regular_Screen
     {
         if ($user_input->control_id === 'select_genre') {
             if (!isset($user_input->selected_media_url)) {
-                hd_debug_print("user input selected media url not set", true);
+                hd_debug_print('user input selected media url not set', true);
                 return null;
             }
 

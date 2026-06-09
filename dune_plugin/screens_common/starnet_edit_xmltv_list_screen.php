@@ -147,7 +147,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_PLUGIN_SETTINGS:
                 /** @var Named_Storage $item */
-                hd_debug_print("item: " . $selected_id, true);
+                hd_debug_print('item: ' . $selected_id, true);
 
                 $source = XMLTV_SOURCE_PLAYLIST;
                 $item = $this->plugin->get_xmltv_source($this->plugin->get_active_playlist_id(), $selected_id);
@@ -171,7 +171,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
                 $bg_indexing_runs = $this->plugin->run_bg_epg_indexing($selected_id, INDEXING_ALL, true);
                 if ($bg_indexing_runs || isset($plugin_cookies->ticker)) {
-                    hd_debug_print("Run timer", true);
+                    hd_debug_print('Run timer', true);
                     $plugin_cookies->ticker = 1;
                     return Action_Factory::change_behaviour($this->do_get_action_map(), self::REFRESH_TIMER);
                 }
@@ -484,7 +484,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
 
-        hd_debug_print("Choosed file: " . $selected_media_url->{PARAM_FILEPATH}, true);
+        hd_debug_print('Choosed file: ' . $selected_media_url->{PARAM_FILEPATH}, true);
         $lines = file($selected_media_url->{PARAM_FILEPATH}, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         if ($lines === false || (count($lines) === 1 && trim($lines[0]) === '')) {
             return Action_Factory::show_title_dialog(TR::t('error'), TR::t('edit_list_empty_file'));
@@ -518,7 +518,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 continue;
             }
 
-            $new_count++;
+            ++$new_count;
             $item = array(
                 PARAM_HASH => $hash,
                 PARAM_TYPE => PARAM_LINK,
@@ -580,10 +580,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $sticker = Control_Factory::create_sticker(get_image_path('star_small.png'), -55, -2);
         $all_sources = $this->plugin->get_all_xmltv_sources($this->plugin->get_active_playlist_id());
-        hd_debug_print("All XMLTV sources: " . $all_sources, true);
+        hd_debug_print('All XMLTV sources: ' . $all_sources, true);
 
         $selected_sources = $this->plugin->get_selected_xmltv_ids();
-        hd_debug_print("Selected sources: " . json_format_unescaped($selected_sources), true);
+        hd_debug_print('Selected sources: ' . json_format_unescaped($selected_sources), true);
         $has_locks = false;
         foreach ($all_sources as $key => $item) {
             $detailed_info = '';
@@ -639,10 +639,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             $pl_id = $this->plugin->get_active_playlist_id();
             $pl_source = $this->plugin->get_xmltv_source($pl_id, $key);
             if (empty($pl_source)) {
-                $icon_file = get_image_path("link.png");
+                $icon_file = get_image_path('link.png');
             } else {
                 if (safe_get_value($item, PARAM_TYPE) === PARAM_CONF) {
-                    $icon_file = get_image_path("config.png");
+                    $icon_file = get_image_path('config.png');
                 } else {
                     $ext_source = $this->plugin->get_xmltv_source(null, $key);
                     $icon_file = get_image_path(empty($ext_source) ? "m3u_file.png" : "both_file.png");

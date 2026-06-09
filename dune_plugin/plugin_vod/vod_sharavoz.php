@@ -69,11 +69,11 @@ class vod_sharavoz extends vod_standard
         hd_debug_print($movie_id);
 
         if (empty($movie_id)) {
-            hd_debug_print("Movie ID is empty!");
+            hd_debug_print('Movie ID is empty!');
             return null;
         }
 
-        $arr = explode("_", $movie_id);
+        $arr = explode('_', $movie_id);
         $stream_id = safe_get_value($arr, 0, $movie_id);
         $stream_type = safe_get_value($arr, 1, xtream_codes_api::VOD);
 
@@ -157,20 +157,20 @@ class vod_sharavoz extends vod_standard
 
         $movie = new Movie($movie_id, $this->plugin);
         $movie->set_data(
-            self::get_data_variant($info, "name"), // name,
-            self::get_data_variant($info, "o_name"), // name_original,
-            self::get_data_variant($info, array("plot", "description")),  // description,
-            self::get_data_variant($info, array("movie_image", "cover")),  // poster_url,
-            self::get_data_variant($info, array("duration", "episode_run_time")), // length_min,
-            self::get_data_variant($info, array("releasedate", "releaseDate", "release_date")), // year,
-            self::get_data_variant($info, "director"), // director_str,
+            self::get_data_variant($info, 'name'), // name,
+            self::get_data_variant($info, 'o_name'), // name_original,
+            self::get_data_variant($info, array('plot', 'description')),  // description,
+            self::get_data_variant($info, array('movie_image', 'cover')),  // poster_url,
+            self::get_data_variant($info, array('duration', 'episode_run_time')), // length_min,
+            self::get_data_variant($info, array('releasedate', 'releaseDate', 'release_date')), // year,
+            self::get_data_variant($info, 'director'), // director_str,
             '', // scenario_str,
-            self::get_data_variant($info, array("actors", "cast")), // actors_str,
-            self::get_data_variant($info, "genre"), // genres_str,
-            self::get_data_variant($info, "rating"), // rate_imdb,
-            self::get_data_variant($info, "rating_count_kinopoisk"), // rate_kinopoisk,
+            self::get_data_variant($info, array('actors', 'cast')), // actors_str,
+            self::get_data_variant($info, 'genre'), // genres_str,
+            self::get_data_variant($info, 'rating'), // rate_imdb,
+            self::get_data_variant($info, 'rating_count_kinopoisk'), // rate_kinopoisk,
             '', // rate_mpaa,
-            self::get_data_variant($info, "country"), // country,
+            self::get_data_variant($info, 'country'), // country,
             '',
             array(),
             $age_limit // rate details
@@ -238,7 +238,7 @@ class vod_sharavoz extends vod_standard
             $category = new Vod_Category($key, $key);
             $gen_arr = array();
             foreach ($value as $sub_cat_name) {
-                $sub_pair = explode("_", $sub_cat_name);
+                $sub_pair = explode('_', $sub_cat_name);
                 //hd_debug_print("Sub Category ($sub_pair[2]): $sub_pair[0] ($sub_pair[1])", true);
                 $gen_arr[] = new Vod_Category($sub_pair[1] . "_" . $sub_pair[2], $sub_pair[0], $category);
             }
@@ -263,7 +263,7 @@ class vod_sharavoz extends vod_standard
         hd_debug_print("getMovieList: $query_id");
 
         // Фильмы_1_vod
-        $arr = explode("_", $query_id);
+        $arr = explode('_', $query_id);
         $category_id = safe_get_value($arr, 1, $query_id);
 
         $vod_items = $this->xtream->get_streams($arr[2], $category_id);
@@ -313,7 +313,7 @@ class vod_sharavoz extends vod_standard
 
         $this->stop_page_index($keyword);
 
-        hd_debug_print("Movies found: " . count($movies));
+        hd_debug_print('Movies found: ' . count($movies));
 
         return array_values($movies);
     }
@@ -351,7 +351,7 @@ class vod_sharavoz extends vod_standard
         $categories = $this->xtream->get_categories($stream_type);
         if ($categories !== false) {
             foreach ($categories as $item) {
-                $pair = explode("|", $item['category_name']);
+                $pair = explode('|', $item['category_name']);
 
                 $parent_id = trim($pair[0]);
                 $query_id = trim($pair[1]) . "_" . $item['category_id'] . "_" . $stream_type;

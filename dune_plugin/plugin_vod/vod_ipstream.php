@@ -55,7 +55,7 @@ class vod_ipstream extends vod_standard
         hd_debug_print("Try Load Movie: $movie_id");
 
         if (empty($movie_id)) {
-            hd_debug_print("Movie ID is empty!");
+            hd_debug_print('Movie ID is empty!');
             return null;
         }
 
@@ -221,7 +221,7 @@ class vod_ipstream extends vod_standard
 
         $this->set_filter_types($exist_filters);
 
-        hd_debug_print("Categories read: " . count($this->category_index));
+        hd_debug_print('Categories read: ' . count($this->category_index));
         return true;
     }
 
@@ -236,7 +236,7 @@ class vod_ipstream extends vod_standard
         $movies = array();
 
         if (empty($this->vod_items)) {
-            hd_debug_print("failed to load movies");
+            hd_debug_print('failed to load movies');
             return $movies;
         }
 
@@ -245,7 +245,7 @@ class vod_ipstream extends vod_standard
             return $movies;
         }
 
-        $arr = explode("_", $query_id);
+        $arr = explode('_', $query_id);
         $category_id = isset($arr[1]) ? $arr[0] : $query_id;
 
         foreach ($this->vod_items as $movie) {
@@ -276,7 +276,7 @@ class vod_ipstream extends vod_standard
         $movies = array();
 
         if (empty($this->vod_items)) {
-            hd_debug_print("failed to load movies");
+            hd_debug_print('failed to load movies');
             return $movies;
         }
 
@@ -299,7 +299,7 @@ class vod_ipstream extends vod_standard
 
         $this->stop_page_index($keyword);
 
-        hd_debug_print("Movies found: " . count($movies));
+        hd_debug_print('Movies found: ' . count($movies));
         return array_values($movies);
     }
 
@@ -314,7 +314,7 @@ class vod_ipstream extends vod_standard
         $movies = array();
 
         if (empty($this->vod_items)) {
-            hd_debug_print("failed to load movies");
+            hd_debug_print('failed to load movies');
             return $movies;
         }
 
@@ -356,7 +356,7 @@ class vod_ipstream extends vod_standard
 
         $this->stop_page_index($query_id);
 
-        hd_debug_print("Movies found: " . count($movies));
+        hd_debug_print('Movies found: ' . count($movies));
         return $movies;
     }
 

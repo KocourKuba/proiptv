@@ -122,7 +122,7 @@ abstract class Abstract_Vod extends vod_pagination
      */
     public function clear_movie_cache()
     {
-        hd_debug_print("Abstract_Vod::clear_movie_cache: movie cache cleared");
+        hd_debug_print('Abstract_Vod::clear_movie_cache: movie cache cleared');
 
         $this->short_movie_by_id = array();
         $this->movie_by_id = array();
@@ -178,7 +178,7 @@ abstract class Abstract_Vod extends vod_pagination
     {
         hd_debug_print(null, true);
         if (empty($movie_id)) {
-            hd_debug_print("Movie ID is not set");
+            hd_debug_print('Movie ID is not set');
             return;
         }
 
@@ -229,7 +229,7 @@ abstract class Abstract_Vod extends vod_pagination
      */
     public function get_genre_icon_url($genre_id)
     {
-        hd_debug_print("Not implemented.");
+        hd_debug_print('Not implemented.');
         return null;
     }
 
@@ -239,7 +239,7 @@ abstract class Abstract_Vod extends vod_pagination
      */
     public function get_genre_media_url_str($genre_id)
     {
-        hd_debug_print("Not implemented.");
+        hd_debug_print('Not implemented.');
         return null;
     }
 
@@ -257,7 +257,7 @@ abstract class Abstract_Vod extends vod_pagination
         $this->genres = $this->load_genres();
 
         if ($this->genres === null) {
-            hd_debug_print("Not implemented.");
+            hd_debug_print('Not implemented.');
         }
     }
 
@@ -266,7 +266,7 @@ abstract class Abstract_Vod extends vod_pagination
      */
     protected function load_genres()
     {
-        hd_debug_print("Not implemented.");
+        hd_debug_print('Not implemented.');
         return null;
     }
 
@@ -276,7 +276,7 @@ abstract class Abstract_Vod extends vod_pagination
     public function get_genre_ids()
     {
         if ($this->genres === null) {
-            hd_debug_print("Not implemented.");
+            hd_debug_print('Not implemented.');
             return null;
         }
 
@@ -290,7 +290,7 @@ abstract class Abstract_Vod extends vod_pagination
     public function get_genre_caption($genre_id)
     {
         if ($this->genres === null) {
-            hd_debug_print("Not implemented.");
+            hd_debug_print('Not implemented.');
             return null;
         }
 
@@ -302,7 +302,7 @@ abstract class Abstract_Vod extends vod_pagination
      */
     public function get_vod_genres_folder_views()
     {
-        hd_debug_print("Not implemented.");
+        hd_debug_print('Not implemented.');
         return null;
     }
 }

@@ -193,7 +193,7 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
             case PARAM_USER_AGENT:
                 $user_agent = $user_input->{PARAM_USER_AGENT};
                 if (empty($user_agent)) {
-                    hd_debug_print("Clear user agent parameter");
+                    hd_debug_print('Clear user agent parameter');
                     $this->plugin->set_playlist_parameter($playlist_id, PARAM_USER_AGENT, $user_agent);
                 } else if ($user_agent !== HD::get_default_user_agent()) {
                     hd_debug_print("Set user agent parameter: $user_agent");

@@ -24,7 +24,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-ini_set ("max_execution_time", 300);
+ini_set ('max_execution_time', 300);
 
 if (!class_exists('DuneSystem')) {
     class DuneSystem
@@ -39,10 +39,10 @@ function hd_print($str)
 
     if (!empty($LOG_FILE)) {
         $log_file = fopen($LOG_FILE, 'ab+');
-        fwrite($log_file, date("[Y-m-d H:i:s] ") . $str . PHP_EOL);
+        fwrite($log_file, date('[Y-m-d H:i:s] ') . $str . PHP_EOL);
         fclose($log_file);
     } else {
-        echo date("[Y-m-d H:i:s] ") . $str . PHP_EOL;
+        echo date('[Y-m-d H:i:s] ') . $str . PHP_EOL;
     }
 }
 

@@ -34,25 +34,25 @@ class api_korona extends api_default
     public function request_provider_token($force = false)
     {
         hd_debug_print(null, true);
-        hd_debug_print("force request provider token: " . var_export($force, true));
+        hd_debug_print('force request provider token: ' . var_export($force, true));
 
         $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
         $expired = empty($token);
 
         if (!$force && !$expired) {
-            hd_debug_print("request or refresh token not required", true);
+            hd_debug_print('request or refresh token not required', true);
             return true;
         }
 
         $refresh_token = $this->plugin->get_cookie(PARAM_REFRESH_TOKEN);
         $can_refresh = $expired && !empty($refresh_token);
         if ($can_refresh) {
-            hd_debug_print("need to refresh token", true);
+            hd_debug_print('need to refresh token', true);
             $cmd = API_COMMAND_REFRESH_TOKEN;
             $pairs['grant_type'] = 'refresh_token';
             $pairs['refresh_token'] = $refresh_token;
         } else {
-            hd_debug_print("need to request token", true);
+            hd_debug_print('need to request token', true);
             $cmd = API_COMMAND_REQUEST_TOKEN;
             $pairs['grant_type'] = 'password';
             $pairs['username'] = $this->GetProviderParameter(MACRO_LOGIN);
@@ -67,7 +67,7 @@ class api_korona extends api_default
         $access_token = safe_get_value($data, 'access_token');
         $refresh_token = safe_get_value($data, 'refresh_token');
         if (!empty($access_token) && !empty($refresh_token)) {
-            hd_debug_print("token requested: " . json_format_unescaped($data), true);
+            hd_debug_print('token requested: ' . json_format_unescaped($data), true);
             $this->plugin->set_cookie(PARAM_TOKEN, $access_token, time() + $data->expires_in);
             $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $refresh_token, PHP_INT_MAX);
             return true;
@@ -81,7 +81,7 @@ class api_korona extends api_default
             return $this->request_provider_token(true);
         }
 
-        hd_debug_print("token not received: " . json_format_unescaped($data));
+        hd_debug_print('token not received: ' . json_format_unescaped($data));
         Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token') . "\n\n" . json_format_unescaped($data));
         return false;
     }
@@ -122,7 +122,7 @@ class api_korona extends api_default
 
         if (empty($this->servers)) {
             $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
-            hd_debug_print("GetServers: " . json_format_unescaped($response), true);
+            hd_debug_print('GetServers: ' . json_format_unescaped($response), true);
             foreach (safe_get_value($response, 'data', array()) as $server) {
                 if (isset($server['id'])) {
                     $this->servers[(string)$server['id']] = safe_get_value($server, 'title', 'unknown');
@@ -139,7 +139,7 @@ class api_korona extends api_default
     protected function get_additional_headers($command)
     {
         if ($command !== API_COMMAND_REQUEST_TOKEN && $command !== API_COMMAND_REFRESH_TOKEN) {
-            return array($this->replace_macros("Authorization: Bearer {TOKEN}"));
+            return array($this->replace_macros('Authorization: Bearer {TOKEN}'));
         }
 
         return array();

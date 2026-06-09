@@ -60,7 +60,7 @@ class Short_Movie
     public function __construct($id, $name, $poster_url, $info = '')
     {
         if (is_null($id)) {
-            hd_debug_print("id is null");
+            hd_debug_print('id is null');
             return;
         }
 

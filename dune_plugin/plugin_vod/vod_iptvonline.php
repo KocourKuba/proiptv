@@ -58,9 +58,9 @@ class vod_iptvonline extends vod_standard
         hd_debug_print("Try Load Movie: $movie_id");
 
         // movies_84636 or serials_84636
-        $arr = explode("_", $movie_id);
+        $arr = explode('_', $movie_id);
         if (empty($arr[1])) {
-            hd_debug_print("Movie ID is empty!");
+            hd_debug_print('Movie ID is empty!');
             return null;
         }
         hd_debug_print("TryLoadMovie: category: movies, id: $arr[1]");
@@ -131,7 +131,7 @@ class vod_iptvonline extends vod_standard
             $details[TR::t('vod_screen_quality')] = $qualities;
         }
 
-        hd_debug_print("Result movie: " . $movie, true);
+        hd_debug_print('Result movie: ' . $movie, true);
         $movie->set_data(
             $movieData['ru_title'],                   // caption,
             $movieData['orig_title'],                 // caption_original,
@@ -169,7 +169,7 @@ class vod_iptvonline extends vod_standard
         $exist_filters = array();
         $data = $this->make_json_request('/' . API_ACTION_FILTERS);
         if (empty($data) || !isset($data['data']['filter_by'])) {
-            hd_debug_print("Wrong response on filter request: " . json_format_unescaped($data));
+            hd_debug_print('Wrong response on filter request: ' . json_format_unescaped($data));
             return false;
         }
 
@@ -200,8 +200,8 @@ class vod_iptvonline extends vod_standard
 
         $this->set_filter_types($exist_filters);
 
-        hd_debug_print("Categories read: " . count($this->category_index));
-        hd_debug_print("Filters count: " . count($exist_filters));
+        hd_debug_print('Categories read: ' . count($this->category_index));
+        hd_debug_print('Filters count: ' . count($exist_filters));
         return true;
     }
 
@@ -232,7 +232,7 @@ class vod_iptvonline extends vod_standard
         hd_debug_print("getSearchList: $keyword");
 
         // Using method GET! but send parameters via POST fields
-        $payload = array("search" => $keyword);
+        $payload = array('search' => $keyword);
 
         $movies = array();
         $page_id = API_ACTION_MOVIE . "_" . API_ACTION_SEARCH;
@@ -265,7 +265,7 @@ class vod_iptvonline extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getFilterList: $query_id");
 
-        $pairs = explode(",", $query_id);
+        $pairs = explode(',', $query_id);
         $filter_params = array();
         foreach ($pairs as $pair) {
             // country:USA
@@ -355,7 +355,7 @@ class vod_iptvonline extends vod_standard
 
         $data = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, $decode);
         if (!isset($data['success'], $data['status']) || !$data['success'] || $data['status'] !== 200) {
-            hd_debug_print("Wrong response: " . json_format_unescaped($data));
+            hd_debug_print('Wrong response: ' . json_format_unescaped($data));
             return false;
         }
 
@@ -418,7 +418,7 @@ class vod_iptvonline extends vod_standard
             $this->shift_next_page_index($query_id);
         }
 
-        hd_debug_print("Movies found: " . count($movies));
+        hd_debug_print('Movies found: ' . count($movies));
         return $movies;
     }
 }

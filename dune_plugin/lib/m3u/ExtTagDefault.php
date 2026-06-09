@@ -180,7 +180,7 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
     public function parseTagAttributes($data)
     {
         /** @var array $m */
-        preg_match_all('/([a-z0-9\-]+?)=("[^"]*"|[\S]+)/i', $data, $m, PREG_SET_ORDER);
+        preg_match_all('/([a-z0-9\-]+?)=("[^"]*"|\S+)/i', $data, $m, PREG_SET_ORDER);
 
         foreach ($m as $match) {
             $this->attributes[$match[1]] = trim($match[2], " \"");

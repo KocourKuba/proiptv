@@ -228,7 +228,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                         $this->force_parent_reload = true;
                     }
                 } catch (Exception $ex) {
-                    hd_debug_print("Problem with download playlist");
+                    hd_debug_print('Problem with download playlist');
                     print_backtrace_exception($ex);
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $ex->getMessage());
                 }

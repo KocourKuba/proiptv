@@ -127,7 +127,7 @@ class M3uParser extends Json_Serializer
             $this->file_name = null;
             try {
                 if (empty($file_name)) {
-                    throw new Exception("File name cannot be empty");
+                    throw new Exception('File name cannot be empty');
                 }
 
                 if (!file_exists($file_name)) {
@@ -153,7 +153,7 @@ class M3uParser extends Json_Serializer
         $this->file_name = null;
         try {
             if (empty($file_name)) {
-                throw new Exception("File name cannot be empty");
+                throw new Exception('File name cannot be empty');
             }
 
             if (!file_exists($file_name)) {
@@ -182,7 +182,7 @@ class M3uParser extends Json_Serializer
 
         // replace patterns in playlist icon
         if (!empty($this->icon_replace_pattern)) {
-            hd_debug_print("Using specific playlist icon replacement: " . json_format_unescaped($this->icon_replace_pattern), true);
+            hd_debug_print('Using specific playlist icon replacement: ' . json_format_unescaped($this->icon_replace_pattern), true);
         }
     }
 
@@ -296,7 +296,7 @@ class M3uParser extends Json_Serializer
             return false;
         }
 
-        $stm_channels = $db->prepare_bind("INSERT OR IGNORE", $this->channels_table, array_keys($init_channels));
+        $stm_channels = $db->prepare_bind('INSERT OR IGNORE', $this->channels_table, array_keys($init_channels));
         if ($stm_channels === false) {
             hd_debug_print("Can't prepare bind statement");
             return false;
@@ -328,22 +328,22 @@ class M3uParser extends Json_Serializer
                         $adult_channel = $entry->getAdult();
                     }
 
-                    $stm_channels->bindValue(":" . COLUMN_HASH, $entry->getHash());
-                    $stm_channels->bindValue(":" . COLUMN_TITLE, $entry->getTitle());
-                    $stm_channels->bindValue(":" . COLUMN_PARSED_ID, $entry->getParsedId());
-                    $stm_channels->bindValue(":" . COLUMN_CUID, $entry->getCUID());
-                    $stm_channels->bindValue(":" . COLUMN_TVG_NAME, $entry->getEntryAttribute(ATTR_TVG_NAME, TAG_EXTINF));
-                    $stm_channels->bindValue(":" . COLUMN_EPG_ID, $entry->getAnyEntryAttribute(self::$epg_id_attrs, TAG_EXTINF));
-                    $stm_channels->bindValue(":" . COLUMN_ARCHIVE, $entry->getArchive(), SQLITE3_INTEGER);
-                    $stm_channels->bindValue(":" . COLUMN_TIMESHIFT, $entry->getTimeshift(), SQLITE3_INTEGER);
-                    $stm_channels->bindValue(":" . COLUMN_CATCHUP, $entry->getCatchupType());
-                    $stm_channels->bindValue(":" . COLUMN_CATCHUP_SOURCE, $entry->getCatchupSource());
-                    $stm_channels->bindValue(":" . COLUMN_ICON, $entry->getIcon());
-                    $stm_channels->bindValue(":" . COLUMN_PATH, $entry->getPath());
-                    $stm_channels->bindValue(":" . COLUMN_ADULT, $adult_channel, SQLITE3_INTEGER);
-                    $stm_channels->bindValue(":" . COLUMN_PARENT_CODE, $entry->getParentCode());
-                    $stm_channels->bindValue(":" . COLUMN_EXT_PARAMS, $entry->getExtParams(true));
-                    $stm_channels->bindValue(":" . COLUMN_GROUP_ID, $group_title);
+                    $stm_channels->bindValue(':' . COLUMN_HASH, $entry->getHash());
+                    $stm_channels->bindValue(':' . COLUMN_TITLE, $entry->getTitle());
+                    $stm_channels->bindValue(':' . COLUMN_PARSED_ID, $entry->getParsedId());
+                    $stm_channels->bindValue(':' . COLUMN_CUID, $entry->getCUID());
+                    $stm_channels->bindValue(':' . COLUMN_TVG_NAME, $entry->getEntryAttribute(ATTR_TVG_NAME, TAG_EXTINF));
+                    $stm_channels->bindValue(':' . COLUMN_EPG_ID, $entry->getAnyEntryAttribute(self::$epg_id_attrs, TAG_EXTINF));
+                    $stm_channels->bindValue(':' . COLUMN_ARCHIVE, $entry->getArchive(), SQLITE3_INTEGER);
+                    $stm_channels->bindValue(':' . COLUMN_TIMESHIFT, $entry->getTimeshift(), SQLITE3_INTEGER);
+                    $stm_channels->bindValue(':' . COLUMN_CATCHUP, $entry->getCatchupType());
+                    $stm_channels->bindValue(':' . COLUMN_CATCHUP_SOURCE, $entry->getCatchupSource());
+                    $stm_channels->bindValue(':' . COLUMN_ICON, $entry->getIcon());
+                    $stm_channels->bindValue(':' . COLUMN_PATH, $entry->getPath());
+                    $stm_channels->bindValue(':' . COLUMN_ADULT, $adult_channel, SQLITE3_INTEGER);
+                    $stm_channels->bindValue(':' . COLUMN_PARENT_CODE, $entry->getParentCode());
+                    $stm_channels->bindValue(':' . COLUMN_EXT_PARAMS, $entry->getExtParams(true));
+                    $stm_channels->bindValue(':' . COLUMN_GROUP_ID, $group_title);
                     $stm_channels->execute();
 
                     $entry = new Entry();
@@ -372,12 +372,12 @@ class M3uParser extends Json_Serializer
         $db->exec('COMMIT;');
         fclose($file_handle);
 
-        $stm_groups = $db->prepare_bind("INSERT OR IGNORE", $this->groups_table, array_keys($init_groups));
+        $stm_groups = $db->prepare_bind('INSERT OR IGNORE', $this->groups_table, array_keys($init_groups));
         $db->exec('BEGIN;');
         foreach ($groups_cache as $group_title => $group) {
-            $stm_groups->bindValue(":" . COLUMN_GROUP_ID, $group_title);
-            $stm_groups->bindValue(":" . COLUMN_ICON, $group[COLUMN_ICON]);
-            $stm_groups->bindValue(":" . COLUMN_ADULT, $group[COLUMN_ADULT]);
+            $stm_groups->bindValue(':' . COLUMN_GROUP_ID, $group_title);
+            $stm_groups->bindValue(':' . COLUMN_ICON, $group[COLUMN_ICON]);
+            $stm_groups->bindValue(':' . COLUMN_ADULT, $group[COLUMN_ADULT]);
             $stm_groups->execute();
         }
         $db->exec('COMMIT;');
@@ -419,7 +419,7 @@ class M3uParser extends Json_Serializer
         $query .= "CREATE TABLE IF NOT EXISTS $this->vod_table ($vod_columns);";
         $db->exec($query);
 
-        $stm_index = $db->prepare_bind("INSERT OR IGNORE", $this->vod_table, array_keys($init_vod));
+        $stm_index = $db->prepare_bind('INSERT OR IGNORE', $this->vod_table, array_keys($init_vod));
         $db->exec('BEGIN;');
         $entry = new Entry();
         while (!feof($file_handle)) {
@@ -429,11 +429,11 @@ class M3uParser extends Json_Serializer
             $res = $this->parseLineFast($line, $entry);
             switch ($res) {
                 case 1:
-                    $stm_index->bindValue(":" . COLUMN_HASH, $entry->getHash());
-                    $stm_index->bindValue(":" . COLUMN_GROUP_ID, $entry->getGroupTitle());
-                    $stm_index->bindValue(":" . COLUMN_TITLE, $entry->getTitle());
-                    $stm_index->bindValue(":" . COLUMN_ICON, $entry->getIcon());
-                    $stm_index->bindValue(":" . COLUMN_PATH, $entry->getPath());
+                    $stm_index->bindValue(':' . COLUMN_HASH, $entry->getHash());
+                    $stm_index->bindValue(':' . COLUMN_GROUP_ID, $entry->getGroupTitle());
+                    $stm_index->bindValue(':' . COLUMN_TITLE, $entry->getTitle());
+                    $stm_index->bindValue(':' . COLUMN_ICON, $entry->getIcon());
+                    $stm_index->bindValue(':' . COLUMN_PATH, $entry->getPath());
                     $stm_index->execute();
                     $entry = new Entry();
                     break;

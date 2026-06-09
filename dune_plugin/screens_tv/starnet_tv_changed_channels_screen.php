@@ -87,7 +87,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         if (!isset($user_input->selected_media_url)) {
-            hd_debug_print("user input selected media url not set", true);
+            hd_debug_print('user input selected media url not set', true);
             return null;
         }
 
@@ -100,7 +100,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 $actions[] = Action_Factory::close_and_run();
                 if ($this->force_parent_reload) {
                     $this->force_parent_reload = false;
-                    hd_debug_print("Force parent reload", true);
+                    hd_debug_print('Force parent reload', true);
                     $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_INVALIDATE);
                 }
                 return Action_Factory::composite($actions);
@@ -168,7 +168,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 return Action_Factory::composite($actions);
 
             case ACTION_RELOAD:
-                hd_debug_print("Action reload", true);
+                hd_debug_print('Action reload', true);
                 $actions[] = Action_Factory::close_and_run();
                 $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD);
                 return Action_Factory::composite($actions);
@@ -191,14 +191,14 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         if (LogSeverity::$is_debug) {
             $new_ids = $this->plugin->get_changed_channels_ids(PARAM_NEW);
             if (!empty($new_ids)) {
-                hd_debug_print("New channels: " . json_format_unescaped($new_ids), true);
+                hd_debug_print('New channels: ' . json_format_unescaped($new_ids), true);
             }
         }
 
         if (LogSeverity::$is_debug) {
             $removed_ids = $this->plugin->get_changed_channels_ids(PARAM_REMOVED);
             if (!empty($removed_ids)) {
-                hd_debug_print("Removed channels: " . json_format_unescaped($removed_ids), true);
+                hd_debug_print('Removed channels: ' . json_format_unescaped($removed_ids), true);
             }
         }
 
@@ -210,7 +210,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 str_replace('|', '¦', (is_null($group) ? "" : $group)),
                 $channel_row[COLUMN_ARCHIVE],
                 $channel_row[COLUMN_CHANNEL_ID],
-                implode(", ", $epg_ids)
+                implode(', ', $epg_ids)
             );
 
             $icon_url = $this->plugin->get_channel_picon($channel_row, true);

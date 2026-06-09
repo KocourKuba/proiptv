@@ -60,7 +60,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         if (!isset($user_input->selected_media_url)) {
-            hd_debug_print("user input selected media url not set", true);
+            hd_debug_print('user input selected media url not set', true);
             return null;
         }
 
@@ -70,7 +70,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         switch ($user_input->control_id) {
             case ACTION_RELOAD:
-                hd_debug_print("reload categories");
+                hd_debug_print('reload categories');
                 if ($this->plugin->init_vod_class(true)) {
                     return User_Input_Handler_Registry::create_action($this, ACTION_INVALIDATE);
                 }
@@ -141,7 +141,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print($media_url, true);
 
         if (!$this->plugin->vod->fetchVodCategories()) {
-            hd_debug_print("Error: Fetch categories");
+            hd_debug_print('Error: Fetch categories');
             return array();
         }
 
@@ -222,7 +222,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 
                     if ($skip) continue;
 
-                    hd_debug_print("special group: " . Default_Dune_Plugin::get_group_media_url_str($group[COLUMN_GROUP_ID]), true);
+                    hd_debug_print('special group: ' . Default_Dune_Plugin::get_group_media_url_str($group[COLUMN_GROUP_ID]), true);
 
                     $items[] = array(
                         PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group[COLUMN_GROUP_ID]),

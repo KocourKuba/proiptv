@@ -76,7 +76,7 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
         } else if (isset($user_input->selected_control_id)) {
             $control_id = $user_input->selected_control_id;
         } else {
-            hd_debug_print("user input control id or selected control id not set", true);
+            hd_debug_print('user input control id or selected control id not set', true);
             return null;
         }
 
@@ -133,7 +133,7 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
         $this->plugin->reset_playlist_db();
         $this->plugin->clear_playlist_cache(null);
 
-        $temp_folder = get_temp_path("restore");
+        $temp_folder = get_temp_path('restore');
         delete_directory($temp_folder);
         $tmp_filename = get_temp_path($name);
         try {
@@ -160,7 +160,7 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
                 throw new Exception(TR::t('err_unzip__2', basename($tmp_filename), $unzip->getStatusString()));
             }
 
-            for ($i = 0; $i < $unzip->numFiles; $i++) {
+            for ($i = 0; $i < $unzip->numFiles; ++$i) {
                 $stat_index = $unzip->statIndex($i);
                 touch("$temp_folder/{$stat_index['name']}", $stat_index['mtime']);
             }
@@ -193,7 +193,7 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
             if ($src->isDir()) {
                 create_path($dest);
             } else {
-                if (preg_match("/lcfg_proiptv_epg_.+\.txt/i", $name)) {
+                if (preg_match('/lcfg_proiptv_epg_.+\.txt/i', $name)) {
                     $dest = "/config/$name";
                 }
                 $mtime = filemtime($src);

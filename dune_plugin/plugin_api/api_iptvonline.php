@@ -39,20 +39,20 @@ class api_iptvonline extends api_default
     public function request_provider_token($force = false)
     {
         hd_debug_print(null, true);
-        hd_debug_print("force request provider token: " . var_export($force, true));
+        hd_debug_print('force request provider token: ' . var_export($force, true));
 
         $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
         $expired = empty($token);
 
         if (!$force) {
             if (!$expired) {
-                hd_debug_print("request not required", true);
+                hd_debug_print('request not required', true);
                 return true;
             }
 
             Dune_Last_Error::get_last_error(LAST_ERROR_REQUEST, false);
             if (!empty($error)) {
-                hd_debug_print("Previous token request failed!");
+                hd_debug_print('Previous token request failed!');
                 return false;
             }
         }
@@ -62,12 +62,12 @@ class api_iptvonline extends api_default
         $refresh_token = $this->plugin->get_cookie(PARAM_REFRESH_TOKEN);
         $can_refresh = $expired && !empty($refresh_token);
         if ($can_refresh) {
-            hd_debug_print("need to refresh token", true);
+            hd_debug_print('need to refresh token', true);
             $cmd = API_COMMAND_REFRESH_TOKEN;
             $pairs['grant_type'] = 'refresh_token';
             $pairs['refresh_token'] = $refresh_token;
         } else {
-            hd_debug_print("need to request token", true);
+            hd_debug_print('need to request token', true);
             $cmd = API_COMMAND_REQUEST_TOKEN;
             $pairs['login'] = $this->GetProviderParameter(MACRO_LOGIN);
             $pairs['password'] = $this->GetProviderParameter(MACRO_PASSWORD);
@@ -85,7 +85,7 @@ class api_iptvonline extends api_default
         $access_token = safe_get_value($data, 'access_token');
         $refresh_token = safe_get_value($data, 'refresh_token');
         if (!empty($access_token) && !empty($refresh_token)) {
-            hd_debug_print("token requested", true);
+            hd_debug_print('token requested', true);
             $this->plugin->set_cookie(PARAM_TOKEN, $access_token, safe_get_value($data, 'expires_time', time() + 86400));
             $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $refresh_token, PHP_INT_MAX);
             return true;
@@ -99,7 +99,7 @@ class api_iptvonline extends api_default
             return $this->request_provider_token(true);
         }
 
-        hd_debug_print("token not received: " . json_format_unescaped($data), true);
+        hd_debug_print('token not received: ' . json_format_unescaped($data), true);
         Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token') . "\n" . json_format_unescaped($data));
         return false;
     }
@@ -132,7 +132,7 @@ class api_iptvonline extends api_default
                 return $this->curl_wrapper->download_file($data, $file);
 
             case API_COMMAND_GET_DEVICE:
-                hd_debug_print("GetServers: " . json_format_unescaped($response), true);
+                hd_debug_print('GetServers: ' . json_format_unescaped($response), true);
                 $status = (int)safe_get_value($response, 'status');
                 if ($status !== 200) break;
 
@@ -261,7 +261,7 @@ class api_iptvonline extends api_default
     public function SetServer($server, &$error_msg)
     {
         $curl_params[CURLOPT_POST] = true;
-        $curl_params[CURLOPT_POSTFIELDS] = array("server_location" => $server);
+        $curl_params[CURLOPT_POSTFIELDS] = array('server_location' => $server);
         $cmd = API_COMMAND_SET_DEVICE;
         return $this->execApiCommandWithPostResponse($cmd, $this->getCurlOpts($cmd, $curl_params), $error_msg);
     }
@@ -292,7 +292,7 @@ class api_iptvonline extends api_default
     {
         $token = $this->plugin->get_cookie(PARAM_TOKEN);
         if (!empty($token) && $command !== API_COMMAND_REQUEST_TOKEN && $command !== API_COMMAND_REFRESH_TOKEN) {
-            return array($this->replace_macros("Authorization: Bearer {TOKEN}"));
+            return array($this->replace_macros('Authorization: Bearer {TOKEN}'));
         }
 
         return array();

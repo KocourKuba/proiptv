@@ -67,7 +67,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
     public function __construct($id, $plugin)
     {
         if (is_null($id)) {
-            hd_debug_print("Movie::id is null, create dummy movie");
+            hd_debug_print('Movie::id is null, create dummy movie');
             $id = "-1";
         }
 
@@ -131,7 +131,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
         // playback_stop_pressed => 1
 
         if (!isset($user_input->control_id)) {
-            hd_debug_print("user input control id not set", true);
+            hd_debug_print('user input control id not set', true);
             return null;
         }
 
@@ -407,7 +407,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
     public function get_qualities($series_id)
     {
         if (!$this->has_series()) {
-            hd_debug_print("no series present", true);
+            hd_debug_print('no series present', true);
             return array();
         }
 
@@ -429,7 +429,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
     public function get_quality($series_id, $id)
     {
         if (!$this->has_series()) {
-            hd_debug_print("no series present", true);
+            hd_debug_print('no series present', true);
             return null;
         }
 
@@ -554,7 +554,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
         hd_debug_print($media_url, true);
 
         if (!isset($media_url->screen_id)) {
-            hd_debug_print("get_movie_play_info: List screen in media url not set: " . $media_url->get_raw_string());
+            hd_debug_print('get_movie_play_info: List screen in media url not set: ' . $media_url->get_raw_string());
             print_backtrace();
             return array();
         }
@@ -563,7 +563,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
             case Starnet_Vod_Seasons_List_Screen::ID:
                 if ($this->has_seasons()) break;
 
-                hd_debug_print("get_movie_play_info: Invalid movie: season list is empty");
+                hd_debug_print('get_movie_play_info: Invalid movie: season list is empty');
                 print_backtrace();
                 return array();
 
@@ -571,19 +571,19 @@ class Movie extends Json_Serializer implements User_Input_Handler
             case Starnet_Vod_Movie_Screen::ID:
                 if ($this->has_series()) break;
 
-                hd_debug_print("get_movie_play_info: Invalid movie: series list is empty");
+                hd_debug_print('get_movie_play_info: Invalid movie: series list is empty');
                 print_backtrace();
                 return array();
 
             case Starnet_Vod_List_Screen::ID:
                 if ($this->has_series()) break;
 
-                hd_debug_print("get_movie_play_info: Invalid movie playlist: list is empty");
+                hd_debug_print('get_movie_play_info: Invalid movie playlist: list is empty');
                 print_backtrace();
                 return array();
 
             default:
-                hd_debug_print("get_movie_play_info: Unknown list screen: $media_url->screen_id");
+                hd_debug_print('get_movie_play_info: Unknown list screen: $media_url->screen_id');
                 print_backtrace();
                 return array();
         }
@@ -658,7 +658,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
                 PluginVodSeriesInfo::playback_url_is_stream_url => $playback_info->is_stream_url,
             );
 
-            $counter++;
+            ++$counter;
         }
 
         $initial_start = 0;

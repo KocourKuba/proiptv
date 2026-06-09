@@ -134,7 +134,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
             case GUI_EVENT_KEY_RETURN:
                 $reload = $this->force_parent_reload;
                 $this->force_parent_reload = false;
-                hd_debug_print("Force parent reload", true);
+                hd_debug_print('Force parent reload', true);
                 $parent_media_url = MediaURL::decode($user_input->parent_media_url);
                 $post_action = self::make_return_action($parent_media_url);
 

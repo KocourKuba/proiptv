@@ -98,7 +98,7 @@ class jellyfin_api
             return true;
         }
 
-        hd_debug_print("Login failed.");
+        hd_debug_print('Login failed.');
         return false;
     }
 
@@ -123,11 +123,11 @@ class jellyfin_api
         $this->curl_wrapper->set_send_headers($this->buildHeaders(true));
         $response = $this->curl_wrapper->download_content($this->baseUrl . '/System/Info', Curl_Wrapper::RET_ARRAY);
         if (empty($response)) {
-            hd_debug_print("Unauthorized");
+            hd_debug_print('Unauthorized');
             return false;
         }
 
-        hd_debug_print("Auth response: " . json_encode($response), true);
+        hd_debug_print('Auth response: ' . json_encode($response), true);
         return $response;
     }
 

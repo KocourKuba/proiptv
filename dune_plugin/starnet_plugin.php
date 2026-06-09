@@ -120,20 +120,20 @@ class Starnet_Plugin extends Default_Dune_Plugin
         print_sysinfo();
 
         hd_print_separator();
-        hd_print("Plugin name:         " . $this->plugin_info['app_caption']);
-        hd_print("Plugin version:      " . $this->plugin_info['app_version']);
-        hd_print("Plugin date:         " . $this->plugin_info['app_release_date']);
-        hd_print("LocalTime:           " . format_datetime('Y-m-d H:i', time()));
-        hd_print("TimeZone:            " . getTimeZone());
-        hd_print("NewUI support:       " . var_export(HD::rows_api_support(), true));
-        hd_print("NewUI enabled:       " . var_export(Starnet_Epfs_Handler::$enabled, true));
-        hd_print("Ext EPG support:     " . var_export(is_ext_epg_supported(), true));
-        hd_print("Auto resume enabled: " . safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_RESUME, SwitchOnOff::off));
-        hd_print("Auto play enabled:   " . safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_PLAY, SwitchOnOff::off));
-        hd_print("Debug log enabled:   " . safe_get_value($plugin_cookies,PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off));
+        hd_print('Plugin name:         ' . $this->plugin_info['app_caption']);
+        hd_print('Plugin version:      ' . $this->plugin_info['app_version']);
+        hd_print('Plugin date:         ' . $this->plugin_info['app_release_date']);
+        hd_print('LocalTime:           ' . format_datetime('Y-m-d H:i', time()));
+        hd_print('TimeZone:            ' . getTimeZone());
+        hd_print('NewUI support:       ' . var_export(HD::rows_api_support(), true));
+        hd_print('NewUI enabled:       ' . var_export(Starnet_Epfs_Handler::$enabled, true));
+        hd_print('Ext EPG support:     ' . var_export(is_ext_epg_supported(), true));
+        hd_print('Auto resume enabled: ' . safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_RESUME, SwitchOnOff::off));
+        hd_print('Auto play enabled:   ' . safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_PLAY, SwitchOnOff::off));
+        hd_print('Debug log enabled:   ' . safe_get_value($plugin_cookies,PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off));
         hd_print_separator();
 
-        hd_debug_print("Plugin loading complete.");
+        hd_debug_print('Plugin loading complete.');
     }
 
     public function init_providers_config()
@@ -147,7 +147,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         // 3. Check previously downloaded web release version
         // 4. Check preinstalled version
         // 5. Houston we have a problem
-        $tmp_file = get_install_path("providers_debug.json");
+        $tmp_file = get_install_path('providers_debug.json');
         if (file_exists($tmp_file)) {
             hd_debug_print("Load debug providers configuration: $tmp_file");
             $jsonArray = parse_json_file($tmp_file);
@@ -156,7 +156,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
             $tmp_file = get_data_path($name);
             $serial = get_serial_number();
             if (empty($serial)) {
-                hd_debug_print("Unable to get DUNE serial.");
+                hd_debug_print('Unable to get DUNE serial.');
                 $serial = 'XXXX';
             }
             $ver = $this->plugin_info['app_version'];
@@ -166,10 +166,10 @@ class Starnet_Plugin extends Default_Dune_Plugin
             $jsonArray = Curl_Wrapper::getInstance()->download_content($config_url, Curl_Wrapper::RET_ARRAY);
             if (empty($jsonArray) || !isset($jsonArray['providers'])) {
                 if (file_exists($tmp_file)) {
-                    hd_debug_print("Load actual providers configuration");
+                    hd_debug_print('Load actual providers configuration');
                     $jsonArray = parse_json_file($tmp_file);
                 } else if (file_exists($tmp_file = get_install_path($name))) {
-                    hd_debug_print("Load installed providers configuration");
+                    hd_debug_print('Load installed providers configuration');
                     $jsonArray = parse_json_file($tmp_file);
                 }
             } else {
@@ -193,7 +193,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         }
 
         if ($jsonArray === false || !isset($jsonArray['providers'])) {
-            hd_debug_print("Problem to get providers configuration");
+            hd_debug_print('Problem to get providers configuration');
             return;
         }
 
@@ -201,15 +201,15 @@ class Starnet_Plugin extends Default_Dune_Plugin
             if (!isset($item['id'], $item['enable']) || $item['enable'] === false) continue;
 
             $api_class = 'api_default';
-            if (isset($item['class']) && class_exists("api_" . $item['class'])) {
-                $api_class = "api_" . $item['class'];
+            if (isset($item['class']) && class_exists('api_' . $item['class'])) {
+                $api_class = 'api_' . $item['class'];
             }
 
             /** @var api_default $provider */
             $provider = new $api_class($this);
             foreach ($item as $key => $value) {
                 $words = explode('_', $key);
-                $setter = "set";
+                $setter = 'set';
                 foreach ($words as $word) {
                     $setter .= ucwords($word);
                 }

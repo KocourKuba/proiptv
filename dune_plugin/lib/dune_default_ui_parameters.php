@@ -68,7 +68,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     {
         if (!is_null($object) && method_exists($object, 'get_id')) {
             if (isset($this->screens[$object->get_id()])) {
-                hd_debug_print("Error: screen (id: " . $object->get_id() . ") already registered.");
+                hd_debug_print('Error: screen (id: ' . $object->get_id() . ') already registered.');
             } else {
                 $this->screens[$object->get_id()] = $object;
                 if ($object instanceof User_Input_Handler) {
@@ -252,12 +252,12 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
                 $path = get_install_path("changelog.$lang.md");
                 if (!file_exists($path)) {
-                    $path = get_install_path("changelog.english.md");
+                    $path = get_install_path('changelog.english.md');
                 }
                 $doc = file_get_contents($path);
             }
 
-            $history_txt = str_replace(array("###", "\r"), '', $doc);
+            $history_txt = str_replace(array('###', "\r"), '', $doc);
         }
 
         $defs = array();
@@ -325,7 +325,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         hd_debug_print(null, true);
 
         if (!isset($prog_info[PluginTvEpgProgram::ext_id])) {
-            hd_debug_print("Unknown channel ID", true);
+            hd_debug_print('Unknown channel ID', true);
             return null;
         }
 
@@ -466,7 +466,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     protected static function add_epg_shift_defs(&$defs, $handler, $initial_epg_shift, $apply)
     {
         $shift_ops_hours = array();
-        for ($i = -24; $i < 25; $i++) {
+        for ($i = -24; $i < 25; ++$i) {
             $shift_ops_hours[$i] = TR::t('setup_epg_shift_hours__1', sprintf("%+03d", $i));
         }
         $shift_ops_hours[0] = TR::t('setup_epg_shift_hours__1', sprintf(" %02d", 0));

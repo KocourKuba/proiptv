@@ -225,7 +225,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
 
         if (is_null($this->iptv)) {
-            hd_debug_print("TV is not supported");
+            hd_debug_print('TV is not supported');
             print_backtrace();
             throw new Exception('TV is not supported');
         }
@@ -245,7 +245,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
 
         if (is_null($this->iptv)) {
-            hd_debug_print("TV is not supported");
+            hd_debug_print('TV is not supported');
             print_backtrace();
             throw new Exception('TV is not supported');
         }
@@ -267,20 +267,20 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
 
         if (is_null($this->iptv)) {
-            hd_debug_print("TV is not supported");
+            hd_debug_print('TV is not supported');
             print_backtrace();
             throw new Exception('TV is not supported');
         }
 
         try {
             if (!$this->is_channels_loaded()) {
-                throw new Exception("Channels not loaded!");
+                throw new Exception('Channels not loaded!');
             }
 
             $pass_sex = $this->get_parameter(PARAM_ADULT_PASSWORD);
             $channel_row = $this->get_channel_info($channel_id);
             if (empty($channel_row)) {
-                throw new Exception("Unknown channel");
+                throw new Exception('Unknown channel');
             }
 
             // do not store adult channels to history
@@ -318,7 +318,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $day_epg = array();
         try {
             if (is_null($this->iptv)) {
-                hd_debug_print("TV is not supported");
+                hd_debug_print('TV is not supported');
                 print_backtrace();
                 throw new Exception('TV is not supported');
             }
@@ -340,11 +340,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             if (LogSeverity::$is_debug) {
                 hd_debug_print("Day_start: $day_start_tm_sec ("
-                    . format_datetime("Y-m-d H:i", $day_start_tm_sec) . ") TZ offset: "
+                    . format_datetime('Y-m-d H:i', $day_start_tm_sec) . ') TZ offset: '
                     . get_local_time_zone_offset() / 3600);
 
                 hd_debug_print("Shifted day_start: $utc_day_start_tm_sec ("
-                    . format_datetime("Y-m-d H:i", $utc_day_start_tm_sec) . ") TZ offset: "
+                    . format_datetime('Y-m-d H:i', $utc_day_start_tm_sec) . ') TZ offset: '
                     . get_local_time_zone_offset() / 3600);
             }
 
@@ -362,7 +362,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
             foreach ($day_epg_items['items'] as $start => $value) {
                 if (!isset($value[PluginTvEpgProgram::end_tm_sec], $value[PluginTvEpgProgram::name], $value[PluginTvEpgProgram::description])) {
-                    hd_debug_print("malformed epg data: " . json_format_unescaped($value));
+                    hd_debug_print('malformed epg data: ' . json_format_unescaped($value));
                     continue;
                 }
 
@@ -377,8 +377,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 );
 
                 if (LogSeverity::$is_debug && !$cached) {
-                    hd_debug_print(format_datetime("m-d H:i", $tm_start)
-                        . " ($tm_start) - " . format_datetime("m-d H:i", $tm_end)
+                    hd_debug_print(format_datetime('m-d H:i', $tm_start)
+                        . " ($tm_start) - " . format_datetime('m-d H:i', $tm_end)
                         . " ($tm_end) {$value[PluginTvEpgProgram::name]}", true);
                 }
 
@@ -469,7 +469,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
 
         if (is_null($this->iptv)) {
-            hd_debug_print("TV is not supported");
+            hd_debug_print('TV is not supported');
             print_backtrace();
             return array();
         }
@@ -507,7 +507,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 break;
 
             case ACTION_ITEMS_CLEAR:
-                hd_debug_print("Clear favorites", true);
+                hd_debug_print('Clear favorites', true);
                 $this->remove_channels_order($fav_id);
                 break;
         }
@@ -530,10 +530,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function get_vod_info($media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print("VOD is not supported");
+        hd_debug_print('VOD is not supported');
 
         print_backtrace();
-        throw new Exception("VOD is not supported");
+        throw new Exception('VOD is not supported');
     }
 
     /**
@@ -574,7 +574,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function init_plugin($force = false)
     {
         hd_debug_print(null, true);
-        hd_debug_print("force: " . var_export($force, true), true);
+        hd_debug_print('force: ' . var_export($force, true), true);
 
         if (!$force && $this->inited) {
             return;
@@ -589,7 +589,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->init_parameters();
         $this->init_epg_cache_dir();
 
-        hd_debug_print("Init plugin done!");
+        hd_debug_print('Init plugin done!');
         hd_print_separator();
 
         $this->inited = true;
@@ -636,9 +636,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
 
         $program_ts = ($program_ts > 0 ? $program_ts : time());
-        $program_ts_str = format_datetime("Y-m-d H:i", $program_ts);
+        $program_ts_str = format_datetime('Y-m-d H:i', $program_ts);
         hd_debug_print("channel ID: $channel_id at time $program_ts_str ($program_ts)", true);
-        $day_start_ts = strtotime(format_datetime("Y-m-d", $program_ts) . " UTC");
+        $day_start_ts = strtotime(format_datetime('Y-m-d', $program_ts) . ' UTC');
         $day_epg = $this->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
         if (empty($day_epg)) {
             hd_debug_print("No entries found for channel $channel_id");
@@ -652,7 +652,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             if ($not_found) {
-                hd_debug_print("No entries in range for selected time in " . count($day_epg) . " entries");
+                hd_debug_print('No entries in range for selected time in ' . count($day_epg) . ' entries');
             }
         }
 
@@ -668,18 +668,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
 
-        hd_debug_print("Force playlist reload: " . var_export($force, true));
+        hd_debug_print('Force playlist reload: ' . var_export($force, true));
         $base_name = $this->get_playlist_cache_filepath(true);
         $m3u_file = $base_name . '.m3u8';
         $db_file = $base_name . '.db';
         try {
             $playlist_id = $this->get_active_playlist_id();
             if (!$this->is_playlist_entry_exist($playlist_id)) {
-                throw new Exception("Tv playlist not defined!");
+                throw new Exception('TV playlist not defined!');
             }
 
             $playlist_params = $this->get_playlist_parameters($playlist_id);
-            hd_debug_print("Using playlist params" . json_format_unescaped($playlist_params));
+            hd_debug_print('Using playlist params' . json_format_unescaped($playlist_params));
 
             // $id_map available for all variants.
             // In one case it set by config but in another by detecting m3u playlist
@@ -692,8 +692,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             } else {
                 $provider = $this->get_active_provider();
                 if (is_null($provider)) {
-                    hd_debug_print("Unable to init provider");
-                    throw new Exception("Unable to init provider!");
+                    hd_debug_print('Unable to init provider');
+                    throw new Exception('Unable to init provider!');
                 }
 
                 $id_parser = $provider->getConfigValue(CONFIG_ID_PARSER);
@@ -709,11 +709,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $icon_replace_pattern = $provider->getConfigValue(CONFIG_ICON_REPLACE);
                 }
                 $this->iptv_m3u_parser->setupParserParameters($id_parser, $icon_replace_pattern);
-                hd_debug_print("Init playlist parser done!");
+                hd_debug_print('Init playlist parser done!');
             }
 
             if (empty($this->channel_id_map)) {
-                hd_debug_print("No specific mapping set using HASH", true);
+                hd_debug_print('No specific mapping set using HASH', true);
                 $this->channel_id_map = ATTR_CHANNEL_HASH;
             }
 
@@ -732,7 +732,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 }
             }
 
-            hd_debug_print("Playlist cache is not valid or database not exist. Reload playlist.");
+            hd_debug_print('Playlist cache is not valid or database not exist. Reload playlist.');
             // clear playlist
             safe_unlink($m3u_file);
 
@@ -759,7 +759,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     }
                 } else {
                     if (!$provider->request_provider_token()) {
-                        throw new Exception("Unable to get provider info to download: " . json_encode($playlist_params));
+                        throw new Exception('Unable to get provider info to download: ' . json_encode($playlist_params));
                     }
                     $cmd = API_COMMAND_GET_PLAYLIST;
                     $opts = $provider->getCurlOpts($cmd);
@@ -791,9 +791,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $curl_wrapper = Curl_Wrapper::getInstance($playlist_id);
                     $this->reset_curl($curl_wrapper);
                     $res = $curl_wrapper->download_file($uri, $m3u_file, Curl_Wrapper::CACHE_RESPONSE);
-                    $logfile = "Error code: " . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc();
+                    $logfile = 'Error code: ' . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc();
                 } else {
-                    throw new Exception("Unknown playlist type");
+                    throw new Exception('Unknown playlist type');
                 }
             }
 
@@ -815,7 +815,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $perf->setLabel('start_parse_playlist');
             $mtime = filemtime($m3u_file);
-            $date_fmt = format_datetime("Y-m-d H:i", $mtime);
+            $date_fmt = format_datetime('Y-m-d H:i', $mtime);
             hd_debug_print("Parse playlist $m3u_file (timestamp: $mtime, $date_fmt)");
 
             $this->iptv_m3u_parser->setPlaylistFile($m3u_file);
@@ -831,7 +831,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     PARAM_CACHE => $source[PARAM_CACHE]
                 );
             }
-            hd_debug_print("saved playlist sources: " . json_format_unescaped($hashes), true);
+            hd_debug_print('saved playlist sources: ' . json_format_unescaped($hashes), true);
 
             $sources = $this->iptv_m3u_parser->getXmltvSources();
             foreach ($sources as $url) {
@@ -881,7 +881,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $report_parse = $perf->getReportItem(Perf_Collector::TIME, 'start_parse_playlist', 'end_parse_playlist');
             $mem_report = $perf->getReportItem(Perf_Collector::MEMORY_USAGE_KB, 'start_download_playlist', 'end_parse_playlist');
             hd_print_separator();
-            hd_debug_print("Parse playlist done!");
+            hd_debug_print('Parse playlist done!');
             hd_debug_print($info);
             hd_debug_print("Download time: $report_download sec");
             hd_debug_print("Parse time:    $report_parse sec");
@@ -980,7 +980,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->init_user_agent();
 
         if ($this->is_vod_playlist()) {
-            hd_debug_print("VOD playlist inited", true);
+            hd_debug_print('VOD playlist inited', true);
         } else if (!$this->load_and_parse_m3u_iptv_playlist($force)) {
             // Parse playlist.
             // if playlist is expired it will downloaded
@@ -989,7 +989,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-        hd_debug_print("Database initialized.");
+        hd_debug_print('Database initialized.');
         hd_print_separator();
 
         return true;
@@ -1009,7 +1009,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function load_channels(&$plugin_cookies, $reload_playlist = false)
     {
         hd_debug_print(null, true);
-        hd_debug_print("Force playlist reload: " . var_export($reload_playlist, true));
+        hd_debug_print('Force playlist reload: ' . var_export($reload_playlist, true));
 
         if ($this->channels_loaded && !$reload_playlist && $this->sql_playlist) {
             return true;
@@ -1029,8 +1029,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->reset_curl($curl_wrapper);
             $curl_wrapper->clear_cache();
         } else {
-            hd_debug_print("Channels loaded: " . var_export($this->channels_loaded, true));
-            hd_debug_print("DB initied: " . var_export(!is_null($this->sql_playlist), true));
+            hd_debug_print('Channels loaded: ' . var_export($this->channels_loaded, true));
+            hd_debug_print('DB initied: ' . var_export(!is_null($this->sql_playlist), true));
         }
 
         // Init playlist db
@@ -1047,7 +1047,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Show VOD icon: $enable_vod_icon", true);
 
         if ($vod_playlist) {
-            hd_debug_print("VOD playlist inited", true);
+            hd_debug_print('VOD playlist inited', true);
             $this->channels_loaded = true;
             return true;
         }
@@ -1057,7 +1057,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         Default_Dune_Plugin::cleanup_stalled_locks();
 
         // clear ext epg
-        $ext_epg_channels = get_temp_path("channel_ids.txt");
+        $ext_epg_channels = get_temp_path('channel_ids.txt');
         safe_unlink($ext_epg_channels);
 
         $this->init_epg_manager();
@@ -1073,7 +1073,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if ($this->picons_source !== PLAYLIST_PICONS) {
             $all_sources = $this->get_active_sources();
             if ($all_sources->size() === 0) {
-                hd_debug_print("No active XMLTV sources found to collect playlist icons...");
+                hd_debug_print('No active XMLTV sources found to collect playlist icons...');
             } else if (!$this->delay_load_picons) {
                 // if delay load is not enabled need to download and index xmltv source for channels at this time
                 foreach ($all_sources as $params) {
@@ -1095,7 +1095,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         hd_print_separator();
-        hd_debug_print("Build categories and channels...");
+        hd_debug_print('Build categories and channels...');
 
         $playlist_entries = $this->get_playlist_entries_count();
         $playlist_groups = $this->get_playlist_group_count();
@@ -1131,7 +1131,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // update existing database for empty group_id (converted from known_channels.settings)
         $query = "SELECT COUNT(*) FROM $channel_info_table WHERE group_id = '';";
         if ($this->sql_playlist->query_value($query)) {
-            hd_debug_print("Update groups name for converted settings", true);
+            hd_debug_print('Update groups name for converted settings', true);
             $query = "UPDATE $channel_info_table
                         SET group_id = (
                             SELECT group_id
@@ -1151,7 +1151,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $query_new_groups = "SELECT * FROM $iptv_groups WHERE group_id NOT IN (SELECT group_id FROM $groups_info_table);";
         $new_groups = $this->sql_playlist->fetch_array($query_new_groups);
         if (!empty($new_groups)) {
-            hd_debug_print("Adding new groups: " . json_format_unescaped(extract_column($new_groups, COLUMN_GROUP_ID)), true);
+            hd_debug_print('Adding new groups: ' . json_format_unescaped(extract_column($new_groups, COLUMN_GROUP_ID)), true);
             $query = '';
             foreach ($new_groups as $group_row) {
                 $group_id = $group_row[COLUMN_GROUP_ID];
@@ -1172,7 +1172,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $query = "SELECT group_id, icon from $iptv_groups WHERE icon <> '';";
         $groups_rows = $this->sql_playlist->fetch_array($query);
         if (!empty($groups_rows)) {
-            hd_debug_print("Update changed group id icons", true);
+            hd_debug_print('Update changed group id icons', true);
             $query = '';
             foreach ($groups_rows as $row) {
                 $q_group_id = Sql_Wrapper::sql_quote($row[COLUMN_GROUP_ID]);
@@ -1225,7 +1225,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         FROM $iptv_channels WHERE $add_where
                         GROUP BY channel_id ORDER BY ROWID;";
             $this->sql_playlist->exec($query);
-            hd_debug_print("Adding new channels: " . json_format_unescaped($new_channels), true);
+            hd_debug_print('Adding new channels: ' . json_format_unescaped($new_channels), true);
         }
 
         // update group_id title and adult if changed for channels
@@ -1240,7 +1240,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $changed_channels = $this->sql_playlist->fetch_array($query);
 
         if (!empty($changed_channels)) {
-            hd_debug_print("Update changed info for channels", true);
+            hd_debug_print('Update changed info for channels', true);
             $query = '';
             foreach ($changed_channels as $changed_channel) {
                 $q_channel_id = Sql_Wrapper::sql_quote($changed_channel[COLUMN_CHANNEL_ID]);
@@ -1254,7 +1254,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $query = '';
         if (!empty($new_groups)) {
-            hd_debug_print("Fill new group channels orders", true);
+            hd_debug_print('Fill new group channels orders', true);
             foreach ($new_groups as $group_row) {
                 $group_channels_order_table = self::get_table_full_name($group_row[COLUMN_GROUP_ID]);
                 $q_group_id = Sql_Wrapper::sql_quote($group_row[COLUMN_GROUP_ID]);
@@ -1271,7 +1271,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $existing_group_ids = $this->get_groups(PARAM_GROUP_ORDINARY, PARAM_ENABLED, COLUMN_GROUP_ID);
 
-        hd_debug_print("Update group channels orders", true);
+        hd_debug_print('Update group channels orders', true);
         $query = '';
         foreach ($existing_group_ids as $group_id) {
             if (empty($group_id)) continue;
@@ -1288,13 +1288,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
         $this->sql_playlist->exec_transaction($query);
 
-        hd_debug_print("Reset changed flag for channels in disabled groups", true);
+        hd_debug_print('Reset changed flag for channels in disabled groups', true);
         $query = "UPDATE $channel_info_table SET changed = 0, disabled = 1
                     WHERE group_id IN (SELECT group_id FROM $groups_info_table WHERE disabled = 1 AND special = 0);";
         $this->sql_playlist->exec($query);
 
         if ($is_new) {
-            hd_debug_print("Clear changed flag for new playlist", true);
+            hd_debug_print('Clear changed flag for new playlist', true);
             $this->clear_changed_channels();
         }
 
@@ -1316,7 +1316,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $perf->setLabel('end');
         $report = $perf->getFullReport();
 
-        hd_debug_print("Is new playlist:     " . var_export($is_new, true));
+        hd_debug_print('Is new playlist:     ' . var_export($is_new, true));
         hd_debug_print("ID column:           $id_column");
         hd_debug_print("Playlist channels:   $playlist_entries");
         hd_debug_print("Playlist groups:     $playlist_groups");
@@ -1328,8 +1328,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Removed channels:    $removed_channels_cnt");
         hd_debug_print("Visible groups:      $visible_groups_cnt");
         hd_debug_print("Hidden groups:       $hidden_groups_cnt");
-        hd_debug_print("New groups:          " . count($new_groups));
-        hd_debug_print("Removed groups:      " . count($removed_groups));
+        hd_debug_print('New groups:          ' . count($new_groups));
+        hd_debug_print('Removed groups:      ' . count($removed_groups));
         hd_debug_print("Load time:           {$report[Perf_Collector::TIME]} secs");
         hd_debug_print("Memory usage:        {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
         hd_print_separator();
@@ -1483,7 +1483,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         );
 
         $config_file = get_temp_path(sprintf(self::PARSE_CONFIG, $source_id));
-        hd_debug_print("Config: " . json_format_unescaped($config), true);
+        hd_debug_print('Config: ' . json_format_unescaped($config), true);
         file_put_contents($config_file, json_format_readable($config));
 
         export_DuneSystem();
@@ -1562,7 +1562,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if (!is_array($values)) {
             $values = array($values);
         }
-        hd_debug_print("Set selected: " . json_format_unescaped($values), true);
+        hd_debug_print('Set selected: ' . json_format_unescaped($values), true);
 
         $table_name = self::SELECTED_XMLTV_TABLE;
         $query = '';
@@ -1632,7 +1632,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function get_configured_preset($provider_preset)
     {
         if (!$this->epg_presets->size()) {
-            hd_debug_print("No configured EPG presets for plugin", true);
+            hd_debug_print('No configured EPG presets for plugin', true);
             return false;
         }
 
@@ -1650,7 +1650,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $config_preset[EPG_JSON_PRESET_ALIAS] = $provider_preset[EPG_JSON_PRESET_ALIAS];
         }
 
-        hd_debug_print("get_configured_preset: " . json_format_unescaped($config_preset), true);
+        hd_debug_print('get_configured_preset: ' . json_format_unescaped($config_preset), true);
         return $config_preset;
     }
 
@@ -1869,7 +1869,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 break;
 
             case ACTION_ITEMS_CLEAR:
-                hd_debug_print("Movie favorites cleared");
+                hd_debug_print('Movie favorites cleared');
                 $this->remove_channels_order(VOD_FAV_GROUP_ID);
                 break;
 
@@ -1901,7 +1901,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // replace all macros
         $stream_url = $channel_row[COLUMN_PATH];
         if (empty($stream_url)) {
-            throw new Exception("Empty url!");
+            throw new Exception('Empty url!');
         }
 
         $force_detect = false;
@@ -2034,7 +2034,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $replaces[catchup_params::CU_END_MIN] = date('M', $now);
             $replaces[catchup_params::CU_END_SEC] = date('S', $now);
 
-            hd_debug_print("replaces: " . json_format_unescaped($replaces), true);
+            hd_debug_print('replaces: ' . json_format_unescaped($replaces), true);
             foreach ($replaces as $key => $value) {
                 if (strpos($stream_url, $key) !== false) {
                     hd_debug_print("replace $key to $value", true);
@@ -2119,9 +2119,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                     $param_pair[0] = trim($param_pair[0]);
                     if (strpos($param_pair[1], ",,") !== false) {
-                        $param_pair[1] = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $param_pair[1]);
+                        $param_pair[1] = str_replace(array(',,', ',', '%2C%2C'), array('%2C%2C', ',,', ',,'), $param_pair[1]);
                     } else {
-                        $param_pair[1] = str_replace(",", ",,", $param_pair[1]);
+                        $param_pair[1] = str_replace(',', ',,', $param_pair[1]);
                     }
 
                     $dune_params[$param_pair[0]] = $param_pair[1];
@@ -2138,13 +2138,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $ch_useragent = $ext_params[TAG_EXTHTTP]['user-agent'];
 
                 // escape commas for dune_params
-                if (strpos($ch_useragent, ",,") !== false) {
-                    $ch_useragent = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $ch_useragent);
+                if (strpos($ch_useragent, ',,') !== false) {
+                    $ch_useragent = str_replace(array(',,', ',', '%2C%2C'), array('%2C%2C', ',,', ',,'), $ch_useragent);
                 } else {
-                    $ch_useragent = str_replace(",", ",,", $ch_useragent);
+                    $ch_useragent = str_replace(',', ',,', $ch_useragent);
                 }
 
-                $dune_params['http_headers'] .= rawurlencode("User-Agent: " . $ch_useragent);
+                $dune_params['http_headers'] .= rawurlencode('User-Agent: ' . $ch_useragent);
             }
         }
 
@@ -2178,7 +2178,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $channel_row = $this->get_channel_info($media_url->channel_id);
         if (empty($channel_row)) {
-            throw new Exception("Unknown channel");
+            throw new Exception('Unknown channel');
         }
 
         $url = $this->generate_stream_url($channel_row, $archive_ts, true);
@@ -2186,7 +2186,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("play movie in the external player: $cmd");
         /** @var array $output */
         exec($cmd, $output);
-        hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
+        hd_debug_print('external player exec result code' . HD::ArrayToStr($output));
         return null;
     }
 
@@ -2834,7 +2834,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $epg_id = Epg_Manager_Json::get_epg_id($channel_row);
             if (!empty($epg_id)) {
                 $epg_ids[] = $epg_id;
-                $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
+                $day_start_ts = from_local_time_zone_offset(strtotime(date('Y-m-d')));
                 $provider = $this->get_active_provider();
                 foreach ($this->get_provider_epg_presets() as $preset) {
                     $config_preset = $this->get_configured_preset($preset);
@@ -3080,15 +3080,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $playlist_sources = $this->get_xmltv_sources_hash(XMLTV_SOURCE_PLAYLIST, $playlist_id);
         $ext_sources = $this->get_xmltv_sources_hash(XMLTV_SOURCE_EXTERNAL, null);
         $all_sources = array_unique(array_merge($playlist_sources, $ext_sources));
-        hd_debug_print("Load All XMLTV sources keys: " . json_format_unescaped($all_sources), true);
+        hd_debug_print('Load All XMLTV sources keys: ' . json_format_unescaped($all_sources), true);
 
         $cur_sources = $this->get_selected_xmltv_ids();
-        hd_debug_print("Load selected XMLTV sources keys: " . json_format_unescaped($cur_sources), true);
+        hd_debug_print('Load selected XMLTV sources keys: ' . json_format_unescaped($cur_sources), true);
 
         // remove non-existing values from selected sources
         $removed_source = array_diff($cur_sources, $all_sources);
         if (!empty($removed_source)) {
-            hd_debug_print("Removed source: " . json_format_unescaped($removed_source));
+            hd_debug_print('Removed source: ' . json_format_unescaped($removed_source));
             foreach ($removed_source as $source) {
                 $this->remove_selected_xmltv_id($source);
             }
@@ -3251,14 +3251,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return ($a[COLUMN_TITLE] < $b[COLUMN_TITLE]) ? -1 : 1;
         });
         $cnt = count($rows);
-        for($i = 0; $i < $cnt; $i++) {
-            if (preg_match("#\sHD|\sFHD#", $rows[$i][COLUMN_TITLE])) continue;
+        for($i = 0; $i < $cnt; ++$i) {
+            if (preg_match('#\sHD|\sFHD#', $rows[$i][COLUMN_TITLE])) continue;
 
-            for ($j = $i + 1; $j < $cnt; $j++) {
+            for ($j = $i + 1; $j < $cnt; ++$j) {
                 $len = strlen($rows[$i][COLUMN_TITLE]);
                 if (strncasecmp($rows[$i][COLUMN_TITLE], $rows[$j][COLUMN_TITLE], $len) !== 0) break;
 
-                $add = preg_match("#^\sHD|\sFHD#", substr($rows[$j][COLUMN_TITLE], $len));
+                $add = preg_match('#^\sHD|\sFHD#', substr($rows[$j][COLUMN_TITLE], $len));
                 if ($add) {
                     $disabled_ids[] = $rows[$i][COLUMN_CHANNEL_ID];
                     $i = $j;
@@ -3353,7 +3353,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $db = new Sql_Wrapper(':memory:');
         if (!$db->is_valid()) {
-            throw new Exception("Unable to create database");
+            throw new Exception('Unable to create database');
         }
 
         $database_attached = $db->attachDatabase(':memory:', M3uParser::IPTV_DB);
@@ -3436,15 +3436,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $post_action, Action_Factory::DEF_DLG_WIDTH, $attrs);
 
             case 0:
-                hd_debug_print("No imports", true);
+                hd_debug_print('No imports', true);
                 break;
 
             case 1:
             case 2:
                 if ($res === 1) {
-                    hd_debug_print("Logs imported. All indexing done", true);
+                    hd_debug_print('Logs imported. All indexing done', true);
                 } else {
-                    hd_debug_print("Logs imported. Some indexing in process", true);
+                    hd_debug_print('Logs imported. Some indexing in process', true);
                 }
 
                 $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
@@ -3454,7 +3454,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     Epg_Manager_Xmltv::clear_delayed_epg();
                     foreach ($delayed_queue as $channel_id) {
                         hd_debug_print("Refresh EPG for channel ID: $channel_id");
-                        $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
+                        $day_start_ts = from_local_time_zone_offset(strtotime(date('Y-m-d')));
                         $day_epg = $this->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
                         $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg,
                             $post_action, $this->is_ext_epg_enabled() && !empty($day_epg));
@@ -3567,7 +3567,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         $serial = get_serial_number();
         if (empty($serial)) {
-            hd_debug_print("Unable to get DUNE serial.");
+            hd_debug_print('Unable to get DUNE serial.');
             $serial = 'XX-XX-XX-XX-XX';
         }
         $ver = $plugin->plugin_info['app_version'];
@@ -3581,8 +3581,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $plugin_name = get_plugin_name();
 
         $paths = array(
-            get_temp_path("*.txt"),
-            get_temp_path("*.log"),
+            get_temp_path('*.txt'),
+            get_temp_path('*.log'),
             Default_Dune_Plugin::get_playlist_cache_path() . '*.m3u8',
             "$apk_subst/tmp/run/shell.log",
             "$apk_subst/tmp/run/shell.log.old",
@@ -3600,7 +3600,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $plugin_backup = self::do_backup_settings($plugin, get_temp_path(), false);
         if ($plugin_backup === false) {
-            $paths[] = get_data_path("*.settings");
+            $paths[] = get_data_path('*.settings');
         } else {
             $paths[] = $plugin_backup;
         }
@@ -3624,18 +3624,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
             $zip->close();
 
-            $url = base64_decode("aHR0cDovL2lwdHYuZXNhbGVjcm0ubmV0L3VwbG9hZC8", true) . $zip_file_name;
+            $url = base64_decode('aHR0cDovL2lwdHYuZXNhbGVjcm0ubmV0L3VwbG9hZC8', true) . $zip_file_name;
             $handle = fopen($zip_file, 'rb');
             if (is_resource($handle)) {
                 $curl_wrapper = Curl_Wrapper::getInstance();
                 $curl_wrapper->set_options(array(CURLOPT_INFILE => $handle, CURLOPT_INFILESIZE => filesize($zip_file)));
-                $curl_wrapper->set_send_headers(array("accept: */*", "Expect: 100-continue", "Content-Type: application/zip"));
+                $curl_wrapper->set_send_headers(array('accept: */*', "Expect: 100-continue", 'Content-Type: application/zip'));
                 $curl_wrapper->set_download_timeout(300);
                 $content = $curl_wrapper->download_content($url);
 
                 $http_code = Curl_Wrapper::get_http_code();
                 if ($content === false) {
-                    $err_msg = "Fetch $url failed. HTTP error: $http_code (" . Curl_Wrapper::get_error_no() . ")";
+                    $err_msg = "Fetch $url failed. HTTP error: $http_code (" . Curl_Wrapper::get_error_no() . ')';
                     throw new Exception($err_msg);
                 }
 
@@ -3650,7 +3650,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     throw new Exception($err_msg);
                 }
 
-                hd_debug_print("Log file sent");
+                hd_debug_print('Log file sent');
                 $ret = true;
             }
         } catch (Exception $ex) {
@@ -3690,7 +3690,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         try {
             $zip = new ZipArchive();
             if (!$zip->open($zip_file, ZipArchive::CREATE)) {
-                throw new Exception(TR::t("err_create_zip__1", $zip_file));
+                throw new Exception(TR::t('err_create_zip__1', $zip_file));
             }
 
             $rootPath = get_data_path();
@@ -3770,7 +3770,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // convert old settings
         if (array_key_exists('cur_xmltv_sources', $plugin_settings)) {
             $active_sources = $plugin_settings['cur_xmltv_sources'];
-            hd_debug_print("convert active sources from hashed array: " . $active_sources, true);
+            hd_debug_print('convert active sources from hashed array: ' . $active_sources, true);
             $active_sources = $active_sources->get_keys();
             $plugin_settings[PARAM_SELECTED_XMLTV_SOURCES] = $active_sources;
             unset($plugin_settings['cur_xmltv_sources']);
@@ -4158,7 +4158,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // create tables for vod search, vod filters, vod favorites
         if ($this->is_vod_playlist() || (!empty($provider) && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
-            hd_debug_print("Preparing tables for VOD", true);
+            hd_debug_print('Preparing tables for VOD', true);
             $tables = array(
                 VOD_FILTER_LIST => 'item',
                 VOD_SEARCH_LIST => 'item',
@@ -4309,7 +4309,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $provider = $this->get_active_provider();
             $this->vod_enabled = $this->vod->init_vod($provider);
             $this->vod->init_vod_screens();
-            hd_debug_print("VOD enabled: " . SwitchOnOff::to_def($this->vod_enabled), true);
+            hd_debug_print('VOD enabled: ' . SwitchOnOff::to_def($this->vod_enabled), true);
         }
 
         return $this->vod_enabled;
@@ -4331,7 +4331,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $config_name = $this->get_active_epg_config($playlist_id);
         // read existing order
         $order = List_Utils::read_config_file($config_name);
-        hd_debug_print("new order: " . json_format_unescaped($order), true);
+        hd_debug_print('new order: ' . json_format_unescaped($order), true);
         $selected_json_table = self::SELECTED_JSON_TABLE;
         $query = "DELETE FROM $selected_json_table;";
         $this->sql_playlist->exec($query);
@@ -4359,15 +4359,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     protected function get_streams_info($stream_url)
     {
         $descriptors = array(
-            0 => array("pipe", "r"), // stdin
-            1 => array("pipe", "w"), // sdout
-            2 => array("pipe", "w"), // stderr
+            0 => array('pipe', 'r'), // stdin
+            1 => array('pipe', 'w'), // sdout
+            2 => array('pipe', 'w'), // stderr
         );
 
         hd_debug_print("Get media info for: $stream_url");
         /** @var array $pipes */
         $process = proc_open(
-            get_install_path("bin/media_check.sh") . " '$stream_url'",
+            get_install_path('bin/media_check.sh') . " '$stream_url'",
             $descriptors,
             $pipes);
 
@@ -4385,7 +4385,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 if (strpos($line, "Stream mapping") !== false) break;
                 if (strpos($line, "Stream #") !== false) {
                     $line = substr($line, 7);
-                    $line = preg_replace("/ \(\[.*\)| \[.*]|, [0-9k.]+ tb[rcn]|, q=[0-9\-]+/", "", $line);
+                    $line = preg_replace('/ \(\[.*\)| \[.*]|, [0-9k.]+ tb[rcn]|, q=[0-9\-]+/', "", $line);
                     $out['streams'][] = $line;
                 }
             }

@@ -135,7 +135,7 @@ class api_sharaclub extends api_default
                 Control_Factory::add_vgap($defs, 50);
             }
 
-            return Action_Factory::show_dialog($defs, TR::t("add_money"), Action_Factory::SMALL_DLG_WIDTH);
+            return Action_Factory::show_dialog($defs, TR::t('add_money'), Action_Factory::SMALL_DLG_WIDTH);
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
         }
@@ -152,7 +152,7 @@ class api_sharaclub extends api_default
 
         if (empty($this->servers)) {
             $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
-            hd_debug_print("GetServers: " . json_format_unescaped($response), true);
+            hd_debug_print('GetServers: ' . json_format_unescaped($response), true);
             if (isset($response['status'])) {
                 foreach (safe_get_value($response, 'allow_nums', array()) as $server) {
                     if (isset($server['id'])) {

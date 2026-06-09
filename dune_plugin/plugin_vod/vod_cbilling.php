@@ -58,7 +58,7 @@ class vod_cbilling extends vod_standard
             $acc_data = $provider->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_ARRAY);
             if (isset($acc_data['data'])) {
                 $info_data = safe_get_value($acc_data, 'data');
-                hd_debug_print("VOD Data: " . json_encode($info_data));
+                hd_debug_print('VOD Data: ' . json_encode($info_data));
                 if (!empty($info_data)) {
                     $this->token = safe_get_value($info_data, 'private_token');
                     $is_ssl = safe_get_value($info_data, 'ssl', false);
@@ -214,7 +214,7 @@ class vod_cbilling extends vod_standard
         $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, TR::t('vod_screen_all_movies__1', " ($total)"));
         $this->category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
 
-        hd_debug_print("Categories read: " . count($this->category_index));
+        hd_debug_print('Categories read: ' . count($this->category_index));
         return true;
     }
 
@@ -235,7 +235,7 @@ class vod_cbilling extends vod_standard
         if ($query_id === Vod_Category::FLAG_ALL_MOVIES) {
             $url = "/filter/new?page=$page_idx&per_page=" .  self::PAGE_LIMIT;
         } else {
-            $arr = explode("_", $query_id);
+            $arr = explode('_', $query_id);
             $genre_id = safe_get_value($arr, 1, $query_id);
             $url = "/genres/$genre_id?page=$page_idx&per_page=" . self::PAGE_LIMIT;
         }
@@ -268,7 +268,7 @@ class vod_cbilling extends vod_standard
     {
         hd_debug_print(null, true);
 
-        $pairs = explode(",", $query_id);
+        $pairs = explode(',', $query_id);
         $filter_params = array();
         $cur_year = date('Y', time());
         foreach ($pairs as $pair) {
@@ -340,7 +340,7 @@ class vod_cbilling extends vod_standard
 
             $name = safe_get_value($entry, 'name');
             if (!empty($name)) {
-                $genre_str = implode(", ", $genresArray);
+                $genre_str = implode(', ', $genresArray);
                 $movie = new Short_Movie(
                     safe_get_value($entry, 'id'),
                     safe_get_value($entry, 'name'),
@@ -365,7 +365,7 @@ class vod_cbilling extends vod_standard
             $this->stop_page_index($query_id);
         }
 
-        hd_debug_print("Movies found: " . count($movies));
+        hd_debug_print('Movies found: ' . count($movies));
         return $movies;
     }
 }

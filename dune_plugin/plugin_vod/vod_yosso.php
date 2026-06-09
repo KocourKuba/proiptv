@@ -77,13 +77,13 @@ class vod_yosso extends vod_standard
         hd_debug_print($movie_id);
 
         if (empty($movie_id)) {
-            hd_debug_print("Movie ID is empty!");
+            hd_debug_print('Movie ID is empty!');
             return null;
         }
 
         list($real_id, $category_type) = explode('_', $movie_id) + array('', jellyfin_api::MOVIES);
         if (empty($real_id)) {
-            hd_debug_print("Real movie ID is empty!");
+            hd_debug_print('Real movie ID is empty!');
             return null;
         }
 
@@ -112,7 +112,7 @@ class vod_yosso extends vod_standard
                 if (empty($season_id)) continue;
 
                 hd_debug_print("season id: $season_id", true);
-                $movie_season = new Movie_Season($season_id, safe_get_value($season, 'IndexNumber', $season_idx++));
+                $movie_season = new Movie_Season($season_id, safe_get_value($season, 'IndexNumber', ++$season_idx));
                 $movie_season->name = safe_get_value($season, 'Name');
                 $movie_season->poster = $this->jfc->getItemImageUrl($season_id);
                 $movie->add_season_data($movie_season);
@@ -248,8 +248,8 @@ class vod_yosso extends vod_standard
 
         $this->set_filter_types($exist_filters);
 
-        hd_debug_print("Categories read: " . count($this->category_index));
-        hd_debug_print("Filters count: " . count($exist_filters));
+        hd_debug_print('Categories read: ' . count($this->category_index));
+        hd_debug_print('Filters count: ' . count($exist_filters));
 
         return true;
     }
@@ -343,7 +343,7 @@ class vod_yosso extends vod_standard
             return $movies;
         }
 
-        $pairs = explode(",", $query_id);
+        $pairs = explode(',', $query_id);
         $query_params = array();
         foreach ($pairs as $pair) {
             /** @var array $m */

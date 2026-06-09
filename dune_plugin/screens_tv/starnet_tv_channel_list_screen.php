@@ -102,7 +102,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         if (!isset($user_input->selected_media_url)) {
-            hd_debug_print("user input selected media url not set", true);
+            hd_debug_print('user input selected media url not set', true);
             return null;
         }
 
@@ -119,7 +119,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $actions[] = Action_Factory::close_and_run();
                 if ($this->force_parent_reload) {
                     $this->force_parent_reload = false;
-                    hd_debug_print("Force parent reload", true);
+                    hd_debug_print('Force parent reload', true);
                     $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_INVALIDATE);
                 }
                 return Action_Factory::composite($actions);
@@ -149,8 +149,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case PARAM_EPG_SHIFT_HOURS:
             case PARAM_EPG_SHIFT_MINS:
-                hd_debug_print("Applying epg shift hours: " . $user_input->{PARAM_EPG_SHIFT_HOURS}, true);
-                hd_debug_print("Applying epg shift mins: " . $user_input->{PARAM_EPG_SHIFT_MINS}, true);
+                hd_debug_print('Applying epg shift hours: ' . $user_input->{PARAM_EPG_SHIFT_HOURS}, true);
+                hd_debug_print('Applying epg shift mins: ' . $user_input->{PARAM_EPG_SHIFT_MINS}, true);
                 $this->plugin->set_channel_epg_shift($channel_id, $user_input->{PARAM_EPG_SHIFT_HOURS}, $user_input->{PARAM_EPG_SHIFT_MINS});
                 if (!isset($new_value)) break;
 
@@ -216,7 +216,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEM_DOWN:
                 $cnt = $this->plugin->get_order_count($parent_group) - 1;
-                $sel_ndx++;
+                ++$sel_ndx;
                 if ($sel_ndx > $cnt) {
                     return null;
                 }
@@ -361,7 +361,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::composite($actions);
 
             case ACTION_RELOAD:
-                hd_debug_print("Action reload", true);
+                hd_debug_print('Action reload', true);
                 $actions[] = Action_Factory::close_and_run();
                 $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD);
                 return Action_Factory::composite($actions);
@@ -390,7 +390,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         try {
             if (!$this->plugin->is_channels_loaded()) {
-                throw new Exception("Channels not loaded!");
+                throw new Exception('Channels not loaded!');
             }
 
             if ($media_url->group_id === TV_ALL_CHANNELS_GROUP_ID) {
@@ -438,7 +438,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 }
             }
         } catch (Exception $ex) {
-            hd_debug_print("Failed collect folder items!");
+            hd_debug_print('Failed collect folder items!');
             print_backtrace_exception($ex);
         }
 

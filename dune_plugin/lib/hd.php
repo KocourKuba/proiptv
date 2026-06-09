@@ -107,7 +107,7 @@ class HD
     public static function rows_api_support()
     {
         if (!isset(self::$with_rows_api))
-            self::$with_rows_api = class_exists("PluginRowsFolderView");
+            self::$with_rows_api = class_exists('PluginRowsFolderView');
 
         return self::$with_rows_api;
     }
@@ -116,7 +116,7 @@ class HD
     {
         if (!isset(self::$with_list_config))
         {
-            self::$with_list_config = class_exists("EditListConfigActionData") && defined("EDIT_LIST_CONFIG_OPT_REMOVE_UNCHECKED");
+            self::$with_list_config = class_exists('EditListConfigActionData') && defined('EDIT_LIST_CONFIG_OPT_REMOVE_UNCHECKED');
         }
         return self::$with_list_config;
     }
@@ -170,7 +170,7 @@ class HD
 
     public static function http_local_port()
     {
-        $port = getenv("HD_HTTP_LOCAL_PORT");
+        $port = getenv('HD_HTTP_LOCAL_PORT');
         return $port ? (int)$port : 80;
     }
 
@@ -193,8 +193,8 @@ class HD
         $sysinfo = @file(getenv('FS_PREFIX') ."/tmp/sysinfo.txt", FILE_IGNORE_NEW_LINES);
         if ($sysinfo !== false) {
             foreach ($sysinfo as $line) {
-                if (preg_match("/product_id:/", $line) ||
-                    preg_match("/firmware_version:/", $line)) {
+                if (preg_match('/product_id:/', $line) ||
+                    preg_match('/firmware_version:/', $line)) {
                     $line = trim($line);
 
                     if (empty($extra_useragent))
@@ -212,7 +212,7 @@ class HD
 
         self::$default_user_agent .= $extra_useragent;
 
-        hd_debug_print("HTTP UserAgent: " . self::$default_user_agent);
+        hd_debug_print('HTTP UserAgent: ' . self::$default_user_agent);
     }
 
     public static function set_dune_user_agent($user_agent)
@@ -736,7 +736,7 @@ class HD
             }
         }
 
-        return implode(", ", $array);
+        return implode(', ', $array);
     }
 
     /**
@@ -829,10 +829,10 @@ class HD
      */
     public static function make_ts($url, $force = false)
     {
-        if (!preg_match("|^https?://ts://|", $url)) {
-            if (preg_match("/\.mp4(?=\?|$)/i", $url)) {
+        if (!preg_match('|^https?://ts://|', $url)) {
+            if (preg_match('/\.mp4(?=\?|$)/i', $url)) {
                 $url = preg_replace(TS_REPL_PATTERN, "$1" . "mp4://$2", $url);
-            } else if ($force || preg_match("/\.ts|\.mpeg|mpegts(?=\?|$)/i", $url)) {
+            } else if ($force || preg_match('/\.ts|\.mpeg|mpegts(?=\?|$)/i', $url)) {
                 $url = preg_replace(TS_REPL_PATTERN, "$1ts://$2", $url);
             }
         }
@@ -842,7 +842,7 @@ class HD
 
     public static function strip_ts($url)
     {
-        return preg_replace("#(https?://)((mp4|ts)://)#", '\1', $url);
+        return preg_replace('#(https?://)((mp4|ts)://)#', '\1', $url);
     }
 
     public static function strip_dune_params($url)
@@ -978,7 +978,7 @@ class HD
 
     public static function detect_encoding($string)
     {
-        static $list = array("utf-8", "windows-1251", "windows-1252", "ASCII");
+        static $list = array('utf-8', 'windows-1251', 'windows-1252', 'ASCII');
 
         foreach ($list as $item) {
             try {

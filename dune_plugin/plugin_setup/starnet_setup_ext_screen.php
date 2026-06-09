@@ -172,7 +172,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
             case PARAM_COOKIE_ENABLE_DEBUG:
                 $debug = SwitchOnOff::to_bool(toggle_cookie_param($plugin_cookies, PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off));
                 set_debug_log($debug);
-                hd_debug_print("Debug logging: " . var_export($debug, true));
+                hd_debug_print('Debug logging: ' . var_export($debug, true));
                 break;
         }
 
