@@ -780,7 +780,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
         }
 
         $url = 'embedded_app://{name=file_browser}{url=' . $path . '}{caption=File Browser}';
-        hd_debug_print("smt_tree::open_folder launch url: $url", true);
+        hd_debug_print("smb_tree::open_folder launch url: $url", true);
         return Action_Factory::launch_media_url($url);
     }
 
