@@ -759,19 +759,19 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                         $str_value = "$provider_id@";
                         switch ($provider->getType()) {
                             case PROVIDER_TYPE_PIN:
-                                $str_value = sprintf("%s@%s",
+                                $str_value = sprintf('%s@%s',
                                     $provider_id,
                                     safe_get_value($params, MACRO_PASSWORD));
                                 break;
 
                             case PROVIDER_TYPE_LOGIN:
-                                $str_value = sprintf("%s@%s:%s",
+                                $str_value = sprintf('%s@%s:%s',
                                     $provider_id,
                                     safe_get_value($params, MACRO_LOGIN),
                                     safe_get_value($params, MACRO_PASSWORD));
                                 break;
                             case $provider_id:
-                                $str_value = sprintf("%s@%s|%s",
+                                $str_value = sprintf('%s@%s|%s',
                                     $provider_id,
                                     safe_get_value($params, MACRO_OTTKEY),
                                     safe_get_value($params, MACRO_VPORTAL));

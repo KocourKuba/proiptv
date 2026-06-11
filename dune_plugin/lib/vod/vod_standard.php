@@ -693,13 +693,12 @@ class vod_standard extends Abstract_Vod
             return 0;
         }
 
-        $where = '';
-        if (!empty($group_id)) {
-            $q_group_id = Sql_Wrapper::sql_quote($group_id);
-            $where = "WHERE group_id = $q_group_id";
+        if (empty($group_id)) {
+            $query = sprintf("SELECT COUNT(*) FROM %s", M3uParser::VOD_TABLE);
+        } else {
+            $query = sprintf("SELECT COUNT(*) FROM %s WHERE %s=%s", M3uParser::VOD_TABLE, COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($group_id));
         }
 
-        $query = "SELECT COUNT(*) FROM " . M3uParser::VOD_TABLE . " $where;";
         return (int)$this->wrapper->query_value($query);
     }
 
@@ -715,15 +714,13 @@ class vod_standard extends Abstract_Vod
             return array();
         }
 
-        $where = '';
+        $query = sprintf("SELECT * FROM %s", M3uParser::VOD_TABLE);
         if (!empty($group_id)) {
-            $q_group_id = Sql_Wrapper::sql_quote($group_id);
-            $where = " WHERE group_id = $q_group_id";
+            $query = sprintf("%s WHERE %s=%s", $query, COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($group_id));
         }
-
-        $limit_str = $limit > 0 ? "LIMIT $from, $limit" : '';
-
-        $query = "SELECT * FROM " . M3uParser::VOD_TABLE . "$where $limit_str;";
+        if ($limit > 0) {
+            $query = sprintf("%s LIMIT %s, %s;", $query, $from, $limit);
+        }
         return $this->wrapper->fetch_array($query);
     }
 
@@ -738,7 +735,7 @@ class vod_standard extends Abstract_Vod
             return array();
         }
 
-        $query = "SELECT DISTINCT group_id FROM " . M3uParser::VOD_TABLE . ";";
+        $query = sprintf("SELECT DISTINCT %s FROM %s;", COLUMN_GROUP_ID, M3uParser::VOD_TABLE);
         return $this->wrapper->fetch_array($query, COLUMN_GROUP_ID);
     }
 
@@ -754,7 +751,7 @@ class vod_standard extends Abstract_Vod
             return array();
         }
 
-        $query = "SELECT * FROM " . M3uParser::VOD_TABLE . " WHERE hash = '$hash';";
+        $query = sprintf("SELECT * FROM %s WHERE %s=%s;", M3uParser::VOD_TABLE, COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
         return $this->wrapper->query_value($query, true);
     }
 

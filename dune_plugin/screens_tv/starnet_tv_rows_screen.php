@@ -182,7 +182,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 $info_children = $this->do_get_info_children($media_url, $plugin_cookies);
                 $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD);
                 if (!$info_children['adult'] || empty($pass_sex)) {
-                    $urls[] = sprintf("plugin_tv://%s/%s", get_plugin_name(), self::row_id_decoder($user_input->item_id)->get_media_url_string());
+                    $urls[] = sprintf('plugin_tv://%s/%s', get_plugin_name(), self::row_id_decoder($user_input->item_id)->get_media_url_string());
                 }
 
                 return Action_Factory::update_rows_info(
@@ -1068,7 +1068,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             }
         } else {
             $program = (object)array();
-            $program->time = sprintf("%s - %s",
+            $program->time = sprintf('%s - %s',
                 format_datetime('H:i', safe_get_value($epg_data, PluginTvEpgProgram::start_tm_sec)),
                 format_datetime('H:i', safe_get_value($epg_data, PluginTvEpgProgram::end_tm_sec))
             );

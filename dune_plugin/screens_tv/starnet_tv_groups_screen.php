@@ -118,8 +118,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $error_msg);
                 }
 
-                if (!is_limited_apk()) break;
-
+                if (!is_limited_apk()) {
+                    return null;
+                }
                 $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
                 $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($plugin_cookies), 1000);
                 return Action_Factory::composite($actions);
@@ -328,7 +329,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     hd_debug_print("Selected engine: $user_input->control_id", true);
                     $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
                     $this->plugin->init_epg_manager();
-                    $active_sources = $this->plugin->get_selected_xmltv_ids();
+                    $active_sources = $this->plugin->get_selected_xmltv_ids($this->plugin->get_active_playlist_id());
                     $post_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
                     if ($user_input->control_id === ENGINE_XMLTV) {
                         if (empty($active_sources)) {
@@ -493,25 +494,28 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             return array();
         }
 
+        $is_vod_playlist = $this->plugin->is_vod_playlist();
         $ordinary_items = array();
-        if (!$this->plugin->is_vod_playlist()) {
+        if (!$is_vod_playlist) {
             $all_groups = $this->plugin->get_groups_by_order();
             $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
             foreach ($all_groups as $group_row) {
                 if (!$show_adult && $group_row[COLUMN_ADULT] !== 0) continue;
-                if ($this->plugin->get_channels_by_order_cnt($group_row[COLUMN_GROUP_ID]) === 0) continue;
 
+                $channel_rows = $this->plugin->get_all_channels_count($group_row[COLUMN_GROUP_ID]);
+                $enabled_value = safe_get_value($channel_rows, array(0, 'disabled'), -1);
+                $enabled_cnt = safe_get_value($channel_rows, array(0, 'count'), 0);
+                if ($enabled_value === -1 || $enabled_cnt === 0) continue;
+
+                $disabled = safe_get_value($channel_rows, array(1, 'count'), 0);
                 $caption = str_replace('|', '¦', $group_row[COLUMN_TITLE]);
-                $detailed_info = TR::t('tv_screen_group_info__3',
-                    $caption,
-                    $this->plugin->get_order_count($group_row[COLUMN_GROUP_ID]),
-                    $this->plugin->get_channels_count($group_row[COLUMN_GROUP_ID], PARAM_DISABLED)
-                );
+                $detailed_info = TR::t('tv_screen_group_info__3', $caption, $enabled_cnt, $disabled);
 
                 $ordinary_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_WHITE, $detailed_info);
             }
         }
 
+        hd_debug_print('Total ordinary items: ' . count($ordinary_items), true);
         $no_channels = empty($ordinary_items);
 
         $special_items = array();
@@ -523,10 +527,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 case TV_ALL_CHANNELS_GROUP_ID:
                     if (!$this->plugin->get_bool_setting(PARAM_SHOW_ALL)) break;
 
-                    $enabled = $this->plugin->get_channels_count($group_id, PARAM_ENABLED);
-                    $disabled = $this->plugin->get_channels_count($group_id, PARAM_DISABLED);
+                    $channel_rows = $this->plugin->get_all_channels_count($group_row[COLUMN_GROUP_ID]);
+                    $enabled = safe_get_value($channel_rows, array(0, 'count'), 0);
+                    $disabled = safe_get_value($channel_rows, array(1, 'count'), 0);
+                    $disabled_groups = $this->plugin->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
+
                     $caption = TR::t('plugin_all_channels');
-                    $detailed_info = TR::t('tv_screen_group_info__3', $caption, $enabled, $disabled);
+                    $detailed_info = TR::t('tv_screen_group_info__4', $caption, $enabled, $disabled, $disabled_groups);
                     $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_SKYBLUE, $detailed_info);
                     break;
 
@@ -573,7 +580,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             }
         }
 
-        if ($this->plugin->is_vod_playlist()) {
+        if ($is_vod_playlist) {
             return $special_items;
         }
 

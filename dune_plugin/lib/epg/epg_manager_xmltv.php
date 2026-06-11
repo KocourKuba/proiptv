@@ -36,6 +36,9 @@ class Epg_Manager_Xmltv
     const TABLE_PICONS = 'epg_picons';
     const TABLE_CHANNELS = 'epg_channels';
     const TABLE_ENTRIES = 'epg_entries';
+    const CREATE_CHANNELS_TABLE = 'CREATE TABLE epg_channels (alias TEXT PRIMARY KEY not null, channel_id TEXT not null, picon_hash TEXT);';
+    const CREATE_PICONS_TABLE = 'CREATE TABLE epg_picons (picon_hash TEXT PRIMARY KEY not null, picon_url TEXT);';
+    const CREATE_ENTRIES_TABLE = 'CREATE TABLE epg_entries (channel_id STRING not null, start INTEGER, end INTEGER, UNIQUE (channel_id, start) ON CONFLICT REPLACE);';
 
     protected static $index_flags = array(INDEXING_DOWNLOAD, INDEXING_CHANNELS, INDEXING_ENTRIES);
 
@@ -303,9 +306,8 @@ class Epg_Manager_Xmltv
         $ch_table_name = self::TABLE_CHANNELS;
         $picons_table_name = self::TABLE_PICONS;
 
-        $query = "SELECT DISTINCT picon_url FROM $picons_table_name
-                    INNER JOIN $ch_table_name ON $picons_table_name.picon_hash=$ch_table_name.picon_hash
-                    WHERE alias IN ($placeHolders);";
+        $query = sprintf('SELECT DISTINCT %s FROM %s INNER JOIN %s ON %s.%s=%s.%s WHERE %s IN (%s);', COLUMN_PICON_URL,
+            $picons_table_name, $ch_table_name, $picons_table_name, COLUMN_PICON_HASH, $ch_table_name, COLUMN_PICON_HASH, COLUMN_ALIAS, $placeHolders);
 
         $db = self::open_sqlite_db($db_name, self::TABLE_CHANNELS, true);
         if ($db === false) {
@@ -519,12 +521,12 @@ class Epg_Manager_Xmltv
             if (empty($db) || !$db->is_table_exists($key)) continue;
 
             if ($key === self::TABLE_CHANNELS) {
-                $result[$key] = (int)$db->query_value("SELECT COUNT(DISTINCT channel_id) FROM $key;");
+                $result[$key] = (int)$db->query_value(sprintf('SELECT COUNT(DISTINCT %s) FROM %s;', COLUMN_CHANNEL_ID, $key));
             } else if ($key === self::TABLE_PICONS) {
-                $result[$key] = (int)$db->query_value("SELECT COUNT(*) FROM $key;");
+                $result[$key] = (int)$db->query_value(sprintf('SELECT COUNT(*) FROM %s;', $key));
             } else if ($key === self::TABLE_ENTRIES) {
-                $result[$key] = (int)$db->query_value("SELECT COUNT(*) FROM $key;");
-                $result['epg_ids'] = (int)$db->query_value("SELECT COUNT(DISTINCT channel_id) FROM $key;");
+                $result[$key] = (int)$db->query_value(sprintf("SELECT COUNT(*) FROM %s;", $key));
+                $result['epg_ids'] = (int)$db->query_value(sprintf("SELECT COUNT(DISTINCT %s) FROM $key;", COLUMN_CHANNEL_ID));
             }
         }
 
@@ -625,10 +627,10 @@ class Epg_Manager_Xmltv
                 $ch_table_name = self::TABLE_CHANNELS;
                 $picons_table_name = self::TABLE_PICONS;
 
-                $query = "DROP TABLE IF EXISTS $ch_table_name;";
-                $query .= "DROP TABLE IF EXISTS $picons_table_name;";
-                $query .= "CREATE TABLE $ch_table_name (alias TEXT PRIMARY KEY not null, channel_id TEXT not null, picon_hash TEXT);";
-                $query .= "CREATE TABLE $picons_table_name (picon_hash TEXT PRIMARY KEY not null, picon_url TEXT);";
+                $query = sprintf('DROP TABLE IF EXISTS %s;', $ch_table_name);
+                $query .= sprintf('DROP TABLE IF EXISTS %s;', $picons_table_name);
+                $query .= self::CREATE_CHANNELS_TABLE;
+                $query .= self::CREATE_PICONS_TABLE;
                 $res = $db->exec_transaction($query);
                 if (!$res) {
                     throw new Exception("Error transaction: $query");
@@ -696,8 +698,8 @@ class Epg_Manager_Xmltv
                             $picon_url = $tag->getAttribute('src');
                             if (!empty($picon_url)) {
                                 $picon_hash = md5($picon_url);
-                                $q_url = Sql_Wrapper::sql_quote($picon_url);
-                                $query .= "INSERT OR REPLACE INTO $picons_table_name (picon_hash, picon_url) VALUES('$picon_hash', $q_url);";
+                                $query .= sprintf('INSERT OR REPLACE INTO %s (%s,%s) VALUES(%s, %s);', $picons_table_name,
+                                    COLUMN_PICON_HASH, COLUMN_PICON_URL, Sql_Wrapper::sql_quote($picon_hash), Sql_Wrapper::sql_quote($picon_url));
                                 break;
                             }
                         }
@@ -705,17 +707,19 @@ class Epg_Manager_Xmltv
 
                     $q_picon_hash = Sql_Wrapper::sql_quote($picon_hash);
                     $q_alias = Sql_Wrapper::sql_quote(mb_convert_case($channel_id, MB_CASE_LOWER, "UTF-8"));
-                    $query .= "INSERT OR IGNORE INTO $ch_table_name (alias, channel_id, picon_hash) VALUES($q_alias, $q_channel_id, $q_picon_hash);";
+                    $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES(%s,%s,%s);',
+                        $ch_table_name, COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_PICON_HASH, $q_alias, $q_channel_id, $q_picon_hash);
 
                     foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
                         $q_alias = Sql_Wrapper::sql_quote(mb_convert_case($tag->nodeValue, MB_CASE_LOWER, "UTF-8"));
-                        $query .= "INSERT OR IGNORE INTO $ch_table_name (alias, channel_id, picon_hash) VALUES($q_alias, $q_channel_id, $q_picon_hash);";
+                        $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES(%s,%s,%s);',
+                            $ch_table_name, COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_PICON_HASH, $q_alias, $q_channel_id, $q_picon_hash);
                     }
                 }
                 $db->exec_transaction($query);
 
-                $channels = (int)$db->query_value("SELECT count(DISTINCT channel_id) FROM $ch_table_name;");
-                $picons = (int)$db->query_value("SELECT COUNT(*) FROM $picons_table_name;");
+                $channels = (int)$db->query_value(sprintf('SELECT count(DISTINCT %s) FROM %s;', COLUMN_CHANNEL_ID, $ch_table_name));
+                $picons = (int)$db->query_value(sprintf("SELECT COUNT(*) FROM %s;", $picons_table_name));
 
                 $perf->setLabel('end_channels');
                 $report = $perf->getFullReport('start_channels', 'end_channels');
@@ -769,9 +773,8 @@ class Epg_Manager_Xmltv
                 hd_debug_print("Indexing positions for: '$cached_file' by '$url'", true);
                 $perf->setLabel('start_reindex_entries');
 
-                $pos_table_name = self::TABLE_ENTRIES;
-                $query = "DROP TABLE IF EXISTS $pos_table_name;";
-                $query .= "CREATE TABLE $pos_table_name (channel_id STRING not null, start INTEGER, end INTEGER, UNIQUE (channel_id, start) ON CONFLICT REPLACE);";
+                $query = sprintf("DROP TABLE IF EXISTS %s;", self::TABLE_ENTRIES);
+                $query .= self::CREATE_ENTRIES_TABLE;
                 $res = $db->exec_transaction($query);
                 if (!$res) {
                     throw new Exception("Error transaction: $query");
@@ -780,7 +783,9 @@ class Epg_Manager_Xmltv
                 hd_debug_print('Begin transactions...', true);
                 $db->exec('BEGIN;');
 
-                $stm = $db->prepare("INSERT INTO $pos_table_name (channel_id, start, end) VALUES(:channel_id, :start, :end);");
+                $query = sprintf('INSERT INTO %s (%s, %s, %s) VALUES(:%s, :%s, :%s);',
+                    self::TABLE_ENTRIES, COLUMN_CHANNEL_ID, COLUMN_START, COLUMN_END, COLUMN_CHANNEL_ID, COLUMN_START, COLUMN_END);
+                $stm = $db->prepare($query);
                 /** @var string $prev_channel */
                 /** @var int $start_program_block */
                 /** @var int $tag_end_pos */
@@ -846,8 +851,8 @@ class Epg_Manager_Xmltv
                 hd_debug_print('End transactions...', true);
                 $db->exec('COMMIT;');
 
-                $total_epg = (int)$db->query_value("SELECT count(DISTINCT channel_id) FROM $pos_table_name;");
-                $total_blocks = (int)$db->query_value("SELECT COUNT(*) FROM $pos_table_name;");
+                $total_epg = (int)$db->query_value(sprintf('SELECT count(DISTINCT %s) FROM %s;', COLUMN_CHANNEL_ID, self::TABLE_ENTRIES));
+                $total_blocks = (int)$db->query_value(sprintf('SELECT COUNT(*) FROM %s;', self::TABLE_ENTRIES));
 
                 $perf->setLabel('end_reindex_entries');
                 $report = $perf->getFullReport('start_reindex_entries', 'end_reindex_entries');
@@ -1183,8 +1188,8 @@ class Epg_Manager_Xmltv
             return $channel_positions;
         }
 
-        $table_channels = self::TABLE_CHANNELS;
-        $query = "SELECT DISTINCT channel_id FROM $table_channels WHERE alias IN ($aliases);";
+        $query = sprintf('SELECT DISTINCT %s FROM %s WHERE %s IN (%s);',
+            COLUMN_CHANNEL_ID, self::TABLE_CHANNELS, COLUMN_ALIAS, $aliases);
         $channel_ids = $db_channels->fetch_array($query, COLUMN_CHANNEL_ID);
         if (empty($channel_ids)) {
             hd_debug_print("No channel_id found for aliases: $aliases");
@@ -1200,8 +1205,8 @@ class Epg_Manager_Xmltv
         }
 
         $table_pos = self::TABLE_ENTRIES;
-        $where = Sql_Wrapper::sql_make_where_clause($channel_ids, COLUMN_CHANNEL_ID);
-        $query = "SELECT start, end FROM $table_pos WHERE $where;";
+        $query = sprintf('SELECT %s, %s FROM %s WHERE %s;',
+            COLUMN_START, COLUMN_END, $table_pos, Sql_Wrapper::sql_make_where_clause($channel_ids, COLUMN_CHANNEL_ID));
         $channel_positions = $db_entries->fetch_array($query);
         if (empty($channel_positions)) {
             $ids = Sql_Wrapper::sql_make_list_from_values($channel_ids);

@@ -82,7 +82,7 @@ class xtream_codes_api
      */
     protected function get_auth_url()
     {
-        return sprintf("%s/player_api.php?username=%s&password=%s", $this->base_url, $this->username, $this->password);
+        return sprintf('%s/player_api.php?username=%s&password=%s', $this->base_url, $this->username, $this->password);
     }
 
     /**
@@ -102,7 +102,7 @@ class xtream_codes_api
      */
     protected function get_categories_url($stream_type = self::VOD)
     {
-        return sprintf("%s&action=get_%s_categories", $this->get_auth_url(), $stream_type);
+        return sprintf('%s&action=get_%s_categories', $this->get_auth_url(), $stream_type);
     }
 
     /**
@@ -122,9 +122,9 @@ class xtream_codes_api
     protected function get_streams_url($stream_type = self::VOD, $category_id = null)
     {
         if ($stream_type === self::SERIES) {
-            $url = sprintf("%s&action=get_%s", $this->get_auth_url(), $stream_type);
+            $url = sprintf('%s&action=get_%s', $this->get_auth_url(), $stream_type);
         } else {
-            $url = sprintf("%s&action=get_%s_streams", $this->get_auth_url(), $stream_type);
+            $url = sprintf('%s&action=get_%s_streams', $this->get_auth_url(), $stream_type);
         }
 
         if (!empty($category_id)) {
@@ -151,7 +151,7 @@ class xtream_codes_api
      */
     protected function get_stream_info_url($id, $stream_type = self::VOD)
     {
-        return sprintf("%s&action=get_%s_info&%s_id=%s", $this->get_auth_url(), $stream_type, $stream_type, $id);
+        return sprintf('%s&action=get_%s_info&%s_id=%s', $this->get_auth_url(), $stream_type, $stream_type, $id);
     }
 
     /**
@@ -162,11 +162,12 @@ class xtream_codes_api
     public function get_stream_url($id, $stream_type = self::VOD)
     {
         $stream_type = ($stream_type !== self::LIVE) ? "movie" : $stream_type;
-        return sprintf("%s/%s/%s/%s/$id",
+        return sprintf('%s/%s/%s/%s/%s',
             $this->base_url,
             $stream_type,
             $this->username,
-            $this->password);
+            $this->password,
+            $id);
     }
 
     protected function json_request($url)

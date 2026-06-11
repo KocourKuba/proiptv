@@ -577,7 +577,7 @@ class Curl_Wrapper
         }
 
         if (self::$error_no !== 0) {
-            hd_debug_print(sprintf("CURL errno: %s (%s; HTTP error: %s;", self::$error_no, self::$error_desc, self::$http_code));
+            hd_debug_print(sprintf('CURL errno: %s (%s); HTTP error: %s', self::$error_no, self::$error_desc, self::$http_code));
             return false;
         }
 
@@ -596,13 +596,13 @@ class Curl_Wrapper
         }
 
         if ($save_file === null) {
-            hd_debug_print(sprintf("Return content: HTTP OK (%d, %d) in %.3fs", self::$http_code, strlen($content), $execution_tm), true);
+            hd_debug_print(sprintf('Return content: HTTP OK (%d, %d) in %.3fs', self::$http_code, strlen($content), $execution_tm), true);
         } else if ($save_file === false) {
-            hd_debug_print(sprintf("Head response: HTTP OK (%d) in %.3fs", self::$http_code, $execution_tm), true);
+            hd_debug_print(sprintf('Head response: HTTP OK (%d) in %.3fs', self::$http_code, $execution_tm), true);
         } else if (file_exists($save_file)) {
-            hd_debug_print(sprintf("Save file: HTTP OK (%d, %d bytes) in %.3fs", self::$http_code, filesize($save_file), $execution_tm), true);
+            hd_debug_print(sprintf('Save file: HTTP OK (%d, %d bytes) in %.3fs', self::$http_code, filesize($save_file), $execution_tm), true);
         } else {
-            hd_debug_print(sprintf("HTTP code (%d) in %.3fs", self::$http_code, $execution_tm), true);
+            hd_debug_print(sprintf('HTTP code (%d) in %.3fs', self::$http_code, $execution_tm), true);
             hd_debug_print("Saved file '$save_file' is not exist!");
             return false;
         }

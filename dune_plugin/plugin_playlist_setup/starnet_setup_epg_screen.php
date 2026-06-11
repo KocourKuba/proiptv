@@ -143,7 +143,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
             case PARAM_EPG_CACHE_ENGINE:
                 $post_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
                 $val = $user_input->{$control_id};
-                $active_sources = $this->plugin->get_selected_xmltv_ids();
+                $active_sources = $this->plugin->get_selected_xmltv_ids($this->plugin->get_active_playlist_id());
                 if (empty($active_sources) && $val === ENGINE_XMLTV) {
                     $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_xmltv_sources'), $post_action);
                 }
@@ -185,7 +185,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 if ($engine === ENGINE_JSON) {
                     Epg_Manager_Json::clear_epg_files($playlist_id);
                 } else {
-                    foreach ($this->plugin->get_selected_xmltv_ids() as $id) {
+                    foreach ($this->plugin->get_selected_xmltv_ids($playlist_id) as $id) {
                         Epg_Manager_Xmltv::clear_epg_files($id);
                     }
                     $this->plugin->reset_channels();

@@ -1030,14 +1030,14 @@ function format_duration($ticks, $point = false)
     }
 
     if ($hours > 0) {
-        return sprintf("%d:%02d:%02d", $hours, $minutes, $seconds);
+        return sprintf('%d:%02d:%02d', $hours, $minutes, $seconds);
     }
 
     if ($point) {
-        return sprintf("%02d:%02d.%03d", $minutes, $seconds, $msecond);
+        return sprintf('%02d:%02d.%03d', $minutes, $seconds, $msecond);
     }
 
-    return sprintf("%02d:%02d", $minutes, $seconds);
+    return sprintf('%02d:%02d', $minutes, $seconds);
 }
 
 /**
@@ -1058,10 +1058,10 @@ function format_duration_seconds($secs)
     $seconds = $remainder % 60;
 
     if ($hours > 0) {
-        return sprintf("%d:%02d:%02d", $hours, $minutes, $seconds);
+        return sprintf('%d:%02d:%02d', $hours, $minutes, $seconds);
     }
 
-    return sprintf("%02d:%02d", $minutes, $seconds);
+    return sprintf('%02d:%02d', $minutes, $seconds);
 }
 
 /**

@@ -653,7 +653,7 @@ class M3uParser extends Json_Serializer
 
     /**
      * @param string $group_id
-     * @return int
+     * @return bool
      */
     public static function is_adult_group($group_id)
     {
@@ -661,7 +661,7 @@ class M3uParser extends Json_Serializer
         return (strpos($lower_title, "взрослы") !== false
             || strpos($lower_title, "adult") !== false
             || strpos($lower_title, "18+") !== false
-            || strpos($lower_title, "xxx") !== false) ? 1 : 0;
+            || strpos($lower_title, "xxx") !== false);
     }
 
     public static function is_valid_m3u($contents)
