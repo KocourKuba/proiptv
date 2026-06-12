@@ -393,24 +393,24 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 throw new Exception('Channels not loaded!');
             }
 
+            $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
+            $groups_order = array();
             if ($media_url->group_id === TV_ALL_CHANNELS_GROUP_ID) {
-                $groups_order = $this->plugin->get_groups_by_order();
+                $groups_order = $this->plugin->get_groups_by_order($show_adult);
             } else {
-                $groups_order[] = $this->plugin->get_group($media_url->group_id, PARAM_GROUP_ORDINARY);
+                $group = $this->plugin->get_group($media_url->group_id, PARAM_GROUP_ORDINARY, $show_adult);
+                if (!empty($group)) {
+                    $groups_order[] = $group;
+                }
             }
 
             $fav_id = $this->plugin->get_fav_id();
             $fav_ids = $this->plugin->get_channels_order($fav_id);
-            $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
 
             foreach ($groups_order as $group_row) {
-                if ($group_row[COLUMN_ADULT] && !$show_adult) continue;
-
                 $group_id = $group_row[COLUMN_GROUP_ID];
-                $channels_rows = $this->plugin->get_channels_by_order($group_id);
+                $channels_rows = $this->plugin->get_channels_by_order($group_id, $show_adult);
                 foreach ($channels_rows as $channel_row) {
-                    if (!$show_adult && $channel_row[COLUMN_ADULT] !== 0) continue;
-
                     $channel_id = $channel_row[COLUMN_CHANNEL_ID];
                     $icon_url = $this->plugin->get_channel_picon($channel_row, true);
                     $title = $channel_row[COLUMN_TITLE];

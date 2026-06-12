@@ -269,7 +269,8 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print($media_url, true);
 
         $items = array();
-        foreach ($this->plugin->get_channels_by_order($this->plugin->get_fav_id(), true) as $channel_row) {
+        $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
+        foreach ($this->plugin->get_channels_by_order($this->plugin->get_fav_id(), $show_adult, true) as $channel_row) {
             $icon_url = $this->plugin->get_channel_picon($channel_row, true);
 
             $items[] = array(

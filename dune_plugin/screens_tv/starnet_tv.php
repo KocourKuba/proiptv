@@ -206,6 +206,7 @@ class Starnet_Tv implements User_Input_Handler
         $archive_delay = $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60);
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD);
         $show_all = $this->plugin->get_bool_setting(PARAM_SHOW_ALL);
+        $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
 
         Sleep_Timer::set_show_pos($this->plugin->get_parameter(PARAM_SLEEP_TIMER_POS, 'top_right'));
         Sleep_Timer::set_show_time($this->plugin->get_parameter(PARAM_SLEEP_TIMER_COUNTDOWN, 120));
@@ -223,7 +224,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $fav_id = $this->plugin->get_fav_id();
         $all_channels = array();
-        foreach ($this->plugin->get_groups_by_order() as $group_row) {
+        foreach ($this->plugin->get_groups_by_order($show_adult) as $group_row) {
             $group_id = $group_row[COLUMN_GROUP_ID];
             if (!$this->plugin->get_order_count($group_id)) {
                 continue;
@@ -240,7 +241,7 @@ class Starnet_Tv implements User_Input_Handler
                 $group_id_arr[TV_ALL_CHANNELS_GROUP_ID] = '';
             }
 
-            foreach ($this->plugin->get_channels_by_order($group_id) as $channel_row) {
+            foreach ($this->plugin->get_channels_by_order($group_id, $show_adult) as $channel_row) {
                 if (empty($channel_row)) continue;
 
                 $group_id_arr[$group_id] = '';
@@ -253,7 +254,7 @@ class Starnet_Tv implements User_Input_Handler
                     PluginTvChannel::number => $channel_row[COLUMN_CH_NUMBER],
 
                     PluginTvChannel::have_archive => $archive > 0,
-                    PluginTvChannel::is_protected => empty($pass_sex) ? 0 : $channel_row[COLUMN_ADULT],
+                    PluginTvChannel::is_protected => $show_adult ? (empty($pass_sex) ? 0 : $channel_row[COLUMN_ADULT]) : 0,
 
                     PluginTvChannel::past_epg_days => $archive,
                     PluginTvChannel::future_epg_days => 7, // set default future epg range

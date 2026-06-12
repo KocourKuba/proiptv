@@ -120,7 +120,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // Show channel count
-        $show_count = $this->plugin->get_setting(PARAM_SHOW_CLASSIC_CHANNEL_COUNT, SwitchOnOff::on);
+        $show_count = $this->plugin->get_setting(PARAM_SHOW_CLASSIC_CHANNEL_COUNT, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, PARAM_SHOW_CLASSIC_CHANNEL_COUNT,
             TR::t('setup_show_channel_count'), SwitchOnOff::translate($show_count), SwitchOnOff::to_image($show_count));
 

@@ -494,21 +494,19 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             return array();
         }
 
-        $show_count = $this->plugin->get_bool_setting(PARAM_SHOW_CLASSIC_CHANNEL_COUNT, SwitchOnOff::on);
+        $show_count = $this->plugin->get_bool_setting(PARAM_SHOW_CLASSIC_CHANNEL_COUNT, SwitchOnOff::off);
+        $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         $is_vod_playlist = $this->plugin->is_vod_playlist();
         $ordinary_items = array();
         if (!$is_vod_playlist) {
-            $all_groups = $this->plugin->get_groups_by_order();
-            $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
+            $all_groups = $this->plugin->get_groups_by_order($show_adult);
             foreach ($all_groups as $group_row) {
-                if (!$show_adult && $group_row[COLUMN_ADULT] !== 0) continue;
-
                 $caption = str_replace('|', '¦', $group_row[COLUMN_TITLE]);
                 if ($show_count) {
                     $channel_rows = $this->plugin->get_all_channels_count($group_row[COLUMN_GROUP_ID]);
                     $enabled_value = safe_get_value($channel_rows, array(0, 'disabled'), -1);
                     $enabled_cnt = safe_get_value($channel_rows, array(0, 'count'), 0);
-                    if ($enabled_value === -1 || $enabled_cnt === 0) continue;
+                    if ($enabled_value != 0 || $enabled_cnt === 0) continue;
 
                     $disabled = safe_get_value($channel_rows, array(1, 'count'), 0);
                     $detailed_info = TR::t('tv_screen_group_info__3', $caption, $enabled_cnt, $disabled);
@@ -550,7 +548,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     if (!$this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) break;
                     $fav_id = $this->plugin->get_fav_id();
 
-                    $channels_cnt = $this->plugin->get_channels_by_order_cnt($fav_id, true);
+                    $channels_cnt = $this->plugin->get_channels_by_order_cnt($fav_id, $show_adult, true);
                     if (!$channels_cnt) break;
 
                     $caption = $fav_id === TV_FAV_COMMON_GROUP_ID ? TR::t('plugin_common_favorites') : TR::t('plugin_favorites');
@@ -661,6 +659,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
     private function get_visible_groups_count($include_all = false)
     {
         $visible = 0;
+        $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         foreach ($this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ALL, COLUMN_GROUP_ID) as $group_id) {
             if ($this->plugin->is_vod_playlist() && $group_id !== VOD_GROUP_ID) continue;
 
@@ -673,7 +672,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
                 case TV_FAV_GROUP_ID:
                     if ($this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) {
-                        $channels_cnt = $this->plugin->get_channels_by_order_cnt($this->plugin->get_fav_id());
+                        $channels_cnt = $this->plugin->get_channels_by_order_cnt($this->plugin->get_fav_id(), $show_adult);
                         if ($channels_cnt) {
                             ++$visible;
                         }

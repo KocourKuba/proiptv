@@ -759,9 +759,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             return;
         }
 
+        $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         $fav_id = $this->plugin->get_fav_id();
         $items = array();
-        foreach ($this->plugin->get_channels_by_order($fav_id) as $channel_row) {
+        foreach ($this->plugin->get_channels_by_order($fav_id, $show_adult) as $channel_row) {
             if (empty($channel_row)) continue;
 
             $channel_id = $channel_row[COLUMN_CHANNEL_ID];
@@ -925,17 +926,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         $fav_stickers = $this->get_fav_stickers();
         $fav_group = $this->plugin->get_channels_order($fav_id);
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
-        $groups = $this->plugin->get_groups_by_order();
+        $groups = $this->plugin->get_groups_by_order($show_adult);
         $show_count = $this->plugin->get_bool_setting(PARAM_NEWUI_SHOW_CHANNEL_COUNT, false);
 
         foreach ($groups as $group_row) {
-            if (!$show_adult && $group_row[COLUMN_ADULT] !== 0) continue;
-
             $group_id = $group_row[COLUMN_GROUP_ID];
             $items = array();
-            foreach ($this->plugin->get_channels_by_order($group_id) as $channel_row) {
-                if (!$show_adult && $channel_row[COLUMN_ADULT] !== 0) continue;
-
+            foreach ($this->plugin->get_channels_by_order($group_id, $show_adult) as $channel_row) {
                 $channel_id = $channel_row[COLUMN_CHANNEL_ID];
                 $row_id = array('group_id' => $group_id, 'channel_id' => $channel_id);
                 $items[] = Rows_Factory::add_regular_item(

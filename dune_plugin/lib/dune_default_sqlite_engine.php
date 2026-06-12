@@ -1217,18 +1217,25 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * returns group with selected id
-     * @param int $type PARAM_GROUP_ORDINARY - only regular groups, PARAM_GROUP_SPECIAL - special groups, PARAM_ALL - all groups
      * @param string $group_id
+     * @param int $type PARAM_GROUP_ORDINARY - only regular groups, PARAM_GROUP_SPECIAL - special groups, PARAM_ALL - all groups
+     * @param bool $include_adult
      * @return array
      */
-    public function get_group($group_id, $type)
+    public function get_group($group_id, $type, $include_adult = true)
     {
-        if ($type === PARAM_ALL) {
-            $query = sprintf('SELECT * FROM %s WHERE %s=%s AND %s=%d ORDER by ROWID;', self::get_table_full_name(GROUPS_INFO),
-                COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($group_id), COLUMN_DISABLED, FALSE);
+        if ($include_adult) {
+            $where = sprintf('%s<>%d', COLUMN_ADULT, -1);
         } else {
-            $query = sprintf('SELECT * FROM %s WHERE %s=%s AND %s=%d AND %s=%d ORDER by ROWID;', self::get_table_full_name(GROUPS_INFO),
-                COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($group_id), COLUMN_DISABLED, FALSE, COLUMN_SPECIAL, $type);
+            $where = sprintf('%s=%d', COLUMN_ADULT, FALSE);
+        }
+
+        if ($type === PARAM_ALL) {
+            $query = sprintf('SELECT * FROM %s WHERE %s=%s AND %s=%d AND %s ORDER by ROWID;', self::get_table_full_name(GROUPS_INFO),
+                COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($group_id), COLUMN_DISABLED, FALSE, $where);
+        } else {
+            $query = sprintf('SELECT * FROM %s WHERE %s=%s AND %s=%d AND %s=%d AND %s ORDER by ROWID;', self::get_table_full_name(GROUPS_INFO),
+                COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($group_id), COLUMN_DISABLED, FALSE, COLUMN_SPECIAL, $type, $where);
         }
         return $this->sql_playlist->query_value($query, true);
     }
@@ -1328,13 +1335,20 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * @param bool $include_adults
      * @return array
      */
-    public function get_groups_by_order()
+    public function get_groups_by_order($include_adults = true)
     {
-        $query = sprintf('SELECT grp.%s, grp.%s, grp.%s, grp.%s FROM %s AS grp INNER JOIN %s as ord USING(%s) ORDER BY ord.ROWID;',
-            COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_ADULT,
-            self::get_table_full_name(GROUPS_INFO), self::get_table_full_name(GROUPS_ORDER), COLUMN_GROUP_ID);
+        if ($include_adults) {
+            $query = sprintf('SELECT %s, %s, %s FROM %s INNER JOIN %s as ord USING(%s) ORDER BY ord.ROWID;',
+                COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON,
+                self::get_table_full_name(GROUPS_INFO), self::get_table_full_name(GROUPS_ORDER), COLUMN_GROUP_ID);
+        } else {
+            $query = sprintf('SELECT %s, %s, %s FROM %s INNER JOIN %s as ord USING(%s) WHERE %s=%d ORDER BY ord.ROWID;',
+                COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON,
+                self::get_table_full_name(GROUPS_INFO), self::get_table_full_name(GROUPS_ORDER), COLUMN_GROUP_ID, COLUMN_ADULT, FALSE);
+        }
         return $this->sql_playlist->fetch_array($query);
     }
 
@@ -1651,7 +1665,7 @@ class Dune_Default_Sqlite_Engine
                 COLUMN_GROUP_ID, COLUMN_GROUP_ID, self::get_table_full_name(GROUPS_INFO), COLUMN_SPECIAL, FALSE);
         } else {
             $q_group_id = Sql_Wrapper::sql_quote($group_id);
-            $where = COLUMN_GROUP_ID . " = $q_group_id";
+            $where = sprintf("%s=%s", COLUMN_GROUP_ID, $q_group_id);
         }
 
         $query = sprintf('SELECT %s, COUNT(*) as count FROM %s WHERE %s GROUP BY %s;',
@@ -2028,31 +2042,37 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string $group_id
+     * @param bool $include_adult
      * @param bool $include_hidden
      * @return array
      */
-    public function get_channels_by_order($group_id, $include_hidden = false)
+    public function get_channels_by_order($group_id, $include_adult = true, $include_hidden = false)
     {
         if (!$this->is_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
             return array();
         }
 
+        if ($include_adult) {
+            $where = sprintf('%s<>%d', COLUMN_ADULT, -1);
+        } else {
+            $where = sprintf('%s=%d', COLUMN_ADULT, FALSE);
+        }
         if ($include_hidden) {
             $query = sprintf('SELECT ord.%s, ch.*, pl.*, pl.ROWID as ch_number
                     FROM %s AS pl
                     JOIN %s AS ord ON pl.%s=ord.%s
                     JOIN %s as ch ON ch.%s=ord.%s
-                    ORDER BY ord.ROWID;',
+                    WHERE %s ORDER BY ord.ROWID;',
                 COLUMN_CHANNEL_ID, M3uParser::CHANNELS_TABLE, self::get_table_full_name($group_id), $this->get_id_column(), COLUMN_CHANNEL_ID,
-                self::get_table_full_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID);
+                self::get_table_full_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, $where);
         } else {
             $query = sprintf('SELECT ord.%s, ch.*, pl.*, pl.ROWID as ch_number
                     FROM %s AS pl
                     JOIN %s AS ord ON pl.%s=ord.%s
                     JOIN %s as ch ON ch.%s=ord.%s AND ch.%s=%d
-                    ORDER BY ord.ROWID;',
+                    WHERE %s ORDER BY ord.ROWID;',
                 COLUMN_CHANNEL_ID, M3uParser::CHANNELS_TABLE, self::get_table_full_name($group_id), $this->get_id_column(), COLUMN_CHANNEL_ID,
-                self::get_table_full_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_DISABLED, FALSE);
+                self::get_table_full_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_DISABLED, FALSE, $where);
         }
         return $this->sql_playlist->fetch_array($query);
     }
@@ -2060,26 +2080,32 @@ class Dune_Default_Sqlite_Engine
     /**
      * @return int
      */
-    public function get_channels_by_order_cnt($group_id, $include_hidden = false)
+    public function get_channels_by_order_cnt($group_id, $include_adult = true, $include_hidden = false)
     {
         if (!$this->is_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
             return 0;
+        }
+
+        if ($include_adult) {
+            $where = sprintf('%s<>%d', COLUMN_ADULT, -1);
+        } else {
+            $where = sprintf('%s=%d', COLUMN_ADULT, FALSE);
         }
 
         if ($include_hidden) {
             $query = sprintf('SELECT COUNT(ord.%s) FROM %s AS pl
                     JOIN %s AS ord ON pl.%s=ord.%s
                     JOIN %s as ch ON ch.%s=ord.%s
-                    ORDER BY ord.ROWID;',
+                    WHERE %s ORDER BY ord.ROWID;',
                 COLUMN_CHANNEL_ID, M3uParser::CHANNELS_TABLE, self::get_table_full_name($group_id), $this->get_id_column(), COLUMN_CHANNEL_ID,
-                self::get_table_full_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID);
+                self::get_table_full_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, $where);
         } else {
             $query = sprintf('SELECT COUNT(ord.%s) FROM %s AS pl
                     JOIN %s AS ord ON pl.%s=ord.%s
                     JOIN %s as ch ON ch.%s = ord.%s AND ch.%s=%d
-                    ORDER BY ord.ROWID;',
+                    WHERE %s ORDER BY ord.ROWID;',
                 COLUMN_CHANNEL_ID, M3uParser::CHANNELS_TABLE, self::get_table_full_name($group_id), $this->get_id_column(), COLUMN_CHANNEL_ID,
-                self::get_table_full_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_DISABLED, FALSE);
+                self::get_table_full_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_DISABLED, FALSE, $where);
         }
         return $this->sql_playlist->query_value($query);
     }

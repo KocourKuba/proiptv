@@ -3109,18 +3109,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Do search channel name : '$search_text'", true);
         $plugin_cookies->{PARAM_COOKIE_LAST_TV_SEARCH} = $search_text;
 
-        $groups_order = $this->get_groups_by_order();
         $show_adult = $this->get_bool_setting(PARAM_SHOW_ADULT);
+        $groups_order = $this->get_groups_by_order($show_adult);
 
         $defs = array();
         $q_result = false;
         foreach ($groups_order as $group_row) {
-            if ($group_row[COLUMN_ADULT] && !$show_adult) continue;
-
-            $channels_rows = $this->get_channels_by_order($group_row[COLUMN_GROUP_ID]);
+            $channels_rows = $this->get_channels_by_order($group_row[COLUMN_GROUP_ID], $show_adult);
             foreach ($channels_rows as $channel_row) {
-                if (!$show_adult && $channel_row[COLUMN_ADULT] !== 0) continue;
-
                 $ch_title = $channel_row[COLUMN_TITLE];
                 $s = mb_stripos($ch_title, $search_text, 0, "UTF-8");
                 if ($s !== false) {
@@ -3402,17 +3398,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 }
 
                 $show_adult = $this->get_bool_setting(PARAM_SHOW_ADULT);
-                $groups_order = $this->get_groups_by_order();
+                $groups_order = $this->get_groups_by_order($show_adult);
                 $channels_changed = array();
                 $default_icon = $this->get_default_channel_icon(true);
                 foreach ($groups_order as $group_row) {
-                    if ($group_row[COLUMN_ADULT] && !$show_adult) continue;
-
                     $group_id = $group_row[COLUMN_GROUP_ID];
-                    $channels_rows = $this->get_channels_by_order($group_id);
+                    $channels_rows = $this->get_channels_by_order($group_id, $show_adult);
                     foreach ($channels_rows as $channel_row) {
-                        if (!$show_adult && $channel_row[COLUMN_ADULT] !== 0) continue;
-
                         $url = $this->get_channel_picon($channel_row, true);
                         if ($url === $default_icon) continue;
 
