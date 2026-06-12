@@ -279,6 +279,7 @@ setup_sleep_time_step = 手动休眠定时步长（分钟）
 setup_sleep_time_power = 休眠触发操作
 setup_top_left = 左上角
 setup_top_right = 右上角
+setup_plugin_memory = 插件内存限制
 
 setup_channels_src_reset_playlist = 重置播放列表设置
 setup_channels_src_edit_playlists = 选择或添加播放列表

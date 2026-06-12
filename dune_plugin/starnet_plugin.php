@@ -75,6 +75,10 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         $this->set_plugin_cookies($plugin_cookies);
 
+        if (is_r22_or_higher()) {
+            ini_set('memory_limit', safe_get_value($plugin_cookies,PARAM_COOKIE_MEMORY_LIMIT, '256M'));
+        }
+
         User_Input_Handler_Registry::get_instance()->register_handler(new Starnet_Entry_Handler($this));
 
         $this->iptv = new Starnet_Tv($this);

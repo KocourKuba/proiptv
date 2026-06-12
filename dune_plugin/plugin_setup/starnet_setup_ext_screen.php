@@ -95,6 +95,14 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
         Control_Factory::add_image_button($defs, $this, PARAM_COOKIE_ENABLE_DEBUG,
             TR::t('setup_debug'), SwitchOnOff::translate($debug_state), SwitchOnOff::to_image($debug_state));
 
+        //////////////////////////////////////
+        // Plugin memory
+        $plugin_memory = safe_get_value($plugin_cookies,PARAM_COOKIE_MEMORY_LIMIT, '256M');
+        hd_debug_print(PARAM_COOKIE_MEMORY_LIMIT . ": $plugin_memory", true);
+        $plugin_memory_ops_translated = array('256M' => '256M', '384M' => '384M', '512M' => '512M', '1024M' => '1024M');
+        Control_Factory::add_combobox($defs, $this, PARAM_COOKIE_MEMORY_LIMIT, TR::t('setup_plugin_memory'),
+            $plugin_memory, $plugin_memory_ops_translated, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+
         return $defs;
     }
 
@@ -174,6 +182,15 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
                 set_debug_log($debug);
                 hd_debug_print('Debug logging: ' . var_export($debug, true));
                 break;
+
+            case PARAM_COOKIE_MEMORY_LIMIT:
+                $plugin_memory = safe_get_value($plugin_cookies,PARAM_COOKIE_MEMORY_LIMIT, '256M');
+                if ($plugin_memory == $user_input->{$control_id}) break;
+
+                $plugin_cookies->{PARAM_COOKIE_MEMORY_LIMIT} = $user_input->{$control_id};
+                $actions[] = Action_Factory::show_title_dialog(TR::t('warning'), TR::t('setup_reboot_required'));
+                $actions[] = Action_Factory::restart();
+                return Action_Factory::composite($actions);
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies), $post_action);

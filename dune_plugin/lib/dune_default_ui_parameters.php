@@ -53,10 +53,6 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     {
         HD::load_firmware_features();
 
-        if (is_r22_or_higher()) {
-            ini_set('memory_limit', '384M');
-        }
-
         $this->plugin_info = get_plugin_manifest_info();
     }
 

@@ -279,6 +279,7 @@ setup_sleep_time_step = Manual sleep timer step (min)
 setup_sleep_time_power = Turn off type
 setup_top_left = Top left corner
 setup_top_right = Top right corner
+setup_plugin_memory = Plugin memory limit
 
 setup_channels_src_reset_playlist = Reset playlist settings
 setup_channels_src_edit_playlists = Select or Add Playlist
