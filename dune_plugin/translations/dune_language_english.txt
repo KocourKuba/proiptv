@@ -393,6 +393,7 @@ tv_screen_zoom_make_taller = Make taller
 tv_screen_zoom_cut_edges = Cut edges
 tv_screen_zoom_full_enlarge = Full enlarge
 tv_screen_zoom_full_stretch = Full stretch
+tv_screen_group_info__1 = Group:|%s
 tv_screen_group_info__2 = Group:|%s||Channels:|%s
 tv_screen_group_info__3 = Group:|%s||Channels (Hidden):|%s (%s)
 tv_screen_group_info__4 = Group:|%s||Channels (Hidden):|%s (%s)||Hidden groups:|%s

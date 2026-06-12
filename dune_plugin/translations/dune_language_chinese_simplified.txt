@@ -393,6 +393,7 @@ tv_screen_zoom_make_taller = 纵向拉伸
 tv_screen_zoom_cut_edges = 裁剪边缘
 tv_screen_zoom_full_enlarge = 全屏放大
 tv_screen_zoom_full_stretch = 全屏拉伸
+tv_screen_group_info__1 = 分组:|%s
 tv_screen_group_info__2 = 分组:|%s||频道数:|%s
 tv_screen_group_info__3 = 分组:|%s||频道数 (已隐藏):|%s (%s)
 tv_screen_group_info__4 = 分组:|%s||频道数 (已隐藏):|%s(%s)||隐藏群:|%s

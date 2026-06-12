@@ -263,6 +263,7 @@ const PARAM_NEWUI_ICONS_IN_ROW = 'icons_in_row';
 const PARAM_NEWUI_SHOW_CHANNEL_CAPTION = 'show_channel_caption';
 const PARAM_NEWUI_SHOW_CHANNEL_COUNT = 'show_channel_count';
 const PARAM_NEWUI_SHOW_CONTINUES = 'show_continues';
+const PARAM_SHOW_CLASSIC_CHANNEL_COUNT = 'show_classic_channel_count';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
 const PARAM_PLAYLIST_CACHE_TIME_IPTV = 'playlist_cache_time_iptv';
 const PARAM_PLAYLIST_CACHE_TIME_VOD = 'playlist_cache_time_vod';

@@ -393,6 +393,7 @@ tv_screen_zoom_make_taller = Увеличение высоты
 tv_screen_zoom_cut_edges = Обрезка краев
 tv_screen_zoom_full_enlarge = Полный экран
 tv_screen_zoom_full_stretch = Растяжение на весь экран
+tv_screen_group_info__1 = Категория:|%s
 tv_screen_group_info__2 = Категория:|%s||Каналов:|%s
 tv_screen_group_info__3 = Категория:|%s||Каналов (Скрыто):|%s (%s)
 tv_screen_group_info__4 = Категория:|%s||Каналов (Скрыто):|%s (%s)||Скрыто групп:|%s

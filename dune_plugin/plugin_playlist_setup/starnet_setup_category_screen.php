@@ -118,6 +118,12 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
         Control_Factory::add_image_button($defs, $this, PARAM_SHOW_ADULT,
             TR::t('setup_show_adult'), SwitchOnOff::translate($show_adult), SwitchOnOff::to_image($show_adult));
 
+        //////////////////////////////////////
+        // Show channel count
+        $show_count = $this->plugin->get_setting(PARAM_SHOW_CLASSIC_CHANNEL_COUNT, SwitchOnOff::on);
+        Control_Factory::add_image_button($defs, $this, PARAM_SHOW_CLASSIC_CHANNEL_COUNT,
+            TR::t('setup_show_channel_count'), SwitchOnOff::translate($show_count), SwitchOnOff::to_image($show_count));
+
         return $defs;
     }
 
@@ -150,6 +156,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
             case PARAM_SHOW_VOD:
             case PARAM_SHOW_ADULT:
             case PARAM_PICONS_DELAY_LOAD:
+            case PARAM_SHOW_CLASSIC_CHANNEL_COUNT:
                 $this->force_parent_reload = true;
                 $this->plugin->toggle_setting($control_id);
                 $this->plugin->update_ui_settings();

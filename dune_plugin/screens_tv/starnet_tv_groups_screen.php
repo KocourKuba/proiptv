@@ -494,6 +494,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             return array();
         }
 
+        $show_count = $this->plugin->get_bool_setting(PARAM_SHOW_CLASSIC_CHANNEL_COUNT, SwitchOnOff::on);
         $is_vod_playlist = $this->plugin->is_vod_playlist();
         $ordinary_items = array();
         if (!$is_vod_playlist) {
@@ -502,14 +503,18 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             foreach ($all_groups as $group_row) {
                 if (!$show_adult && $group_row[COLUMN_ADULT] !== 0) continue;
 
-                $channel_rows = $this->plugin->get_all_channels_count($group_row[COLUMN_GROUP_ID]);
-                $enabled_value = safe_get_value($channel_rows, array(0, 'disabled'), -1);
-                $enabled_cnt = safe_get_value($channel_rows, array(0, 'count'), 0);
-                if ($enabled_value === -1 || $enabled_cnt === 0) continue;
-
-                $disabled = safe_get_value($channel_rows, array(1, 'count'), 0);
                 $caption = str_replace('|', '¦', $group_row[COLUMN_TITLE]);
-                $detailed_info = TR::t('tv_screen_group_info__3', $caption, $enabled_cnt, $disabled);
+                if ($show_count) {
+                    $channel_rows = $this->plugin->get_all_channels_count($group_row[COLUMN_GROUP_ID]);
+                    $enabled_value = safe_get_value($channel_rows, array(0, 'disabled'), -1);
+                    $enabled_cnt = safe_get_value($channel_rows, array(0, 'count'), 0);
+                    if ($enabled_value === -1 || $enabled_cnt === 0) continue;
+
+                    $disabled = safe_get_value($channel_rows, array(1, 'count'), 0);
+                    $detailed_info = TR::t('tv_screen_group_info__3', $caption, $enabled_cnt, $disabled);
+                } else {
+                    $detailed_info = TR::t('tv_screen_group_info__1', $caption);
+                }
 
                 $ordinary_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_WHITE, $detailed_info);
             }
@@ -533,7 +538,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     $disabled_groups = $this->plugin->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
 
                     $caption = TR::t('plugin_all_channels');
-                    $detailed_info = TR::t('tv_screen_group_info__4', $caption, $enabled, $disabled, $disabled_groups);
+                    if ($show_count) {
+                        $detailed_info = TR::t('tv_screen_group_info__4', $caption, $enabled, $disabled, $disabled_groups);
+                    } else {
+                        $detailed_info = TR::t('tv_screen_group_info__1', $caption);
+                    }
                     $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_SKYBLUE, $detailed_info);
                     break;
 
@@ -545,7 +554,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     if (!$channels_cnt) break;
 
                     $caption = $fav_id === TV_FAV_COMMON_GROUP_ID ? TR::t('plugin_common_favorites') : TR::t('plugin_favorites');
-                    $detailed_info = TR::t('tv_screen_group_info__2', $caption, $channels_cnt);
+                    if ($show_count) {
+                        $detailed_info = TR::t('tv_screen_group_info__2', $caption, $channels_cnt);
+                    } else {
+                        $detailed_info = TR::t('tv_screen_group_info__1', $caption);
+                    }
                     $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_GOLD, $detailed_info);
                     break;
 
@@ -556,7 +569,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     if (!$channels_cnt) break;
 
                     $caption = TR::t('plugin_history');
-                    $detailed_info = TR::t('tv_screen_group_info__2', $caption, $channels_cnt);
+                    if ($show_count) {
+                        $detailed_info = TR::t('tv_screen_group_info__2', $caption, $channels_cnt);
+                    } else {
+                        $detailed_info = TR::t('tv_screen_group_info__1', $caption);
+                    }
                     $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_TURQUOISE, $detailed_info);
                     break;
 
