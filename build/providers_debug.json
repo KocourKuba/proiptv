@@ -1837,7 +1837,9 @@
         "domains": {
           "team.ga": "team.ga",
           "tvtm.one": "tvtm.one",
-          "rus.tvtm.one": "rus.tvtm.one"
+          "rus.tvtm.one": "rus.tvtm.one",
+          "hls.gd": "hls.gd",
+          "rus.hls.gd": "rus.hls.gd"
         },
         "epg_presets": [
           {
