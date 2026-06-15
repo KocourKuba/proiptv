@@ -249,7 +249,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case ACTION_ITEMS_EDIT:
-                return $this->plugin->do_edit_list_screen(static::ID, $user_input->action_edit, $parent_media_url);
+                return $this->plugin->do_edit_list_screen(static::ID, $user_input, $parent_media_url);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items[] = $this->plugin->create_menu_item($this,

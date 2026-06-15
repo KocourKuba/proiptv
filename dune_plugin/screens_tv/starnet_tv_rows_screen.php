@@ -329,7 +329,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 return $reload_action;
 
             case ACTION_ITEMS_EDIT:
-                return $this->plugin->do_edit_list_screen(static::ID, $user_input->action_edit, $media_url);
+                return $this->plugin->do_edit_list_screen(static::ID, $user_input, $media_url);
 
             case ACTION_PLUGIN_SETTINGS:
                 return $this->plugin->show_protect_settings_dialog($this,

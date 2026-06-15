@@ -634,6 +634,7 @@ class Action_Factory
      */
     public static function invalidate_all_folders($plugin_cookies, $media_urls = null, $post_action = null)
     {
+        hd_debug_print(null, true);
         $media_urls = is_array($media_urls) ? $media_urls : array();
         $post_action = self::invalidate_epfs_folders($plugin_cookies, $post_action);
         return self::invalidate_folders($media_urls, $post_action, true);
@@ -649,6 +650,7 @@ class Action_Factory
     public static function invalidate_epfs_folders($plugin_cookies, $post_action = null)
     {
         if (Starnet_Epfs_Handler::$enabled) {
+            hd_debug_print(null, true);
             $post_action = self::invalidate_folders(array(Starnet_Epfs_Handler::$epf_id), $post_action);
         }
 

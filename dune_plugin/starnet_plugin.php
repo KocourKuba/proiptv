@@ -56,6 +56,7 @@ require_once 'screens_tv/starnet_tv_channel_list_screen.php';
 require_once 'screens_tv/starnet_tv_favorites_screen.php';
 require_once 'screens_tv/starnet_tv_history_screen.php';
 require_once 'screens_tv/starnet_edit_hidden_list_screen.php';
+require_once 'screens_tv/starnet_edit_group_list_screen.php';
 
 require_once 'screens_common/starnet_folder_screen.php';
 require_once 'screens_common/starnet_edit_playlists_screen.php';
@@ -115,6 +116,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Edit_Xmltv_List_Screen($this));
         $this->create_screen(new Starnet_Edit_Providers_List_Screen($this));
         $this->create_screen(new Starnet_Edit_Hidden_List_Screen($this));
+        $this->create_screen(new Starnet_Edit_Group_List_Screen($this));
 
         Starnet_Epfs_Handler::init($this, $plugin_cookies);
 

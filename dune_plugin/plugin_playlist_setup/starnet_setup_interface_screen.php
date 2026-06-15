@@ -129,11 +129,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                $ret_action = null;
-                if ($this->force_parent_reload) {
-                    $ret_action = ACTION_RELOAD;
-                }
-                return self::make_return_action($parent_media_url, $ret_action);
+                return self::make_return_action($parent_media_url, $this->force_parent_reload ? ACTION_RELOAD : ACTION_EMPTY);
 
             case self::CONTROL_EDIT_CATEGORY_SCREEN: // show category settings dialog
                 return Action_Factory::open_folder(

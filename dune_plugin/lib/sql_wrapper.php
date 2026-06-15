@@ -252,7 +252,7 @@ class Sql_Wrapper
     {
         $str = "";
         foreach ($arr as $col => $type) {
-            $str .= "$col = " . self::sql_quote($type) . ",";
+            $str .= "$col=" . self::sql_quote($type) . ",";
         }
         return rtrim($str, ",");
     }

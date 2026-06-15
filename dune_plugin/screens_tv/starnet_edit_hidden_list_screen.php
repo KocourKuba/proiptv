@@ -140,9 +140,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $items[] = self::add_item(
                     $channel_row[COLUMN_CHANNEL_ID],
                     $channel_row[COLUMN_TITLE],
-                    false,
-                    safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH),
-                    null
+                    safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH)
                 );
             }
         }
@@ -155,9 +153,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $items[] = self::add_item(
                     $group_row[COLUMN_GROUP_ID],
                     $group_row[COLUMN_TITLE],
-                    false,
-                    safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON),
-                    null
+                    safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON)
                 );
             }
         }
@@ -186,26 +182,19 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
 
         return array(
-            $this->plugin->get_screen_view('list_1x11_info'),
-            $this->plugin->get_screen_view('list_2x11_small_info'),
-            $this->plugin->get_screen_view('list_3x11_no_info'),
+            $this->plugin->get_screen_view('list_1x11_info')
         );
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// protected methods
 
-    protected static function add_item($id, $title, $starred, $icon_file, $detailed_info)
+    protected static function add_item($id, $title, $icon_file)
     {
         return array(
             PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'id' => $id)),
             PluginRegularFolderItem::caption => $title,
-            PluginRegularFolderItem::view_item_params => array(
-                ViewItemParams::item_sticker => ($starred ? Control_Factory::create_sticker(get_image_path('star_small.png'), -55, -2) : null),
-                ViewItemParams::icon_path => $icon_file,
-                ViewItemParams::item_detailed_info => $detailed_info,
-                ViewItemParams::item_detailed_icon_path => $icon_file,
-            ),
+            PluginRegularFolderItem::view_item_params => array(ViewItemParams::icon_path => $icon_file),
         );
     }
 }

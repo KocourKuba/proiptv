@@ -54,16 +54,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
 
-        if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
-            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP, TR::t('top'));
-            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM, TR::t('bottom'));
-        } else {
-            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
-            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
-        }
+        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_EDIT_PLAYLIST_SETTINGS, TR::t('setup_playlist'));
+        $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_SETTINGS, TR::t('entry_setup'));
 
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_INFO, TR::t('plugin_info'));
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
@@ -145,115 +139,17 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
                 return Action_Factory::show_title_dialog(TR::t('err_load_any'), $has_error);
 
-            case ACTION_ITEM_TOGGLE_MOVE:
-                $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
-                $actions = $this->do_get_action_map($plugin_cookies);
-                return Action_Factory::change_behaviour($actions);
-
-            case ACTION_ITEM_UP:
-                $this->force_parent_reload = true;
-                $min_sel = $this->get_visible_groups_count();
-                $sel_ndx--;
-                if ($sel_ndx < $min_sel) {
-                    return null;
-                }
-
-                hd_debug_print("min_sel: $min_sel sel_idx: $sel_ndx");
-                $this->plugin->arrange_groups_order_rows($selected_media_url->group_id, Ordered_Array::UP);
-                break;
-
-            case ACTION_ITEM_DOWN:
-                $max_sel = $this->get_visible_groups_count(true) - 1;
-                ++$sel_ndx;
-                if ($sel_ndx > $max_sel) {
-                    return null;
-                }
-
-                $this->force_parent_reload = true;
-                $this->plugin->arrange_groups_order_rows($selected_media_url->group_id, Ordered_Array::DOWN);
-                break;
-
-            case ACTION_ITEM_TOP:
-                $min_sel = $this->get_visible_groups_count();
-                if ($sel_ndx === $min_sel) {
-                    return null;
-                }
-
-                $this->force_parent_reload = true;
-                $sel_ndx = $min_sel;
-                hd_debug_print("min_sel: $min_sel sel_idx: $sel_ndx");
-                $this->plugin->arrange_groups_order_rows($selected_media_url->group_id, Ordered_Array::TOP);
-                break;
-
-            case ACTION_ITEM_BOTTOM:
-                $max_sel = $this->get_visible_groups_count(true) - 1;
-                if ($sel_ndx === $max_sel) {
-                    return null;
-                }
-
-                $this->force_parent_reload = true;
-                $sel_ndx = $max_sel;
-                $this->plugin->arrange_groups_order_rows($selected_media_url->group_id, Ordered_Array::BOTTOM);
-                break;
-
             case ACTION_ITEM_DELETE:
-                // hide group
                 $this->force_parent_reload = true;
                 $group_id = safe_get_value($selected_media_url, COLUMN_GROUP_ID);
-                if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID || $group_id === TV_HISTORY_GROUP_ID) {
-                    return User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR);
-                }
-
-                $this->plugin->set_groups_visible($group_id, false);
-                break;
-
-            case ACTION_ITEMS_SORT:
-                $this->force_parent_reload = true;
-                $this->plugin->sort_groups_order();
-                break;
-
-            case ACTION_RESET_ITEMS_SORT:
-                if (!isset($user_input->{ACTION_RESET_TYPE})) {
+                if ($group_id !== TV_CHANGED_CHANNELS_GROUP_ID && $group_id !== TV_HISTORY_GROUP_ID) {
                     return null;
                 }
 
-                switch ($user_input->{ACTION_RESET_TYPE}) {
-                    case ACTION_SORT_CHANNELS:
-                        $this->plugin->sort_channels_order($selected_media_url->group_id, true);
-                        break;
-
-                    case ACTION_SORT_GROUPS:
-                        $this->plugin->sort_groups_order(true);
-                        break;
-
-                    case ACTION_SORT_ALL:
-                        $this->plugin->sort_groups_order(true);
-                        foreach ($this->plugin->get_groups_by_order() as $row) {
-                            $this->plugin->sort_channels_order($row[COLUMN_GROUP_ID], true);
-                        }
-                        break;
-
-                    default:
-                        return null;
-                }
-
-                $this->force_parent_reload = true;
-                break;
+                return User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR);
 
             case ACTION_ITEMS_EDIT:
-                $post_action = null;
-                if (isset($user_input->{ACTION_ITEMS_EDIT}) && $user_input->{ACTION_ITEMS_EDIT} === Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST) {
-                    $active_key = $this->plugin->get_active_playlist_id();
-                    if ($this->plugin->is_playlist_entry_exist($active_key)) {
-                        $post_action = User_Input_Handler_Registry::create_screen_action(Starnet_Edit_Playlists_Screen::ID,
-                            ACTION_INVALIDATE,
-                            null,
-                            array('playlist_id' => $active_key)
-                        );
-                    }
-                }
-
-                return $this->plugin->do_edit_list_screen(static::ID, $user_input->action_edit, $selected_media_url, $post_action);
+                return $this->plugin->do_edit_list_screen(static::ID, $user_input, $selected_media_url);
 
             case ACTION_SHOW_SEARCH_DLG:
                 return $this->plugin->new_search($this, $plugin_cookies);
@@ -294,13 +190,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
                     $menu_items = $this->plugin->epg_engine_menu($this);
-                } else if (isset($user_input->{ACTION_SORT_POPUP})) {
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_groups'));
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_groups_sort'),
-                        null, array(ACTION_RESET_TYPE => ACTION_SORT_GROUPS));
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_all_sort'),
-                        null, array(ACTION_RESET_TYPE => ACTION_SORT_ALL));
-                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 } else {
                     $refresh_menu = $this->plugin->refresh_playlist_menu($this);
                     $refresh_menu[] = $this->plugin->create_menu_item($this,
@@ -341,15 +230,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     return $post_action;
                 }
                 break;
-
-            case ACTION_SORT_POPUP:
-                hd_debug_print('Start event popup menu for playlist', true);
-                return User_Input_Handler_Registry::create_action(
-                    $this,
-                    GUI_EVENT_KEY_POPUP_MENU,
-                    null,
-                    array(ACTION_SORT_POPUP => true)
-                );
 
             case ACTION_CHANGE_GROUP_ICON:
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
@@ -499,17 +379,15 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
         $is_vod_playlist = $this->plugin->is_vod_playlist();
         $ordinary_items = array();
         if (!$is_vod_playlist) {
-            $all_groups = $this->plugin->get_groups_by_order($show_adult);
+            $all_groups = $this->plugin->get_groups_channels_count($show_adult);
             foreach ($all_groups as $group_row) {
                 $caption = str_replace('|', '¦', $group_row[COLUMN_TITLE]);
                 if ($show_count) {
-                    $channel_rows = $this->plugin->get_all_channels_count($group_row[COLUMN_GROUP_ID]);
-                    $enabled_value = safe_get_value($channel_rows, array(0, 'disabled'), -1);
-                    $enabled_cnt = safe_get_value($channel_rows, array(0, 'count'), 0);
-                    if ($enabled_value != 0 || $enabled_cnt === 0) continue;
+                    $enabled = safe_get_value($group_row, 'enabled', 0);
+                    if ($enabled === 0) continue;
 
-                    $disabled = safe_get_value($channel_rows, array(1, 'count'), 0);
-                    $detailed_info = TR::t('tv_screen_group_info__3', $caption, $enabled_cnt, $disabled);
+                    $disabled = safe_get_value($group_row, 'disabled', 0);
+                    $detailed_info = TR::t('tv_screen_group_info__3', $caption, $enabled, $disabled);
                 } else {
                     $detailed_info = TR::t('tv_screen_group_info__1', $caption);
                 }
@@ -530,13 +408,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 case TV_ALL_CHANNELS_GROUP_ID:
                     if (!$this->plugin->get_bool_setting(PARAM_SHOW_ALL)) break;
 
-                    $channel_rows = $this->plugin->get_all_channels_count($group_row[COLUMN_GROUP_ID]);
-                    $enabled = safe_get_value($channel_rows, array(0, 'count'), 0);
-                    $disabled = safe_get_value($channel_rows, array(1, 'count'), 0);
-                    $disabled_groups = $this->plugin->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
-
                     $caption = TR::t('plugin_all_channels');
                     if ($show_count) {
+                        $row = $this->plugin->get_all_channels_count($show_adult);
+                        $enabled = safe_get_value($row, 'enabled', 0);
+                        $disabled = safe_get_value($row, 'disabled', 0);
+                        $disabled_groups = $this->plugin->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
                         $detailed_info = TR::t('tv_screen_group_info__4', $caption, $enabled, $disabled, $disabled_groups);
                     } else {
                         $detailed_info = TR::t('tv_screen_group_info__1', $caption);
@@ -654,57 +531,5 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 ViewItemParams::item_detailed_info => $item_detailed_info,
             )
         );
-    }
-
-    private function get_visible_groups_count($include_all = false)
-    {
-        $visible = 0;
-        $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
-        foreach ($this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ALL, COLUMN_GROUP_ID) as $group_id) {
-            if ($this->plugin->is_vod_playlist() && $group_id !== VOD_GROUP_ID) continue;
-
-            switch ($group_id) {
-                case TV_ALL_CHANNELS_GROUP_ID:
-                    if ($this->plugin->get_bool_setting(PARAM_SHOW_ALL)) {
-                        ++$visible;
-                    }
-                    break;
-
-                case TV_FAV_GROUP_ID:
-                    if ($this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) {
-                        $channels_cnt = $this->plugin->get_channels_by_order_cnt($this->plugin->get_fav_id(), $show_adult);
-                        if ($channels_cnt) {
-                            ++$visible;
-                        }
-                    }
-                    break;
-
-                case TV_HISTORY_GROUP_ID:
-                    if ($this->plugin->get_bool_setting(PARAM_SHOW_HISTORY)) {
-                        $channels_cnt = $this->plugin->get_tv_history_count();
-                        if ($channels_cnt) {
-                            ++$visible;
-                        }
-                    }
-                    break;
-
-                case TV_CHANGED_CHANNELS_GROUP_ID:
-                    if ($this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS)) {
-                        $has_changes = $this->plugin->get_changed_channels_count(PARAM_CHANGED);
-                        if ($has_changes) {
-                            ++$visible;
-                        }
-                    }
-                    break;
-
-                case VOD_GROUP_ID:
-                    if ($this->plugin->is_vod_enabled() && $this->plugin->get_bool_setting(PARAM_SHOW_VOD)) {
-                        ++$visible;
-                    }
-                    break;
-            }
-        }
-
-        return $visible + ($include_all ? $this->plugin->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_ENABLED) : 0);
     }
 }

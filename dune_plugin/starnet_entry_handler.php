@@ -116,7 +116,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_PLAYLIST_SCREEN:
                 $this->plugin->init_plugin();
-                return $this->plugin->show_protect_settings_dialog($this, $this->open_playlist_screen($plugin_cookies));
+                return $this->plugin->show_protect_settings_dialog($this, $this->open_playlist_screen());
 
             case self::ACTION_CALL_XMLTV_SOURCES_SCREEN:
                 $this->plugin->init_plugin();
@@ -235,7 +235,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     return Action_Factory::show_title_dialog(
                         TR::t('err_load_playlist'),
                         Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST),
-                        $this->open_playlist_screen($plugin_cookies)
+                        $this->open_playlist_screen()
                     );
                 }
                 $actions[] = Action_Factory::refresh_entry_points();
@@ -274,7 +274,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                         $this->plugin->init_plugin(true);
                         if ($this->plugin->get_all_playlists_count() === 0) {
-                            return $this->open_playlist_screen($plugin_cookies);
+                            return $this->open_playlist_screen();
                         }
 
                         $show_vod_icon = SwitchOnOff::to_bool($plugin_cookies->{PARAM_SHOW_VOD_ICON});
@@ -297,7 +297,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             return Action_Factory::show_title_dialog(
                                 TR::t('err_load_playlist'),
                                 Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST),
-                                $this->open_playlist_screen($plugin_cookies)
+                                $this->open_playlist_screen()
                             );
                         }
                         Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
@@ -367,10 +367,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
     }
 
     /**
-     * @param $plugin_cookies
      * @return array
      */
-    private function open_playlist_screen($plugin_cookies)
+    private function open_playlist_screen()
     {
         $media_url = Starnet_Edit_Playlists_Screen::make_callback_media_url_str(Starnet_Entry_Handler::ID,
             array(
@@ -381,7 +380,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
             )
         );
 
-        $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
         $actions[] = Action_Factory::open_folder($media_url, TR::t('setup_channels_src_edit_playlists'));
         return Action_Factory::composite($actions);
     }
@@ -402,7 +400,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
         $this->plugin->init_plugin(true);
         if ($this->plugin->get_all_playlists_count() === 0) {
             hd_debug_print('No playlists found. Open playlists page');
-            return $this->open_playlist_screen($plugin_cookies);
+            return $this->open_playlist_screen();
         }
 
         if (!$this->plugin->load_channels($plugin_cookies)) {

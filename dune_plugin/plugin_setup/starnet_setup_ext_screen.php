@@ -189,7 +189,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
 
                 $plugin_cookies->{PARAM_COOKIE_MEMORY_LIMIT} = $user_input->{$control_id};
                 $actions[] = Action_Factory::show_title_dialog(TR::t('warning'), TR::t('setup_reboot_required'));
-                $actions[] = Action_Factory::restart();
+                $actions[] = Action_Factory::restart(true);
                 return Action_Factory::composite($actions);
         }
 

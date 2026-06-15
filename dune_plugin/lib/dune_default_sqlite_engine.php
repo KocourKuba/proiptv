@@ -433,10 +433,11 @@ class Dune_Default_Sqlite_Engine
 
         $q_name = Sql_Wrapper::sql_quote($name);
         $q_value = Sql_Wrapper::sql_quote($value);
+        $q_playlist_id = Sql_Wrapper::sql_quote($playlist_id);
         $query = sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES (%s,%s,%s);', self::PLAYLIST_PARAMETERS_TABLE,
-            COLUMN_PLAYLIST_ID, COLUMN_NAME, COLUMN_VALUE, $playlist_id, $q_name, $q_value);
+            COLUMN_PLAYLIST_ID, COLUMN_NAME, COLUMN_VALUE, $q_playlist_id, $q_name, $q_value);
         $query .= sprintf('UPDATE %s SET %s=%s WHERE %s=%s AND %s=%s;', self::PLAYLIST_PARAMETERS_TABLE,
-            COLUMN_VALUE, $q_value, COLUMN_PLAYLIST_ID, $playlist_id, COLUMN_NAME, $q_name);
+            COLUMN_VALUE, $q_value, COLUMN_PLAYLIST_ID, $q_playlist_id, COLUMN_NAME, $q_name);
         $this->sql_params->exec_transaction($query);
     }
 
@@ -1187,9 +1188,9 @@ class Dune_Default_Sqlite_Engine
         }
 
         hd_debug_print(null, true);
-        $where = ($disabled === PARAM_ALL) ? "" : COLUMN_DISABLED . '=' . $disabled;
+        $where = ($disabled === PARAM_ALL) ? '' : COLUMN_DISABLED . '=' . $disabled;
         $and = empty($where) ? '' : 'AND';
-        $where = $type === PARAM_ALL ? '' : "$where $and " . COLUMN_SPECIAL . "=" . $type;
+        $where = $type === PARAM_ALL ? '' : sprintf("%s %s %s=%d", $where, $and, COLUMN_SPECIAL, $type);
         $query = sprintf('SELECT * FROM %s WHERE %s ORDER by ROWID;', self::get_table_full_name(GROUPS_INFO), $where);
         $rows = $this->sql_playlist->fetch_array($query);
         if ($column !== null) {
@@ -1655,22 +1656,49 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
-     * @param string|null $group_id
+     * @param $include_adult
      * @return array
      */
-    public function get_all_channels_count($group_id)
+    public function get_groups_channels_count($include_adult)
     {
-        if ($group_id === TV_ALL_CHANNELS_GROUP_ID) {
-            $where = sprintf('%s IN (SELECT %s FROM %s WHERE %s=%d)',
-                COLUMN_GROUP_ID, COLUMN_GROUP_ID, self::get_table_full_name(GROUPS_INFO), COLUMN_SPECIAL, FALSE);
+        if ($include_adult) {
+            $adult = sprintf('%s<>%d', COLUMN_ADULT, -1);
         } else {
-            $q_group_id = Sql_Wrapper::sql_quote($group_id);
-            $where = sprintf("%s=%s", COLUMN_GROUP_ID, $q_group_id);
+            $adult = sprintf('%s=%d', COLUMN_ADULT, FALSE);
         }
 
-        $query = sprintf('SELECT %s, COUNT(*) as count FROM %s WHERE %s GROUP BY %s;',
-            COLUMN_DISABLED, self::get_table_full_name(CHANNELS_INFO), $where, COLUMN_DISABLED);
+        $ch_where = sprintf('SELECT COUNT(*) FROM %s WHERE %s=ord.%s AND %s AND %s',
+            self::get_table_full_name(CHANNELS_INFO), COLUMN_GROUP_ID, COLUMN_GROUP_ID, $adult, COLUMN_DISABLED);
+
+        $query = sprintf('SELECT %s, %s, %s, (%s=%d) AS enabled, (%s=%d) AS disabled
+                                    FROM %s AS ord
+                                    INNER JOIN %s USING(%s) WHERE %s ORDER BY ord.ROWID;',
+        COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, $ch_where, FALSE, $ch_where, TRUE,
+            self::get_table_full_name(GROUPS_ORDER), self::get_table_full_name(GROUPS_INFO), COLUMN_GROUP_ID, $adult);
+
         return $this->sql_playlist->fetch_array($query);
+    }
+
+    /**
+     * @param $include_adult
+     * @return array
+     */
+    public function get_all_channels_count($include_adult)
+    {
+        if ($include_adult) {
+            $adult = sprintf('%s<>%d', COLUMN_ADULT, -1);
+        } else {
+            $adult = sprintf('%s=%d', COLUMN_ADULT, FALSE);
+        }
+
+        $ch_where = sprintf('SELECT COUNT(*) FROM %s WHERE %s=groups.%s AND %s AND %s',
+            self::get_table_full_name(CHANNELS_INFO), COLUMN_GROUP_ID, COLUMN_GROUP_ID, $adult, COLUMN_DISABLED);
+
+        $query = sprintf('SELECT SUM(ch_enabled) AS enabled, SUM(ch_disabled) AS disabled FROM (
+                                SELECT (%s=%d) AS ch_enabled, (%s=%d) AS ch_disabled FROM %s AS groups WHERE %s=%d AND %s);',
+            $ch_where, FALSE, $ch_where, TRUE, self::get_table_full_name(GROUPS_INFO), COLUMN_SPECIAL, FALSE, $adult);
+
+        return $this->sql_playlist->query_value($query, true);
     }
 
     /**
@@ -2053,9 +2081,9 @@ class Dune_Default_Sqlite_Engine
         }
 
         if ($include_adult) {
-            $where = sprintf('%s<>%d', COLUMN_ADULT, -1);
+            $where = sprintf('ch.%s<>%d', COLUMN_ADULT, -1);
         } else {
-            $where = sprintf('%s=%d', COLUMN_ADULT, FALSE);
+            $where = sprintf('ch.%s=%d', COLUMN_ADULT, FALSE);
         }
         if ($include_hidden) {
             $query = sprintf('SELECT ord.%s, ch.*, pl.*, pl.ROWID as ch_number
@@ -2087,9 +2115,9 @@ class Dune_Default_Sqlite_Engine
         }
 
         if ($include_adult) {
-            $where = sprintf('%s<>%d', COLUMN_ADULT, -1);
+            $where = sprintf('ch.%s<>%d', COLUMN_ADULT, -1);
         } else {
-            $where = sprintf('%s=%d', COLUMN_ADULT, FALSE);
+            $where = sprintf('ch.%s=%d', COLUMN_ADULT, FALSE);
         }
 
         if ($include_hidden) {

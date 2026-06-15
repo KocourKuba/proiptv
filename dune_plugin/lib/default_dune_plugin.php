@@ -1243,12 +1243,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             hd_debug_print('Update changed info for channels', true);
             $query = '';
             foreach ($changed_channels as $changed_channel) {
-                $q_channel_id = Sql_Wrapper::sql_quote($changed_channel[COLUMN_CHANNEL_ID]);
-                $q_title = Sql_Wrapper::sql_quote($changed_channel[COLUMN_TITLE]);
-                $q_group_id = Sql_Wrapper::sql_quote($changed_channel[COLUMN_GROUP_ID]);
-                $q_adult = Sql_Wrapper::sql_quote($changed_channel[COLUMN_ADULT]);
-                $query .= sprintf('UPDATE %s SET %s=%s,%s=%s,%s=%s WHERE %s=%;', $channel_info_table,
-                    COLUMN_TITLE, $q_title, COLUMN_GROUP_ID, $q_group_id, COLUMN_ADULT, $q_adult, COLUMN_CHANNEL_ID, $q_channel_id);
+                $query .= sprintf('UPDATE %s SET %s=%s,%s=%s,%s=%d WHERE %s=%s;', $channel_info_table,
+                    COLUMN_TITLE, Sql_Wrapper::sql_quote($changed_channel[COLUMN_TITLE]),
+                    COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($changed_channel[COLUMN_GROUP_ID]),
+                    COLUMN_ADULT, $changed_channel[COLUMN_ADULT],
+                    COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($changed_channel[COLUMN_CHANNEL_ID]));
             }
             $this->sql_playlist->exec_transaction($query);
         }
@@ -1700,8 +1699,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function get_provider($playlist_id, $request_token = false)
     {
-        hd_debug_print(null, true);
-
         if ($playlist_id === $this->get_active_playlist_id() && $this->active_provider !== null) {
             return $this->get_active_provider();
         }
@@ -2558,10 +2555,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $fav_id = $this->get_fav_id();
         $menu_items = array();
         if ($group_id !== null) {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
-            $menu_items[] = $this->create_menu_item($handler, ACTION_SORT_POPUP, TR::t('sort_popup_menu'), "sort.png");
-            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-
             if (!$is_classic) {
                 if ($group_id === $fav_id && $this->get_order_count($fav_id)) {
                     $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
@@ -2573,12 +2566,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), "brush.png");
             }
 
-            $menu_items = array_merge($menu_items, $this->edit_hidden_menu($handler, $group_id));
-            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-        }
+            if ($is_classic) {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
+            }
 
-        if ($is_classic) {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
+            $menu_items = array_merge($menu_items, $this->edit_hidden_menu($handler, $group_id));
             $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
         }
 
@@ -2594,12 +2586,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             TR::t('setup_edit_xmltv_list'),
             "epg.png",
             array(CONTROL_ACTION_EDIT => Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST));
-
-        $menu_items[] = $this->create_menu_item($handler,
-            ACTION_EDIT_PLAYLIST_SETTINGS,
-            TR::t('setup_playlist'),
-            "playlist_settings.png");
-        $menu_items[] = $this->create_menu_item($handler, ACTION_PLUGIN_SETTINGS, TR::t('entry_setup'), "settings.png");
 
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
         if (!is_null($provider)) {
@@ -2627,12 +2613,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         if ($groups) {
-            if (!self::is_special_group_id($group_id)) {
-                $menu_items[] = $this->create_menu_item($handler,
-                    ACTION_ITEM_DELETE,
-                    TR::t('tv_screen_hide_group'),
-                    "hide.png");
-            }
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_ITEMS_EDIT,
+                TR::t('arrange_groups'),
+                "move.png",
+                array(CONTROL_ACTION_EDIT => Starnet_Edit_Group_List_Screen::PARAM_EDIT_GROUPS));
 
             $cnt = $this->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
             hd_debug_print("Disabled groups: $cnt", true);
@@ -2699,13 +2684,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     /**
      * @param string $source_screen_id
-     * @param string $action_edit
+     * @param object $user_input
      * @param MediaURL|null $media_url
-     * @param array|null $post_action
      * @return array|null
      */
-    public function do_edit_list_screen($source_screen_id, $action_edit, $media_url = null, $post_action = null)
+    public function do_edit_list_screen($source_screen_id, $user_input, $media_url)
     {
+        $post_action = null;
+        $action_edit = $user_input->{CONTROL_ACTION_EDIT};
         switch ($action_edit) {
             case Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_CHANNELS:
                 $params = array(
@@ -2732,7 +2718,32 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $title = TR::t('tv_screen_edit_hidden_group');
                 break;
 
+            case Starnet_Edit_Group_List_Screen::PARAM_EDIT_GROUPS:
+                $params = array(
+                    PARAM_END_ACTION => ACTION_INVALIDATE,
+                    PARAM_CANCEL_ACTION => ACTION_EMPTY,
+                    Starnet_Edit_Group_List_Screen::PARAM_EDIT_LIST => $action_edit
+                );
+
+                if (!is_null($media_url) && isset($media_url->group_id)) {
+                    $params['group_id'] = $media_url->group_id;
+                }
+                $new_media_url_str = Starnet_Edit_Group_List_Screen::make_callback_media_url_str($source_screen_id, $params);
+                $title = TR::t('tv_screen_arrange_groups');
+                break;
+
             case Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST:
+                if (isset($user_input->{ACTION_ITEMS_EDIT}) && $user_input->{ACTION_ITEMS_EDIT} === Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST) {
+                    $active_key = $this->get_active_playlist_id();
+                    if ($this->is_playlist_entry_exist($active_key)) {
+                        $post_action = User_Input_Handler_Registry::create_screen_action(Starnet_Edit_Playlists_Screen::ID,
+                            ACTION_INVALIDATE,
+                            null,
+                            array('playlist_id' => $active_key)
+                        );
+                    }
+                }
+
                 $new_media_url_str = Starnet_Edit_Playlists_Screen::make_callback_media_url_str($source_screen_id,
                     array(
                         PARAM_END_ACTION => ACTION_RELOAD,

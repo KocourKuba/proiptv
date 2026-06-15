@@ -2913,7 +2913,7 @@ function color_palette_patch(&$error)
         }
     }
 
-    $reboot_action = Action_Factory::restart();
+    $reboot_action = Action_Factory::restart(true);
     $xml = $dom->saveXML();
     // cut <?xml> tag
     $patched_skin_config = substr($xml, strpos($xml, '?>') + 2);
@@ -2994,7 +2994,7 @@ function color_palette_restore()
         break;
     }
 
-    return Action_Factory::show_main_screen(Action_Factory::restart());
+    return Action_Factory::show_main_screen(Action_Factory::restart(true));
 }
 
 function recursive_copy($source, $target)
