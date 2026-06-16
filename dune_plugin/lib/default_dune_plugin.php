@@ -2587,6 +2587,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             "epg.png",
             array(CONTROL_ACTION_EDIT => Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST));
 
+        if (!$is_classic) {
+            $menu_items[] = $this->create_menu_item($handler, ACTION_EDIT_PLAYLIST_SETTINGS, TR::t('setup_playlist'), "playlist_settings.png");
+            $menu_items[] = $this->create_menu_item($handler, ACTION_PLUGIN_SETTINGS, TR::t('entry_setup'), "settings.png");
+        }
+
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
         if (!is_null($provider)) {
             $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
