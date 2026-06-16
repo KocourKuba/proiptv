@@ -1308,7 +1308,7 @@
       "name": "Sharavoz",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
-      "provider_url": "https://sh365.org/",
+      "provider_url": "https://sharavoz.tv/",
       "api_commands": {
         "get_playlist": "http://{DOMAIN_ID}/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
         "get_vod": "http://app.media24.cc/json/c"

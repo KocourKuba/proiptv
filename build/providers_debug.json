@@ -1551,7 +1551,7 @@
       "name": "Sharavoz",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
-      "provider_url": "https://sh365.org/",
+      "provider_url": "https://sharavoz.tv/",
       "vod_api_url": "http://app.media24.cc",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
