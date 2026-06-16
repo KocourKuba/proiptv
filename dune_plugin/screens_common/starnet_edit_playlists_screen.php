@@ -73,6 +73,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_SETTINGS, TR::t('edit'));
 
         $action_return = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
         $actions[GUI_EVENT_KEY_RETURN] = $action_return;
         $actions[GUI_EVENT_KEY_TOP_MENU] = $action_return;
         $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
@@ -87,7 +88,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        $selected_id = isset($user_input->selected_media_url) ? MediaURL::decode($user_input->selected_media_url)->id : 0;
+        $selected_id = isset($user_input->selected_media_url) ? MediaURL::decode($user_input->selected_media_url)->{COLUMN_PLAYLIST_ID} : 0;
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $sel_idx = $user_input->sel_ndx;
@@ -116,6 +117,14 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 $this->plugin->set_active_playlist_id($selected_id);
                 $this->force_parent_reload = true;
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+
+            case GUI_EVENT_KEY_INFO:
+                if (!$this->plugin->is_playlist_entry_exist($selected_id)) {
+                    hd_debug_print("Unknown playlist: $selected_id", true);
+                    return null;
+                }
+
+                return $this->show_playlist_info($selected_id);
 
             case ACTION_PLUGIN_SETTINGS:
                 if (!$this->plugin->is_playlist_entry_exist($selected_id)) {
@@ -305,6 +314,47 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// protected methods
 
+    protected function show_playlist_info($playlist_id)
+    {
+        hd_debug_print(null, true);
+        $playlist_params = $this->plugin->get_playlist_parameters($playlist_id);
+        $type = safe_get_value($playlist_params, PARAM_TYPE);
+        $vod_url = '';
+        if ($type === PARAM_PROVIDER) {
+            $provider = $this->plugin->get_provider($playlist_id);
+            if (is_null($provider)) {
+                return null;
+            }
+            Control_Factory::format_smart_label($defs, TR::load('provider_url'), $provider->getProviderUrl());
+
+            if ($provider->GetPlaylistIptvId() === DIRECT_FILE_PLAYLIST_ID) {
+                $playlist_url = $provider->GetPlaylistIptvUrl();
+            } else {
+                $provider->request_provider_token();
+                $playlist_url = $provider->replace_macros($provider->getApiCommand(API_COMMAND_GET_PLAYLIST));
+            }
+
+            if ($provider->hasApiCommand(API_COMMAND_GET_VOD)) {
+                $vod_url = $provider->replace_macros($provider->GetPlaylistVodUrl());
+            }
+        } else {
+            $playlist_url = safe_get_value($playlist_params, PARAM_URI);
+        }
+
+        if (!empty($playlist_url)) {
+            Control_Factory::format_smart_label($defs, TR::load('playlist_url'), htmlspecialchars($playlist_url));
+        }
+
+        if (!empty($vod_url)) {
+            Control_Factory::format_smart_label($defs, TR::load('vod_url'), htmlspecialchars($vod_url));
+        }
+
+        Control_Factory::add_vgap($defs, 15);
+        Control_Factory::add_ok_button($defs, true);
+
+        return Action_Factory::show_dialog($defs, TR::t('playlist_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
+    }
+
     protected function edit_provider_dlg($user_input)
     {
         $playlist_id = safe_get_value($user_input, COLUMN_PLAYLIST_ID, '');
@@ -463,7 +513,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $used = array();
         foreach ($this->plugin->get_playlists_shortcuts() as $row) {
             $used[] = $row[PARAM_SHORTCUT];
-            if ($row[COLUMN_PLAYLIST_ID] === $selected_media_url->id) {
+            if ($row[COLUMN_PLAYLIST_ID] === $selected_media_url->{COLUMN_PLAYLIST_ID}) {
                 $selected = $row[PARAM_SHORTCUT];
             }
         }
@@ -964,7 +1014,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             }
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'id' => $playlist_id)),
+                PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, COLUMN_PLAYLIST_ID => $playlist_id)),
                 PluginRegularFolderItem::caption => $title,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::item_sticker => ($starred ? $sel_sticker : ($missed ? $del_sticker : null)),
