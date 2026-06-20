@@ -371,8 +371,8 @@ class vod_sharavoz extends vod_standard
         if (isset($movieData['stream_id'])) {
             $id = $movieData['stream_id'] . "_" . xtream_codes_api::VOD;
             $icon = (string)safe_get_value($movieData, 'stream_icon');
-        } else if (isset($movieData['series_id'])) {
-            $id = safe_get_value($movieData, 'series_id') . "_" . xtream_codes_api::SERIES;
+        } else if (isset($movieData[COLUMN_SERIES_ID])) {
+            $id = safe_get_value($movieData, COLUMN_SERIES_ID) . "_" . xtream_codes_api::SERIES;
             $icon = safe_get_value($movieData, 'cover');
         }
 

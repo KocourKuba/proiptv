@@ -234,13 +234,13 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public static function make_vod_media_url_str($movie_id, $season_id = null, $episode_id = null)
     {
-        $arr = array(PARAM_SCREEN_ID => static::ID, 'movie_id' => $movie_id);
+        $arr = array(PARAM_SCREEN_ID => static::ID, PARAM_MOVIE_ID => $movie_id);
         if (!empty($season_id)) {
             $arr['season_id'] = $season_id;
         }
 
         if (!empty($episode_id)) {
-            $arr['episode_id'] = $episode_id;
+            $arr[PARAM_EPISODE_ID] = $episode_id;
         }
 
         return MediaURL::encode($arr);

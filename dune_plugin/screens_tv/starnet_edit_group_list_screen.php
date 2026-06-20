@@ -33,6 +33,8 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
     const PARAM_EDIT_LIST = 'edit_list';
     const PARAM_EDIT_GROUPS = 'edit_groups';
 
+    protected $selected_items = array();
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -59,7 +61,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
         $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
-        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+        $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
 
         return $actions;
     }
@@ -87,6 +89,10 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
 
                 return Action_Factory::close_and_run($target_action);
 
+            case GUI_EVENT_KEY_ENTER:
+                $this->selected_items[$selected_media_url->{PARAM_GROUP_ID}] = true;
+                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
+
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
                 $actions = $this->do_get_action_map($plugin_cookies);
@@ -98,7 +104,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                     return null;
                 }
 
-                $this->plugin->arrange_groups_order_rows($selected_media_url->group_id, Ordered_Array::UP);
+                $this->plugin->arrange_groups_order_rows($selected_media_url->{PARAM_GROUP_ID}, Ordered_Array::UP);
                 break;
 
             case ACTION_ITEM_DOWN:
@@ -108,7 +114,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                 }
 
                 hd_debug_print("sel_idx: $sel_ndx");
-                $this->plugin->arrange_groups_order_rows($selected_media_url->group_id, Ordered_Array::DOWN);
+                $this->plugin->arrange_groups_order_rows($selected_media_url->{PARAM_GROUP_ID}, Ordered_Array::DOWN);
                 break;
 
             case ACTION_ITEM_TOP:
@@ -118,7 +124,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
 
                 $this->force_parent_reload = true;
                 $sel_ndx = 0;
-                $this->plugin->arrange_groups_order_rows($selected_media_url->group_id, Ordered_Array::TOP);
+                $this->plugin->arrange_groups_order_rows($selected_media_url->{PARAM_GROUP_ID}, Ordered_Array::TOP);
                 break;
 
             case ACTION_ITEM_BOTTOM:
@@ -129,13 +135,13 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
 
                 $this->force_parent_reload = true;
                 $sel_ndx = $max_sel;
-                $this->plugin->arrange_groups_order_rows($selected_media_url->group_id, Ordered_Array::BOTTOM);
+                $this->plugin->arrange_groups_order_rows($selected_media_url->{PARAM_GROUP_ID}, Ordered_Array::BOTTOM);
                 break;
 
             case ACTION_ITEM_DELETE:
                 // hide group
                 $this->force_parent_reload = true;
-                $this->plugin->set_groups_visible($selected_media_url->group_id, false);
+                $this->plugin->set_groups_visible($selected_media_url->{PARAM_GROUP_ID}, false);
                 break;
 
             case ACTION_ITEMS_SORT:
@@ -150,7 +156,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
 
                 switch ($user_input->{ACTION_RESET_TYPE}) {
                     case ACTION_SORT_CHANNELS:
-                        $this->plugin->sort_channels_order($selected_media_url->group_id, true);
+                        $this->plugin->sort_channels_order($selected_media_url->{PARAM_GROUP_ID}, true);
                         break;
 
                     case ACTION_SORT_GROUPS:
@@ -218,7 +224,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
             $icon = get_cached_image(safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON));
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
-                    array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_row[COLUMN_GROUP_ID])),
+                    array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => $group_row[COLUMN_GROUP_ID])),
                 PluginRegularFolderItem::caption => $group_row[COLUMN_TITLE],
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::item_caption_color => DEF_LABEL_TEXT_COLOR_WHITE,

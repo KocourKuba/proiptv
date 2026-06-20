@@ -40,7 +40,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public static function make_group_media_url_str($group_id)
     {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_id));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => $group_id));
     }
 
     /**
@@ -135,7 +135,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEM_DELETE:
                 $this->force_parent_reload = true;
-                $this->plugin->erase_tv_history($selected_media_url->channel_id);
+                $this->plugin->erase_tv_history($selected_media_url->{PARAM_CHANNEL_ID});
                 if ($this->plugin->get_tv_history_count() === 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
@@ -154,17 +154,17 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ADD_FAV:
                 $this->force_parent_reload = true;
-                $is_favorite = $this->plugin->is_channel_in_order($fav_id, $selected_media_url->channel_id);
+                $is_favorite = $this->plugin->is_channel_in_order($fav_id, $selected_media_url->{PARAM_CHANNEL_ID});
                 $opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
-                $this->plugin->change_channels_order($fav_id, $selected_media_url->channel_id, $is_favorite);
+                $this->plugin->change_channels_order($fav_id, $selected_media_url->{PARAM_CHANNEL_ID}, $is_favorite);
 
                 $actions[] = Action_Factory::show_title_dialog(TR::t('information'), $message);
-                $actions[] = $this->plugin->change_tv_favorites($opt_type, $selected_media_url->channel_id);
+                $actions[] = $this->plugin->change_tv_favorites($opt_type, $selected_media_url->{PARAM_CHANNEL_ID});
                 return Action_Factory::composite($actions);
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->jump_to_channel($selected_media_url->channel_id);
+                return $this->plugin->jump_to_channel($selected_media_url->{PARAM_CHANNEL_ID});
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();
@@ -228,9 +228,9 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
                     array(
-                        'channel_id' => $channel_id,
-                        'group_id' => TV_HISTORY_GROUP_ID,
-                        'archive_tm' => $channel_ts
+                        PARAM_CHANNEL_ID => $channel_id,
+                        PARAM_GROUP_ID => TV_HISTORY_GROUP_ID,
+                        PARAM_ARCHIVE_TM => $channel_ts
                     )
                 ),
                 PluginRegularFolderItem::caption => $title,

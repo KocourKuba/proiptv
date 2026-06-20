@@ -112,7 +112,6 @@ const CONTROL_PLAYLIST_IPTV = 'iptv';
 const CONTROL_PLAYLIST_VOD = 'vod';
 const CONTROL_DETECT_ID = 'detect_id';
 const CONTROL_EDIT_TYPE = 'playlist_type';
-
 # Special groups ID
 const TV_ALL_CHANNELS_GROUP_ID = '##all_channels##';
 const TV_ALL_CHANNELS_GROUP_CAPTION = 'plugin_all_channels';
@@ -219,6 +218,8 @@ const COLUMN_EXTERNAL_PLAYER = 'external_player';
 const COLUMN_ALIAS = 'alias';
 const COLUMN_PICON_URL = 'picon_url';
 const COLUMN_PICON_HASH = 'picon_hash';
+const COLUMN_ARCHIVE_TM = 'archive_tm';
+const COLUMN_VIEW_PROGRESS = 'view_progress';
 
 const PARAM_COOKIE_ENABLE_DEBUG = 'enable_debug';
 const PARAM_COOKIE_LAST_TV_SEARCH = 'last_tv_search';
@@ -356,6 +357,16 @@ const PARAM_PLAYLIST_IPTV_ID = 'playlist_id';
 const PARAM_PLAYLIST_VOD_ID = 'playlist_vod_id';
 const PARAM_USE_COMMON_FAV = 'use_common_fav';
 const PARAM_CLEAR_PLAYLIST = 'clear_playlist';
+const PARAM_GROUP_ID = 'group_id';
+const PARAM_CHANNEL_ID = 'channel_id';
+const PARAM_MOVIE_ID = 'movie_id';
+const PARAM_SERIES_ID = 'series_id';
+const PARAM_EPISODE_ID = 'episode_id';
+const PARAM_ARCHIVE_TM = 'archive_tm';
+const PARAM_PROGRAM_TITLE = 'program_title';
+const PARAM_VIEW_PROGRESS = 'view_progress';
+const PARAM_IS_FAVOURITES = 'is_favorites';
+const PARAM_IS_FAVORITE = 'is_favorite';
 
 const PARAM_GROUP_ORDINARY = 0;
 const PARAM_GROUP_SPECIAL = 1;

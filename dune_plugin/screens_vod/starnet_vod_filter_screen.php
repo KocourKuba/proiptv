@@ -161,7 +161,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public static function make_group_media_url_str($category = '')
     {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => VOD_FILTER_GROUP_ID, 'category' => $category));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => VOD_FILTER_GROUP_ID, 'category' => $category));
     }
 
     ///////////////////////////////////////////////////////////////////////

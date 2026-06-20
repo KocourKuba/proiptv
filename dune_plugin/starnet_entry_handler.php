@@ -484,11 +484,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
         $mode = safe_get_value($user_input, 'resume_mode');
         $resume_owner = strpos(safe_get_value($user_input, 'plugin_name', ''), get_plugin_name()) !== false;
         $media_url = MediaURL::decode();
-        $media_url->is_favorite = safe_get_value($user_input, 'resume_tv_is_favorite');
-        $media_url->group_id = safe_get_value($user_input, 'resume_tv_group');
-        $media_url->channel_id = safe_get_value($user_input, 'resume_tv_channel');
+        $media_url->{PARAM_IS_FAVORITE} = safe_get_value($user_input, 'resume_tv_is_favorite');
+        $media_url->{PARAM_GROUP_ID} = safe_get_value($user_input, 'resume_tv_group');
+        $media_url->{PARAM_CHANNEL_ID} = safe_get_value($user_input, 'resume_tv_channel');
         $archive_tm = safe_get_value($user_input, 'resume_tv_archive_tm');
-        $media_url->archive_tm = ((time() - $archive_tm) < 259200) ? $archive_tm : -1;
+        $media_url->{PARAM_ARCHIVE_TM} = ((time() - $archive_tm) < 259200) ? $archive_tm : -1;
         // Check if previous state is TV playback
         if (!$is_playlist_changed && $resume_owner && $mode === "PLUGIN_TV_PLAYBACK") {
             hd_debug_print('Resumed media url: ' . $media_url);

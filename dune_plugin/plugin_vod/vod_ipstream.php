@@ -68,8 +68,8 @@ class vod_ipstream extends vod_standard
         foreach ($this->vod_items as $item) {
             if (isset($item['id'])) {
                 $id = (string)safe_get_value($item, 'id');
-            } else if (isset($item['series_id'])) {
-                $id = safe_get_value($item, 'series_id') . "_serial";
+            } else if (isset($item[COLUMN_SERIES_ID])) {
+                $id = safe_get_value($item, COLUMN_SERIES_ID) . "_serial";
             } else {
                 $id = Hashed_Array::hash($item['name']);
             }
@@ -371,8 +371,8 @@ class vod_ipstream extends vod_standard
         $name = safe_get_value($movieData, 'name');
         if (isset($movieData['id'])) {
             $id = (string)$movieData['id'];
-        } else if (isset($movieData['series_id'])) {
-            $id = $movieData['series_id'] . "_serial";
+        } else if (isset($movieData[COLUMN_SERIES_ID])) {
+            $id = $movieData[COLUMN_SERIES_ID] . "_serial";
         } else {
             $id = Hashed_Array::hash($name);
         }

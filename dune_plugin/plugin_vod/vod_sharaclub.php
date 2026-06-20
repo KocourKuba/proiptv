@@ -71,8 +71,8 @@ class vod_sharaclub extends vod_standard
             $id = '-1';
             if (isset($item['id'])) {
                 $id = (string)safe_get_value($item, 'id');
-            } else if (isset($item['series_id'])) {
-                $id = safe_get_value($item, 'series_id') . "_serial";
+            } else if (isset($item[COLUMN_SERIES_ID])) {
+                $id = safe_get_value($item, COLUMN_SERIES_ID) . "_serial";
             }
             if ($id !== $movie_id) {
                 continue;
@@ -381,8 +381,8 @@ class vod_sharaclub extends vod_standard
         $id = '-1';
         if (isset($movieData['id'])) {
             $id = (string)$movieData['id'];
-        } else if (isset($movieData['series_id'])) {
-            $id = $movieData['series_id'] . "_serial";
+        } else if (isset($movieData[COLUMN_SERIES_ID])) {
+            $id = $movieData[COLUMN_SERIES_ID] . "_serial";
         }
 
         $name = safe_get_value($movieData, 'name');

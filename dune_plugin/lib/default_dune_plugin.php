@@ -2114,11 +2114,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function tv_player_exec($media_url, $archive_ts = -1)
     {
-        if (!$this->get_channel_ext_player($media_url->channel_id)) {
+        if (!$this->get_channel_ext_player($media_url->{PARAM_CHANNEL_ID})) {
             return Action_Factory::tv_play($media_url);
         }
 
-        $channel_row = $this->get_channel_info($media_url->channel_id);
+        $channel_row = $this->get_channel_info($media_url->{PARAM_CHANNEL_ID});
         if (empty($channel_row)) {
             throw new Exception('Unknown channel');
         }
@@ -2705,8 +2705,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     Starnet_Edit_Hidden_List_Screen::PARAM_EDIT_LIST => $action_edit
                 );
 
-                if (!is_null($media_url) && isset($media_url->group_id)) {
-                    $params['group_id'] = $media_url->group_id;
+                if (!is_null($media_url) && isset($media_url->{PARAM_GROUP_ID})) {
+                    $params[PARAM_GROUP_ID] = $media_url->{PARAM_GROUP_ID};
                 }
                 $new_media_url_str = Starnet_Edit_Hidden_List_Screen::make_callback_media_url_str($source_screen_id, $params);
                 $title = TR::t('tv_screen_edit_hidden_channels');
@@ -2730,8 +2730,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     Starnet_Edit_Group_List_Screen::PARAM_EDIT_LIST => $action_edit
                 );
 
-                if (!is_null($media_url) && isset($media_url->group_id)) {
-                    $params['group_id'] = $media_url->group_id;
+                if (!is_null($media_url) && isset($media_url->{PARAM_GROUP_ID})) {
+                    $params['group_id'] = $media_url->{PARAM_GROUP_ID};
                 }
                 $new_media_url_str = Starnet_Edit_Group_List_Screen::make_callback_media_url_str($source_screen_id, $params);
                 $title = TR::t('tv_screen_arrange_groups');

@@ -41,7 +41,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public static function make_group_media_url_str($group_id)
     {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_id));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => $group_id));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -75,7 +75,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_D_BLUE] = $add_to_favorite;
         $actions[GUI_EVENT_KEY_DUNE] = $add_to_favorite;
 
-        if ((string)$media_url->group_id !== TV_ALL_CHANNELS_GROUP_ID && $this->plugin->get_order_count($media_url->group_id)) {
+        if ((string)$media_url->{PARAM_GROUP_ID} !== TV_ALL_CHANNELS_GROUP_ID && $this->plugin->get_order_count($media_url->{PARAM_GROUP_ID})) {
             $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
             if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP, TR::t('top'));
@@ -109,8 +109,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         $fav_id = $this->plugin->get_fav_id();
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $parent_group = $parent_media_url->group_id;
-        $channel_id = $selected_media_url->channel_id;
+        $parent_group = $parent_media_url->{PARAM_GROUP_ID};
+        $channel_id = $selected_media_url->{PARAM_CHANNEL_ID};
         $sel_ndx = $user_input->sel_ndx;
 
         switch ($user_input->control_id) {
@@ -395,10 +395,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
             $groups_order = array();
-            if ($media_url->group_id === TV_ALL_CHANNELS_GROUP_ID) {
+            if ($media_url->{PARAM_GROUP_ID} === TV_ALL_CHANNELS_GROUP_ID) {
                 $groups_order = $this->plugin->get_groups_by_order($show_adult);
             } else {
-                $group = $this->plugin->get_group($media_url->group_id, PARAM_GROUP_ORDINARY, $show_adult);
+                $group = $this->plugin->get_group($media_url->{PARAM_GROUP_ID}, PARAM_GROUP_ORDINARY, $show_adult);
                 if (!empty($group)) {
                     $groups_order[] = $group;
                 }
@@ -426,7 +426,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                     }
 
                     $items[] = array(
-                        PluginRegularFolderItem::media_url => MediaURL::encode(array('channel_id' => $channel_id, 'group_id' => $group_id)),
+                        PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_CHANNEL_ID => $channel_id, PARAM_GROUP_ID => $group_id)),
                         PluginRegularFolderItem::caption => $title,
                         PluginRegularFolderItem::starred => in_array($channel_id, $fav_ids),
                         PluginRegularFolderItem::view_item_params => array(

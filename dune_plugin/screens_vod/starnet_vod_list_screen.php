@@ -193,7 +193,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public static function make_group_media_url_str($movie_id)
     {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => VOD_LIST_GROUP_ID, 'movie_id' => VOD_LIST_GROUP_ID, 'episode_id' => $movie_id));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => VOD_LIST_GROUP_ID, PARAM_MOVIE_ID => VOD_LIST_GROUP_ID, PARAM_EPISODE_ID => $movie_id));
     }
 
     ///////////////////////////////////////////////////////////////////////

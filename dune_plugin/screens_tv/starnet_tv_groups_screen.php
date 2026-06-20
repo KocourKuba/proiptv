@@ -41,10 +41,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return $this->do_get_action_map($plugin_cookies);
+        return $this->do_get_action_map();
     }
 
-    protected function do_get_action_map(&$plugin_cookies)
+    protected function do_get_action_map()
     {
         hd_debug_print(null, true);
 
@@ -120,7 +120,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     return null;
                 }
                 $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
-                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($plugin_cookies), 1000);
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map(), 1000);
                 return Action_Factory::composite($actions);
 
             case EVENT_INDEXING_DONE:
@@ -130,7 +130,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_PLAY_FOLDER:
                 $has_error = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
                 if (empty($has_error)) {
-                    if ($selected_media_url->group_id !== VOD_GROUP_ID) {
+                    if ($selected_media_url->{PARAM_GROUP_ID} !== VOD_GROUP_ID) {
                         return Action_Factory::open_folder();
                     }
 
@@ -250,7 +250,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
             case self::ACTION_ICON_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
-                $group = $this->plugin->get_group($selected_media_url->group_id, PARAM_ALL);
+                $group = $this->plugin->get_group($selected_media_url->{PARAM_GROUP_ID}, PARAM_ALL);
                 if (is_null($group)) break;
 
                 $cached_image_name = $this->plugin->get_active_playlist_id() . '_' . $data->{PARAM_CAPTION};
@@ -260,8 +260,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_copy'));
                 }
 
-                hd_debug_print("Assign icon: $cached_image_name to group: $selected_media_url->group_id");
-                $this->plugin->set_group_icon($selected_media_url->group_id, $cached_image_name);
+                hd_debug_print("Assign icon: $cached_image_name to group: $selected_media_url->{PARAM_GROUP_ID}");
+                $this->plugin->set_group_icon($selected_media_url->{PARAM_GROUP_ID}, $cached_image_name);
                 return Action_Factory::refresh_entry_points($this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
 
             case ACTION_ITEMS_CLEAR:
@@ -287,8 +287,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case self::ACTION_RESET_ICON_DEFAULT:
-                hd_debug_print("Reset icon for group: $selected_media_url->group_id to default");
-                switch ($selected_media_url->group_id) {
+                hd_debug_print("Reset icon for group: " . $selected_media_url->{PARAM_GROUP_ID} . " to default");
+                switch ($selected_media_url->{PARAM_GROUP_ID}) {
                     case TV_ALL_CHANNELS_GROUP_ID:
                         $icon = TV_ALL_CHANNELS_GROUP_ICON;
                         break;
@@ -313,7 +313,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                         $icon = '';
                 }
 
-                $this->plugin->set_group_icon($selected_media_url->group_id, $icon);
+                $this->plugin->set_group_icon($selected_media_url->{PARAM_GROUP_ID}, $icon);
                 break;
 
             case ACTION_INFO_DLG:
@@ -340,7 +340,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 $actions[] = Action_Factory::refresh_entry_points();
                 $actions[] = Action_Factory::close_and_run();
                 $actions[] = Action_Factory::open_folder(static::ID, $this->plugin->get_plugin_title());
-                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($plugin_cookies));
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map());
                 return Action_Factory::composite($actions);
 
             case ACTION_RELOAD:

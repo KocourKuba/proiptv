@@ -83,7 +83,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_ITEM_DELETE:
                 if ($parent_media_url->{self::PARAM_EDIT_LIST} === self::PARAM_HIDDEN_CHANNELS) {
                     $this->plugin->set_channel_visible($selected_id, true);
-                    $force_return = $this->plugin->get_channels_count($parent_media_url->group_id, PARAM_DISABLED) === 0;
+                    $force_return = $this->plugin->get_channels_count($parent_media_url->{PARAM_GROUP_ID}, PARAM_DISABLED) === 0;
                     hd_debug_print("restore channel: $selected_id", true);
                 } else if ($parent_media_url->{self::PARAM_EDIT_LIST} === self::PARAM_HIDDEN_GROUPS) {
                     $this->plugin->set_groups_visible($selected_id, true);
@@ -105,9 +105,9 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 if ($parent_media_url->{self::PARAM_EDIT_LIST} === self::PARAM_HIDDEN_CHANNELS) {
-                    $channels_ids = $this->plugin->get_channels_ids($parent_media_url->group_id, PARAM_DISABLED);
+                    $channels_ids = $this->plugin->get_channels_ids($parent_media_url->{PARAM_GROUP_ID}, PARAM_DISABLED);
                     $this->plugin->set_channel_visible($channels_ids, true);
-                    $cnt = $this->plugin->get_channels_count($parent_media_url->group_id, PARAM_DISABLED);
+                    $cnt = $this->plugin->get_channels_count($parent_media_url->{PARAM_GROUP_ID}, PARAM_DISABLED);
                 } else {
                     $groups_ids = $this->plugin->get_groups(PARAM_GROUP_ORDINARY, PARAM_DISABLED, COLUMN_GROUP_ID);
                     $this->plugin->set_groups_visible($groups_ids, true);
@@ -133,7 +133,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $items = array();
         if ($media_url->{self::PARAM_EDIT_LIST} === self::PARAM_HIDDEN_CHANNELS) {
-            $channels_rows = $this->plugin->get_channels($media_url->group_id, PARAM_DISABLED, true);
+            $channels_rows = $this->plugin->get_channels($media_url->{PARAM_GROUP_ID}, PARAM_DISABLED, true);
             foreach ($channels_rows as $channel_row) {
                 if (empty($channel_row)) continue;
 

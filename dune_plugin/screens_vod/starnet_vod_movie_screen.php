@@ -90,7 +90,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
         $fav_ids = $this->plugin->get_channels_order(VOD_FAV_GROUP_ID);
         $movie_id = $movie->get_id();
         $right_button_caption = in_array($movie_id, $fav_ids) ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
-        $right_button_action = User_Input_Handler_Registry::create_action($this, PARAM_FAVORITES, null, array('movie_id' => $movie_id));
+        $right_button_action = User_Input_Handler_Registry::create_action($this, PARAM_FAVORITES, null, array(PARAM_MOVIE_ID => $movie_id));
 
         if ($movie->has_seasons()) {
             $screen_media_url = Starnet_Vod_Seasons_List_Screen::make_vod_media_url_str($movie_id);
@@ -133,7 +133,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
      */
     public static function make_vod_media_url_str($movie_id, $name = false, $poster_url = false, $info = false)
     {
-        $arr = array(PARAM_SCREEN_ID => static::ID, 'movie_id' => $movie_id);
+        $arr = array(PARAM_SCREEN_ID => static::ID, PARAM_MOVIE_ID => $movie_id);
         if ($name !== false) {
             $arr['name'] = $name;
         }

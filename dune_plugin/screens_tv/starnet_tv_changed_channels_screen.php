@@ -38,7 +38,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
      */
     public static function make_group_media_url_str($group_id)
     {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_id));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => $group_id));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -92,7 +92,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         }
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
+        $channel_id = MediaURL::decode($user_input->selected_media_url)->{PARAM_CHANNEL_ID};
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -217,7 +217,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
-                    array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => TV_CHANGED_CHANNELS_GROUP_ID)
+                    array(PARAM_CHANNEL_ID => $channel_row[COLUMN_CHANNEL_ID], PARAM_GROUP_ID => TV_CHANGED_CHANNELS_GROUP_ID)
                 ),
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::caption => $channel_row[COLUMN_TITLE],
@@ -235,7 +235,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
-                    array('channel_id' => $item[COLUMN_CHANNEL_ID], 'group_id' => TV_CHANGED_CHANNELS_GROUP_ID)
+                    array(PARAM_CHANNEL_ID => $item[COLUMN_CHANNEL_ID], PARAM_GROUP_ID => TV_CHANGED_CHANNELS_GROUP_ID)
                 ),
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::caption => $item[COLUMN_TITLE],

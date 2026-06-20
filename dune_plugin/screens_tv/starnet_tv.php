@@ -276,7 +276,7 @@ class Starnet_Tv implements User_Input_Handler
             $initial_group_id = null;
             $initial_is_favorite = 1;
         } else {
-            $initial_group_id = (string)$media_url->group_id;
+            $initial_group_id = (string)$media_url->{PARAM_GROUP_ID};
             $initial_is_favorite = 0;
         }
 
@@ -293,13 +293,13 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::favorites_supported => $show_fav,
             PluginTvInfo::favorites_icon_url => get_cached_image($fav_icon),
 
-            PluginTvInfo::initial_channel_id => (string)$media_url->channel_id,
+            PluginTvInfo::initial_channel_id => (string)$media_url->{PARAM_CHANNEL_ID},
             PluginTvInfo::initial_group_id => $initial_group_id,
 
             PluginTvInfo::initial_is_favorite => $initial_is_favorite,
             PluginTvInfo::favorite_channel_ids => $this->plugin->get_channels_order($fav_id),
 
-            PluginTvInfo::initial_archive_tm => isset($media_url->archive_tm) ? (int)$media_url->archive_tm : -1,
+            PluginTvInfo::initial_archive_tm => isset($media_url->{PARAM_ARCHIVE_TM}) ? (int)$media_url->{PARAM_ARCHIVE_TM} : -1,
 
             PluginTvInfo::epg_font_size => $epg_font_size ? PLUGIN_FONT_SMALL : PLUGIN_FONT_NORMAL,
 

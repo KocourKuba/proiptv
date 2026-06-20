@@ -129,7 +129,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public static function make_group_media_url_str($group_id)
     {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_id));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => $group_id));
     }
 
     /**
@@ -145,7 +145,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen
             if (empty($movie_info)) continue;
 
             hd_debug_print('history info: ' . json_format_unescaped($movie_info), true);
-            $movie_id = $movie_info['movie_id'];
+            $movie_id = $movie_info[COLUMN_MOVIE_ID];
             $movie = $this->plugin->vod->get_loaded_movie($movie_id);
             if (is_null($movie)) continue;
 

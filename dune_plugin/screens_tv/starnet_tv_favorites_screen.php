@@ -38,7 +38,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public static function make_group_media_url_str($group_id)
     {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_id, 'is_favorites' => true));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => $group_id, PARAM_IS_FAVOURITES => true));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -107,7 +107,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $sel_ndx = $user_input->sel_ndx;
-        $channel_id = $selected_media_url->channel_id;
+        $channel_id = $selected_media_url->{PARAM_CHANNEL_ID};
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -158,7 +158,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::show_popup_menu($menu_items);
 
             case ACTION_PLAY_ITEM:
-                if (!$this->plugin->is_channel_visible($selected_media_url->channel_id)) {
+                if (!$this->plugin->is_channel_visible($selected_media_url->{PARAM_CHANNEL_ID})) {
                     return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_channel_hidden'));
                 }
 
@@ -275,7 +275,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
-                    array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => TV_FAV_GROUP_ID)
+                    array(PARAM_CHANNEL_ID => $channel_row[COLUMN_CHANNEL_ID], PARAM_GROUP_ID => TV_FAV_GROUP_ID)
                 ),
                 PluginRegularFolderItem::caption => $channel_row[COLUMN_TITLE],
                 PluginRegularFolderItem::starred => false,

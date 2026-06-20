@@ -80,10 +80,10 @@ class Action_Factory
             $action[GuiAction::params] = array('selected_media_url' => $media_url);
         } else if (is_object($media_url)) {
             $action[GuiAction::data] = array(
-                PluginTvPlayActionData::initial_group_id => isset($media_url->group_id) ? $media_url->group_id : null,
-                PluginTvPlayActionData::initial_channel_id => isset($media_url->channel_id) ? $media_url->channel_id : null,
-                PluginTvPlayActionData::initial_is_favorite => isset($media_url->is_favorite) && $media_url->is_favorite,
-                PluginTvPlayActionData::initial_archive_tm => isset($media_url->archive_tm) ? (int)$media_url->archive_tm : -1,
+                PluginTvPlayActionData::initial_group_id => isset($media_url->{PARAM_GROUP_ID}) ? $media_url->{PARAM_GROUP_ID} : null,
+                PluginTvPlayActionData::initial_channel_id => isset($media_url->{PARAM_CHANNEL_ID}) ? $media_url->{PARAM_CHANNEL_ID} : null,
+                PluginTvPlayActionData::initial_is_favorite => isset($media_url->{PARAM_IS_FAVORITE}) && $media_url->{PARAM_IS_FAVORITE},
+                PluginTvPlayActionData::initial_archive_tm => isset($media_url->{PARAM_ARCHIVE_TM}) ? (int)$media_url->{PARAM_ARCHIVE_TM} : -1,
             );
         }
 
