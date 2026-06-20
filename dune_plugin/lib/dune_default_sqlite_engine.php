@@ -1441,7 +1441,7 @@ class Dune_Default_Sqlite_Engine
     public function is_channel_visible($channel_id)
     {
         $query = sprintf('SELECT %s FROM %s WHERE %s=%s;',
-            COLUMN_CHANNEL_ID, self::get_table_full_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($channel_id));
+            COLUMN_DISABLED, self::get_table_full_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($channel_id));
         return $this->sql_playlist->query_value($query) === 0;
     }
 
