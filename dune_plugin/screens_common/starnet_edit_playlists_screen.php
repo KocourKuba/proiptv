@@ -105,6 +105,11 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                     $target_action = User_Input_Handler_Registry::create_screen_action($source_window, $end_action);
                 }
 
+                if (safe_get_value($plugin_cookies, PARAM_COOKIE_PLAYLIST_FIRST, SwitchOnOff::off) === SwitchOnOff::on) {
+                    if ($this->plugin->get_bool_parameter(PARAM_ASK_EXIT)) {
+                        return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, ACTION_CONFIRM_EXIT_DLG_APPLY);
+                    }
+                }
                 return Action_Factory::close_and_run($target_action);
 
             case GUI_EVENT_KEY_ENTER:
@@ -116,6 +121,28 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
                 $this->plugin->set_active_playlist_id($selected_id);
                 $this->force_parent_reload = true;
+                if (safe_get_value($plugin_cookies, PARAM_COOKIE_PLAYLIST_FIRST, SwitchOnOff::off) === SwitchOnOff::on) {
+                    $this->force_parent_reload = false;
+                    $this->plugin->reset_channels();
+                    if (!$this->plugin->load_channels($plugin_cookies)) {
+                        $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+                        $actions[] = Action_Factory::open_folder(
+                            Starnet_Tv_Groups_Screen::ID,
+                            $this->plugin->get_plugin_title(),
+                            null,
+                            null,
+                            Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
+                        );
+                    } else {
+                        hd_debug_print('action: launch open', true);
+                        $actions[] = Action_Factory::refresh_entry_points();
+                        $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+                        $actions[] = Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
+                    }
+
+                    return Action_Factory::composite($actions);
+                }
+
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case GUI_EVENT_KEY_INFO:
@@ -296,6 +323,11 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 $this->force_parent_reload = true;
                 $this->plugin->set_playlist_shortcut($selected_id, $user_input->{LIST_IDX});
                 break;
+
+            case ACTION_CONFIRM_EXIT_DLG_APPLY:
+                $this->force_parent_reload = false;
+                hd_debug_print('Force parent reload', true);
+                return Action_Factory::invalidate_epfs_folders($plugin_cookies, Action_Factory::close_and_run());
 
             case ACTION_RELOAD:
                 $this->force_parent_reload = true;

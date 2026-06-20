@@ -2588,7 +2588,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             array(CONTROL_ACTION_EDIT => Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST));
 
         if (!$is_classic) {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_EDIT_PLAYLIST_SETTINGS, TR::t('setup_playlist'), "playlist_settings.png");
+            $menu_items[] = $this->create_menu_item($handler, ACTION_EDIT_PLAYLIST_SETTINGS, TR::t('setup_playlist_menu'), "playlist_settings.png");
             $menu_items[] = $this->create_menu_item($handler, ACTION_PLUGIN_SETTINGS, TR::t('entry_setup'), "settings.png");
         }
 
@@ -2744,7 +2744,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         $post_action = User_Input_Handler_Registry::create_screen_action(Starnet_Edit_Playlists_Screen::ID,
                             ACTION_INVALIDATE,
                             null,
-                            array('playlist_id' => $active_key)
+                            array(PARAM_PLAYLIST_ID => $active_key)
                         );
                     }
                 }

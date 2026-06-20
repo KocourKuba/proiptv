@@ -109,7 +109,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_init_database'));
                 }
                 return $this->plugin->show_protect_settings_dialog($this,
-                    Action_Factory::open_folder(Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID), TR::t('setup_playlist')));
+                    Action_Factory::open_folder(Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID), TR::t('setup_playlist'))
+                );
 
             case ACTION_PASSWORD_APPLY:
                 return $this->plugin->apply_protect_settings_dialog($user_input);
@@ -381,6 +382,14 @@ class Starnet_Entry_Handler implements User_Input_Handler
         );
 
         $actions[] = Action_Factory::open_folder($media_url, TR::t('setup_channels_src_edit_playlists'));
+
+        $current_playlist = $this->plugin->get_active_playlist_id() ? array(PARAM_PLAYLIST_ID => $this->plugin->get_active_playlist_id()) : null;
+        $actions[] = User_Input_Handler_Registry::create_screen_action(
+            Starnet_Edit_Playlists_Screen::ID,
+            ACTION_INVALIDATE,
+            null,
+            $current_playlist);
+
         return Action_Factory::composite($actions);
     }
 
@@ -417,7 +426,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         $auto_play = false;
         $mandatory_playback = (int)safe_get_value($user_input, PARAM_MANDATORY_PLAYBACK);
-        $auto_resume = safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_RESUME, SwitchOnOff::off);
+        $auto_resume = safe_get_value($plugin_cookies, PARAM_COOKIE_AUTO_RESUME, SwitchOnOff::off);
 
         if ($user_input->action_id === self::ACTION_LAUNCH) {
             $auto_play = safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_PLAY, SwitchOnOff::off);
@@ -425,7 +434,20 @@ class Starnet_Entry_Handler implements User_Input_Handler
             hd_debug_print("Auto play:        $auto_play");
 
             if ($mandatory_playback !== 1 && !SwitchOnOff::to_bool($auto_play)) {
+                $playlist_first = safe_get_value($plugin_cookies,PARAM_COOKIE_PLAYLIST_FIRST, SwitchOnOff::off);
                 hd_debug_print('action: launch open', true);
+                if ($playlist_first === SwitchOnOff::on) {
+
+                    $actions[] = Action_Factory::open_folder(
+                        Starnet_Edit_Playlists_Screen::ID,
+                        TR::t('setup_channels_src_choose_playlists'));
+
+                    $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Edit_Playlists_Screen::ID,
+                        ACTION_INVALIDATE,
+                        null,
+                        array(PARAM_PLAYLIST_ID => $this->plugin->get_active_playlist_id()));
+                    return Action_Factory::composite($actions);
+                }
                 return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
             }
         } else if ($user_input->action_id === self::ACTION_AUTO_RESUME) {

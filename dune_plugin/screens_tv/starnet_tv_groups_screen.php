@@ -33,7 +33,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
     const ACTION_RESET_ICON_DEFAULT = 'reset_icon_default';
     const ACTION_ICON_SELECTED = 'icon_selected';
-    const ACTION_CONFIRM_EXIT_DLG_APPLY = 'apply_dlg';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -65,6 +64,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_SETUP] = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_SETTINGS);
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, ACTION_INFO_DLG);
+        $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_EDIT,
+            null,
+            array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST, PARAM_PLAYLIST_ID => $this->plugin->get_active_playlist_id())
+        );
 
         if (!is_limited_apk()) {
             // this key used to fire event from background xmltv indexing script
@@ -97,13 +100,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                if ($this->plugin->get_bool_parameter(PARAM_ASK_EXIT)) {
-                    return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_EXIT_DLG_APPLY);
+                if (safe_get_value($plugin_cookies, PARAM_COOKIE_PLAYLIST_FIRST, SwitchOnOff::off) === SwitchOnOff::off
+                    && $this->plugin->get_bool_parameter(PARAM_ASK_EXIT)) {
+                    return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, ACTION_CONFIRM_EXIT_DLG_APPLY);
                 }
 
                 $this->force_parent_reload = false;
                 hd_debug_print('Force parent reload', true);
-                return User_Input_Handler_Registry::create_action($this, self::ACTION_CONFIRM_EXIT_DLG_APPLY);
+                return User_Input_Handler_Registry::create_action($this, ACTION_CONFIRM_EXIT_DLG_APPLY);
 
             case GUI_EVENT_TIMER:
                 $error_msg = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
@@ -176,7 +180,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_PASSWORD_APPLY:
                 return $this->plugin->apply_protect_settings_dialog($user_input);
 
-            case self::ACTION_CONFIRM_EXIT_DLG_APPLY:
+            case ACTION_CONFIRM_EXIT_DLG_APPLY:
                 $this->force_parent_reload = false;
                 hd_debug_print('Force parent reload', true);
                 return Action_Factory::invalidate_epfs_folders($plugin_cookies, Action_Factory::close_and_run());

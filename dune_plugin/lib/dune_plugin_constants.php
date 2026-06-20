@@ -102,6 +102,7 @@ const ACTION_FILE_PLAYLIST = 'play_list_file';
 const ACTION_SLEEP_TIMER = 'sleep_timer';
 const ACTION_SLEEP_TIMER_ADD = 'sleep_timer_add';
 const ACTION_SLEEP_TIMER_CLEAR = 'sleep_timer_clear';
+const ACTION_CONFIRM_EXIT_DLG_APPLY = 'confirm_apply_dlg';
 
 const CONTROL_ACTION_EDIT = 'action_edit';
 const CONTROL_EDIT_NAME = 'set_item_name';
@@ -225,6 +226,8 @@ const PARAM_COOKIE_AUTO_PLAY = 'auto_play';
 const PARAM_COOKIE_AUTO_RESUME = 'auto_resume';
 const PARAM_COOKIE_ENABLE_NEWUI = 'enable_newui';
 const PARAM_COOKIE_MEMORY_LIMIT = 'memory_limit';
+const PARAM_COOKIE_SHOW_TV = 'show_tv';
+const PARAM_COOKIE_PLAYLIST_FIRST = 'playlist_first';
 
 const PARAM_SCREEN_ID = 'screen_id';
 const PARAM_SOURCE_WINDOW_ID = 'source_window_id';
