@@ -73,7 +73,7 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // auto resume
-        $auto_resume = safe_get_value($plugin_cookies, PARAM_COOKIE_AUTO_RESUME, SwitchOnOff::on);
+        $auto_resume = safe_get_value($plugin_cookies, PARAM_COOKIE_AUTO_RESUME, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, PARAM_COOKIE_AUTO_RESUME,
             TR::t('setup_continue_play'), SwitchOnOff::translate($auto_resume), SwitchOnOff::to_image($auto_resume));
 
@@ -136,11 +136,11 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
                 return self::make_return_action($parent_media_url);
 
             case PARAM_COOKIE_SHOW_TV:
-            case PARAM_COOKIE_AUTO_RESUME:
                 toggle_cookie_param($plugin_cookies, $control_id, SwitchOnOff::on);
                 break;
 
             case PARAM_COOKIE_AUTO_PLAY:
+            case PARAM_COOKIE_AUTO_RESUME:
             case PARAM_COOKIE_PLAYLIST_FIRST:
                 toggle_cookie_param($plugin_cookies, $control_id, SwitchOnOff::off);
                 break;
