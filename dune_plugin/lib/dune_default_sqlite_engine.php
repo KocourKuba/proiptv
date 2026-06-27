@@ -41,8 +41,7 @@ class Dune_Default_Sqlite_Engine
     const CREATE_ORDERED_TABLE = "CREATE TABLE IF NOT EXISTS %s (%s TEXT PRIMARY KEY NOT NULL);";
 
     const CREATE_GROUPS_INFO_TABLE = "CREATE TABLE IF NOT EXISTS %s
-                                        (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                         group_id TEXT UNIQUE,
+                                        (group_id TEXT PRIMARY KEY NOT NULL,
                                          title TEXT DEFAULT '',
                                          icon TEXT DEFAULT '',
                                          adult INTEGER DEFAULT 0,
@@ -1152,8 +1151,7 @@ class Dune_Default_Sqlite_Engine
     public function clear_changed_channels()
     {
         $channels_info_table = self::get_table_full_name(CHANNELS_INFO);
-        $channels_info_table_s = self::get_table_name(CHANNELS_INFO);
-        $tmp_table = "{$channels_info_table}_tmp";
+        $tmp_table = $channels_info_table . '_tmp';
 
         $query = sprintf('DELETE FROM %s WHERE %s=%d;', $channels_info_table, COLUMN_CHANGED, -1);
         $query .= sprintf('UPDATE %s SET %s=%d WHERE %s=%d;', $channels_info_table, COLUMN_CHANGED, FALSE, COLUMN_CHANGED, TRUE);
@@ -1167,7 +1165,7 @@ class Dune_Default_Sqlite_Engine
             $tmp_table, $channels_info_table, $iptv_channels, COLUMN_CHANNEL_ID, $this->get_id_column());
 
         $query .= sprintf('DROP TABLE IF EXISTS %s;', $channels_info_table);
-        $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, $channels_info_table_s);
+        $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name(CHANNELS_INFO));
         $this->sql_playlist->exec_transaction($query);
     }
 
@@ -1282,11 +1280,12 @@ class Dune_Default_Sqlite_Engine
                     $query .= sprintf('INSERT OR IGNORE INTO %s (%s) SELECT %s FROM %s WHERE %s=%s;',
                         $group_table_name, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, $channels_info_table, COLUMN_GROUP_ID, $q_group_id);
                     $query .= sprintf('UPDATE %s SET %s=%d WHERE %s=%s;', $channels_info_table,
-                        COLUMN_CHANNEL_ID, FALSE, COLUMN_GROUP_ID, $q_group_id);
+                        COLUMN_DISABLED, FALSE, COLUMN_GROUP_ID, $q_group_id);
                 }
             }
         }
 
+        hd_debug_print($query);
         $this->sql_playlist->exec_transaction($query);
     }
 
@@ -1341,16 +1340,34 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_groups_by_order($include_adults = true)
     {
-        if ($include_adults) {
-            $query = sprintf('SELECT %s, %s, %s FROM %s INNER JOIN %s as ord USING(%s) ORDER BY ord.ROWID;',
-                COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON,
-                self::get_table_full_name(GROUPS_INFO), self::get_table_full_name(GROUPS_ORDER), COLUMN_GROUP_ID);
-        } else {
-            $query = sprintf('SELECT %s, %s, %s FROM %s INNER JOIN %s as ord USING(%s) WHERE %s=%d ORDER BY ord.ROWID;',
-                COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON,
-                self::get_table_full_name(GROUPS_INFO), self::get_table_full_name(GROUPS_ORDER), COLUMN_GROUP_ID, COLUMN_ADULT, FALSE);
+        $where = '';
+        if (!$include_adults) {
+            $where = sprintf('WHERE %s=%d', COLUMN_ADULT, FALSE);
         }
+
+        /** @noinspection Annotator */
+        $query = sprintf('SELECT %s, %s, %s FROM %s INNER JOIN %s as ord USING(%s) %s ORDER BY ord.ROWID;',
+            COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON,
+            self::get_table_full_name(GROUPS_INFO), self::get_table_full_name(GROUPS_ORDER), COLUMN_GROUP_ID, $where);
+
         return $this->sql_playlist->fetch_array($query);
+    }
+
+    /**
+     * @param bool $include_adults
+     * @return array
+     */
+    public function get_groups_ids_by_order($include_adults = true)
+    {
+        if ($include_adults) {
+            $query = sprintf('SELECT %s FROM %s as ord ORDER BY ord.ROWID;', COLUMN_GROUP_ID, self::get_table_full_name(GROUPS_ORDER));
+        } else {
+            $query = sprintf('SELECT %s FROM %s as ord INNER JOIN %s USING(%s) WHERE %s=%d ORDER BY ord.ROWID;',
+                COLUMN_GROUP_ID, self::get_table_full_name(GROUPS_ORDER), self::get_table_full_name(GROUPS_INFO),
+                COLUMN_GROUP_ID, COLUMN_ADULT, FALSE);
+        }
+
+        return $this->sql_playlist->fetch_array($query, COLUMN_GROUP_ID);
     }
 
     /**
@@ -1361,8 +1378,7 @@ class Dune_Default_Sqlite_Engine
     {
         $groups_info_table = self::get_table_full_name(GROUPS_INFO);
         $groups_order_table = self::get_table_full_name(GROUPS_ORDER);
-        $groups_order_table_s = self::get_table_name(GROUPS_ORDER);
-        $tmp_table = "{$groups_order_table}_tmp";
+        $tmp_table = $groups_order_table . '_tmp';
         $query = sprintf(self::CREATE_ORDERED_TABLE, $tmp_table, COLUMN_GROUP_ID);
 
         if ($reset) {
@@ -1374,7 +1390,7 @@ class Dune_Default_Sqlite_Engine
                 $tmp_table, COLUMN_GROUP_ID, COLUMN_GROUP_ID, $groups_info_table, COLUMN_DISABLED, FALSE, COLUMN_SPECIAL, FALSE, COLUMN_GROUP_ID);
         }
         $query .= sprintf('DROP TABLE IF EXISTS %s;', $groups_order_table);
-        $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, $groups_order_table_s);
+        $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name(GROUPS_ORDER));
 
         $this->sql_playlist->exec_transaction($query);
     }
@@ -1395,13 +1411,44 @@ class Dune_Default_Sqlite_Engine
     /**
      * Arrange groups
      *
-     * @param string $group_id
+     * @param string|array $group_id
      * @param int $direction
      * @return bool
      */
     public function arrange_groups_order_rows($group_id, $direction)
     {
+        if (is_array($group_id)) {
+            $res = false;
+            if ($direction === Ordered_Array::DOWN) {
+                $group_id = array_reverse($group_id);
+            }
+            foreach ($group_id as $id) {
+                $res |= $this->arrange_rows(GROUPS_ORDER, COLUMN_GROUP_ID, $id, $direction);
+            }
+            return $res;
+        }
         return $this->arrange_rows(GROUPS_ORDER, COLUMN_GROUP_ID, $group_id, $direction);
+    }
+
+    /**
+     * Arrange groups
+     *
+     * @param array $groups_id
+     * @return bool
+     */
+    public function store_groups_order_rows($groups_id)
+    {
+        $table_name = self::get_table_full_name(GROUPS_ORDER);
+        $tmp_table = $table_name . '_tmp';
+        $query = sprintf(self::CREATE_ORDERED_TABLE, $tmp_table, COLUMN_GROUP_ID);
+        foreach ($groups_id as $item) {
+            $query .= sprintf('INSERT INTO %s (%s) VALUES (%s);',
+                $tmp_table, COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($item));
+        }
+        $query .= sprintf('DROP TABLE IF EXISTS %s;', $table_name);
+        $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name(GROUPS_ORDER));
+
+        return $this->sql_playlist->exec_transaction($query);
     }
 
     /**
@@ -1511,7 +1558,6 @@ class Dune_Default_Sqlite_Engine
         $channels_info_table = self::get_table_full_name(CHANNELS_INFO);
         $group_table = self::get_table_full_name($group_id);
         $tmp_table = $group_table . "_tmp";
-        $alter_table_name = self::get_table_name($group_id);
         $q_group_id = Sql_Wrapper::sql_quote($group_id);
 
         $query = sprintf(self::CREATE_ORDERED_TABLE, $tmp_table, COLUMN_CHANNEL_ID);
@@ -1527,7 +1573,7 @@ class Dune_Default_Sqlite_Engine
                 COLUMN_GROUP_ID, $q_group_id, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, $group_table, COLUMN_TITLE);
         }
         $query .= sprintf('DROP TABLE IF EXISTS %s;', $group_table);
-        $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, $alter_table_name);
+        $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name($group_id));
 
         $this->sql_playlist->exec_transaction($query);
     }
@@ -2370,26 +2416,23 @@ class Dune_Default_Sqlite_Engine
     {
         if ($table === self::PLAYLISTS_TABLE) {
             $script = self::CREATE_PLAYLISTS_TABLE;
-            $table_name = $table;
-            $table_name_short = $table;
             $sql_wrapper = $this->sql_params;
         } else {
             $script = self::CREATE_ORDERED_TABLE;
-            $table_name = self::get_table_full_name($table);
-            $table_name_short = self::get_table_name($table);
             $sql_wrapper = $this->sql_playlist;
         }
+        $table_name = self::get_table_full_name($table);
 
         $q_item = Sql_Wrapper::sql_quote($item);
         $cur = '';
         $new = '';
         if ($direction === Ordered_Array::UP || $direction === Ordered_Array::DOWN) {
-            $sub_query = "SELECT ROWID AS cur FROM $table_name WHERE $column = $q_item";
-            if ($direction === Ordered_Array::UP) {
-                $query = "SELECT * FROM ((SELECT MAX(ROWID) AS new FROM $table_name WHERE ROWID < ($sub_query)) INNER JOIN ($sub_query));";
-            } else {
-                $query = "SELECT * FROM ((SELECT MIN(ROWID) AS new FROM $table_name WHERE ROWID > ($sub_query)) INNER JOIN ($sub_query));";
-            }
+            $sub_query = sprintf('SELECT ROWID AS cur FROM %s WHERE %s=%s', $table_name, $column, $q_item);
+            $min_max = $direction === Ordered_Array::UP ? 'MAX(ROWID)' : 'MIN(ROWID)';
+            $logic = sprintf($direction === Ordered_Array::UP ? 'ROWID < (%s)' : 'ROWID > (%s)', $sub_query);
+            $query = sprintf('SELECT * FROM ((SELECT %s AS new FROM %s WHERE %s) INNER JOIN (%s));',
+                $min_max, $table_name, $logic, $sub_query);
+
             $positions = $sql_wrapper->query_value($query, true);
             if (empty($positions) || $positions['cur'] === null || $positions['new'] === null) {
                 return false;
@@ -2397,15 +2440,13 @@ class Dune_Default_Sqlite_Engine
 
             $cur = $positions['cur'];
             $new = $positions['new'];
-            $query = "UPDATE $table_name SET ROWID = -$cur WHERE ROWID = $cur;
-                      UPDATE $table_name SET ROWID =  $cur WHERE ROWID = $new;
-                      UPDATE $table_name SET ROWID =  $new WHERE ROWID = -$cur;";
-            return $sql_wrapper->exec_transaction($query);
-        }
-
-        if ($direction === Ordered_Array::TOP || $direction === Ordered_Array::BOTTOM) {
+            $query  = sprintf('UPDATE %s SET ROWID=%d WHERE ROWID=%d;', $table_name, -$cur, $cur);
+            $query .= sprintf('UPDATE %s SET ROWID=%d WHERE ROWID=%d;', $table_name, $cur, $new);
+            $query .= sprintf('UPDATE %s SET ROWID=%d WHERE ROWID=%d;', $table_name, $new, -$cur);
+        } else  if ($direction === Ordered_Array::TOP || $direction === Ordered_Array::BOTTOM) {
             if ($direction == Ordered_Array::TOP) {
-                $query = "SELECT ROWID AS cur FROM $table_name WHERE $column = $q_item AND ROWID > (SELECT MIN(ROWID) FROM $table_name) LIMIT 1;";
+                $query = sprintf('SELECT ROWID AS cur FROM %s WHERE %s=%s AND ROWID > (SELECT MIN(ROWID) FROM %s) LIMIT 1;',
+                    $table_name, $column, $q_item, $table_name);
                 $cur = $sql_wrapper->query_value($query);
                 if (empty($cur)) {
                     return false;
@@ -2415,10 +2456,10 @@ class Dune_Default_Sqlite_Engine
             }
 
             if ($direction === Ordered_Array::BOTTOM) {
-                $query_pos = "SELECT * FROM (
-                                (SELECT ROWID AS cur FROM $table_name
-                                    WHERE $column = $q_item AND ROWID < (SELECT MAX(ROWID) FROM $table_name))
-                                INNER JOIN (SELECT ROWID AS new FROM $table_name ORDER BY ROWID DESC LIMIT 1));";
+                $query_pos = sprintf('SELECT * FROM ((SELECT ROWID AS cur FROM %s WHERE %s = %s AND ROWID < (SELECT MAX(ROWID) FROM %s))
+                                                INNER JOIN (SELECT ROWID AS new FROM %s ORDER BY ROWID DESC LIMIT 1));',
+                    $table_name, $column, $q_item, $table_name, $table_name);
+
                 $positions = $sql_wrapper->query_value($query_pos, true);
                 if (empty($positions) || $positions['cur'] === null || $positions['new'] === null) {
                     return false;
@@ -2430,14 +2471,14 @@ class Dune_Default_Sqlite_Engine
 
             $tmp_table =  $table_name . "_tmp";
             $query = sprintf($script, $tmp_table, $column);
-            $query .= "UPDATE $table_name SET ROWID=$new WHERE ROWID=$cur;";
-            $query .= "INSERT INTO $tmp_table SELECT * FROM $table_name ORDER BY ROWID;";
+            $query .= sprintf('UPDATE %s SET ROWID=%d WHERE ROWID=%d;', $table_name, $new, $cur);
+            $query .= sprintf('INSERT INTO %s SELECT * FROM %s ORDER BY ROWID;', $tmp_table, $table_name);
             $query .= sprintf('DROP TABLE IF EXISTS %s;', $table_name);
-            $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, $table_name_short);
-            return $sql_wrapper->exec_transaction($query);
+            $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name($table));
+        } else {
+            return false;
         }
-
-        return false;
+        return $sql_wrapper->exec_transaction($query);
     }
 
     /**

@@ -129,7 +129,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
                 unset($movie_quality['auto']);
                 $qualities = safe_merge_array(array('auto' => TR::t('by_default')), $movie_quality);
                 foreach ($qualities as $key => $quality_name) {
-                    $menu_items[] = $this->plugin->create_menu_item($this,
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                         self::ACTION_QUALITY_SELECTED,
                         $quality_name,
                         $key == $cur_quality ? 'gui_skin://small_icons/video_settings.aai' : null,
@@ -189,24 +189,24 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
                 if (count($audios) > 1) {
                     $cur_audio = $this->plugin->get_setting(PARAM_VOD_SELECTED_AUDIO, 'auto');
                     foreach ($audios as $key => $audio_name) {
-                        $menu_items[] = $this->plugin->create_menu_item($this,
+                        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                             self::ACTION_AUDIO_SELECTED,
                             $audio_name,
                             $key == $cur_audio ? 'gui_skin://small_icons/audio_settings.aai' : null,
                             array('audio' => $key)
                         );
                     }
-                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                    $menu_items[] = Control_Factory::menu_separator();
                 }
 
                 if (!is_limited_apk()) {
-                    $menu_items[] = $this->plugin->create_menu_item($this,
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                         ACTION_PLAY_ITEM,
                         TR::t('tv_screen_external_player'),
                         'play.png',
                         array('external' => true));
 
-                    $menu_items[] = $this->plugin->create_menu_item($this, GUI_EVENT_KEY_INFO, TR::t('vod_info_dlg'), "info.png");
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_INFO, TR::t('vod_info_dlg'), 'info.png');
                 }
 
                 if (empty($menu_items)) break;

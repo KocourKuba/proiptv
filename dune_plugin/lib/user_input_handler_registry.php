@@ -66,18 +66,27 @@ class User_Input_Handler_Registry
 
     /**
      * @param User_Input_Handler $handler
-     * @param string $name
+     * @param string $action_id
      * @param string $caption
      * @param string|null $icon
      * @param array|null $add_params
      * @return array
      */
-    public static function create_popup_item(User_Input_Handler $handler, $name, $caption, $icon = null, $add_params = null)
+    public static function create_popup_item($handler, $action_id, $caption, $icon = null, $add_params = null)
     {
+        if (!empty($icon)) {
+            if (strpos($icon, "://") === false) {
+                $icon = get_image_path($icon);
+            } else {
+                $icon = get_cached_image($icon);
+            }
+        }
+
         $arr[GuiMenuItemDef::caption] = $caption;
-        $arr[GuiMenuItemDef::action] = self::create_action($handler, $name, $caption, $add_params);
-        if ($icon)
+        $arr[GuiMenuItemDef::action] = self::create_action($handler, $action_id, $caption, $add_params);
+        if ($icon) {
             $arr[GuiMenuItemDef::icon_url] = $icon;
+        }
 
         return $arr;
     }

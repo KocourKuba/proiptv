@@ -150,11 +150,11 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
-                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                $menu_items[] = $this->plugin->create_menu_item($this, GUI_EVENT_KEY_SUBTITLE, TR::t('channel_epg_dlg'), "epg.png");
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
+                $menu_items[] = Control_Factory::menu_separator();
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_SUBTITLE, TR::t('channel_epg_dlg'), "epg.png");
                 return Action_Factory::show_popup_menu($menu_items);
 
             case ACTION_PLAY_ITEM:

@@ -243,7 +243,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $presets = $this->plugin->get_xmltv_presets();
                 $menu_items = array();
                 foreach ($presets as $key => $preset) {
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ADD_SELECTED_PRESET, $key, null, $preset);
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ADD_SELECTED_PRESET, $key, null, $preset);
                 }
                 return Action_Factory::show_popup_menu($menu_items);
 
@@ -297,40 +297,40 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
 
         $menu_items = array();
-        $menu_items[] = $this->plugin->create_menu_item($this, GUI_EVENT_KEY_ENTER, TR::t('select_enter'), "check.png");
-        $menu_items[] = $this->plugin->create_menu_item($this, GUI_EVENT_KEY_INFO, TR::t('xmltv_info_dlg'), "info.png");
-        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_INDEX_EPG, TR::t('entry_index_epg'), 'settings.png');
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CLEAR_CACHE, TR::t('entry_epg_cache_clear'), 'brush.png');
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CALL_CLEAR_ALL_EPG, TR::t('entry_epg_cache_clear_all'), 'brush.png');
-        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_ENTER, TR::t('select_enter'), 'check.png');
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_INFO, TR::t('xmltv_info_dlg'), 'info.png');
+        $menu_items[] = Control_Factory::menu_separator();
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_INDEX_EPG, TR::t('entry_index_epg'), 'settings.png');
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_CLEAR_CACHE, TR::t('entry_epg_cache_clear'), 'brush.png');
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_CALL_CLEAR_ALL_EPG, TR::t('entry_epg_cache_clear_all'), 'brush.png');
+        $menu_items[] = Control_Factory::menu_separator();
 
         // Add Preset
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ADD_PRESET, TR::t('edit_list_add_preset'), "epg.png");
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ADD_PRESET, TR::t('edit_list_add_preset'), "epg.png");
 
         // Add URL
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ADD_URL_DLG, TR::t('edit_list_add_url'), "link.png");
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ADD_URL_DLG, TR::t('edit_list_add_url'), "link.png");
 
         // Add list file
-        $menu_items[] = $this->plugin->create_menu_item($this,
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             ACTION_CHOOSE_FILE,
             TR::t('edit_list_import_list'),
             "text_file.png",
             array(PARAM_SELECTED_ACTION => self::ACTION_FILE_TEXT_LIST, PARAM_EXTENSION => TEXT_FILE_PATTERN)
         );
 
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_EXPORT, TR::t('export_list'));
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_EXPORT, TR::t('export_list'));
 
         // Copy to external
         $item = $this->plugin->get_xmltv_source($this->plugin->get_active_playlist_id(), $selected_id);
         if (!empty($item)) {
-            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ADD_TO_EXTERNAL_SOURCE, TR::t('edit_list_add_to_external_source'), "copy.png");
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ADD_TO_EXTERNAL_SOURCE, TR::t('edit_list_add_to_external_source'), "copy.png");
         }
 
 
-        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete2'), "remove.png");
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
+        $menu_items[] = Control_Factory::menu_separator();
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE, TR::t('delete_menu'), "remove.png");
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
 
         return Action_Factory::show_popup_menu($menu_items);
     }

@@ -133,7 +133,7 @@
                         </action>
                     </menu_item>
                     <menu_item>
-                        <caption>%tr%setup_channels_src_edit_playlists</caption>
+                        <caption>%tr%entry_edit_playlists_title</caption>
                         <icon_url>gui_skin://small_icons/playlist_file.aai</icon_url>
                         <action>
                             <type>plugin_handle_user_input</type>

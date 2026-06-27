@@ -389,7 +389,7 @@ class Sql_Wrapper
 
     /**
      * Fetch array of rows that contains array of columns
-     * if column is null then returns array of rows['column'] it will convert to simple array() of values row['column']
+     * if column is null then returned array of rows['column'] it will convert to simple array() of values row['column']
      *
      * @param string $query
      * @param string|null $column

@@ -486,6 +486,11 @@ class Control_Factory
         );
     }
 
+    public static function menu_separator()
+    {
+        return array(GuiMenuItemDef::is_separator => true);
+    }
+
     /**
      * @param string|array $img
      * @param int $img_x

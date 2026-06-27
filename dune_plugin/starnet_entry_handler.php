@@ -381,7 +381,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
             )
         );
 
-        $actions[] = Action_Factory::open_folder($media_url, TR::t('setup_channels_src_edit_playlists'));
+        $actions[] = Action_Factory::open_folder($media_url, TR::t('entry_edit_playlists_title'));
 
         $current_playlist = $this->plugin->get_active_playlist_id() ? array(PARAM_PLAYLIST_ID => $this->plugin->get_active_playlist_id()) : null;
         $actions[] = User_Input_Handler_Registry::create_screen_action(

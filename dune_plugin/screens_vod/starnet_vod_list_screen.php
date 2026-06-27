@@ -178,9 +178,9 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
                 );
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_WATCHED, TR::t('vod_screen_viewed_not_viewed'), "hide.png");
-                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_list'), "brush.png");
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_WATCHED, TR::t('vod_screen_viewed_not_viewed'), "hide.png");
+                $menu_items[] = Control_Factory::menu_separator();
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_list'), "brush.png");
                 return Action_Factory::show_popup_menu($menu_items);
         }
 

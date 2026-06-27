@@ -92,14 +92,14 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $title = TR::t('playlist_name_msg__1', TR::t(VOD_GROUP_CAPTION));
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RELOAD, $title, "refresh.png");
-                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RELOAD, $title, "refresh.png");
+                $menu_items[] = Control_Factory::menu_separator();
                 if ($group_id === VOD_FAV_GROUP_ID && $this->plugin->get_order_count(VOD_FAV_GROUP_ID)) {
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
                 } else if ($group_id === VOD_HISTORY_GROUP_ID && $this->plugin->get_all_vod_history_count() !== 0) {
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
                 } else if ($group_id === VOD_LIST_GROUP_ID && $this->plugin->get_order_count(VOD_LIST_GROUP_CAPTION)) {
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_list'), "brush.png");
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_list'), "brush.png");
                 }
                 return Action_Factory::show_popup_menu($menu_items);
 

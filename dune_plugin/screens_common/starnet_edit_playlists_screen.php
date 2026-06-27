@@ -467,14 +467,14 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
 
         // Add provider
-        $menu_items[] = $this->plugin->create_menu_item($this,
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             self::ACTION_ADD_PROVIDER,
             TR::t('edit_list_add_provider'),
             "iptv.png"
         );
 
         // Add URL
-        $menu_items[] = $this->plugin->create_menu_item($this,
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             ACTION_ADD_URL_DLG,
             TR::t('edit_list_add_url'),
             "link.png",
@@ -482,7 +482,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         );
 
         // Add File
-        $menu_items[] = $this->plugin->create_menu_item($this,
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             ACTION_CHOOSE_FILE,
             TR::t('select_file'),
             "m3u_file.png",
@@ -492,7 +492,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             )
         );
 
-        $menu_items[] = $this->plugin->create_menu_item($this,
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             self::ACTION_CHOOSE_FOLDER,
             TR::t('edit_list_folder_path'),
             "folder.png",
@@ -500,7 +500,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         );
 
         // Add list file
-        $menu_items[] = $this->plugin->create_menu_item($this,
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             ACTION_CHOOSE_FILE,
             TR::t('edit_list_import_list'),
             "text_file.png",
@@ -510,20 +510,20 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             )
         );
 
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_EXPORT, TR::t('export_list'));
-        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_EXPORT, TR::t('export_list'));
+        $menu_items[] = Control_Factory::menu_separator();
 
         if ($this->plugin->get_all_playlists_count() !== 0) {
-            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
         }
 
-        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete2'), "remove.png");
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
+        $menu_items[] = Control_Factory::menu_separator();
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE, TR::t('delete'), "remove.png");
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
 
         if ($this->plugin->is_full_size_remote()) {
-            $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-            $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_ASSIGN_SHORTCUT_POPUP, TR::t('tv_screen_assign_shortcut'));
+            $menu_items[] = Control_Factory::menu_separator();
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, self::ACTION_ASSIGN_SHORTCUT_POPUP, TR::t('tv_screen_assign_shortcut'));
         }
 
         return Action_Factory::show_popup_menu($menu_items);
@@ -554,14 +554,14 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $keys = array(GUI_EVENT_KEY_1, GUI_EVENT_KEY_2, GUI_EVENT_KEY_3, GUI_EVENT_KEY_4, GUI_EVENT_KEY_5,
             GUI_EVENT_KEY_6, GUI_EVENT_KEY_7, GUI_EVENT_KEY_8, GUI_EVENT_KEY_9, GUI_EVENT_KEY_0);
         $keys = array_diff($keys, $used);
-        $menu_items[] = $this->plugin->create_menu_item($this,
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             self::ACTION_SHORTCUT_SELECTED,
             TR::t('no'),
             empty($selected) ? "check.png" : null,
             array(LIST_IDX => '')
         );
         foreach ($keys as $key) {
-            $menu_items[] = $this->plugin->create_menu_item($this,
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                 self::ACTION_SHORTCUT_SELECTED,
                 $key,
                 $selected === $key ? "check.png" : null,
@@ -772,7 +772,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
         $actions[] = Action_Factory::show_title_dialog(TR::t('information'), TR::t('edit_list_added__2', $new_count - $old_count, count($lines)));
         $actions[] = Action_Factory::close_and_run();
-        $actions[] = Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('setup_channels_src_edit_playlists'));
+        $actions[] = Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('entry_edit_playlists_title'));
         return Action_Factory::composite($actions);
     }
 
@@ -816,7 +816,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $new_count = $this->plugin->get_all_playlists_count();
         $actions[] = Action_Factory::show_title_dialog(TR::t('information'), TR::t('edit_list_added__2', $new_count - $old_count, count($files)));
         $actions[] = Action_Factory::close_and_run();
-        $actions[] = Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('setup_channels_src_edit_playlists'));
+        $actions[] = Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('entry_edit_playlists_title'));
         return Action_Factory::composite($actions);
     }
 

@@ -75,10 +75,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         $actions[GUI_EVENT_KEY_DUNE] = $add_to_favorite;
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
-        $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
         $actions[GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+
+        $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_EDIT,
+            null,
+            array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST, PARAM_PLAYLIST_ID => $this->plugin->get_active_playlist_id())
+        );
 
         if (!is_limited_apk()) {
             // this key used to fire event from background xmltv indexing script
@@ -195,6 +199,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                     empty($urls) ? array() : $urls
                 );
 
+            case GUI_EVENT_KEY_POPUP_MENU:
+                hd_debug_print('Start event popup menu');
+                return Action_Factory::show_popup_menu($this->do_popup_menu($user_input));
+
             case ACTION_SORT_POPUP:
                 hd_debug_print('Start event popup menu for playlist', true);
                 return User_Input_Handler_Registry::create_action(
@@ -203,10 +211,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                     null,
                     array(ACTION_SORT_POPUP => true)
                 );
-
-            case GUI_EVENT_KEY_POPUP_MENU:
-                hd_debug_print('Start event popup menu');
-                return Action_Factory::show_popup_menu($this->do_popup_menu($user_input));
 
             case PLUGIN_FAVORITES_OP_ADD:
             case PLUGIN_FAVORITES_OP_REMOVE:
@@ -329,7 +333,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 return $reload_action;
 
             case ACTION_ITEMS_EDIT:
-                return $this->plugin->do_edit_list_screen(static::ID, $user_input, $media_url);
+                return $this->plugin->do_edit_list_screen(static::ID, $user_input->{CONTROL_ACTION_EDIT}, $media_url,
+                    array(PARAM_END_ACTION => ACTION_RELOAD, PARAM_CANCEL_ACTION => ACTION_EMPTY));
 
             case ACTION_PLUGIN_SETTINGS:
                 return $this->plugin->show_protect_settings_dialog($this,
@@ -386,6 +391,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 $actions[] = Action_Factory::refresh_entry_points();
                 $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($plugin_cookies));
                 return Action_Factory::composite($actions);
+
+            case ACTION_EMPTY:
+                break;
         }
 
         return null;
@@ -1248,7 +1256,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             $defs[] = GComps_Factory::label(
                 GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
                 null,
-                $in_fav ? TR::t('delete') : TR::t('add'),
+                $in_fav ? TR::t('delete_from_favorite') : TR::t('add_to_favorite'),
                 1,
                 PaneParams::fav_btn_font_color,
                 PaneParams::fav_btn_font_size
@@ -1295,23 +1303,25 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         // show changing playlist and xmltv source in any place
         $menu_items = array();
         if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
-            $menu_items = $this->plugin->epg_engine_menu($this);
+            // case for menu item called from epg engine popup
+            $this->plugin->epg_engine_menu_items($this, $menu_items);
         } else if (isset($user_input->{ACTION_SORT_POPUP})) {
+            // case for menu item called from sort popup
             hd_debug_print('create sort menu', true);
             if (isset($media_url->{PARAM_GROUP_ID})) {
                 hd_debug_print("sort group: " . $media_url->{PARAM_GROUP_ID}, true);
                 if ($this->plugin->get_group($media_url->{PARAM_GROUP_ID}, PARAM_GROUP_ORDINARY) !== null) {
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_channels'),
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_SORT, TR::t('sort_channels'),
                         null, array(ACTION_SORT_TYPE => ACTION_SORT_CHANNELS));
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_groups'),
-                        null, array(ACTION_SORT_TYPE => ACTION_SORT_GROUPS));
-                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_channels_sort'),
+
+                    $menu_items[] = Control_Factory::menu_separator();
+
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_channels_sort'),
                         null, array(ACTION_RESET_TYPE => ACTION_SORT_CHANNELS));
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_groups_sort'),
-                        null, array(ACTION_RESET_TYPE => ACTION_SORT_GROUPS));
-                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_all_sort'),
+
+                    $menu_items[] = Control_Factory::menu_separator();
+
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_all_sort'),
                         null, array(ACTION_RESET_TYPE => ACTION_SORT_ALL));
                 }
             }
@@ -1320,48 +1330,76 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             hd_debug_print('in channels rows', true);
             if ($media_url->{PARAM_GROUP_ID} === TV_HISTORY_GROUP_ID) {
                 hd_debug_print('in history rows', true);
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_REMOVE, TR::t('delete'), "remove.png");
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_REMOVE, TR::t('delete'), 'remove.png');
             } else if ($media_url->{PARAM_GROUP_ID} === $fav_id && $this->plugin->is_full_size_remote()) {
                 hd_debug_print('in favorites rows', true);
-                $menu_items[] = $this->plugin->create_menu_item($this, PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete_from_favorite'), "star.png");
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete_from_favorite'), 'star.png');
             } else {
                 hd_debug_print("Selected channel in row: $media_url->{PARAM_CHANNEL_ID}", true);
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'), "remove.png");
-                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'), 'remove.png');
 
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_EDIT_CHANNEL_DLG, TR::t('tv_screen_edit_channel'), "check.png");
-                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                $menu_items[] = Control_Factory::menu_separator();
 
-                $menu_items[] = $this->plugin->create_menu_item($this, GUI_EVENT_KEY_INFO, TR::t('channel_info_dlg'), "info.png");
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_EDIT_CHANNEL_DLG, TR::t('tv_screen_edit_channel'), 'check.png');
+
+                $menu_items[] = Control_Factory::menu_separator();
+
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_INFO, TR::t('channel_info_dlg'), 'info.png');
             }
 
-            $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-            $menu_items[] = $this->plugin->create_menu_item($this,
-                ACTION_ITEMS_EDIT,
-                TR::t('setup_channels_src_edit_playlists'),
-                "m3u_file.png",
-                array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
+            $menu_items[] = Control_Factory::menu_separator();
 
             if (!$this->plugin->is_full_size_remote()) {
-                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 if ($media_url->{PARAM_GROUP_ID} === $fav_id) {
-                    $menu_items[] = $this->plugin->create_menu_item($this,
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                         PLUGIN_FAVORITES_OP_MOVE_UP, TR::t('left'), PaneParams::fav_button_green);
-                    $menu_items[] = $this->plugin->create_menu_item($this,
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                         PLUGIN_FAVORITES_OP_MOVE_DOWN, TR::t('right'), PaneParams::fav_button_yellow);
                 }
 
                 $is_in_favorites = $this->plugin->is_channel_in_order($fav_id, $media_url->{PARAM_CHANNEL_ID});
                 $caption = $is_in_favorites ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
                 $action = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
-                $menu_items[] = $this->plugin->create_menu_item($this, $action, $caption, PaneParams::fav_button_blue);
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, $action, $caption, PaneParams::fav_button_blue);
             }
         } else {
             // popup menu for left side list
             hd_debug_print('in menu side', true);
-            $refresh_menu = $this->plugin->refresh_playlist_menu($this);
+
+            $this->plugin->refresh_playlist_menu_items($this, $menu_items);
+
             $group_id = safe_get_value($media_url, COLUMN_GROUP_ID);
-            $menu_items = array_merge($refresh_menu, $menu_items, $this->plugin->common_categories_menu($this, $group_id, false));
+            if ($group_id !== null) {
+                if ($group_id === $fav_id && $this->plugin->get_order_count($fav_id)) {
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), 'brush.png');
+                }
+                if ($group_id === TV_HISTORY_GROUP_ID && $this->plugin->get_tv_history_count() !== 0) {
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'), 'brush.png');
+                } else if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), 'brush.png');
+                }
+
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                    ACTION_ITEMS_EDIT,
+                    TR::t('tv_screen_edit_groups'),
+                    "move.png",
+                    array(CONTROL_ACTION_EDIT => Starnet_Edit_Group_List_Screen::PARAM_EDIT_GROUPS));
+
+                $menu_items[] = Control_Factory::menu_separator();
+            }
+
+            $this->plugin->epg_select_menu_items($this, $menu_items);
+
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_EDIT_PLAYLIST_SETTINGS, TR::t('setup_playlist'), "playlist_settings.png");
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_PLUGIN_SETTINGS, TR::t('entry_setup'), "settings.png");
+
+            $menu_items[] = Control_Factory::menu_separator();
+
+            if ($this->plugin->has_active_provider()) {
+                if ($this->plugin->get_active_provider()->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
+                }
+            }
         }
 
         return $menu_items;

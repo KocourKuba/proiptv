@@ -850,9 +850,9 @@ function get_ip_address()
     $ip = '';
     if (is_dune()) {
         $ip = trim(shell_exec('ifconfig eth0 2>/dev/null | head -2 | tail -1 | sed "s/^.*inet addr:\([^ ]*\).*$/\1/"'));
-        if (!is_numeric(preg_replace('/\s|\./', '', $ip))) {
+        if (!is_numeric(preg_replace('/[\s.]/', '', $ip))) {
             $ip = trim(shell_exec('ifconfig wlan0 2>/dev/null | head -2 | tail -1 | sed "s/^.*inet addr:\([^ ]*\).*$/\1/"'));
-            if (!is_numeric(preg_replace('/\s|\./', '', $ip))) {
+            if (!is_numeric(preg_replace('/[\s.]/', '', $ip))) {
                 $ip = '';
             }
         }
@@ -1861,29 +1861,43 @@ function export_DuneSystem()
 }
 
 /**
+ * Get path to icon in plugin 'img' folder
+ *
  * @param string $image
  * @return string
  */
-function get_image_path($image = '')
+function get_image_path($image)
 {
     return get_install_path('img/' . ltrim($image, '/'));
 }
 
 /**
- * @param string $image
+ * Make path to icon in plugin_data 'cached_img' folder
+ * Create cached_img folder if needed
+ *
+ * @param string $image_file path to image
  * @return string
  */
-function get_cached_image_path($image = '')
+function get_cached_image_path($image_file = '')
 {
     $cache_image_path = get_data_path(CACHED_IMAGE_SUBDIR);
     create_path($cache_image_path);
-    return $cache_image_path . '/' . ltrim($image, "/");
+    return $cache_image_path . '/' . ltrim($image_file, "/");
 }
 
+/**
+ * Check for existance and return path to icon in plugin_data 'cached_img' folder
+ *
+ * @param string $image image filename
+ * @return string
+ */
 function get_cached_image($image)
 {
-    if (strpos($image, "plugin_file://") === false && file_exists(get_cached_image_path($image))) {
-        $image = get_cached_image_path($image);
+    if (strpos($image, "plugin_file://") === false) {
+        $test = get_cached_image_path($image);
+        if (file_exists($test)) {
+            $image = $test;
+        }
     }
 
     return $image;

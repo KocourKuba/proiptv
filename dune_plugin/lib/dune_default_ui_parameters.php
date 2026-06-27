@@ -143,14 +143,15 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     public function get_background_image()
     {
         $background = $this->get_setting(PARAM_PLUGIN_BACKGROUND, '');
+        $cached_img_path = get_cached_image_path();
         if ($background === $this->plugin_info['app_background']) {
             $this->set_setting(PARAM_PLUGIN_BACKGROUND, '');
-        } else if (strncmp($background, get_cached_image_path(), strlen(get_cached_image_path())) === 0) {
+        } else if (strncmp($background, $cached_img_path, strlen($cached_img_path)) === 0) {
             $this->set_setting(PARAM_PLUGIN_BACKGROUND, basename($background));
         } else if (empty($background) || !file_exists(get_cached_image_path($background))) {
             $background = $this->plugin_info['app_background'];
         } else {
-            $background = get_cached_image_path($background);
+            $background = get_cached_image($background);
         }
 
         return $background;

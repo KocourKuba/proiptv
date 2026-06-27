@@ -54,7 +54,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_CLEAR] = $remove;
 
         $actions[GUI_EVENT_KEY_B_GREEN] = $remove;
-        $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'));
+        $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear_history_title'));
         $actions[GUI_EVENT_KEY_D_BLUE] = $add_to_favorite;
         $actions[GUI_EVENT_KEY_DUNE] = $add_to_favorite; // FAV1
 
