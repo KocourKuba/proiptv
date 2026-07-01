@@ -1332,7 +1332,9 @@
           "linkspile.cc": "linkspile cc",
           "linkspile.su": "linkspile su",
           "link-pile.ch": "linkspile sh",
-          "link-pile.vg": "linkspile vg"
+          "link-pile.vg": "linkspile vg",
+          "sharavoz.tv": "sharavoz.tv",
+          "sharavoz.space": "sharavoz.space"
         },
         "streams": {
           "index.m3u8": "HLS",
