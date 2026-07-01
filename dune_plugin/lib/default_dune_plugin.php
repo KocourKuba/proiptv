@@ -4128,6 +4128,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $config_name = $this->get_active_epg_config($playlist_id);
         // read existing order
         $order = List_Utils::read_config_file($config_name);
+        if (empty($order)) {
+            // do not update order if it not saved
+            return;
+        }
         hd_debug_print('new order: ' . json_format_unescaped($order), true);
         $selected_json_table = self::SELECTED_JSON_TABLE;
         $query = "DELETE FROM $selected_json_table;";
