@@ -143,10 +143,6 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $this->plugin->vod->toggle_special_group(VOD_LIST_GROUP_ID, true);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-            case ACTION_ITEMS_CLEAR:
-                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
-                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
-
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 $this->force_parent_reload = true;
                 $this->plugin->remove_channels_order(VOD_LIST_GROUP_ID);
@@ -178,10 +174,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
                 );
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_WATCHED, TR::t('vod_screen_viewed_not_viewed'), "hide.png");
-                $menu_items[] = Control_Factory::menu_separator();
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_list'), "brush.png");
-                return Action_Factory::show_popup_menu($menu_items);
+                return $this->create_popup_menu();
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
@@ -260,5 +253,21 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
             $this->plugin->get_screen_view('icons_5x2_movie_caption'),
             $this->plugin->get_screen_view('icons_5x2_movie_no_caption'),
         );
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    /// Protected methods
+
+    protected function create_popup_menu()
+    {
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_WATCHED, TR::t('vod_screen_viewed_not_viewed'), 'hide.png');
+
+        $menu_items[] = Control_Factory::menu_separator();
+
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+            Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'), $this, ACTION_CONFIRM_CLEAR_DLG_APPLY),
+            TR::t('clear_list'), 'brush.png');
+
+        return Action_Factory::show_popup_menu($menu_items);
     }
 }

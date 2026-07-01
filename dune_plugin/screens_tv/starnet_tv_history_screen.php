@@ -141,10 +141,6 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
                 }
                 break;
 
-            case ACTION_ITEMS_CLEAR:
-                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
-                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
-
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 $this->force_parent_reload = true;
                 $this->plugin->clear_tv_history();
@@ -163,13 +159,14 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
                 $actions[] = $this->plugin->change_tv_favorites($opt_type, $selected_media_url->{PARAM_CHANNEL_ID});
                 return Action_Factory::composite($actions);
 
-            case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->jump_to_channel($selected_media_url->{PARAM_CHANNEL_ID});
-
             case GUI_EVENT_KEY_POPUP_MENU:
-                $menu_items = array();
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_history_title'), "brush.png");
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+                    $this->plugin->jump_to_channel($selected_media_url->{PARAM_CHANNEL_ID}),
+                    TR::t('jump_to_channel'), 'goto.png');
+
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+                    Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'), $this, ACTION_CONFIRM_CLEAR_DLG_APPLY),
+                    TR::t('clear_history_title'), 'brush.png');
 
                 return Action_Factory::show_popup_menu($menu_items);
 

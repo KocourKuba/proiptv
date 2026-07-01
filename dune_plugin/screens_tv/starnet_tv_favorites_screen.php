@@ -150,12 +150,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
-                $menu_items[] = Control_Factory::menu_separator();
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_SUBTITLE, TR::t('channel_epg_dlg'), "epg.png");
-                return Action_Factory::show_popup_menu($menu_items);
+                return $this->create_popup_menu($channel_id);
 
             case ACTION_PLAY_ITEM:
                 if (!$this->plugin->is_channel_visible($selected_media_url->{PARAM_CHANNEL_ID})) {
@@ -236,9 +231,6 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-            case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->jump_to_channel($channel_id);
-
             case ACTION_SHORTCUT:
                 $actions[] = Action_Factory::close_and_run();
                 $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,
@@ -314,5 +306,31 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
             $this->plugin->get_screen_view('list_2x11_small_info'),
             $this->plugin->get_screen_view('list_3x11_no_info'),
         );
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    /// Protected functions
+
+    /**
+     * @param string $channel_id
+     * @return array
+     */
+    protected function create_popup_menu($channel_id)
+    {
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+            $this->plugin->jump_to_channel($channel_id),
+            TR::t('jump_to_channel'), 'goto.png'
+        );
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+            ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), 'move.png');
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+            ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), 'brush.png');
+
+        $menu_items[] = Control_Factory::menu_separator();
+
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+            GUI_EVENT_KEY_SUBTITLE, TR::t('channel_epg_dlg'), 'epg.png');
+
+        return Action_Factory::show_popup_menu($menu_items);
     }
 }

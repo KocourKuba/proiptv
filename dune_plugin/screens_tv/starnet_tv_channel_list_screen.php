@@ -30,9 +30,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'tv_channel_list';
 
-    const ACTION_CUSTOM_DELETE = 'custom_delete';
-    const ACTION_CUSTOM_STRING_DLG_APPLY = 'apply_custom_string_dlg';
-
     /**
      * Get MediaURL string representation (json encoded)
      * *
@@ -51,10 +48,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return $this->do_get_action_map($media_url, $plugin_cookies);
+        return $this->do_get_action_map($media_url);
     }
 
-    protected function do_get_action_map(MediaURL $media_url, &$plugin_cookies)
+    protected function do_get_action_map(MediaURL $media_url)
     {
         hd_debug_print(null, true);
 
@@ -65,26 +62,22 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
-        $actions[GUI_EVENT_KEY_SETUP] = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_SETTINGS);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
-        $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
         $actions[GUI_EVENT_KEY_SUBTITLE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_SUBTITLE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+
+        $special_group = $this->plugin->get_group($media_url->{PARAM_GROUP_ID}, PARAM_GROUP_SPECIAL);
+        if (empty($special_group)) {
+            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this,
+                ACTION_ITEMS_EDIT, TR::t('tv_screen_edit_channels'));
+        }
+
+        $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this,
+            ACTION_EDIT_CHANNEL_DLG, TR::t('tv_screen_edit_channel'));
 
         $add_to_favorite = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
         $actions[GUI_EVENT_KEY_D_BLUE] = $add_to_favorite;
         $actions[GUI_EVENT_KEY_DUNE] = $add_to_favorite;
-
-        if ((string)$media_url->{PARAM_GROUP_ID} !== TV_ALL_CHANNELS_GROUP_ID && $this->plugin->get_order_count($media_url->{PARAM_GROUP_ID})) {
-            $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
-            if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
-                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP, TR::t('top'));
-                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM, TR::t('bottom'));
-            } else {
-                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
-                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
-            }
-        }
 
         if (!is_limited_apk()) {
             // this key used to fire event from background xmltv indexing script
@@ -109,7 +102,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         $fav_id = $this->plugin->get_fav_id();
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $parent_group = $parent_media_url->{PARAM_GROUP_ID};
         $channel_id = $selected_media_url->{PARAM_CHANNEL_ID};
         $sel_ndx = $user_input->sel_ndx;
 
@@ -134,7 +126,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 if (!is_limited_apk()) break;
 
                 $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
-                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($parent_media_url, $plugin_cookies), 1000);
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($parent_media_url), 1000);
                 return Action_Factory::composite($actions);
 
             case EVENT_INDEXING_DONE:
@@ -179,19 +171,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
                 break;
 
-            case ACTION_PLUGIN_SETTINGS:
-                return $this->plugin->show_protect_settings_dialog($this,
-                    Action_Factory::open_folder(Starnet_Setup_Plugin_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup'))
-                );
-
-            case ACTION_SHOW_SEARCH_DLG:
-                return $this->plugin->new_search($this, $plugin_cookies);
-
             case ACTION_NEW_SEARCH:
                 return Action_Factory::close_dialog_and_run($this->plugin->do_search($this, $user_input->{ACTION_NEW_SEARCH}, $plugin_cookies));
 
             case ACTION_JUMP_TO_CHANNEL:
-                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->number);
+                $sel_ndx = $user_input->number;
+                break;
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
                 $ch_id = $channel_id;
@@ -200,189 +185,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 }
                 return Action_Factory::close_and_run($this->plugin->jump_to_channel($ch_id));
 
-            case ACTION_ITEM_TOGGLE_MOVE:
-                $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
-                return Action_Factory::change_behaviour($this->do_get_action_map($parent_media_url, $plugin_cookies));
-
-            case ACTION_ITEM_UP:
-                $sel_ndx--;
-                if ($sel_ndx < 0) {
-                    return null;
-                }
-
-                $this->force_parent_reload = true;
-                $this->plugin->arrange_channels_order_rows($parent_group, $channel_id, Ordered_Array::UP);
-                break;
-
-            case ACTION_ITEM_DOWN:
-                $cnt = $this->plugin->get_order_count($parent_group) - 1;
-                ++$sel_ndx;
-                if ($sel_ndx > $cnt) {
-                    return null;
-                }
-                $this->force_parent_reload = true;
-                $this->plugin->arrange_channels_order_rows($parent_group, $channel_id, Ordered_Array::DOWN);
-                break;
-
-            case ACTION_ITEM_TOP:
-                if ($sel_ndx === 0) {
-                    return null;
-                }
-                $this->force_parent_reload = true;
-                $sel_ndx = 0;
-                $this->plugin->arrange_channels_order_rows($parent_group, $channel_id, Ordered_Array::TOP);
-                break;
-
-            case ACTION_ITEM_BOTTOM:
-                $max_sel = $this->plugin->get_order_count($fav_id) - 1;
-                if ($sel_ndx === $max_sel) {
-                    return null;
-                }
-                $this->force_parent_reload = true;
-                $sel_ndx = $max_sel;
-                $this->plugin->arrange_channels_order_rows($parent_group, $channel_id, Ordered_Array::BOTTOM);
-                break;
-
-            case ACTION_ITEM_DELETE:
-                $this->force_parent_reload = true;
-                $this->plugin->set_channel_visible($channel_id, false);
-                break;
-
             case ACTION_ITEMS_EDIT:
-                return $this->plugin->do_edit_list_screen(static::ID, $user_input->{CONTROL_ACTION_EDIT}, $parent_media_url);
+                return $this->plugin->do_edit_list_screen(static::ID,
+                    Starnet_Edit_Channel_List_Screen::PARAM_EDIT_CHANNELS, $parent_media_url);
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_SHOW_SEARCH_DLG,
-                    TR::t('search'),
-                    "search.png");
-
-                if ($parent_group === TV_ALL_CHANNELS_GROUP_ID) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        ACTION_JUMP_TO_CHANNEL_IN_GROUP,
-                        TR::t('jump_to_channel'),
-                        "goto.png");
-                    $menu_items[] = Control_Factory::menu_separator();
-
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        ACTION_ITEM_DELETE,
-                        TR::t('tv_screen_hide_channel'),
-                        "remove.png");
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        ACTION_ITEM_DELETE_CHANNELS,
-                        TR::t('tv_screen_hide_group_channels'),
-                        "remove.png");
-
-                    $cnt = $this->plugin->get_channels_count($parent_group, PARAM_DISABLED);
-                    hd_debug_print("Disabled channels in $parent_group: $cnt", true);
-                    if ($cnt !== 0) {
-                        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                            ACTION_ITEMS_EDIT,
-                            TR::t('tv_screen_edit_hidden_channels'),
-                            "edit.png",
-                            array(CONTROL_ACTION_EDIT => Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_CHANNELS));
-                    }
-                } else {
-                    $special_group = $this->plugin->get_group($parent_group, PARAM_GROUP_SPECIAL);
-                    if (empty($special_group)) {
-                        $menu_items[] = Control_Factory::menu_separator();
-
-                        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                            ACTION_ITEM_DELETE,
-                            TR::t('tv_screen_hide_channel'),
-                            "remove.png");
-                        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                            ACTION_ITEM_DELETE_CHANNELS,
-                            TR::t('tv_screen_hide_group_channels'),
-                            "remove.png");
-
-                        $cnt = $this->plugin->get_channels_count($parent_group, PARAM_DISABLED);
-                        hd_debug_print("Disabled channels in $parent_group: $cnt", true);
-                        if ($cnt !== 0) {
-                            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                                ACTION_ITEMS_EDIT,
-                                TR::t('tv_screen_edit_hidden_channels'),
-                                "edit.png",
-                                array(CONTROL_ACTION_EDIT => Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_CHANNELS));
-                        }
-
-
-                        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
-
-                        $menu_items[] = Control_Factory::menu_separator();
-
-                        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_SORT, TR::t('sort_channels'));
-                        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_channels_sort'));
-                    }
-                }
-
-                $menu_items[] = Control_Factory::menu_separator();
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    GUI_EVENT_KEY_SUBTITLE,
-                    TR::t('channel_epg_dlg'),
-                    "epg.png");
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    GUI_EVENT_KEY_INFO,
-                    TR::t('channel_info_dlg'),
-                    "info.png");
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_EDIT_CHANNEL_DLG,
-                    TR::t('tv_screen_edit_channel'),
-                    "check.png");
-
-                return Action_Factory::show_popup_menu($menu_items);
-
-            case ACTION_ITEM_DELETE_CHANNELS:
-                $items = array(
-                    TR::t('tv_screen_hide_plus') => "[\s(]\+\d",
-                    TR::t('tv_screen_hide_orig') => "[Oo]rig|[Uu]ncomp",
-                    TR::t('tv_screen_hide_50') => "\s50|\sFHD",
-                    TR::t('tv_screen_hide_uhd') => "UHD|\s4[KkКк]|\s8[KkКк]",
-                    TR::t('tv_screen_hide_sd') => "hide_sd",
-                    TR::t('tv_screen_hide_string') => "custom_string"
-                );
-                foreach ($items as $key => $val) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE_BY_STRING, $key, null, array('hide' => $val));
-                }
-                return Action_Factory::show_popup_menu($menu_items);
-
-            case ACTION_ITEM_DELETE_BY_STRING:
-                if ($user_input->hide === 'hide_sd') {
-                    $this->force_parent_reload = $this->plugin->hide_sd_channels($parent_group) !== 0;
-                } else if ($user_input->hide !== 'custom_string') {
-                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($user_input->hide, $parent_group) !== 0;
-                } else {
-                    $defs = array();
-                    Control_Factory::add_text_field($defs, $this, self::ACTION_CUSTOM_DELETE, '',
-                        $this->plugin->get_parameter(PARAM_CUSTOM_DELETE_STRING),
-                        false, false, false, false, Control_Factory::DLG_CONTROLS_WIDTH);
-
-                    Control_Factory::add_vgap($defs, 100);
-                    Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_CUSTOM_STRING_DLG_APPLY, TR::t('ok'));
-                    Control_Factory::add_cancel_button($defs);
-                    Control_Factory::add_vgap($defs, 10);
-
-                    return Action_Factory::show_dialog($defs, TR::t('tv_screen_hide_string'));
-                }
-                break;
-
-            case self::ACTION_CUSTOM_STRING_DLG_APPLY:
-                $custom_string = $user_input->{self::ACTION_CUSTOM_DELETE};
-                if (!empty($custom_string)) {
-                    $this->plugin->set_parameter(PARAM_CUSTOM_DELETE_STRING, $custom_string);
-                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($custom_string, $parent_group, false) !== 0;
-                }
-                break;
-
-            case ACTION_ITEMS_SORT:
-                $this->force_parent_reload = true;
-                $this->plugin->sort_channels_order($parent_group);
-                break;
-
-            case ACTION_RESET_ITEMS_SORT:
-                $this->force_parent_reload = true;
-                $this->plugin->sort_channels_order($parent_group, true);
-                break;
+                return $this->create_popup_menu($user_input, $plugin_cookies);
 
             case ACTION_EDIT_CHANNEL_DLG:
                 return $this->plugin->do_edit_channel_parameters($this, $channel_id);
@@ -409,7 +217,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_INVALIDATE:
                 $this->force_parent_reload = true;
                 break;
-
 
             case ACTION_EMPTY:
                 return null;
@@ -519,5 +326,36 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
             $this->plugin->get_screen_view('list_2x11_small_info'),
             $this->plugin->get_screen_view('list_3x11_no_info'),
         );
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    /// Protected methods
+
+    protected function create_popup_menu($user_input, $plugin_cookies)
+    {
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+        $parent_group = $parent_media_url->{PARAM_GROUP_ID};
+        $channel_id = $selected_media_url->{PARAM_CHANNEL_ID};
+
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+            $this->plugin->new_search($this, $plugin_cookies),
+            TR::t('search'), 'search.png');
+
+        if ($parent_group === TV_ALL_CHANNELS_GROUP_ID) {
+            $ch_id = isset($user_input->{COLUMN_CHANNEL_ID}) ? $user_input->{COLUMN_CHANNEL_ID} : $channel_id;
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+                Action_Factory::close_and_run($this->plugin->jump_to_channel($ch_id)),
+                TR::t('jump_to_channel'), 'goto.png');
+        }
+
+        $menu_items[] = Control_Factory::menu_separator();
+
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+            GUI_EVENT_KEY_SUBTITLE, TR::t('channel_epg_dlg'), 'epg.png');
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+            GUI_EVENT_KEY_INFO, TR::t('channel_info_dlg'), 'info.png');
+
+        return Action_Factory::show_popup_menu($menu_items);
     }
 }

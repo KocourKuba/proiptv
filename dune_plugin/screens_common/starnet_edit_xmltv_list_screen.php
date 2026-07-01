@@ -207,10 +207,6 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             case GUI_EVENT_KEY_POPUP_MENU:
                 return $this->create_popup_menu($selected_id);
 
-            case ACTION_ITEMS_CLEAR:
-                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
-                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
-
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 if ($this->plugin->get_epg_manager() === null) break;
 
@@ -224,9 +220,6 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 if ($this->plugin->get_xmltv_sources_count(null)) break;
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-
-            case ACTION_ADD_URL_DLG:
-                return $this->do_edit_url_dlg(XMLTV_SOURCE_EXTERNAL);
 
             case ACTION_ADD_TO_EXTERNAL_SOURCE:
                 $item = $this->plugin->get_xmltv_source($this->plugin->get_active_playlist_id(), $selected_id);
@@ -250,9 +243,6 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_ADD_SELECTED_PRESET:
                 return $this->apply_add_preset($user_input, $plugin_cookies);
 
-            case ACTION_EXPORT:
-                return $this->plugin->show_export_dialog($this, 'xmltv_sources_list.txt');
-
             case ACTION_EXPORT_APPLY_DLG:
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                     array(
@@ -266,18 +256,6 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             case self::ACTION_EXPORT_FOLDER_SELECTED:
                 return $this->do_export_xmltv_sources($user_input);
 
-            case ACTION_CHOOSE_FILE:
-                $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
-                    array(
-                        PARAM_EXTENSION => $user_input->{PARAM_EXTENSION},
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_FILE_SELECTED,
-                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => ($user_input->{PARAM_SELECTED_ACTION} === self::ACTION_FILE_TEXT_LIST) && !is_limited_apk(),
-                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
-                    )
-                );
-
-                return Action_Factory::open_folder($media_url, TR::t('select_file'));
-
             case self::ACTION_FILE_SELECTED:
                 hd_debug_print(null, true);
                 return $this->selected_text_file($user_input);
@@ -287,7 +265,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////
-    /// protected methods
+    /// Protected methods
 
     /**
      * @return array|null
@@ -299,38 +277,53 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $menu_items = array();
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_ENTER, TR::t('select_enter'), 'check.png');
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_INFO, TR::t('xmltv_info_dlg'), 'info.png');
+
         $menu_items[] = Control_Factory::menu_separator();
+
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_INDEX_EPG, TR::t('entry_index_epg'), 'settings.png');
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_CLEAR_CACHE, TR::t('entry_epg_cache_clear'), 'brush.png');
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_CALL_CLEAR_ALL_EPG, TR::t('entry_epg_cache_clear_all'), 'brush.png');
+
         $menu_items[] = Control_Factory::menu_separator();
 
         // Add Preset
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ADD_PRESET, TR::t('edit_list_add_preset'), "epg.png");
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ADD_PRESET, TR::t('edit_list_add_preset'), 'epg.png');
 
         // Add URL
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ADD_URL_DLG, TR::t('edit_list_add_url'), "link.png");
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+            $this->do_edit_url_dlg(XMLTV_SOURCE_EXTERNAL),
+            TR::t('edit_list_add_url'), "link.png");
 
         // Add list file
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-            ACTION_CHOOSE_FILE,
-            TR::t('edit_list_import_list'),
-            "text_file.png",
-            array(PARAM_SELECTED_ACTION => self::ACTION_FILE_TEXT_LIST, PARAM_EXTENSION => TEXT_FILE_PATTERN)
+        $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
+            array(
+                PARAM_EXTENSION => TEXT_FILE_PATTERN,
+                Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_FILE_SELECTED,
+                Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
+                Starnet_Folder_Screen::PARAM_READ_ONLY => true,
+            )
+        );
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+            Action_Factory::open_folder($media_url, TR::t('select_file')),
+            TR::t('edit_list_import_list'), 'text_file.png'
         );
 
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_EXPORT, TR::t('export_list'));
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+            $this->plugin->show_export_dialog($this, 'xmltv_sources_list.txt'), TR::t('export_list'));
 
         // Copy to external
         $item = $this->plugin->get_xmltv_source($this->plugin->get_active_playlist_id(), $selected_id);
         if (!empty($item)) {
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ADD_TO_EXTERNAL_SOURCE, TR::t('edit_list_add_to_external_source'), "copy.png");
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                ACTION_ADD_TO_EXTERNAL_SOURCE, TR::t('edit_list_add_to_external_source'), 'copy.png');
         }
 
-
         $menu_items[] = Control_Factory::menu_separator();
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE, TR::t('delete_menu'), "remove.png");
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
+
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE, TR::t('delete_menu'), 'remove.png');
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+            Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+            $this, ACTION_CONFIRM_CLEAR_DLG_APPLY), TR::t('clear'), 'brush.png');
 
         return Action_Factory::show_popup_menu($menu_items);
     }

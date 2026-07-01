@@ -68,7 +68,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
                 if (isset($user_input->selected_media_url)
                     && MediaURL::decode($user_input->selected_media_url)->genre_id !== Vod_Category::FLAG_FILTER) {
 
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE, TR::t('delete'), "brush.png");
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE, TR::t('delete'), 'brush.png');
                     return Action_Factory::show_popup_menu($menu_items);
                 }
 

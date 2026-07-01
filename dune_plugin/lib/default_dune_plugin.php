@@ -2454,7 +2454,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if (count($this->get_provider_epg_presets())) {
             $engine = TR::t('setup_epg_cache_json');
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler, ENGINE_JSON, $engine, $this->use_xmltv ? null : 'check.png');
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+                ENGINE_JSON, $engine,
+                $this->use_xmltv ? null : 'check.png');
         }
     }
 
@@ -2469,13 +2471,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
                 ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1',
                     TR::t($this->use_xmltv ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json')),
-                "engine.png");
+                'engine.png');
         }
 
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-            ACTION_ITEMS_EDIT,
-            TR::t('setup_edit_xmltv_list'),
-            "epg.png",
+            ACTION_ITEMS_EDIT, TR::t('setup_edit_xmltv_list'),
+            'epg.png',
             array(CONTROL_ACTION_EDIT => Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST));
 
         $menu_items[] = Control_Factory::menu_separator();
@@ -2488,7 +2489,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function refresh_playlist_menu_items($handler, &$menu_items)
     {
-        $icon_file = "refresh.png";
+        $icon_file = 'refresh.png';
         $playlist_parameters = $this->get_playlist_parameters($this->get_active_playlist_id());
         $title = safe_get_value($playlist_parameters, PARAM_NAME);
         if (safe_get_value($playlist_parameters, PARAM_TYPE) === PARAM_PROVIDER) {
@@ -2508,11 +2509,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $title = TR::t('playlist_name_msg__1', $title);
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler, ACTION_RELOAD, $title, $icon_file, array(PARAM_CLEAR_PLAYLIST => true));
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+            ACTION_RELOAD, $title, $icon_file,
+            array(PARAM_CLEAR_PLAYLIST => true));
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
             ACTION_ITEMS_EDIT,
             TR::t('select_edit_playlists'),
-            "m3u_file.png",
+            'm3u_file.png',
             array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
 
         $menu_items[] = Control_Factory::menu_separator();
@@ -2581,10 +2584,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $title = TR::t('tv_screen_edit_groups');
                 break;
 
+            case Starnet_Edit_Channel_List_Screen::PARAM_EDIT_CHANNELS:
+                $ret_action[Starnet_Edit_Channel_List_Screen::PARAM_EDIT_LIST] = $action_edit;
+                $new_media_url_str = Starnet_Edit_Channel_List_Screen::make_callback_media_url_str($source_screen_id, $ret_action);
+                $title = TR::t('tv_screen_edit_channels');
+                break;
+
             case Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST:
                 $ret_action[PARAM_END_ACTION] = ACTION_RELOAD;
                 $ret_action[PARAM_CANCEL_ACTION] = RESET_CONTROLS_ACTION_ID;
-                $ret_action[PARAM_EXTENSION] = PLAYLIST_PATTERN;
                 $new_media_url_str = Starnet_Edit_Playlists_Screen::make_callback_media_url_str($source_screen_id, $ret_action);
                 $title = TR::t('entry_edit_playlists_title');
                 break;
@@ -2646,7 +2654,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         Control_Factory::format_smart_label($defs, TR::load('archive'), $channel_row[COLUMN_ARCHIVE] . ' ' . TR::load('days'));
         Control_Factory::format_smart_label($defs, TR::load('adult'),
             $channel_row[COLUMN_ADULT] ? TR::load('yes') : TR::load('no'));
-        Control_Factory::format_smart_label($defs, "EPG IDs:", $epg_id);
+        Control_Factory::format_smart_label($defs, 'EPG IDs:', $epg_id);
 
         if ($channel_row[COLUMN_TIMESHIFT] != 0) {
             Control_Factory::format_smart_label($defs, TR::load('time_shift'),
@@ -2691,7 +2699,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $dune_params = $this->generate_dune_params($channel_id, json_decode($ext_params, true));
         if (!empty($dune_params)) {
             Control_Factory::add_vgap($defs, 15);
-            Control_Factory::format_smart_label($defs, "dune_params:", $dune_params);
+            Control_Factory::format_smart_label($defs, 'dune_params:', $dune_params);
         }
 
         if (!empty($live_url) && !is_limited_apk()) {
@@ -2756,7 +2764,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if (!empty($magic)) {
             Control_Factory::add_vgap($defs, 10);
-            Control_Factory::format_smart_label($defs, "dune_params:", $magic);
+            Control_Factory::format_smart_label($defs, 'dune_params:', $magic);
         }
 
         Control_Factory::format_smart_label($defs, TR::load('url'), htmlspecialchars($stream_url));

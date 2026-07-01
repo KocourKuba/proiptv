@@ -26,13 +26,16 @@
 require_once 'lib/abstract_preloaded_regular_screen.php';
 require_once 'lib/user_input_handler_registry.php';
 
-class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
+class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 {
-    const ID = 'edit_group_list';
+    const ID = 'edit_channel_list';
 
     const PARAM_EDIT_LIST = 'edit_list';
-    const PARAM_EDIT_GROUPS = 'edit_groups';
+    const PARAM_EDIT_CHANNELS = 'edit_channels';
     const PAGE_SIZE = 11; // see list_1x11_info
+
+    const ACTION_CUSTOM_DELETE = 'custom_delete';
+    const ACTION_CUSTOM_STRING_DLG_APPLY = 'apply_custom_string_dlg';
 
     protected $selected_items = array();
     protected $toggle_move = 0;
@@ -90,21 +93,22 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $selected_media_url = MediaURL::decode(safe_get_value($user_input, 'selected_media_url'));
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
-        $group_order = $this->plugin->get_groups_ids_by_order($show_adult);
-        $selected_group = $selected_media_url->{PARAM_GROUP_ID};
+        $channels_order = $this->plugin->get_channels_ids_by_order($selected_media_url->{PARAM_GROUP_ID}, $show_adult);
+        $selected_channel = $selected_media_url->{PARAM_CHANNEL_ID};
+        $parent_group = $selected_media_url->{PARAM_GROUP_ID};
 
         if (empty($this->selected_items)) {
-            $selected_items[] = $selected_group;
+            $selected_items[] = $selected_channel;
         } else {
             $new_selected = array();
-            foreach($group_order as $item) {
+            foreach($channels_order as $item) {
                 if (in_array($item, $this->selected_items)) {
                     $new_selected[] = $item;
                 }
             }
             $selected_items = $this->selected_items = $new_selected;
         }
-        $sel_ndx_top = array_search(reset($selected_items), $group_order);
+        $sel_ndx_top = array_search(reset($selected_items), $channels_order);
         $sel_ndx = safe_get_value($user_input, 'sel_ndx', 0);
 
         switch ($user_input->control_id) {
@@ -124,11 +128,11 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::close_and_run($target_action);
 
             case GUI_EVENT_KEY_ENTER:
-                $pos = array_search($selected_group, $this->selected_items);
+                $pos = array_search($selected_channel, $this->selected_items);
                 if ($pos !== false) {
                     array_splice($this->selected_items, $pos, 1);
                 } else {
-                    $this->selected_items[] = $selected_group;
+                    $this->selected_items[] = $selected_channel;
                 }
                 break;
 
@@ -145,17 +149,17 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                     break;
                 }
 
-                $group_order = array_diff($group_order, $selected_items);
-                $sel_ndx = $this->update_order($sel_ndx_top, $selected_group, $selected_items, $group_order);
+                $channels_order = array_diff($channels_order, $selected_items);
+                $sel_ndx = $this->update_channel_order($parent_group, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
                 break;
 
             case ACTION_ITEM_DOWN:
-                $group_order = array_diff($group_order, $selected_items);
-                if (++$sel_ndx_top > count($group_order)) {
+                $channels_order = array_diff($channels_order, $selected_items);
+                if (++$sel_ndx_top > count($channels_order)) {
                     break;
                 }
 
-                $sel_ndx = $this->update_order($sel_ndx_top, $selected_group, $selected_items, $group_order);
+                $sel_ndx = $this->update_channel_order($parent_group, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
                 break;
 
             case ACTION_ITEM_PAGE_UP:
@@ -169,32 +173,32 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                     $sel_ndx_top = 0;
                 }
 
-                $group_order = array_diff($group_order, $selected_items);
-                $sel_ndx = $this->update_order($sel_ndx_top, $selected_group, $selected_items, $group_order);
+                $channels_order = array_diff($channels_order, $selected_items);
+                $sel_ndx = $this->update_channel_order($parent_group, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
                 break;
 
             case ACTION_ITEM_PAGE_DOWN:
                 $this->force_parent_reload = true;
                 $sel_ndx_top += self::PAGE_SIZE;
-                $group_order = array_diff($group_order, $selected_items);
-                $max = count($group_order);
+                $channels_order = array_diff($channels_order, $selected_items);
+                $max = count($channels_order);
                 if ($sel_ndx_top > $max) {
                     $sel_ndx_top = $max;
                 }
 
-                $sel_ndx = $this->update_order($sel_ndx_top, $selected_group, $selected_items, $group_order);
+                $sel_ndx = $this->update_channel_order($parent_group, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
                 break;
 
             case ACTION_ITEM_TOP:
                 $this->force_parent_reload = true;
-                $group_order = array_diff($group_order, $selected_items);
-                $sel_ndx = $this->update_order(0, $selected_group, $selected_items, $group_order);
+                $channels_order = array_diff($channels_order, $selected_items);
+                $sel_ndx = $this->update_channel_order($parent_group, 0, $selected_channel, $selected_items, $channels_order);
                 break;
 
             case ACTION_ITEM_BOTTOM:
                 $this->force_parent_reload = true;
-                $group_order = array_diff($group_order, $selected_items);
-                $sel_ndx = $this->update_order(count($group_order), $selected_group, $selected_items, $group_order);
+                $channels_order = array_diff($channels_order, $selected_items);
+                $sel_ndx = $this->update_channel_order($parent_group, count($channels_order), $selected_channel, $selected_items, $channels_order);
                 break;
 
             case ACTION_ITEM_DELETE:
@@ -205,7 +209,11 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case ACTION_ITEMS_EDIT:
-                return $this->plugin->do_edit_list_screen(static::ID, Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_GROUPS);
+                $cnt = $this->plugin->get_channels_count($parent_group, PARAM_DISABLED);
+                if ($cnt > 0) {
+                    return $this->plugin->do_edit_list_screen(static::ID, Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_CHANNELS);
+                }
+                break;
 
             case ACTION_ITEMS_CLEAR:
                 $this->selected_items = array();
@@ -213,19 +221,62 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEMS_SORT:
                 $this->force_parent_reload = true;
-                $this->plugin->sort_groups_order();
+                $this->plugin->sort_channels_order($parent_group);
                 break;
 
             case ACTION_RESET_ITEMS_SORT:
                 $this->force_parent_reload = true;
-                $this->plugin->sort_groups_order(true);
+                $this->plugin->sort_channels_order($parent_group, true);
+                break;
+
+            case ACTION_ITEM_DELETE_CHANNELS:
+                $items = array(
+                    TR::t('tv_screen_hide_plus') => "[\s(]\+\d",
+                    TR::t('tv_screen_hide_orig') => "[Oo]rig|[Uu]ncomp",
+                    TR::t('tv_screen_hide_50') => "\s50|\sFHD",
+                    TR::t('tv_screen_hide_uhd') => "UHD|\s4[KkКк]|\s8[KkКк]",
+                    TR::t('tv_screen_hide_sd') => "hide_sd",
+                    TR::t('tv_screen_hide_string') => "custom_string"
+                );
+                foreach ($items as $key => $val) {
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE_BY_STRING, $key, null, array('hide' => $val));
+                }
+                return Action_Factory::show_popup_menu($menu_items);
+
+            case ACTION_ITEM_DELETE_BY_STRING:
+                if ($user_input->hide === 'hide_sd') {
+                    $this->force_parent_reload = $this->plugin->hide_sd_channels($parent_group) !== 0;
+                } else if ($user_input->hide !== 'custom_string') {
+                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($user_input->hide, $parent_group) !== 0;
+                } else {
+                    $defs = array();
+                    Control_Factory::add_text_field($defs, $this, self::ACTION_CUSTOM_DELETE, '',
+                        $this->plugin->get_parameter(PARAM_CUSTOM_DELETE_STRING),
+                        false, false, false, false, Control_Factory::DLG_CONTROLS_WIDTH);
+
+                    Control_Factory::add_vgap($defs, 100);
+                    Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_CUSTOM_STRING_DLG_APPLY, TR::t('ok'));
+                    Control_Factory::add_cancel_button($defs);
+                    Control_Factory::add_vgap($defs, 10);
+
+                    return Action_Factory::show_dialog($defs, TR::t('tv_screen_hide_string'));
+                }
+                break;
+
+            case self::ACTION_CUSTOM_STRING_DLG_APPLY:
+                $custom_string = $user_input->{self::ACTION_CUSTOM_DELETE};
+                if (!empty($custom_string)) {
+                    $this->plugin->set_parameter(PARAM_CUSTOM_DELETE_STRING, $custom_string);
+                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($custom_string, $parent_group, false) !== 0;
+                }
                 break;
 
             case ACTION_SORT_POPUP:
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                     ACTION_ITEMS_SORT, TR::t('sort_groups'), 'sort.png');
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RESET_ITEMS_SORT,
-                    TR::t('reset_groups_sort'), 'brush.png');
+
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                    ACTION_RESET_ITEMS_SORT, TR::t('reset_groups_sort'), 'brush.png');
                 return Action_Factory::show_popup_menu($menu_items);
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -246,26 +297,33 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
-        $items = array();
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
-        foreach ($this->plugin->get_groups_by_order($show_adult) as $group_row) {
-            $icon = get_cached_image(safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON));
-            $selected = in_array($group_row[COLUMN_GROUP_ID], $this->selected_items);
+        $fav_ids = $this->plugin->get_channels_order($this->plugin->get_fav_id());
+        $group_id = $media_url->{PARAM_GROUP_ID};
+        $channels_rows = $this->plugin->get_channels_by_order($group_id, $show_adult);
+
+        $items = array();
+        foreach ($channels_rows as $channel_row) {
+            $channel_id = $channel_row[COLUMN_CHANNEL_ID];
+            $icon_url = $this->plugin->get_channel_picon($channel_row, true);
+            $title = $channel_row[COLUMN_TITLE];
+            $selected = in_array($channel_id, $this->selected_items);
+
             $items[] = array(
-                PluginRegularFolderItem::media_url => MediaURL::encode(
-                    array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => $group_row[COLUMN_GROUP_ID])),
-                PluginRegularFolderItem::caption => $group_row[COLUMN_TITLE],
+                PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_CHANNEL_ID => $channel_id, PARAM_GROUP_ID => $group_id)),
+                PluginRegularFolderItem::caption => $title,
+                PluginRegularFolderItem::starred => in_array($channel_id, $fav_ids),
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::item_sticker => $selected ? Control_Factory::create_sticker(get_image_path('mark.png'),
                         -30, 0, 'left', 'center') : null,
                     ViewItemParams::item_caption_color => $selected ? DEF_LABEL_TEXT_COLOR_YELLOW : DEF_LABEL_TEXT_COLOR_WHITE,
-                    ViewItemParams::icon_path => $icon,
-                    ViewItemParams::item_detailed_icon_path => $icon,
-                )
+                    ViewItemParams::icon_path => $icon_url,
+                    ViewItemParams::item_detailed_icon_path => $icon_url,
+                    ViewItemParams::item_detailed_info => $title,
+                ),
             );
         }
 
-        hd_debug_print('Total items: ' . count($items), true);
         return $items;
     }
 
@@ -305,24 +363,28 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                 ACTION_ITEMS_CLEAR, TR::t('clear_selection'), 'brush.png');
         }
 
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+            ACTION_ITEM_DELETE_CHANNELS, TR::t('tv_screen_hide_group_channels'), 'remove.png');
+
         return Action_Factory::show_popup_menu($menu_items);
     }
 
     /**
+     * @param string $group_id
      * @param int $offset
-     * @param string $selected_group
+     * @param string $selected_channel
      * @param array $selected_items
-     * @param array $group_order
+     * @param array $channel_order
      * @return false|int|string
      */
-    protected function update_order($offset, $selected_group, $selected_items, $group_order)
+    protected function update_channel_order($group_id, $offset, $selected_channel, $selected_items, $channel_order)
     {
-        array_splice($group_order, $offset, 0, $selected_items);
-        $this->plugin->store_groups_order_rows($group_order);
+        array_splice($channel_order, $offset, 0, $selected_items);
+        $this->plugin->store_channels_order_rows($group_id, $channel_order);
 
-        if (!in_array($selected_group, $selected_items)) {
-            $selected_group = reset($selected_items);
+        if (!in_array($selected_channel, $selected_items)) {
+            $selected_channel = reset($selected_items);
         }
-        return array_search($selected_group, $group_order);
+        return array_search($selected_channel, $channel_order);
     }
 }

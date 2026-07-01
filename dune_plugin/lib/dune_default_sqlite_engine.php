@@ -1433,20 +1433,49 @@ class Dune_Default_Sqlite_Engine
     /**
      * Arrange groups
      *
-     * @param array $groups_id
+     * @param array $groups_ids
      * @return bool
      */
-    public function store_groups_order_rows($groups_id)
+    public function store_groups_order_rows($groups_ids)
     {
+        if (!$this->sql_playlist) {
+            return false;
+        }
+
         $table_name = self::get_table_full_name(GROUPS_ORDER);
         $tmp_table = $table_name . '_tmp';
         $query = sprintf(self::CREATE_ORDERED_TABLE, $tmp_table, COLUMN_GROUP_ID);
-        foreach ($groups_id as $item) {
+        foreach ($groups_ids as $item) {
             $query .= sprintf('INSERT INTO %s (%s) VALUES (%s);',
                 $tmp_table, COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($item));
         }
         $query .= sprintf('DROP TABLE IF EXISTS %s;', $table_name);
         $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name(GROUPS_ORDER));
+
+        return $this->sql_playlist->exec_transaction($query);
+    }
+
+    /**
+     * Arrange groups
+     *
+     * @param array $channel_ids
+     * @return bool
+     */
+    public function store_channels_order_rows($group_id, $channel_ids)
+    {
+        if (!$this->sql_playlist) {
+            return false;
+        }
+
+        $table_name = self::get_table_full_name($group_id);
+        $tmp_table = $table_name . '_tmp';
+        $query = sprintf(self::CREATE_ORDERED_TABLE, $tmp_table, COLUMN_CHANNEL_ID);
+        foreach ($channel_ids as $item) {
+            $query .= sprintf('INSERT INTO %s (%s) VALUES (%s);',
+                $tmp_table, COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($item));
+        }
+        $query .= sprintf('DROP TABLE IF EXISTS %s;', $table_name);
+        $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name($group_id));
 
         return $this->sql_playlist->exec_transaction($query);
     }
@@ -1705,7 +1734,7 @@ class Dune_Default_Sqlite_Engine
      * @param $include_adult
      * @return array
      */
-    public function get_groups_channels_count($include_adult)
+    public function get_groups_channels($include_adult)
     {
         if ($include_adult) {
             $adult = sprintf('%s<>%d', COLUMN_ADULT, -1);
@@ -2149,6 +2178,24 @@ class Dune_Default_Sqlite_Engine
                 self::get_table_full_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_DISABLED, FALSE, $where);
         }
         return $this->sql_playlist->fetch_array($query);
+    }
+
+    /**
+     * @param string $group_id
+     * @param bool $include_adult
+     * @return array
+     */
+    public function get_channels_ids_by_order($group_id, $include_adult = true)
+    {
+        if ($include_adult) {
+            $query = sprintf('SELECT %s FROM %s ORDER BY ROWID;', COLUMN_CHANNEL_ID, self::get_table_full_name($group_id));
+        } else {
+            $query = sprintf('SELECT %s FROM %s as ord INNER JOIN %s USING(%s) WHERE %s=%d ORDER BY ord.ROWID;',
+                COLUMN_CHANNEL_ID, self::get_table_full_name($group_id), self::get_table_full_name(CHANNELS_INFO),
+                COLUMN_CHANNEL_ID, COLUMN_ADULT, FALSE);
+        }
+
+        return $this->sql_playlist->fetch_array($query, COLUMN_CHANNEL_ID);
     }
 
     /**

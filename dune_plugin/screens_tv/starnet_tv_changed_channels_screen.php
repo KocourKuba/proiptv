@@ -147,12 +147,11 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-            case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->jump_to_channel($channel_id);
-
             case GUI_EVENT_KEY_POPUP_MENU:
                 if ($this->plugin->get_changed_channels_count(PARAM_NEW, $channel_id)) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+                        $this->plugin->jump_to_channel($channel_id),
+                        TR::t('jump_to_channel'), 'goto.png');
                     return Action_Factory::show_popup_menu($menu_items);
                 }
 

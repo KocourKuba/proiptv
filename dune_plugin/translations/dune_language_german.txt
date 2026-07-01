@@ -392,6 +392,7 @@ tv_screen_hide_sd = SD-Kanäle ausblenden, wenn HD vorhanden ist
 tv_screen_toggle_move = Verschieben umschalten (SELECT)
 tv_screen_assign_shortcut = Tastenkombination zuweisen (0-9)
 tv_screen_edit_groups = Bearbeitungskategorien
+tv_screen_edit_channels = Kanäle bearbeiten
 tv_screen_edit_hidden_groups = Verborgene Kategorie bearbeiten
 tv_screen_edit_hidden_channels = Bearbeiten Sie ausgeblendete Kanäle
 tv_screen_continue = Weitermachen
@@ -418,7 +419,7 @@ tv_screen_channel_info__6 = Name:%s||Archiv:|%s Tage||Kanäle ID:|%s||EPG ID:|%s
 tv_screen_external_player = externer Spieler
 tv_screen_internal_player = internen Spieler
 tv_screen_toggle_icons_aspect = Symbole für quadratische Kanäle
-tv_screen_edit_channel = Bearbeiten von Kanalparametern
+tv_screen_edit_channel = Kanal bearbeiten
 tv_screen_channel_zoom = Zoom
 
 vod_screen_new_filter = [Neuer Filter]

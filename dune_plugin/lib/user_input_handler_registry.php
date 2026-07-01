@@ -92,6 +92,30 @@ class User_Input_Handler_Registry
     }
 
     /**
+     * @param array $action
+     * @param string|null $icon
+     * @return array
+     */
+    public static function create_popup_item_ext($action, $caption, $icon = null)
+    {
+        if (!empty($icon)) {
+            if (strpos($icon, "://") === false) {
+                $icon = get_image_path($icon);
+            } else {
+                $icon = get_cached_image($icon);
+            }
+        }
+
+        $arr[GuiMenuItemDef::caption] = $caption;
+        $arr[GuiMenuItemDef::action] = $action;
+        if ($icon) {
+            $arr[GuiMenuItemDef::icon_url] = $icon;
+        }
+
+        return $arr;
+    }
+
+    /**
      * @param User_Input_Handler $handler
      * @param string $name
      * @param string|null $caption

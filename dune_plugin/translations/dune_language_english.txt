@@ -392,6 +392,7 @@ tv_screen_hide_sd = Hide SD channels if HD is present
 tv_screen_toggle_move = Toggle move (SELECT)
 tv_screen_assign_shortcut = Assign shortcut button (0-9)
 tv_screen_edit_groups = Edit categories
+tv_screen_edit_channels = Edit channels
 tv_screen_edit_hidden_groups = Edit hidden category
 tv_screen_edit_hidden_channels = Edit hidden channels
 tv_screen_continue = Continue
@@ -418,7 +419,7 @@ tv_screen_channel_info__6 = Name:|%s||Archive:|%s day(s)||Channel ID:|%s||EPG ID
 tv_screen_external_player = Play by external player
 tv_screen_internal_player = Play by internal player
 tv_screen_toggle_icons_aspect = Square channels icons
-tv_screen_edit_channel = Edit channel parameters
+tv_screen_edit_channel = Edit channel
 tv_screen_channel_zoom = Zoom
 
 vod_screen_new_filter = [New filter]

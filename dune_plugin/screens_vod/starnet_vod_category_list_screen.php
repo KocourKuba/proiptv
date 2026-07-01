@@ -91,21 +91,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::update_regular_folder($range, true, -1);
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $title = TR::t('playlist_name_msg__1', TR::t(VOD_GROUP_CAPTION));
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RELOAD, $title, "refresh.png");
-                $menu_items[] = Control_Factory::menu_separator();
-                if ($group_id === VOD_FAV_GROUP_ID && $this->plugin->get_order_count(VOD_FAV_GROUP_ID)) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
-                } else if ($group_id === VOD_HISTORY_GROUP_ID && $this->plugin->get_all_vod_history_count() !== 0) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
-                } else if ($group_id === VOD_LIST_GROUP_ID && $this->plugin->get_order_count(VOD_LIST_GROUP_CAPTION)) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_list'), "brush.png");
-                }
-                return Action_Factory::show_popup_menu($menu_items);
-
-            case ACTION_ITEMS_CLEAR:
-                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
-                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
+                return $this->create_popup_menu($group_id);
 
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 if ($group_id === VOD_HISTORY_GROUP_ID) {
@@ -295,5 +281,33 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
             $this->plugin->get_screen_view('list_2x11_small_info'),
             $this->plugin->get_screen_view('list_3x11_no_info'),
         );
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    /// Protected methods
+
+    protected function create_popup_menu($group_id)
+    {
+        $title = TR::t('playlist_name_msg__1', TR::t(VOD_GROUP_CAPTION));
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RELOAD, $title, 'refresh.png');
+
+        $menu_items[] = Control_Factory::menu_separator();
+
+        $clear_action = Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+            $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
+
+        if ($group_id === VOD_FAV_GROUP_ID && $this->plugin->get_order_count(VOD_FAV_GROUP_ID)) {
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($clear_action, TR::t('clear_favorites'), 'brush.png');
+        }
+
+        if ($group_id === VOD_HISTORY_GROUP_ID && $this->plugin->get_all_vod_history_count() !== 0) {
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($clear_action, TR::t('clear_history'), 'brush.png');
+        }
+
+        if ($group_id === VOD_LIST_GROUP_ID && $this->plugin->get_order_count(VOD_LIST_GROUP_CAPTION)) {
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($clear_action, TR::t('clear_list'), 'brush.png');
+        }
+
+        return Action_Factory::show_popup_menu($menu_items);
     }
 }

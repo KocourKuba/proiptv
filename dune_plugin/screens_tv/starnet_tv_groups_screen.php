@@ -61,7 +61,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_INFO, TR::t('plugin_info'));
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
 
-        $actions[GUI_EVENT_KEY_SETUP] = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_SETTINGS);
+        $actions[GUI_EVENT_KEY_SETUP] = User_Input_Handler_Registry::create_action($this, ACTION_EDIT_PLAYLIST_SETTINGS);
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, ACTION_INFO_DLG);
         $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_EDIT,
@@ -150,13 +150,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     return null;
                 }
 
-                return User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR);
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
 
             case ACTION_ITEMS_EDIT:
                 return $this->plugin->do_edit_list_screen(static::ID, $user_input->{CONTROL_ACTION_EDIT}, $selected_media_url);
-
-            case ACTION_SHOW_SEARCH_DLG:
-                return $this->plugin->new_search($this, $plugin_cookies);
 
             case ACTION_NEW_SEARCH:
                 return Action_Factory::close_dialog_and_run($this->plugin->do_search($this, $user_input->{ACTION_NEW_SEARCH}, $plugin_cookies));
@@ -188,12 +186,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_PLUGIN_INFO:
                 return $this->plugin->get_plugin_info_dlg($this);
 
-            case ACTION_DONATE_DLG: // show donate QR codes
-                return $this->plugin->do_donate_dialog();
-
             case GUI_EVENT_KEY_POPUP_MENU:
-                $menu_items = $this->do_popup_menu(safe_get_value($selected_media_url, COLUMN_GROUP_ID));
-                return Action_Factory::show_popup_menu($menu_items);
+                return $this->do_popup_menu(safe_get_value($selected_media_url, COLUMN_GROUP_ID), $plugin_cookies);
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print('Start event popup menu for epg source', true);
@@ -223,19 +217,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 }
                 break;
 
-            case ACTION_CHANGE_GROUP_ICON:
-                $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
-                    array(
-                        PARAM_EXTENSION => IMAGE_PREVIEW_PATTERN,
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_ICON_SELECTED,
-                        Starnet_Folder_Screen::PARAM_RESET_ACTION => self::ACTION_RESET_ICON_DEFAULT,
-                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
-                        Starnet_Folder_Screen::PARAM_ALLOW_IMAGE_LIB => true,
-                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
-                    )
-                );
-                return Action_Factory::open_folder($media_url, TR::t('select_file'));
-
             case self::ACTION_ICON_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 $group = $this->plugin->get_group($selected_media_url->{PARAM_GROUP_ID}, PARAM_ALL);
@@ -251,10 +232,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 hd_debug_print("Assign icon: $cached_image_name to group: $selected_media_url->{PARAM_GROUP_ID}");
                 $this->plugin->set_group_icon($selected_media_url->{PARAM_GROUP_ID}, $cached_image_name);
                 return Action_Factory::refresh_entry_points($this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
-
-            case ACTION_ITEMS_CLEAR:
-                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
-                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
 
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 $group_id = safe_get_value($selected_media_url, COLUMN_GROUP_ID);
@@ -371,7 +348,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
         $is_vod_playlist = $this->plugin->is_vod_playlist();
         $ordinary_items = array();
         if (!$is_vod_playlist) {
-            $all_groups = $this->plugin->get_groups_channels_count($show_adult);
+            $all_groups = $this->plugin->get_groups_channels($show_adult);
             foreach ($all_groups as $group_row) {
                 $caption = str_replace('|', '¦', $group_row[COLUMN_TITLE]);
                 if ($show_count) {
@@ -504,9 +481,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
     /**
      * @param string $group_id
+     * @param $plugin_cookies
      * @return array
      */
-    public function do_popup_menu($group_id)
+    public function do_popup_menu($group_id, $plugin_cookies)
     {
         hd_debug_print(null, true);
 
@@ -515,42 +493,45 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             $this->plugin->epg_engine_menu_items($this, $menu_items);
         } else {
             $this->plugin->refresh_playlist_menu_items($this, $menu_items);
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                ACTION_SHOW_SEARCH_DLG,
-                TR::t('search'),
-                "search.png");
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($this->plugin->new_search($this, $plugin_cookies),
+                TR::t('search'), 'search.png');
 
             $menu_items[] = Control_Factory::menu_separator();
 
             $fav_id = $this->plugin->get_fav_id();
             if ($group_id !== null) {
                 // menu for group
+                $action_clear = Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
+
                 if ($group_id === $fav_id && $this->plugin->get_order_count($fav_id)) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), 'brush.png');
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($action_clear, TR::t('clear_favorites'), 'brush.png');
                 }
                 if ($group_id === TV_HISTORY_GROUP_ID && $this->plugin->get_tv_history_count() !== 0) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'), 'brush.png');
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($action_clear, TR::t('clear_history'), 'brush.png');
                 } else if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), 'brush.png');
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($action_clear, TR::t('clear_changed'), 'brush.png');
                 }
 
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), 'image.png');
+                $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
+                    array(
+                        PARAM_EXTENSION => IMAGE_PREVIEW_PATTERN,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_ICON_SELECTED,
+                        Starnet_Folder_Screen::PARAM_RESET_ACTION => self::ACTION_RESET_ICON_DEFAULT,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
+                        Starnet_Folder_Screen::PARAM_ALLOW_IMAGE_LIB => true,
+                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
+                    )
+                );
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+                    Action_Factory::open_folder($media_url, TR::t('select_file')),
+                    TR::t('change_group_icon'), 'image.png');
 
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                     ACTION_ITEMS_EDIT,
                     TR::t('tv_screen_edit_groups'),
                     "move.png",
                     array(CONTROL_ACTION_EDIT => Starnet_Edit_Group_List_Screen::PARAM_EDIT_GROUPS));
-
-                $cnt = $this->plugin->get_channels_count($group_id, PARAM_DISABLED);
-                hd_debug_print("Disabled channels in $group_id: $cnt", true);
-                if ($cnt !== 0) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        ACTION_ITEMS_EDIT,
-                        TR::t('tv_screen_edit_hidden_channels'),
-                        "edit.png",
-                        array(CONTROL_ACTION_EDIT => Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_CHANNELS));
-                }
 
                 $menu_items[] = Control_Factory::menu_separator();
             }
@@ -560,12 +541,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             if ($this->plugin->has_active_provider()) {
                 $menu_items[] = Control_Factory::menu_separator();
                 if ($this->plugin->get_active_provider()->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_INFO_DLG, TR::t('subscription'), 'info.png');
                 }
             }
         }
 
-        return $menu_items;
+        return Action_Factory::show_popup_menu($menu_items);
     }
 
     /**

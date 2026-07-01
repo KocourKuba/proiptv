@@ -35,7 +35,6 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
     const ACTION_FILE_TEXT_LIST = 'text_list_file';
 
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
-    const ACTION_CHOOSE_FOLDER = 'choose_folder';
     const ACTION_ADD_PROVIDER = 'add_provider';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
     const ACTION_ASSIGN_SHORTCUT_POPUP = 'assign_shortcut';
@@ -236,9 +235,6 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-            case ACTION_EXPORT:
-                return $this->plugin->show_export_dialog($this, 'playlists_export.txt');
-
             case ACTION_EXPORT_APPLY_DLG:
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                     array(
@@ -252,53 +248,17 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             case self::ACTION_EXPORT_FOLDER_SELECTED:
                 return $this->do_export_playlist($user_input);
 
-            case ACTION_ADD_URL_DLG:
-                return $this->do_add_url_dlg();
-
             case ACTION_URL_DLG_APPLY:
                 return $this->apply_add_url_dlg($user_input);
 
             case ACTION_PL_TYPE_DLG_APPLY:
                 return $this->apply_add_m3u_type($user_input);
 
-            case ACTION_CHOOSE_FILE:
-                $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
-                    array(
-                        PARAM_EXTENSION => $user_input->{PARAM_EXTENSION},
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => $user_input->{PARAM_SELECTED_ACTION},
-                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
-                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
-                    )
-                );
-
-                return Action_Factory::open_folder($media_url, TR::t('select_file'));
-
             case self::ACTION_FILE_TEXT_LIST:
                 return $this->selected_text_file($user_input);
 
             case ACTION_FILE_PLAYLIST:
                 return $this->selected_m3u_file($user_input);
-
-            case self::ACTION_CHOOSE_FOLDER:
-                $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
-                    array(
-                        PARAM_EXTENSION => $user_input->{PARAM_EXTENSION},
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => self::ACTION_IMPORT_FOLDER_SELECTED,
-                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
-                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
-                    )
-                );
-
-                return Action_Factory::open_folder($media_url, TR::t('edit_list_src_folder'));
-
-            case self::ACTION_ADD_PROVIDER:
-                $params = array(
-                    PARAM_SCREEN_ID => Starnet_Edit_Providers_List_Screen::ID,
-                    PARAM_SOURCE_WINDOW_ID => static::ID,
-                    PARAM_WINDOW_COUNTER => 1,
-                    PARAM_END_ACTION => ACTION_EDIT_PROVIDER_DLG,
-                );
-                return Action_Factory::open_folder(MediaURL::encode($params), TR::t('edit_list_add_provider'));
 
             case ACTION_EDIT_PROVIDER_DLG:
                 return $this->edit_provider_dlg($user_input);
@@ -467,63 +427,81 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
 
         // Add provider
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-            self::ACTION_ADD_PROVIDER,
-            TR::t('edit_list_add_provider'),
-            "iptv.png"
-        );
+        $params = MediaURL::encode(array(
+            PARAM_SCREEN_ID => Starnet_Edit_Providers_List_Screen::ID,
+            PARAM_SOURCE_WINDOW_ID => static::ID,
+            PARAM_WINDOW_COUNTER => 1,
+            PARAM_END_ACTION => ACTION_EDIT_PROVIDER_DLG,
+        ));
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+            Action_Factory::open_folder($params, TR::t('edit_list_add_provider')),
+            TR::t('edit_list_add_provider'), 'iptv.png');
 
         // Add URL
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-            ACTION_ADD_URL_DLG,
-            TR::t('edit_list_add_url'),
-            "link.png",
-            array(PARAM_SELECTED_ACTION => ACTION_FILE_PLAYLIST)
-        );
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($this->do_add_url_dlg(), TR::t('edit_list_add_url'), 'link.png');
 
         // Add File
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-            ACTION_CHOOSE_FILE,
-            TR::t('select_file'),
-            "m3u_file.png",
+        $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
             array(
-                PARAM_SELECTED_ACTION => ACTION_FILE_PLAYLIST,
-                PARAM_EXTENSION => PLAYLIST_PATTERN
+                PARAM_EXTENSION => PLAYLIST_PATTERN,
+                Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_PLAYLIST,
+                Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
+                Starnet_Folder_Screen::PARAM_READ_ONLY => true,
             )
         );
-
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-            self::ACTION_CHOOSE_FOLDER,
-            TR::t('edit_list_folder_path'),
-            "folder.png",
-            array(PARAM_EXTENSION => $parent_media_url->{PARAM_EXTENSION})
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+            Action_Factory::open_folder($media_url, TR::t('select_file')),
+            TR::t('select_file'),
+            'm3u_file.png'
         );
+
+        // choose folder
+        $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
+            array(
+                PARAM_EXTENSION => PLAYLIST_PATTERN,
+                Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => self::ACTION_IMPORT_FOLDER_SELECTED,
+                Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
+                Starnet_Folder_Screen::PARAM_READ_ONLY => true,
+            )
+        );
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+            Action_Factory::open_folder($media_url, TR::t('edit_list_src_folder')),
+            TR::t('edit_list_folder_path'), 'folder.png');
 
         // Add list file
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-            ACTION_CHOOSE_FILE,
-            TR::t('edit_list_import_list'),
-            "text_file.png",
+        $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
             array(
-                PARAM_SELECTED_ACTION => self::ACTION_FILE_TEXT_LIST,
-                PARAM_EXTENSION => TEXT_FILE_PATTERN
+                PARAM_EXTENSION => TEXT_FILE_PATTERN,
+                Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_FILE_TEXT_LIST,
+                Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
+                Starnet_Folder_Screen::PARAM_READ_ONLY => true,
             )
         );
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+            Action_Factory::open_folder($media_url, TR::t('select_file')),
+            TR::t('edit_list_import_list'),
+            'text_file.png'
+        );
 
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_EXPORT, TR::t('export_list'));
+        // Export list
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+            $this->plugin->show_export_dialog($this, 'playlists_export.txt'), TR::t('export_list'));
+
         $menu_items[] = Control_Factory::menu_separator();
 
         if ($this->plugin->get_all_playlists_count() !== 0) {
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), 'move.png');
         }
 
         $menu_items[] = Control_Factory::menu_separator();
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE, TR::t('delete'), "remove.png");
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE, TR::t('delete'), 'remove.png');
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), 'brush.png');
 
         if ($this->plugin->is_full_size_remote()) {
             $menu_items[] = Control_Factory::menu_separator();
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, self::ACTION_ASSIGN_SHORTCUT_POPUP, TR::t('tv_screen_assign_shortcut'));
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                self::ACTION_ASSIGN_SHORTCUT_POPUP, TR::t('tv_screen_assign_shortcut'));
         }
 
         return Action_Factory::show_popup_menu($menu_items);
@@ -798,7 +776,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
-        $files = glob_dir($selected_media_url->{PARAM_FILEPATH}, "/\." . $parent_media_url->{PARAM_EXTENSION} . "$/i");
+        $files = glob_dir($selected_media_url->{PARAM_FILEPATH}, "/\." . PLAYLIST_PATTERN . "$/i");
         if (empty($files)) {
             return Action_Factory::show_title_dialog(TR::t('error'), TR::t('edit_list_no_files'));
         }
