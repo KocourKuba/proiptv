@@ -491,7 +491,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
         $media_url->{PARAM_ARCHIVE_TM} = ((time() - $archive_tm) < 259200) ? $archive_tm : -1;
         // Check if previous state is TV playback
         if (!$is_playlist_changed && $resume_owner && $mode === "PLUGIN_TV_PLAYBACK") {
-            hd_debug_print('Resumed media url: ' . $media_url);
             return Action_Factory::tv_play($media_url);
         }
 

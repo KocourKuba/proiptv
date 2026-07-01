@@ -2554,15 +2554,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @param string $source_screen_id
      * @param string $action_edit
-     * @param MediaURL|null $media_url
+     * @param string|null $group_id
      * @return array|null
      */
-    public function do_edit_list_screen($source_screen_id, $action_edit, $media_url = null,
+    public function do_edit_list_screen($source_screen_id, $action_edit, $group_id = null,
                                         $ret_action = array(PARAM_END_ACTION => ACTION_INVALIDATE, PARAM_CANCEL_ACTION => ACTION_EMPTY))
     {
         $post_action = null;
-        if (!is_null($media_url) && isset($media_url->{PARAM_GROUP_ID})) {
-            $ret_action[PARAM_GROUP_ID] = $media_url->{PARAM_GROUP_ID};
+        if (!is_null($group_id)) {
+            $ret_action[PARAM_GROUP_ID] = $group_id;
         }
 
         switch ($action_edit) {

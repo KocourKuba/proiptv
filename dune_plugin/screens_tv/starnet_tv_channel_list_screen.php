@@ -187,7 +187,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEMS_EDIT:
                 return $this->plugin->do_edit_list_screen(static::ID,
-                    Starnet_Edit_Channel_List_Screen::PARAM_EDIT_CHANNELS, $parent_media_url);
+                    Starnet_Edit_Channel_List_Screen::PARAM_EDIT_CHANNELS, $parent_media_url->{PARAM_GROUP_ID});
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 return $this->create_popup_menu($user_input, $plugin_cookies);
