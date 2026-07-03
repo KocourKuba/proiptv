@@ -86,6 +86,7 @@ add_to_list = Add to List
 storage = External storages
 internal = Internal storage
 image_libs = Icon libraries
+last_folder = Recent used folder
 restore = Restore
 restore_all = Restore all
 name = Name:
@@ -356,6 +357,8 @@ edit_list_wrong_cache_type = Warning:|Server does not support caching! Please se
 
 folder_screen_open_folder = Open folder
 folder_screen_create_folder = Create folder
+folder_screen_nfs_mounts = NFS mounted folders
+folder_screen_smb_mounts = SMB mounted folders
 folder_screen_smb_settings = SMB settings
 folder_screen_select__1 = ||Press Blue D or Select to choose:|%s
 folder_screen_select_file__2 = File:||%s||%s||||Press ENTER to select

@@ -172,7 +172,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case ACTION_NEW_SEARCH:
-                return Action_Factory::close_dialog_and_run($this->plugin->do_search($this, $user_input->{ACTION_NEW_SEARCH}, $plugin_cookies));
+                return Action_Factory::close_dialog_and_run($this->plugin->do_search($this, $user_input->{ACTION_NEW_SEARCH}));
 
             case ACTION_JUMP_TO_CHANNEL:
                 $sel_ndx = $user_input->number;
@@ -190,7 +190,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                     Starnet_Edit_Channel_List_Screen::PARAM_EDIT_CHANNELS, $parent_media_url->{PARAM_GROUP_ID});
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                return $this->create_popup_menu($user_input, $plugin_cookies);
+                return $this->create_popup_menu($user_input);
 
             case ACTION_EDIT_CHANNEL_DLG:
                 return $this->plugin->do_edit_channel_parameters($this, $channel_id);
@@ -331,7 +331,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// Protected methods
 
-    protected function create_popup_menu($user_input, $plugin_cookies)
+    protected function create_popup_menu($user_input)
     {
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
@@ -339,7 +339,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         $channel_id = $selected_media_url->{PARAM_CHANNEL_ID};
 
         $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
-            $this->plugin->new_search($this, $plugin_cookies),
+            $this->plugin->new_search($this),
             TR::t('search'), 'search.png');
 
         if ($parent_group === TV_ALL_CHANNELS_GROUP_ID) {

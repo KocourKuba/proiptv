@@ -144,7 +144,8 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
             case ACTION_CHANGE_BACKGROUND:
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                     array(
-                        PARAM_EXTENSION => 'png|jpg|jpeg',
+                        PARAM_EXTENSION => BG_IMAGE_PATTERN,
+                        PARAM_RECENT_FOLDER => $this->plugin->get_setting(PARAM_RECENT_IMAGE_FOLDER, ''),
                         Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_BG_FILE_SELECTED,
                         Starnet_Folder_Screen::PARAM_RESET_ACTION => self::ACTION_BG_RESET_DEFAULT,
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
@@ -156,12 +157,15 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
 
             case self::ACTION_BG_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+                $filepath = $data->{PARAM_FILEPATH};
+                $this->plugin->set_setting(PARAM_RECENT_IMAGE_FOLDER, get_noslash_trailed_path(dirname($filepath)));
+
                 $old_image = $this->plugin->get_background_image();
                 $is_old_default = $this->plugin->is_background_image_default();
                 $cached_image = get_cached_image_path($this->plugin->get_active_playlist_id() . '_' . $data->{PARAM_CAPTION});
 
-                hd_print('copy from: ' . $data->{PARAM_FILEPATH} . " to: $cached_image");
-                if (!copy($data->{PARAM_FILEPATH}, $cached_image)) {
+                hd_print("copy from: $filepath to: $cached_image");
+                if (!copy($filepath, $cached_image)) {
                     return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_copy'));
                 }
 

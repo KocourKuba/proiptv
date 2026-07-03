@@ -220,7 +220,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 if (isset($user_input->{self::ACTION_ASSIGN_SHORTCUT_POPUP})) {
                     return $this->create_shortcuts_popup($user_input);
                 }
-                return $this->create_popup_menu($user_input);
+                return $this->create_popup_menu();
 
             case ACTION_ITEMS_CLEAR:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
@@ -417,14 +417,11 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
     }
 
     /**
-     * @param object $user_input
      * @return array|null
      */
-    protected function create_popup_menu($user_input)
+    protected function create_popup_menu()
     {
         hd_debug_print(null, true);
-
-        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
 
         // Add provider
         $params = MediaURL::encode(array(

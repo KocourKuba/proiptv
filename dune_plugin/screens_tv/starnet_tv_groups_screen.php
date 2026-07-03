@@ -157,7 +157,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 return $this->plugin->do_edit_list_screen(static::ID, $user_input->{CONTROL_ACTION_EDIT}, $selected_media_url);
 
             case ACTION_NEW_SEARCH:
-                return Action_Factory::close_dialog_and_run($this->plugin->do_search($this, $user_input->{ACTION_NEW_SEARCH}, $plugin_cookies));
+                return Action_Factory::close_dialog_and_run($this->plugin->do_search($this, $user_input->{ACTION_NEW_SEARCH}));
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
                 if (isset($user_input->{COLUMN_CHANNEL_ID})) {
@@ -187,7 +187,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 return $this->plugin->get_plugin_info_dlg($this);
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                return $this->create_popup_menu(safe_get_value($selected_media_url, COLUMN_GROUP_ID), $plugin_cookies);
+                return $this->create_popup_menu(safe_get_value($selected_media_url, COLUMN_GROUP_ID));
 
             case ACTION_EPG_CACHE_ENGINE:
                 $this->plugin->epg_engine_menu_items($this, $menu_items);
@@ -212,22 +212,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 }
                 break;
 
-            case self::ACTION_ICON_SELECTED:
-                $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
-                $group = $this->plugin->get_group($selected_media_url->{PARAM_GROUP_ID}, PARAM_ALL);
-                if (is_null($group)) break;
-
-                $cached_image_name = $this->plugin->get_active_playlist_id() . '_' . $data->{PARAM_CAPTION};
-                $cached_image_path = get_cached_image_path($cached_image_name);
-                hd_print('copy from: ' . $data->{PARAM_FILEPATH} . " to: $cached_image_path");
-                if (!copy($data->{PARAM_FILEPATH}, $cached_image_path)) {
-                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_copy'));
-                }
-
-                hd_debug_print("Assign icon: $cached_image_name to group: $selected_media_url->{PARAM_GROUP_ID}");
-                $this->plugin->set_group_icon($selected_media_url->{PARAM_GROUP_ID}, $cached_image_name);
-                return Action_Factory::refresh_entry_points($this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
-
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 $group_id = safe_get_value($selected_media_url, COLUMN_GROUP_ID);
                 if ($group_id === TV_HISTORY_GROUP_ID) {
@@ -245,6 +229,23 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 }
                 break;
+
+            case self::ACTION_ICON_SELECTED:
+                $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+                $group = $this->plugin->get_group($selected_media_url->{PARAM_GROUP_ID}, PARAM_ALL);
+                if (is_null($group)) break;
+
+                $this->plugin->set_setting(PARAM_RECENT_IMAGE_FOLDER, get_noslash_trailed_path(dirname($data->{PARAM_FILEPATH})));
+                $cached_image_name = $this->plugin->get_active_playlist_id() . '_' . $data->{PARAM_CAPTION};
+                $cached_image_path = get_cached_image_path($cached_image_name);
+                hd_print('copy from: ' . $data->{PARAM_FILEPATH} . " to: $cached_image_path");
+                if (!copy($data->{PARAM_FILEPATH}, $cached_image_path)) {
+                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_copy'));
+                }
+
+                hd_debug_print("Assign icon: $cached_image_name to group: " . $selected_media_url->{PARAM_GROUP_ID});
+                $this->plugin->set_group_icon($selected_media_url->{PARAM_GROUP_ID}, $cached_image_name);
+                return Action_Factory::refresh_entry_points($this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
 
             case self::ACTION_RESET_ICON_DEFAULT:
                 hd_debug_print("Reset icon for group: " . $selected_media_url->{PARAM_GROUP_ID} . " to default");
@@ -476,16 +477,15 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
     /**
      * @param string $group_id
-     * @param $plugin_cookies
      * @return array
      */
-    public function create_popup_menu($group_id, $plugin_cookies)
+    public function create_popup_menu($group_id)
     {
         hd_debug_print(null, true);
 
         $menu_items = array();
         $this->plugin->refresh_playlist_menu_items($this, $menu_items);
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($this->plugin->new_search($this, $plugin_cookies),
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($this->plugin->new_search($this),
             TR::t('search'), 'search.png');
 
         $menu_items[] = Control_Factory::menu_separator();
@@ -508,6 +508,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                 array(
                     PARAM_EXTENSION => IMAGE_PREVIEW_PATTERN,
+                    PARAM_RECENT_FOLDER => $this->plugin->get_setting(PARAM_RECENT_IMAGE_FOLDER, ''),
                     Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_ICON_SELECTED,
                     Starnet_Folder_Screen::PARAM_RESET_ACTION => self::ACTION_RESET_ICON_DEFAULT,
                     Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
@@ -525,7 +526,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 "move.png",
                 array(CONTROL_ACTION_EDIT => Starnet_Edit_Group_List_Screen::PARAM_EDIT_GROUPS));
 
-            if ($group_id !== TV_ALL_CHANNELS_GROUP_ID) {
+            if ($group_id !== TV_ALL_CHANNELS_GROUP_ID &&
+                $group_id !== TV_FAV_GROUP_ID &&
+                $group_id !== TV_FAV_COMMON_GROUP_ID &&
+                $group_id !== TV_CHANGED_CHANNELS_GROUP_ID &&
+                $group_id !== TV_HISTORY_GROUP_ID &&
+                $group_id !== VOD_GROUP_ID) {
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
                     $this->plugin->do_edit_list_screen(static::ID,
                         Starnet_Edit_Channel_List_Screen::PARAM_EDIT_CHANNELS, $group_id),

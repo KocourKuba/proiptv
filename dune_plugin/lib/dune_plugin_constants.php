@@ -231,6 +231,8 @@ const PARAM_ACTION = 'param_action';
 const PARAM_ACTION_ID = 'action_id';
 const PARAM_WINDOW_COUNTER = 'window_counter';
 const PARAM_EXTENSION = 'extension';
+const PARAM_RECENT_FOLDER = 'recent_folder';
+const PARAM_RECENT_IMAGE_FOLDER = 'last_image_folder';
 const PARAM_CAPTION = 'caption';
 const PARAM_FILEPATH = 'filepath';
 const PARAM_MANDATORY_PLAYBACK = 'mandatory_playback';
@@ -267,6 +269,7 @@ const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_GROUP_FONT_SIZE = 'group_font_size';
 const PARAM_ASK_EXIT = 'ask_exit';
 const PARAM_LAST_PLAYLIST = 'current_playlist';
+const PARAM_SMB_SETUP = 'smb_setup';
 
 // playlist params
 const PARAM_PLAYLIST_STORAGE = 'playlist_storage';
@@ -470,6 +473,7 @@ const AUDIO_PATTERN = 'mp3|ac3|wma|ogg|ogm|m4a|aif|iff|mid|mpa|ra|wav|flac|ape|v
 const VIDEO_PATTERN = 'avi|mp4|mpg|mpeg|divx|m4v|3gp|asf|wmv|mkv|mov|ogv|vob|flv|ts|3g2|swf|ps|qt|m2ts';
 const IMAGE_PREVIEW_PATTERN = 'png|jpg|jpeg|bmp|gif|aai';
 const IMAGE_PATTERN = '|psd|pspimage|thm|tif|yuf|svg|ico|djpg|dbmp|dpng';
+const BG_IMAGE_PATTERN = '|png|jpg|jpeg';
 const PLAYLIST_PATTERN = 'm3u|m3u8';
 const TEXT_FILE_PATTERN = 'txt|lst';
 const EPG_PATTERN = 'xml|xmltv|gz';
