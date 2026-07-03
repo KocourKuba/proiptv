@@ -273,10 +273,10 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_SORT_POPUP:
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_ITEMS_SORT, TR::t('sort_groups'), 'sort.png');
+                    ACTION_ITEMS_SORT, TR::t('sort_channels'), 'sort.png');
 
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_RESET_ITEMS_SORT, TR::t('reset_groups_sort'), 'brush.png');
+                    ACTION_RESET_ITEMS_SORT, TR::t('reset_channels_sort'), 'brush.png');
                 return Action_Factory::show_popup_menu($menu_items);
 
             case GUI_EVENT_KEY_POPUP_MENU:
