@@ -59,22 +59,22 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // Show in main screen
         if (!is_limited_apk()) {
-            $show_tv = safe_get_value($plugin_cookies, PARAM_COOKIE_SHOW_TV, SwitchOnOff::on);
-            hd_debug_print(PARAM_COOKIE_SHOW_TV . ": $show_tv", true);
-            Control_Factory::add_image_button($defs, $this, PARAM_COOKIE_SHOW_TV,
+            $show_tv = $this->plugin->get_parameter(PARAM_SHOW_TV, SwitchOnOff::on);
+            hd_debug_print(PARAM_SHOW_TV . ": $show_tv", true);
+            Control_Factory::add_image_button($defs, $this, PARAM_SHOW_TV,
                 TR::t('setup_show_in_main'), SwitchOnOff::translate($show_tv), SwitchOnOff::to_image($show_tv));
         }
 
         //////////////////////////////////////
         // auto play
-        $auto_play = safe_get_value($plugin_cookies, PARAM_COOKIE_AUTO_PLAY, SwitchOnOff::off);
-        Control_Factory::add_image_button($defs, $this, PARAM_COOKIE_AUTO_PLAY,
+        $auto_play = $this->plugin->get_parameter(PARAM_AUTO_PLAY, SwitchOnOff::off);
+        Control_Factory::add_image_button($defs, $this, PARAM_AUTO_PLAY,
             TR::t('setup_autostart'), SwitchOnOff::translate($auto_play), SwitchOnOff::to_image($auto_play));
 
         //////////////////////////////////////
         // auto resume
-        $auto_resume = safe_get_value($plugin_cookies, PARAM_COOKIE_AUTO_RESUME, SwitchOnOff::off);
-        Control_Factory::add_image_button($defs, $this, PARAM_COOKIE_AUTO_RESUME,
+        $auto_resume = $this->plugin->get_parameter(PARAM_AUTO_RESUME, SwitchOnOff::off);
+        Control_Factory::add_image_button($defs, $this, PARAM_AUTO_RESUME,
             TR::t('setup_continue_play'), SwitchOnOff::translate($auto_resume), SwitchOnOff::to_image($auto_resume));
 
         //////////////////////////////////////
@@ -86,8 +86,8 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // Show playlist first
-        $playlist_first = safe_get_value($plugin_cookies, PARAM_COOKIE_PLAYLIST_FIRST, SwitchOnOff::off);
-        Control_Factory::add_image_button($defs, $this, PARAM_COOKIE_PLAYLIST_FIRST,
+        $playlist_first = $this->plugin->get_parameter(PARAM_PLAYLIST_FIRST, SwitchOnOff::off);
+        Control_Factory::add_image_button($defs, $this, PARAM_PLAYLIST_FIRST,
             TR::t('setup_playlist_first'), SwitchOnOff::translate($playlist_first), SwitchOnOff::to_image($playlist_first));
 
         //////////////////////////////////////
@@ -135,14 +135,14 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
                 $parent_media_url = MediaURL::decode($user_input->parent_media_url);
                 return self::make_return_action($parent_media_url);
 
-            case PARAM_COOKIE_SHOW_TV:
-                toggle_cookie_param($plugin_cookies, $control_id, SwitchOnOff::on);
+            case PARAM_SHOW_TV:
+                $this->plugin->toggle_parameter($control_id, SwitchOnOff::on);
                 break;
 
-            case PARAM_COOKIE_AUTO_PLAY:
-            case PARAM_COOKIE_AUTO_RESUME:
-            case PARAM_COOKIE_PLAYLIST_FIRST:
-                toggle_cookie_param($plugin_cookies, $control_id, SwitchOnOff::off);
+            case PARAM_AUTO_PLAY:
+            case PARAM_AUTO_RESUME:
+            case PARAM_PLAYLIST_FIRST:
+                $this->plugin->toggle_parameter($control_id, SwitchOnOff::off);
                 break;
 
             case PARAM_COOKIE_ENABLE_NEWUI:

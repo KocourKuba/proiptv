@@ -2137,6 +2137,8 @@ function print_sysinfo()
     foreach ($table as $key => $value) {
         hd_print(str_pad($key, $max + 2) . $value);
     }
+
+    hd_print_separator();
 }
 
 /**

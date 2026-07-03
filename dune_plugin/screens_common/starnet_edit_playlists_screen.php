@@ -104,7 +104,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                     $target_action = User_Input_Handler_Registry::create_screen_action($source_window, $end_action);
                 }
 
-                if (safe_get_value($plugin_cookies, PARAM_COOKIE_PLAYLIST_FIRST, SwitchOnOff::off) === SwitchOnOff::on) {
+                if ($this->plugin->get_parameter(PARAM_PLAYLIST_FIRST, SwitchOnOff::off) === SwitchOnOff::on) {
                     if ($this->plugin->get_bool_parameter(PARAM_ASK_EXIT)) {
                         return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, ACTION_CONFIRM_EXIT_DLG_APPLY);
                     }
@@ -120,7 +120,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
                 $this->plugin->set_active_playlist_id($selected_id);
                 $this->force_parent_reload = true;
-                if (safe_get_value($plugin_cookies, PARAM_COOKIE_PLAYLIST_FIRST, SwitchOnOff::off) === SwitchOnOff::on) {
+                if ($this->plugin->get_parameter(PARAM_PLAYLIST_FIRST, SwitchOnOff::off) === SwitchOnOff::on) {
                     $this->force_parent_reload = false;
                     $this->plugin->reset_channels();
                     if (!$this->plugin->load_channels($plugin_cookies)) {

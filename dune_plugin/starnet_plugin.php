@@ -71,7 +71,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
     /**
      * @throws Exception
      */
-    public function __construct($plugin_cookies)
+    public function __construct(&$plugin_cookies)
     {
         parent::__construct();
 
@@ -125,23 +125,20 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->init_providers_config();
         $this->init_screen_view_parameters($this->plugin_info['app_background']);
 
+        hd_print_separator();
+        hd_print('Plugin name:             ' . $this->plugin_info['app_caption']);
+        hd_print('Plugin version:          ' . $this->plugin_info['app_version']);
+        hd_print('Plugin date:             ' . $this->plugin_info['app_release_date']);
+        hd_print('LocalTime:               ' . format_datetime('Y-m-d H:i', time()));
+        hd_print('TimeZone:                ' . getTimeZone());
+        hd_print('NewUI support:           ' . SwitchOnOff::to_def(HD::rows_api_support()));
+        hd_print('NewUI enabled:           ' . SwitchOnOff::to_def(Starnet_Epfs_Handler::$enabled));
+        hd_print('Ext EPG support:         ' . SwitchOnOff::to_def(is_ext_epg_supported()));
+        hd_print('Debug log enabled:       ' . safe_get_value($plugin_cookies,PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off));
+
         print_sysinfo();
 
-        hd_print_separator();
-        hd_print('Plugin name:         ' . $this->plugin_info['app_caption']);
-        hd_print('Plugin version:      ' . $this->plugin_info['app_version']);
-        hd_print('Plugin date:         ' . $this->plugin_info['app_release_date']);
-        hd_print('LocalTime:           ' . format_datetime('Y-m-d H:i', time()));
-        hd_print('TimeZone:            ' . getTimeZone());
-        hd_print('NewUI support:       ' . var_export(HD::rows_api_support(), true));
-        hd_print('NewUI enabled:       ' . var_export(Starnet_Epfs_Handler::$enabled, true));
-        hd_print('Ext EPG support:     ' . var_export(is_ext_epg_supported(), true));
-        hd_print('Auto resume enabled: ' . safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_RESUME, SwitchOnOff::off));
-        hd_print('Auto play enabled:   ' . safe_get_value($plugin_cookies,PARAM_COOKIE_AUTO_PLAY, SwitchOnOff::off));
-        hd_print('Debug log enabled:   ' . safe_get_value($plugin_cookies,PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off));
-        hd_print_separator();
-
-        hd_debug_print('Plugin loading complete.');
+        hd_print('Plugin loading complete.');
     }
 
     public function init_providers_config()

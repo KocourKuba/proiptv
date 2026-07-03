@@ -100,7 +100,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                if (safe_get_value($plugin_cookies, PARAM_COOKIE_PLAYLIST_FIRST, SwitchOnOff::off) === SwitchOnOff::off
+                if ($this->plugin->get_parameter(PARAM_PLAYLIST_FIRST, SwitchOnOff::off) === SwitchOnOff::off
                     && $this->plugin->get_bool_parameter(PARAM_ASK_EXIT)) {
                     return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, ACTION_CONFIRM_EXIT_DLG_APPLY);
                 }

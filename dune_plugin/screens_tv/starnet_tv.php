@@ -197,6 +197,8 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_tv_info(MediaURL $media_url)
     {
+        hd_debug_print($media_url, true);
+
         if (!$this->plugin->is_channels_loaded()) {
             hd_debug_print('Channels not loaded!');
             return array();
@@ -276,9 +278,11 @@ class Starnet_Tv implements User_Input_Handler
             $initial_group_id = null;
             $initial_is_favorite = 1;
         } else {
-            $initial_group_id = (string)$media_url->{PARAM_GROUP_ID};
+            $initial_group_id = isset($media_url->{PARAM_GROUP_ID}) ? (string)$media_url->{PARAM_GROUP_ID} : null;
             $initial_is_favorite = 0;
         }
+        $initial_channel_id = isset($media_url->{PARAM_CHANNEL_ID}) ? (string)$media_url->{PARAM_CHANNEL_ID} : null;
+        $archive_tm = isset($media_url->{PARAM_ARCHIVE_TM}) ? (int)$media_url->{PARAM_ARCHIVE_TM} : -1;
 
         $show_fav = $this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES);
         $fav_icon = $this->plugin->get_group_icon(TV_FAV_GROUP_ID);
@@ -293,13 +297,13 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::favorites_supported => $show_fav,
             PluginTvInfo::favorites_icon_url => get_cached_image($fav_icon),
 
-            PluginTvInfo::initial_channel_id => (string)$media_url->{PARAM_CHANNEL_ID},
+            PluginTvInfo::initial_channel_id => $initial_channel_id,
             PluginTvInfo::initial_group_id => $initial_group_id,
 
             PluginTvInfo::initial_is_favorite => $initial_is_favorite,
             PluginTvInfo::favorite_channel_ids => $this->plugin->get_channels_order($fav_id),
 
-            PluginTvInfo::initial_archive_tm => isset($media_url->{PARAM_ARCHIVE_TM}) ? (int)$media_url->{PARAM_ARCHIVE_TM} : -1,
+            PluginTvInfo::initial_archive_tm => $archive_tm,
 
             PluginTvInfo::epg_font_size => $epg_font_size ? PLUGIN_FONT_SMALL : PLUGIN_FONT_NORMAL,
 

@@ -1065,8 +1065,9 @@ class Epg_Manager_Xmltv
         self::$cache_dir = get_slash_trailed_path($cache_dir);
         create_path(self::$cache_dir);
 
-        hd_debug_print('Cache dir:      ' . self::$cache_dir);
-        hd_debug_print('Storage space:  ' . HD::get_storage_size(self::$cache_dir));
+        hd_print_separator();
+        hd_print('XMLTV cache folder:      ' . self::$cache_dir);
+        hd_print('Storage space:           ' . HD::get_storage_size(self::$cache_dir));
     }
 
     /**

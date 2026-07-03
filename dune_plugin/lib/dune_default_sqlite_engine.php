@@ -97,9 +97,24 @@ class Dune_Default_Sqlite_Engine
      */
     protected $playback_points = array();
 
+    /**
+     * @var object
+     */
+    protected $plugin_cookies;
+
     public function get_sql_playlist()
     {
         return $this->sql_playlist;
+    }
+
+    public function get_plugin_cookies()
+    {
+        return $this->plugin_cookies;
+    }
+
+    public function set_plugin_cookies(&$plugin_cookies)
+    {
+        $this->plugin_cookies = $plugin_cookies;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -239,6 +254,36 @@ class Dune_Default_Sqlite_Engine
             foreach ($parameters as $key => $value) {
                 hd_debug_print("!!!!! Parameter $key is not imported: " . $value);
             }
+        }
+
+        $get_query = function(&$plugin_cookies, $name, $default) {
+            $query = '';
+            if (isset($plugin_cookies->{$name})) {
+                $value = safe_get_value($plugin_cookies, $name, $default);
+                if (!empty($value)) {
+                    unset($plugin_cookies->{$name});
+                    $query = sprintf('INSERT OR IGNORE INTO %s (%s,%s) VALUES (%s,%s);',
+                        Dune_Default_Sqlite_Engine::PARAMETERS_TABLE, COLUMN_NAME, COLUMN_VALUE,
+                        Sql_Wrapper::sql_quote($name), Sql_Wrapper::sql_quote($value));
+                }
+            }
+            return $query;
+        };
+
+        if (isset($this->plugin_cookies->toggle_move)) {
+            unset($this->plugin_cookies->toggle_move);
+        }
+
+        // move parameters from plugin_cookies to db
+        $query = $get_query($this->plugin_cookies, PARAM_SHOW_TV, SwitchOnOff::on);
+        $query .= $get_query($this->plugin_cookies, PARAM_AUTO_PLAY, SwitchOnOff::off);
+        $query .= $get_query($this->plugin_cookies, PARAM_AUTO_RESUME, SwitchOnOff::off);
+        $query .= $get_query($this->plugin_cookies, PARAM_PLAYLIST_FIRST, SwitchOnOff::off);
+        $query .= $get_query($this->plugin_cookies, PARAM_LAST_TV_SEARCH, '');
+        $query .= $get_query($this->plugin_cookies, PARAM_LAST_PLAYLIST, '');
+
+        if (!empty($query)) {
+            $this->sql_params->exec_transaction($query);
         }
 
         // cleanup xmltv table from wrong values
@@ -2152,6 +2197,7 @@ class Dune_Default_Sqlite_Engine
     public function get_channels_by_order($group_id, $include_adult = true, $include_hidden = false)
     {
         if (!$this->is_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
+            hd_debug_print('No channels in ' . M3uParser::S_CHANNELS_TABLE . ' table!');
             return array();
         }
 
