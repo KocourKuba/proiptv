@@ -154,6 +154,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case ACTION_ITEM_DOWN:
+                $this->force_parent_reload = true;
                 $channels_order = array_diff($channels_order, $selected_items);
                 if (++$sel_ndx_top > count($channels_order)) {
                     break;

@@ -150,6 +150,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case ACTION_ITEM_DOWN:
+                $this->force_parent_reload = true;
                 $group_order = array_diff($group_order, $selected_items);
                 if (++$sel_ndx_top > count($group_order)) {
                     break;
