@@ -69,7 +69,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
         }
 
-        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_SORT_POPUP, TR::t('sort'));
+        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_RENAME_GROUP, TR::t('rename'));
         $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_EDIT, TR::t('restore'));
 
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('hide'));
@@ -130,6 +130,14 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                 } else {
                     $this->selected_items[] = $selected_group;
                 }
+                break;
+
+            case ACTION_RENAME_GROUP:
+                return $this->plugin->do_edit_title_dlg($this, $this->plugin->get_group_title($selected_group));
+
+            case ACTION_EDIT_TITLE_APPLY:
+                $this->force_parent_reload = true;
+                $this->plugin->set_group_title($selected_group, $user_input->{CONTROL_EDIT_NAME});
                 break;
 
             case ACTION_ITEM_TOGGLE_MOVE:
@@ -222,13 +230,6 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $this->plugin->sort_groups_order(true);
                 break;
 
-            case ACTION_SORT_POPUP:
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_ITEMS_SORT, TR::t('sort_groups'), 'sort.png');
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RESET_ITEMS_SORT,
-                    TR::t('reset_groups_sort'), 'brush.png');
-                return Action_Factory::show_popup_menu($menu_items);
-
             case GUI_EVENT_KEY_POPUP_MENU:
                 return $this->create_popup_menu();
 
@@ -300,11 +301,20 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
 
     protected function create_popup_menu()
     {
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_ENTER, TR::t('select_enter'));
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_ENTER, TR::t('select_enter'), 'mark.png');
+
         if ($this->selected_items) {
+            $menu_items[] = Control_Factory::menu_separator();
             $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                 ACTION_ITEMS_CLEAR, TR::t('clear_selection'), 'brush.png');
         }
+
+        $menu_items[] = Control_Factory::menu_separator();
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+            ACTION_ITEMS_SORT, TR::t('sort_groups'), 'sort.png');
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RESET_ITEMS_SORT,
+            TR::t('reset_groups_sort'), 'brush.png');
+
 
         return Action_Factory::show_popup_menu($menu_items);
     }

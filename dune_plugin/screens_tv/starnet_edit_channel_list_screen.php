@@ -47,32 +47,35 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return $this->do_get_action_map();
+        return $this->do_get_action_map($media_url);
     }
 
-    protected function do_get_action_map()
+    protected function do_get_action_map($media_url)
     {
         hd_debug_print(null, true);
+        hd_debug_print($media_url, true);
 
-        switch($this->toggle_move) {
-            case 0:
-                $actions[GUI_EVENT_KEY_LEFT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP);
-                $actions[GUI_EVENT_KEY_RIGHT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN);
-                $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('move_step'));
-            break;
-            case 1:
-                $actions[GUI_EVENT_KEY_LEFT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_PAGE_UP);
-                $actions[GUI_EVENT_KEY_RIGHT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_PAGE_DOWN);
-                $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('move_page'));
-                break;
-            case 2:
-                $actions[GUI_EVENT_KEY_LEFT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP);
-                $actions[GUI_EVENT_KEY_RIGHT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM);
-                $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('move_edge'));
-                break;
+        if ($media_url->group_id !== TV_ALL_CHANNELS_GROUP_ID) {
+            switch($this->toggle_move) {
+                case 0:
+                    $actions[GUI_EVENT_KEY_LEFT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP);
+                    $actions[GUI_EVENT_KEY_RIGHT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN);
+                    $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('move_step'));
+                    break;
+                case 1:
+                    $actions[GUI_EVENT_KEY_LEFT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_PAGE_UP);
+                    $actions[GUI_EVENT_KEY_RIGHT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_PAGE_DOWN);
+                    $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('move_page'));
+                    break;
+                case 2:
+                    $actions[GUI_EVENT_KEY_LEFT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP);
+                    $actions[GUI_EVENT_KEY_RIGHT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM);
+                    $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('move_edge'));
+                    break;
+            }
         }
 
-        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_SORT_POPUP, TR::t('sort'));
+        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_RENAME_CHANNEL, TR::t('rename'));
         $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_EDIT, TR::t('restore'));
 
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('hide'));
@@ -134,6 +137,14 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 } else {
                     $this->selected_items[] = $selected_channel;
                 }
+                break;
+
+            case ACTION_RENAME_CHANNEL:
+                return $this->plugin->do_edit_title_dlg($this, $this->plugin->get_channel_title($selected_channel));
+
+            case ACTION_EDIT_TITLE_APPLY:
+                $this->force_parent_reload = true;
+                $this->plugin->set_channel_title($selected_channel, $user_input->{CONTROL_EDIT_NAME});
                 break;
 
             case ACTION_ITEM_TOGGLE_MOVE:
@@ -300,29 +311,41 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         $fav_ids = $this->plugin->get_channels_order($this->plugin->get_fav_id());
-        $group_id = $media_url->{PARAM_GROUP_ID};
-        $channels_rows = $this->plugin->get_channels_by_order($group_id, $show_adult);
+
+        if ($media_url->{PARAM_GROUP_ID} === TV_ALL_CHANNELS_GROUP_ID) {
+            $groups_order = $this->plugin->get_groups_by_order($show_adult);
+        } else {
+            $groups_order = array();
+            $group = $this->plugin->get_group($media_url->{PARAM_GROUP_ID}, PARAM_GROUP_ORDINARY, $show_adult);
+            if (!empty($group)) {
+                $groups_order[] = $group;
+            }
+        }
 
         $items = array();
-        foreach ($channels_rows as $channel_row) {
-            $channel_id = $channel_row[COLUMN_CHANNEL_ID];
-            $icon_url = $this->plugin->get_channel_picon($channel_row, true);
-            $title = $channel_row[COLUMN_TITLE];
-            $selected = in_array($channel_id, $this->selected_items);
+        foreach ($groups_order as $group_row) {
+            $group_id = $group_row[COLUMN_GROUP_ID];
+            $channels_rows = $this->plugin->get_channels_by_order($group_id, $show_adult);
+            foreach ($channels_rows as $channel_row) {
+                $channel_id = $channel_row[COLUMN_CHANNEL_ID];
+                $icon_url = $this->plugin->get_channel_picon($channel_row, true);
+                $title = $channel_row[COLUMN_TITLE];
+                $selected = in_array($channel_id, $this->selected_items);
 
-            $items[] = array(
-                PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_CHANNEL_ID => $channel_id, PARAM_GROUP_ID => $group_id)),
-                PluginRegularFolderItem::caption => $title,
-                PluginRegularFolderItem::starred => in_array($channel_id, $fav_ids),
-                PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::item_sticker => $selected ? Control_Factory::create_sticker(get_image_path('mark.png'),
-                        -30, 0, 'left', 'center') : null,
-                    ViewItemParams::item_caption_color => $selected ? DEF_LABEL_TEXT_COLOR_YELLOW : DEF_LABEL_TEXT_COLOR_WHITE,
-                    ViewItemParams::icon_path => $icon_url,
-                    ViewItemParams::item_detailed_icon_path => $icon_url,
-                    ViewItemParams::item_detailed_info => $title,
-                ),
-            );
+                $items[] = array(
+                    PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_CHANNEL_ID => $channel_id, PARAM_GROUP_ID => $group_id)),
+                    PluginRegularFolderItem::caption => $title,
+                    PluginRegularFolderItem::starred => in_array($channel_id, $fav_ids),
+                    PluginRegularFolderItem::view_item_params => array(
+                        ViewItemParams::item_sticker => $selected ? Control_Factory::create_sticker(get_image_path('mark.png'),
+                            -30, 0, 'left', 'center') : null,
+                        ViewItemParams::item_caption_color => $selected ? DEF_LABEL_TEXT_COLOR_YELLOW : DEF_LABEL_TEXT_COLOR_WHITE,
+                        ViewItemParams::icon_path => $icon_url,
+                        ViewItemParams::item_detailed_icon_path => $icon_url,
+                        ViewItemParams::item_detailed_info => $title,
+                    ),
+                );
+            }
         }
 
         return $items;
@@ -360,10 +383,17 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
     {
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_ENTER, TR::t('select_enter'));
         if ($this->selected_items) {
+            $menu_items[] = Control_Factory::menu_separator();
             $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                 ACTION_ITEMS_CLEAR, TR::t('clear_selection'), 'brush.png');
         }
+        $menu_items[] = Control_Factory::menu_separator();
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+            ACTION_ITEMS_SORT, TR::t('sort_groups'), 'sort.png');
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RESET_ITEMS_SORT,
+            TR::t('reset_groups_sort'), 'brush.png');
 
+        $menu_items[] = Control_Factory::menu_separator();
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             ACTION_ITEM_DELETE_CHANNELS, TR::t('tv_screen_hide_group_channels'), 'remove.png');
 

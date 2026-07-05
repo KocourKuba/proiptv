@@ -1335,6 +1335,29 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * @param string $group_id
+     * @param string $title
+     * @return string|false
+     */
+    public function set_group_title($group_id, $title)
+    {
+        $query = sprintf('UPDATE %s SET %s=%s WHERE %s=%s;', self::get_table_full_name(GROUPS_INFO),
+            COLUMN_TITLE, Sql_Wrapper::sql_quote($title), COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($group_id));
+        return $this->sql_playlist->query_value($query);
+    }
+
+    /**
+     * @param string $group_id
+     * @return string|false
+     */
+    public function get_group_title($group_id)
+    {
+        $query = sprintf('SELECT %s FROM %s WHERE %s=%s;',
+            COLUMN_TITLE, self::get_table_full_name(GROUPS_INFO), COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($group_id));
+        return $this->sql_playlist->query_value($query);
+    }
+
+    /**
      * @param $group_id
      * @return string|false
      */
@@ -1438,6 +1461,29 @@ class Dune_Default_Sqlite_Engine
         $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name(GROUPS_ORDER));
 
         $this->sql_playlist->exec_transaction($query);
+    }
+
+    /**
+     * @param string $channel_id
+     * @param string $title
+     * @return string|false
+     */
+    public function set_channel_title($channel_id, $title)
+    {
+        $query = sprintf('UPDATE %s SET %s=%s WHERE %s=%s;', self::get_table_full_name(CHANNELS_INFO),
+            COLUMN_TITLE, Sql_Wrapper::sql_quote($title), COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($channel_id));
+        return $this->sql_playlist->query_value($query);
+    }
+
+    /**
+     * @param string $channel_id
+     * @return string|false
+     */
+    public function get_channel_title($channel_id)
+    {
+        $query = sprintf('SELECT %s FROM %s WHERE %s=%s;',
+            COLUMN_TITLE, self::get_table_full_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($channel_id));
+        return $this->sql_playlist->query_value($query);
     }
 
     /**
@@ -2223,6 +2269,7 @@ class Dune_Default_Sqlite_Engine
                 COLUMN_CHANNEL_ID, M3uParser::CHANNELS_TABLE, self::get_table_full_name($group_id), $this->get_id_column(), COLUMN_CHANNEL_ID,
                 self::get_table_full_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_DISABLED, FALSE, $where);
         }
+        hd_debug_print($query);
         return $this->sql_playlist->fetch_array($query);
     }
 

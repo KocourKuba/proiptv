@@ -2587,7 +2587,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @param User_Input_Handler|null $handler
+     * @param User_Input_Handler $handler
      * @param string $channel_id
      * @param bool $is_classic
      * @return array|null
@@ -2799,6 +2799,28 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         return $provider->GetPayUI();
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $title
+     * @return array|null
+     */
+    public function do_edit_title_dlg($handler, $title)
+    {
+        hd_debug_print(null, true);
+        $defs = array();
+
+        Control_Factory::add_label($defs, '', TR::t('name'), -10);
+        Control_Factory::add_text_field($defs, $handler, CONTROL_EDIT_NAME, '', $title,
+            false, false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
+
+        Control_Factory::add_vgap($defs, 50);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_EDIT_TITLE_APPLY, TR::t('ok'));
+        Control_Factory::add_cancel_button($defs);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog($defs, TR::t('edit_list_edit_item'));
     }
 
     /**

@@ -21,6 +21,7 @@ edit = Bearbeiten
 filter = Filter
 filter__1 = Filter: %s
 sort = Sortieren
+rename = Umbenennung
 hide = Verstecken
 genre = Genre
 country = Land
