@@ -1928,7 +1928,7 @@
         "id_map": "tvg-id",
         "epg_presets": [],
         "playlist_mirrors": {
-          "EU": "https://m3u.biluspeh.com/hls",
+          "EU": "https://m3u.uspeh.my/hls",
           "RU": "https://m3u.uspeh-bil.ru/ru"
         },
         "playlists": {

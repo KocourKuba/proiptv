@@ -1635,7 +1635,7 @@
         "id_map": "tvg-id",
         "epg_presets": [],
         "servers": {
-          "m3u.biluspeh.com/hls": "EU",
+          "m3u.uspeh.my/hls": "EU",
           "m3u.uspeh-bil.ru/ru": "Russia"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
