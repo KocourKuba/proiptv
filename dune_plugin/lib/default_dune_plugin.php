@@ -3724,8 +3724,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             foreach ($plugin_orders[PARAM_KNOWN_CHANNELS] as $channel_id => $title) {
                 $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
                 $q_title = Sql_Wrapper::sql_quote($title);
-                $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES (%s,%s,%d);', $channels_info_table,
-                COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_CHANGED, $q_channel_id, $q_title, FALSE);
+                $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s,%s) VALUES (%s,%s,%s,%d);', $channels_info_table,
+                COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_CHANGED, $q_channel_id, $q_title, $q_title, FALSE);
             }
             $this->sql_playlist->exec_transaction($query);
             unset($plugin_orders[PARAM_KNOWN_CHANNELS]);
@@ -3958,6 +3958,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $query = sprintf('ALTER TABLE %s ADD COLUMN %s INTEGER DEFAULT 0;', self::get_table_full_name(CHANNELS_INFO), COLUMN_EPG_SHIFT);
             $this->sql_playlist->exec($query);
         }
+
+        if (!$this->sql_playlist->is_column_exists(CHANNELS_INFO, COLUMN_SHOW_TITLE, self::PLAYLIST_ORDERS_DB)) {
+            $query = sprintf("ALTER TABLE %s ADD COLUMN %s TEXT DEFAULT '';", self::get_table_full_name(CHANNELS_INFO), COLUMN_SHOW_TITLE);
+            $this->sql_playlist->exec($query);
+        }
+        $query = sprintf("UPDATE %s SET %s=%s WHERE %s IS NULL OR TRIM(%s) = '';", self::get_table_full_name(CHANNELS_INFO),
+            COLUMN_SHOW_TITLE, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_SHOW_TITLE);
+        $this->sql_playlist->exec($query);
+
         // create order_groups table
         $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_full_name(GROUPS_ORDER), COLUMN_GROUP_ID);
         $this->sql_playlist->exec($query);

@@ -75,6 +75,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
             }
         }
 
+        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_RENAME_CHANNEL, TR::t('rename'));
         $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_EDIT, TR::t('restore'));
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('hide'));
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
@@ -135,6 +136,14 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 } else {
                     $this->selected_items[] = $selected_channel;
                 }
+                break;
+
+            case ACTION_RENAME_CHANNEL:
+                return $this->do_edit_title_dlg($selected_channel);
+
+            case ACTION_EDIT_TITLE_APPLY:
+                $this->force_parent_reload = true;
+                $this->plugin->set_channel_title($selected_channel, isset($user_input->restore) ? null : $user_input->{CONTROL_EDIT_NAME});
                 break;
 
             case ACTION_ITEM_TOGGLE_MOVE:
@@ -319,7 +328,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
             foreach ($channels_rows as $channel_row) {
                 $channel_id = $channel_row[COLUMN_CHANNEL_ID];
                 $icon_url = $this->plugin->get_channel_picon($channel_row, true);
-                $title = $channel_row[COLUMN_TITLE];
+                $title = $channel_row[COLUMN_SHOW_TITLE];
                 $selected = in_array($channel_id, $this->selected_items);
 
                 $items[] = array(
@@ -388,6 +397,29 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
             ACTION_ITEM_DELETE_CHANNELS, TR::t('tv_screen_hide_group_channels'), 'remove.png');
 
         return Action_Factory::show_popup_menu($menu_items);
+    }
+
+    /**
+     * @param string $selected_channel
+     * @return array|null
+     */
+    public function do_edit_title_dlg($selected_channel)
+    {
+        hd_debug_print(null, true);
+        $defs = array();
+
+        Control_Factory::add_label($defs, TR::t('original'), $this->plugin->get_channel_title($selected_channel, true));
+        Control_Factory::add_text_field($defs, $this, CONTROL_EDIT_NAME, TR::t('name'), $this->plugin->get_channel_title($selected_channel, false),
+            false, false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
+
+        Control_Factory::add_vgap($defs, 50);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_EDIT_TITLE_APPLY, TR::t('ok'));
+        Control_Factory::add_cancel_button($defs);
+        Control_Factory::add_vgap($defs, 20);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_EDIT_TITLE_APPLY, TR::t('restore'), array('restore' => true));
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog($defs, TR::t('edit_list_edit_item'));
     }
 
     /**

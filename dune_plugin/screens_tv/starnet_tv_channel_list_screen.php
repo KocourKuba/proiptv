@@ -260,7 +260,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 foreach ($channels_rows as $channel_row) {
                     $channel_id = $channel_row[COLUMN_CHANNEL_ID];
                     $icon_url = $this->plugin->get_channel_picon($channel_row, true);
-                    $title = $channel_row[COLUMN_TITLE];
+                    $title = $channel_row[COLUMN_SHOW_TITLE];
                     $archive = $channel_row[COLUMN_ARCHIVE];
                     $zoom = safe_get_value($channel_row, COLUMN_ZOOM, DuneVideoZoomPresets::not_set);
                     $epg_shift = format_duration_minutes((int)safe_get_value($channel_row, COLUMN_EPG_SHIFT, 0));

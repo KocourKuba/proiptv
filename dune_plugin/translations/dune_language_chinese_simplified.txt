@@ -20,7 +20,6 @@ refresh = 刷新
 edit = 编辑
 filter = 筛选
 filter__1 = 筛选: %s
-sort = 排序
 rename = 更名
 hide = 藏起来
 genre = 类型

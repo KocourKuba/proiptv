@@ -21,7 +21,6 @@ edit = Редактировать
 search = Поиск
 filter = Фильтр
 filter__1 = Фильтр: %s
-sort = Сортировка
 rename = Переименовать
 hide = Скрыть
 genre = Жанр

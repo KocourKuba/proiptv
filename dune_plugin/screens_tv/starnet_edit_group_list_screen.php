@@ -137,11 +137,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_EDIT_TITLE_APPLY:
                 $this->force_parent_reload = true;
-                if (isset($user_input->restore)) {
-                    $this->plugin->set_group_title($selected_group, null);
-                } else {
-                    $this->plugin->set_group_title($selected_group, $user_input->{CONTROL_EDIT_NAME});
-                }
+                $this->plugin->set_group_title($selected_group, isset($user_input->restore) ? null : $user_input->{CONTROL_EDIT_NAME});
                 break;
 
             case ACTION_ITEM_TOGGLE_MOVE:
