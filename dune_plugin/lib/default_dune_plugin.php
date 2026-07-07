@@ -3946,7 +3946,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $tmp_table, COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_ADULT, COLUMN_DISABLED, COLUMN_SPECIAL,
                 COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_ADULT, COLUMN_DISABLED, COLUMN_SPECIAL, $groups_info_table
             );
-            $query .= sprintf('DROP TABLE IF EXISTS %s;', $groups_info_table);
+            $query .= sprintf('DROP TABLE %s;', $groups_info_table);
             $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name(GROUPS_INFO));
             $this->sql_playlist->exec_transaction($query);
         }

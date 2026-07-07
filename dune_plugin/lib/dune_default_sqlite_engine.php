@@ -1205,13 +1205,16 @@ class Dune_Default_Sqlite_Engine
             COLUMN_DISABLED, TRUE, COLUMN_GROUP_ID, Sql_Wrapper::sql_quote(TV_CHANGED_CHANNELS_GROUP_ID));
         $this->sql_playlist->exec_transaction($query);
 
-        $iptv_channels = M3uParser::CHANNELS_TABLE;
         $query = sprintf(self::CREATE_CHANNELS_INFO_TABLE, $tmp_table);
-        $query .= sprintf('INSERT INTO %s SELECT ch.* FROM %s as ch INNER JOIN %s as pl ON ch.%s = pl.%s ORDER BY pl.ROWID;',
-            $tmp_table, $channels_info_table, $iptv_channels, COLUMN_CHANNEL_ID, $this->get_id_column());
+        $columns = sprintf('ch.%s, ch.%s, ch.%s, ch.%s, ch.%s, ch.%s, ch.%s, ch.%s, ch.%s, ch.%s',
+            COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_GROUP_ID, COLUMN_DISABLED,
+            COLUMN_ADULT, COLUMN_CHANGED, COLUMN_ZOOM, COLUMN_EPG_SHIFT, COLUMN_EXTERNAL_PLAYER);
+        $query .= sprintf('INSERT INTO %s SELECT %s FROM %s as ch INNER JOIN %s as pl ON ch.%s = pl.%s ORDER BY pl.ROWID;',
+            $tmp_table, $columns, $channels_info_table, M3uParser::CHANNELS_TABLE, COLUMN_CHANNEL_ID, $this->get_id_column());
 
-        $query .= sprintf('DROP TABLE IF EXISTS %s;', $channels_info_table);
+        $query .= sprintf('DROP TABLE %s;', $channels_info_table);
         $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name(CHANNELS_INFO));
+        hd_debug_print($query);
         $this->sql_playlist->exec_transaction($query);
     }
 
