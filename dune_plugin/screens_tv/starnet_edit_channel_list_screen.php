@@ -75,9 +75,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
             }
         }
 
-        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_RENAME_CHANNEL, TR::t('rename'));
         $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_EDIT, TR::t('restore'));
-
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('hide'));
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
@@ -139,19 +137,11 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 }
                 break;
 
-            case ACTION_RENAME_CHANNEL:
-                return $this->plugin->do_edit_title_dlg($this, $this->plugin->get_channel_title($selected_channel));
-
-            case ACTION_EDIT_TITLE_APPLY:
-                $this->force_parent_reload = true;
-                $this->plugin->set_channel_title($selected_channel, $user_input->{CONTROL_EDIT_NAME});
-                break;
-
             case ACTION_ITEM_TOGGLE_MOVE:
                 if (++$this->toggle_move > 2) {
                     $this->toggle_move = 0;
                 }
-                $actions = $this->do_get_action_map();
+                $actions = $this->do_get_action_map($selected_media_url);
                 return Action_Factory::change_behaviour($actions);
 
             case ACTION_ITEM_UP:
@@ -216,7 +206,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_ITEM_DELETE:
                 // hide group
                 $this->force_parent_reload = true;
-                $this->plugin->set_groups_visible($selected_items, false);
+                $this->plugin->set_channel_visible($selected_items, false);
                 $this->selected_items = array();
                 break;
 

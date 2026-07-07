@@ -31,9 +31,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'tv_groups';
 
-    const ACTION_RESET_ICON_DEFAULT = 'reset_icon_default';
-    const ACTION_ICON_SELECTED = 'icon_selected';
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -230,7 +227,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 }
                 break;
 
-            case self::ACTION_ICON_SELECTED:
+            case ACTION_ICON_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 $group = $this->plugin->get_group($selected_media_url->{PARAM_GROUP_ID}, PARAM_ALL);
                 if (is_null($group)) break;
@@ -247,7 +244,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 $this->plugin->set_group_icon($selected_media_url->{PARAM_GROUP_ID}, $cached_image_name);
                 return Action_Factory::refresh_entry_points($this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
 
-            case self::ACTION_RESET_ICON_DEFAULT:
+            case ACTION_RESET_ICON_DEFAULT:
                 hd_debug_print("Reset icon for group: " . $selected_media_url->{PARAM_GROUP_ID} . " to default");
                 switch ($selected_media_url->{PARAM_GROUP_ID}) {
                     case TV_ALL_CHANNELS_GROUP_ID:
@@ -509,8 +506,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 array(
                     PARAM_EXTENSION => IMAGE_PREVIEW_PATTERN,
                     PARAM_RECENT_FOLDER => $this->plugin->get_setting(PARAM_RECENT_IMAGE_FOLDER, ''),
-                    Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_ICON_SELECTED,
-                    Starnet_Folder_Screen::PARAM_RESET_ACTION => self::ACTION_RESET_ICON_DEFAULT,
+                    Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_ICON_SELECTED,
+                    Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_ICON_DEFAULT,
                     Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     Starnet_Folder_Screen::PARAM_ALLOW_IMAGE_LIB => true,
                     Starnet_Folder_Screen::PARAM_READ_ONLY => true,

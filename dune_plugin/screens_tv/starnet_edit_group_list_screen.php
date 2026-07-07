@@ -133,11 +133,15 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case ACTION_RENAME_GROUP:
-                return $this->plugin->do_edit_title_dlg($this, $this->plugin->get_group_title($selected_group));
+                return $this->do_edit_title_dlg($selected_group);
 
             case ACTION_EDIT_TITLE_APPLY:
                 $this->force_parent_reload = true;
-                $this->plugin->set_group_title($selected_group, $user_input->{CONTROL_EDIT_NAME});
+                if (isset($user_input->restore)) {
+                    $this->plugin->set_group_title($selected_group, null);
+                } else {
+                    $this->plugin->set_group_title($selected_group, $user_input->{CONTROL_EDIT_NAME});
+                }
                 break;
 
             case ACTION_ITEM_TOGGLE_MOVE:
@@ -230,6 +234,31 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $this->plugin->sort_groups_order(true);
                 break;
 
+            case ACTION_ICON_SELECTED:
+                $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+                $group = $this->plugin->get_group($selected_media_url->{PARAM_GROUP_ID}, PARAM_ALL);
+                if (is_null($group)) break;
+
+                $this->plugin->set_setting(PARAM_RECENT_IMAGE_FOLDER, get_noslash_trailed_path(dirname($data->{PARAM_FILEPATH})));
+                $cached_image_name = $this->plugin->get_active_playlist_id() . '_' . $data->{PARAM_CAPTION};
+                $cached_image_path = get_cached_image_path($cached_image_name);
+                hd_print('copy from: ' . $data->{PARAM_FILEPATH} . " to: $cached_image_path");
+                if (!copy($data->{PARAM_FILEPATH}, $cached_image_path)) {
+                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_copy'));
+                }
+
+                hd_debug_print("Assign icon: $cached_image_name to group: " . $selected_media_url->{PARAM_GROUP_ID});
+                $this->force_parent_reload = true;
+                $this->plugin->set_group_icon($selected_media_url->{PARAM_GROUP_ID}, $cached_image_name);
+                return Action_Factory::refresh_entry_points($this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
+
+            case ACTION_RESET_ICON_DEFAULT:
+                hd_debug_print("Reset icon for group: " . $selected_media_url->{PARAM_GROUP_ID} . " to default");
+                $this->force_parent_reload = true;
+                $icon = $selected_media_url->{PARAM_GROUP_ID} === TV_ALL_CHANNELS_GROUP_ICON ? TV_ALL_CHANNELS_GROUP_ICON : '';
+                $this->plugin->set_group_icon($selected_media_url->{PARAM_GROUP_ID}, $icon);
+                break;
+
             case GUI_EVENT_KEY_POPUP_MENU:
                 return $this->create_popup_menu();
 
@@ -310,6 +339,22 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
         }
 
         $menu_items[] = Control_Factory::menu_separator();
+        $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
+            array(
+                PARAM_EXTENSION => IMAGE_PREVIEW_PATTERN,
+                PARAM_RECENT_FOLDER => $this->plugin->get_setting(PARAM_RECENT_IMAGE_FOLDER, ''),
+                Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_ICON_SELECTED,
+                Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_ICON_DEFAULT,
+                Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
+                Starnet_Folder_Screen::PARAM_ALLOW_IMAGE_LIB => true,
+                Starnet_Folder_Screen::PARAM_READ_ONLY => true,
+            )
+        );
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+            Action_Factory::open_folder($media_url, TR::t('select_file')),
+            TR::t('change_group_icon'), 'image.png');
+
+        $menu_items[] = Control_Factory::menu_separator();
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             ACTION_ITEMS_SORT, TR::t('sort_groups'), 'sort.png');
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RESET_ITEMS_SORT,
@@ -317,6 +362,29 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
 
 
         return Action_Factory::show_popup_menu($menu_items);
+    }
+
+    /**
+     * @param string $selected_group
+     * @return array|null
+     */
+    public function do_edit_title_dlg($selected_group)
+    {
+        hd_debug_print(null, true);
+        $defs = array();
+
+        Control_Factory::add_label($defs, TR::t('original'), $selected_group);
+        Control_Factory::add_text_field($defs, $this, CONTROL_EDIT_NAME, TR::t('name'), $this->plugin->get_group_title($selected_group),
+            false, false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
+
+        Control_Factory::add_vgap($defs, 50);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_EDIT_TITLE_APPLY, TR::t('ok'));
+        Control_Factory::add_cancel_button($defs);
+        Control_Factory::add_vgap($defs, 20);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_EDIT_TITLE_APPLY, TR::t('restore'), array('restore' => true));
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog($defs, TR::t('edit_list_edit_item'));
     }
 
     /**

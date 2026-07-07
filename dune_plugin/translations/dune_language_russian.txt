@@ -91,6 +91,7 @@ last_folder = Последняя выбранная папка
 restore = Восстановить
 restore_all = Восстановить все
 name = Имя:
+original = Оригинал:
 url = Ссылка:
 direct_url = Прямая ссылка
 playlist_url = Ссылка на плейлист:

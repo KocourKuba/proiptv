@@ -91,6 +91,7 @@ last_folder = 最近使用的文件夹
 restore = 恢复
 restore_all = 全部恢复
 name = 名称:
+original = 原版:
 url = 网址:
 direct_url = 直链网址
 playlist_url = 播放列表网址:

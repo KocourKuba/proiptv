@@ -91,6 +91,7 @@ last_folder = Zuletzt verwendeter Ordner
 restore = Wiederherstellen
 restore_all = Alles wiederherstellen
 name = Name:
+original = Originell:
 url = URL:
 direct_url = Direkte URL
 playlist_url = Playlist-URL:

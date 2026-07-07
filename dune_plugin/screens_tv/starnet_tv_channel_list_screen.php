@@ -67,7 +67,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
 
         $special_group = $this->plugin->get_group($media_url->{PARAM_GROUP_ID}, PARAM_GROUP_SPECIAL);
-        if (empty($special_group)) {
+        if (empty($special_group) || $media_url->{PARAM_GROUP_ID} === TV_ALL_CHANNELS_GROUP_ID) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this,
                 ACTION_ITEMS_EDIT, TR::t('tv_screen_edit_channels'));
         }

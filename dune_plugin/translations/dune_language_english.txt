@@ -91,6 +91,7 @@ last_folder = Recent used folder
 restore = Restore
 restore_all = Restore all
 name = Name:
+original = Original:
 url = URL:
 direct_url = Direct URL
 playlist_url = Playlist URL:

@@ -50,7 +50,6 @@ const ACTION_ITEMS_SORT = 'items_sort';
 const ACTION_RESET_ITEMS_SORT = 'reset_items_sort';
 const ACTION_SORT_POPUP = 'sort_popup';
 const ACTION_RENAME_GROUP = 'rename_group';
-const ACTION_RENAME_CHANNEL = 'rename_channel';
 const ACTION_OPEN_FOLDER = 'open_folder';
 const ACTION_PLAY_FOLDER = 'play_folder';
 const ACTION_PLAY_ITEM = 'play_item';
@@ -106,6 +105,8 @@ const ACTION_SLEEP_TIMER = 'sleep_timer';
 const ACTION_SLEEP_TIMER_ADD = 'sleep_timer_add';
 const ACTION_SLEEP_TIMER_CLEAR = 'sleep_timer_clear';
 const ACTION_CONFIRM_EXIT_DLG_APPLY = 'confirm_apply_dlg';
+const ACTION_RESET_ICON_DEFAULT = 'reset_icon_default';
+const ACTION_ICON_SELECTED = 'icon_selected';
 
 const CONTROL_ACTION_EDIT = 'action_edit';
 const CONTROL_EDIT_NAME = 'set_item_name';
