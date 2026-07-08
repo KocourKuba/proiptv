@@ -170,8 +170,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
         $media_url = MediaURL::decode($media_url_str);
-        hd_debug_print($media_url, true);
-
         return $this->get_screen_by_url($media_url)->get_folder_view($media_url, $plugin_cookies);
     }
 
@@ -1215,9 +1213,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if (!empty($new_channels)) {
             // add new channels
             $add_where = Sql_Wrapper::sql_make_where_clause($new_channels, COLUMN_CHANNEL_ID);
-            $query = sprintf('INSERT OR REPLACE INTO %s (%s,%s,%s,%s) SELECT %s AS %s,%s,%s,%s FROM %s WHERE %s GROUP BY %s ORDER BY ROWID;',
-                $channel_info_table, COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_GROUP_ID, COLUMN_ADULT,
-                $id_column, COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_GROUP_ID, COLUMN_ADULT, $iptv_channels, $add_where, COLUMN_CHANNEL_ID);
+            $query = sprintf('INSERT OR REPLACE INTO %s (%s,%s,%s,%s,%s) SELECT %s AS %s,%s,%s,%s,%s FROM %s WHERE %s GROUP BY %s ORDER BY ROWID;',
+                $channel_info_table, COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_GROUP_ID, COLUMN_ADULT,
+                $id_column, COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_TITLE, COLUMN_GROUP_ID, COLUMN_ADULT, $iptv_channels, $add_where, COLUMN_CHANNEL_ID);
             $this->sql_playlist->exec($query);
             hd_debug_print('Adding new channels: ' . json_format_unescaped($new_channels), true);
         }
