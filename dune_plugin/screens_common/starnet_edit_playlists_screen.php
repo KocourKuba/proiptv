@@ -44,6 +44,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
     const PARAM_ALLOW_ORDER = 'allow_order';
 
+    protected $toggle_move = false;
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -51,16 +53,16 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return $this->do_get_action_map($plugin_cookies);
+        return $this->do_get_action_map();
     }
 
-    protected function do_get_action_map(&$plugin_cookies)
+    protected function do_get_action_map()
     {
         hd_debug_print(null, true);
 
         if ($this->plugin->get_all_playlists_count() !== 0) {
             $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
-            if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
+            if ($this->toggle_move) {
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP, TR::t('top'));
                 $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM, TR::t('bottom'));
             } else {
@@ -166,8 +168,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 );
 
             case ACTION_ITEM_TOGGLE_MOVE:
-                $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
-                $actions = $this->do_get_action_map($plugin_cookies);
+                $this->toggle_move = !$this->toggle_move;
+                $actions = $this->do_get_action_map();
                 return Action_Factory::change_behaviour($actions);
 
             case ACTION_ITEM_UP:

@@ -59,12 +59,13 @@ class PaneParams
     const fav_btn_font_size 		    = 26; # size in pt
     const fav_btn_font_color	    	= '#E0E0E0FF';
     const fav_btn_disabled_font_color	= '#808080FF';
+    const fav_button_red                = 'gui_skin://special_icons/controls_button_red.aai';
     const fav_button_green              = 'gui_skin://special_icons/controls_button_green.aai';
     const fav_button_yellow             = 'gui_skin://special_icons/controls_button_yellow.aai';
     const fav_button_blue               = 'gui_skin://special_icons/controls_button_blue.aai';
 
     public static $ch_num_pos = array(
-            0 => array('x' => 690,  'y' => 520), // bottom left
+            0 => array('x' => 725,  'y' => 520), // bottom left
             1 => array('x' => 690,  'y' => 0),   // top left
             2 => array('x' => 1670, 'y' => 0),   // top right
             3 => array('x' => 1670, 'y' => 520), // bottom right

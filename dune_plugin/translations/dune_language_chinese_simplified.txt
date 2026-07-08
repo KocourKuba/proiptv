@@ -40,6 +40,7 @@ hours = 小时
 information = 信息
 warning = 警告
 error = 错误
+toggle_move = 模式
 
 add_to_favorite = 加入收藏
 delete_from_favorite = 取消收藏
@@ -394,6 +395,7 @@ tv_screen_hide_uhd = 隐藏 'UHD|4K|8K'标识
 tv_screen_hide_string = 按关键词隐藏
 tv_screen_hide_sd = 存在高清时隐藏标清
 tv_screen_toggle_move = 手动排序 (SELECT)
+tv_screen_toggle_move_title = 手动排序
 tv_screen_assign_shortcut = 分配快捷键 (0-9)
 tv_screen_edit_groups = 编辑分类
 tv_screen_edit_channels = 编辑频道

@@ -30,6 +30,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'tv_favorites';
 
+    protected $toggle_move = false;
     /**
      * Get MediaURL string representation (json encoded)
      * *
@@ -48,10 +49,10 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return $this->do_get_action_map($plugin_cookies);
+        return $this->do_get_action_map();
     }
 
-    protected function do_get_action_map(&$plugin_cookies)
+    protected function do_get_action_map()
     {
         hd_debug_print(null, true);
 
@@ -72,7 +73,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
 
         $fav_id = $this->plugin->get_fav_id();
         if ($this->plugin->get_order_count($fav_id)) {
-            if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
+            if ($this->toggle_move) {
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP, TR::t('top'));
                 $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM, TR::t('bottom'));
             } else {
@@ -169,7 +170,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
                 return $post_action;
 
             case ACTION_ITEM_TOGGLE_MOVE:
-                $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
+                $this->toggle_move = !$this->toggle_move;
                 $actions = $this->do_get_action_map($plugin_cookies);
                 return Action_Factory::change_behaviour($actions);
 

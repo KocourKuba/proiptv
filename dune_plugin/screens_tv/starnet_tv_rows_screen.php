@@ -47,6 +47,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     private $square_icons = false;
     private $show_continues = true;
 
+    private $toggle_move = false;
     ///////////////////////////////////////////////////////////////////////////
 
     /**
@@ -54,21 +55,24 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return $this->do_get_action_map($plugin_cookies);
+        return $this->do_get_action_map();
     }
 
-    protected function do_get_action_map(&$plugin_cookies)
+    protected function do_get_action_map()
     {
         hd_debug_print(null, true);
 
         $actions[GUI_EVENT_KEY_PLAY] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_PLAY);
         $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
-        if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
-            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP, TR::t('top'));
-            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM, TR::t('bottom'));
+
+        $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
+
+        if (isset($this->toggle_move) && $this->toggle_move) {
+            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP);
+            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM);
         } else {
-            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
-            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
+            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP);
+            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN);
         }
         $add_to_favorite = User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_ADD);
         $actions[GUI_EVENT_KEY_D_BLUE] = $add_to_favorite;
@@ -79,9 +83,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         $actions[GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
 
-        $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_EDIT,
-            null,
-            array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST, PARAM_PLAYLIST_ID => $this->plugin->get_active_playlist_id())
+        $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_EDIT, null,
+            array(
+                CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST,
+                PARAM_PLAYLIST_ID => $this->plugin->get_active_playlist_id()
+            )
         );
 
         if (!is_limited_apk()) {
@@ -160,7 +166,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 if (!is_limited_apk()) return null;
 
                 $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
-                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($plugin_cookies), 1000);
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map(), 1000);
                 return Action_Factory::composite($actions);
 
             case EVENT_INDEXING_DONE:
@@ -223,64 +229,19 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 return Action_Factory::invalidate_epfs_folders($plugin_cookies);
 
             case ACTION_ITEM_TOGGLE_MOVE:
-                $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
-                break;
+                $this->toggle_move = !$this->toggle_move;
+                return Action_Factory::invalidate_epfs_folders($plugin_cookies);
 
             case ACTION_ITEM_UP:
             case ACTION_ITEM_DOWN:
             case ACTION_ITEM_TOP:
             case ACTION_ITEM_BOTTOM:
-                $direction = $this->action_to_direction($control_id);
-                if (!isset($media_url->{PARAM_GROUP_ID})
-                    || $media_url->{PARAM_GROUP_ID} === TV_HISTORY_GROUP_ID
-                    || $media_url->{PARAM_GROUP_ID} === TV_ALL_CHANNELS_GROUP_ID
-                    || $media_url->{PARAM_GROUP_ID} === TV_CHANGED_CHANNELS_GROUP_ID
-                    || $direction === null) {
-                    return null;
-                }
-
-                if ($is_sel_channel && $this->plugin->arrange_groups_order_rows($media_url->{PARAM_GROUP_ID}, $direction)) {
-                    break;
-                }
-
-                if ($media_url->{PARAM_GROUP_ID} === $fav_id) {
+                hd_debug_print(json_format_unescaped($media_url), true);
+                if ($media_url->{PARAM_GROUP_ID} == $fav_id) {
                     $this->plugin->change_tv_favorites($control_id, $media_url->{PARAM_CHANNEL_ID});
-                    break;
+                    return Action_Factory::invalidate_epfs_folders($plugin_cookies);
                 }
-
-                $this->plugin->arrange_channels_order_rows($media_url->{PARAM_GROUP_ID}, $media_url->{PARAM_CHANNEL_ID}, $direction);
-                return Action_Factory::invalidate_epfs_folders($plugin_cookies);
-
-            case ACTION_ITEMS_SORT:
-                $group = $this->plugin->get_group($media_url->{PARAM_GROUP_ID}, PARAM_GROUP_ORDINARY);
-                if (is_null($group) || !isset($user_input->{ACTION_SORT_TYPE})) {
-                    return null;
-                }
-
-                if ($user_input->{ACTION_SORT_TYPE} === ACTION_SORT_CHANNELS) {
-                    $this->plugin->sort_channels_order($media_url->{PARAM_GROUP_ID});
-                } else {
-                    $this->plugin->sort_groups_order();
-                }
-                return $reload_action;
-
-            case ACTION_RESET_ITEMS_SORT:
-                if (!isset($user_input->{ACTION_RESET_TYPE})) {
-                    return null;
-                }
-
-                if ($user_input->{ACTION_RESET_TYPE} === ACTION_SORT_CHANNELS) {
-                    $this->plugin->sort_channels_order($media_url->{PARAM_GROUP_ID}, true);
-                } else if ($user_input->{ACTION_RESET_TYPE} === ACTION_SORT_GROUPS) {
-                    $this->plugin->sort_groups_order(true);
-                } else if ($user_input->{ACTION_RESET_TYPE} === ACTION_SORT_ALL) {
-                    $this->plugin->sort_groups_order(true);
-                    foreach ($this->plugin->get_groups_by_order() as $row) {
-                        $this->plugin->sort_channels_order($row[COLUMN_GROUP_ID], true);
-                    }
-                }
-
-                return $reload_action;
+                break;
 
             case ACTION_ITEM_REMOVE:
                 $this->plugin->erase_tv_history($media_url->{PARAM_CHANNEL_ID});
@@ -353,14 +314,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 return $this->plugin->do_show_add_money();
 
             case GUI_EVENT_KEY_INFO:
-                if (isset($media_url->{PARAM_CHANNEL_ID})) {
-                    return $this->plugin->do_show_channel_info(null, $media_url->{PARAM_CHANNEL_ID}, false);
-                }
-                return null;
+                if (!isset($media_url->{PARAM_CHANNEL_ID})) break;
+
+                return $this->plugin->do_show_channel_info(null, $media_url->{PARAM_CHANNEL_ID}, false);
 
             case ACTION_SHORTCUT:
                 if (!isset($user_input->{COLUMN_PLAYLIST_ID}) || $this->plugin->get_active_playlist_id() === $user_input->{COLUMN_PLAYLIST_ID}) {
-                    return null;
+                    break;
                 }
 
                 $this->plugin->set_active_playlist_id($user_input->{COLUMN_PLAYLIST_ID});
@@ -1157,25 +1117,27 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             PaneParams::separator_line_color
         );
 
+        $dx_icon = 53;
+        $dx_text = 108;
         $dy_icon = 530;
         $dy_txt = $dy_icon - 4;
-        $dx = 15;
+        $dx = 0;
         hd_debug_print("newUI: $group_id");
         $in_fav = $this->plugin->is_channel_in_order($fav_id, $channel_id);
         if ($group_id === TV_HISTORY_GROUP_ID || $group_id === TV_ALL_CHANNELS_GROUP_ID || $group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
-
             // blue button image (D)
             $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
                 null,
                 PaneParams::fav_button_blue
             );
+            $dx += $dx_icon;
 
-            $dx += 55;
             if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
                 $btn_label = TR::t('clear_changed');
             } else {
-                $btn_label = $in_fav ? TR::t('delete') : TR::t('add');
+                $btn_label =  $in_fav ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
             }
+
             $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
                 null,
                 $btn_label,
@@ -1184,67 +1146,94 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 PaneParams::fav_btn_font_size
             );
         } else {
-            $order = $this->plugin->get_channels_order($group_id);
-            $is_first_channel = ($channel_id === reset($order));
-            // green button image (B) 52x50
-            $defs[] = GComps_Factory::get_image_def(
-                GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
-                null,
-                PaneParams::fav_button_green,
-                false,
-                true,
-                null,
-                null,
-                null,
-                $is_first_channel ? 99 : 255
-            );
+            if ($group_id === $fav_id) {
+                $order = $this->plugin->get_channels_order($group_id);
+                $is_first_channel = ($channel_id === reset($order));
+                // red button image (A) 52x50
+                $defs[] = GComps_Factory::get_image_def(
+                    GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
+                    null,
+                    PaneParams::fav_button_red,
+                    false,
+                    true,
+                    null,
+                    null,
+                    null,
+                    255
+                );
+                $dx += $dx_icon;
 
-            $dx += 55;
-            // green button text
-            $defs[] = GComps_Factory::label(
-                GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
-                null,
-                (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) ? TR::t('top') : TR::t('left'),
-                1,
-                $is_first_channel ? PaneParams::fav_btn_disabled_font_color : PaneParams::fav_btn_font_color,
-                PaneParams::fav_btn_font_size
-            );
+                // red button text
+                $defs[] = GComps_Factory::label(
+                    GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
+                    null,
+                    TR::t('toggle_move'),
+                    1,
+                    PaneParams::fav_btn_font_color,
+                    PaneParams::fav_btn_font_size
+                );
+                $dx += $dx_text;
 
-            $is_last_channel = ($channel_id === end($order));
-            $dx += 105;
-            // yellow button image (C)
-            $defs[] = GComps_Factory::get_image_def(
-                GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
-                null,
-                PaneParams::fav_button_yellow,
-                1,
-                false,
-                null,
-                null,
-                null,
-                $is_last_channel ? 99 : 255
-            );
+                // green button image (B) 52x50
+                $defs[] = GComps_Factory::get_image_def(
+                    GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
+                    null,
+                    PaneParams::fav_button_green,
+                    false,
+                    true,
+                    null,
+                    null,
+                    null,
+                    $is_first_channel ? 99 : 255
+                );
+                $dx += $dx_icon;
 
-            $dx += 55;
-            // yellow button text
-            $defs[] = GComps_Factory::label(
-                GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
-                null,
-                (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) ? TR::t('bottom') : TR::t('right'),
-                1,
-                $is_last_channel ? PaneParams::fav_btn_disabled_font_color : PaneParams::fav_btn_font_color,
-                PaneParams::fav_btn_font_size
-            );
+                // green button text
+                $defs[] = GComps_Factory::label(
+                    GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
+                    null,
+                    $this->toggle_move ? TR::t('top') : TR::t('left'),
+                    1,
+                    $is_first_channel ? PaneParams::fav_btn_disabled_font_color : PaneParams::fav_btn_font_color,
+                    PaneParams::fav_btn_font_size
+                );
+                $dx += $dx_text;
 
-            $dx += 105;
+                $is_last_channel = ($channel_id === end($order));
+                // yellow button image (C)
+                $defs[] = GComps_Factory::get_image_def(
+                    GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
+                    null,
+                    PaneParams::fav_button_yellow,
+                    1,
+                    false,
+                    null,
+                    null,
+                    null,
+                    $is_last_channel ? 99 : 255
+                );
+                $dx += $dx_icon;
+
+                // yellow button text
+                $defs[] = GComps_Factory::label(
+                    GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
+                    null,
+                    $this->toggle_move ? TR::t('bottom') : TR::t('right'),
+                    1,
+                    $is_last_channel ? PaneParams::fav_btn_disabled_font_color : PaneParams::fav_btn_font_color,
+                    PaneParams::fav_btn_font_size
+                );
+                $dx += $dx_text;
+            }
+
             // blue button image (D)
             $defs[] = GComps_Factory::get_image_def(
                 GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
                 null,
                 PaneParams::fav_button_blue
             );
+            $dx += $dx_icon;
 
-            $dx += 55;
             // blue button text
             $defs[] = GComps_Factory::label(
                 GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
@@ -1337,6 +1326,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 $menu_items[] = Control_Factory::menu_separator();
 
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+                    $this->plugin->do_edit_list_screen(static::ID,
+                        Starnet_Edit_Channel_List_Screen::PARAM_EDIT_CHANNELS, $media_url->{PARAM_GROUP_ID},
+                        array(PARAM_END_ACTION => ACTION_RELOAD, PARAM_CANCEL_ACTION => ACTION_EMPTY)
+                    ),
+                    TR::t('tv_screen_edit_channels'), 'edit.png');
+
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
                     $this->plugin->do_edit_channel_parameters($this, $media_url->{PARAM_CHANNEL_ID}),
                     TR::t('tv_screen_edit_channel'), 'check.png');
 
@@ -1350,10 +1346,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
             if (!$this->plugin->is_full_size_remote()) {
                 if ($media_url->{PARAM_GROUP_ID} === $fav_id) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        PLUGIN_FAVORITES_OP_MOVE_UP, TR::t('left'), PaneParams::fav_button_green);
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        PLUGIN_FAVORITES_OP_MOVE_DOWN, TR::t('right'), PaneParams::fav_button_yellow);
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, PLUGIN_FAVORITES_OP_MOVE_UP,
+                        TR::t('tv_screen_toggle_move_title'), PaneParams::fav_button_red);
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, PLUGIN_FAVORITES_OP_MOVE_UP,
+                        $this->toggle_move ? TR::t('top') : TR::t('left'), PaneParams::fav_button_green);
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, PLUGIN_FAVORITES_OP_MOVE_DOWN,
+                        $this->toggle_move ? TR::t('bottom') : TR::t('right'), PaneParams::fav_button_yellow);
                 }
 
                 $is_in_favorites = $this->plugin->is_channel_in_order($fav_id, $media_url->{PARAM_CHANNEL_ID});
@@ -1394,6 +1392,19 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 );
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($action,
                     TR::t('tv_screen_edit_groups'), "move.png");
+
+                if ($group_id !== $fav_id &&
+                    $group_id !== TV_CHANGED_CHANNELS_GROUP_ID &&
+                    $group_id !== TV_HISTORY_GROUP_ID &&
+                    $group_id !== VOD_GROUP_ID) {
+
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+                        $this->plugin->do_edit_list_screen(static::ID,
+                            Starnet_Edit_Channel_List_Screen::PARAM_EDIT_CHANNELS, $group_id,
+                            array(PARAM_END_ACTION => ACTION_RELOAD, PARAM_CANCEL_ACTION => ACTION_EMPTY)
+                        ),
+                        TR::t('tv_screen_edit_channels'), 'edit.png');
+                }
 
                 $menu_items[] = Control_Factory::menu_separator();
             }
@@ -1441,29 +1452,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         $this->channels_in_row = $this->plugin->get_setting(PARAM_NEWUI_ICONS_IN_ROW, 7);
         $this->square_icons = $this->plugin->get_bool_setting(PARAM_NEWUI_SQUARE_ICONS, false);
         $this->show_continues = $this->plugin->get_bool_setting(PARAM_NEWUI_SHOW_CONTINUES);
-    }
-
-    protected function action_to_direction($action)
-    {
-        switch ($action) {
-            case ACTION_ITEM_UP:
-                $direction = Ordered_Array::UP;
-                break;
-            case ACTION_ITEM_DOWN:
-                $direction = Ordered_Array::DOWN;
-                break;
-            case ACTION_ITEM_TOP:
-                $direction = Ordered_Array::TOP;
-                break;
-            case ACTION_ITEM_BOTTOM:
-                $direction = Ordered_Array::BOTTOM;
-                break;
-            default:
-                $direction = null;
-                break;
-        }
-
-        return $direction;
     }
 
     /**

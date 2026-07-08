@@ -523,8 +523,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 "move.png",
                 array(CONTROL_ACTION_EDIT => Starnet_Edit_Group_List_Screen::PARAM_EDIT_GROUPS));
 
-            if ($group_id !== TV_FAV_GROUP_ID &&
-                $group_id !== TV_FAV_COMMON_GROUP_ID &&
+            if ($group_id !== $fav_id &&
                 $group_id !== TV_CHANGED_CHANNELS_GROUP_ID &&
                 $group_id !== TV_HISTORY_GROUP_ID &&
                 $group_id !== VOD_GROUP_ID) {

@@ -1010,10 +1010,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return true;
         }
 
-        if (isset($plugin_cookies->toggle_move)) {
-            $plugin_cookies->toggle_move = false;
-        }
-
         $this->init_plugin();
 
         $playlist_id = $this->get_active_playlist_id();
@@ -2585,7 +2581,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @param User_Input_Handler $handler
+     * @param User_Input_Handler|null $handler
      * @param string $channel_id
      * @param bool $is_classic
      * @return array|null
