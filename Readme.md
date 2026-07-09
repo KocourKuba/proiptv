@@ -3,7 +3,7 @@
 
 Universal **Dune HD** plugin with M3U playlist and XMLTV EPG support. Also, it has many presets for the most popular IPTV providers.
 
-Minimal firmware revision supported by the current version of the plugin (7.x) is R22.
+Minimal firmware revision supported by the current version of the plugin (8.x) is R22. Some features available only for R24
 
 For devices (Android-based), with a revision lower than R22, the latest version is [6.2.1358](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1358) Strongly recommend to update firmware to r22
 
@@ -17,7 +17,7 @@ For Dune HD ATV devices (Homatics, Boxy, Premier) and Dune HD Whale TV there are
 
 Универсальный плагин M3U плейлистов для плейеров **Dune HD**, с поддержкой XMLTV EPG. Так же поддерживаются наиболее известные провайдеры IPTV в виде готовых шаблонов.
 
-Минимальная версия прошивки поддерживаемая текущей версией плагина (7.x) - R22.
+Минимальная версия прошивки поддерживаемая текущей версией плагина (8.x) - R22. Некоторые действия и настройки доступны только с R24
 
 Для приставок (на Android) с ревизией прошивки меньше R22 - актуальная версия [6.2.1358](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1358) рекомендую обновить прошивку до r22
 
