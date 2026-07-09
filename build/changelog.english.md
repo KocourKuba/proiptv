@@ -1,4 +1,24 @@
-﻿### Version 7.1.1660
+﻿### Version 8.0.1706
+- For the latest r24 firmware, the ability to lazy load icons from XMLTV is available. The plugin starts faster, icons are shown after the XMLTV processing is finished
+- Reduced memory consumption when parsing an M3U playlist
+- Added ready-made links for popular XMLTV sources
+- Added setting of the maximum available memory for the plugin (for large playlists)
+- Added setting to enable/disable the display of the number of channels/hidden in the category information (also slightly speeds up the loading of the plugin for large playlists). Disabled by default
+- Changed the assignment of colored buttons on category/channel screens
+- Added editing screens for category/channel lists. Moving, renaming, icon assignment actions moved to them
+- Added the ability to move a group of categories/channels. Selection by pressing the Enter/Ok button. Clear all selected - CLEAR. 3 modes of moving categories/channels by LEFT/RIGHT buttons - step by step, page, begin/end
+- Added the ability to rename a category/channel
+- Added the ability to view current links to the playlist/VOD for provider templates (press Info button on the playlist)
+- Added the ability to launch the plugin from the playlist list screen, not the channel categories of the current playlist
+- Added the ability to select the last used folder when changing category icons/wallpaper
+- Some settings have been moved from the Dune memory to the plugin database and will now be restored from the backup
+- Fixed a bug where the plugin forgot the order of the EPG Internet sources when exiting
+- An additional playlist of the VOD has been added for the RU TV provider
+- Updated Sharavoz/Uspeh/TV Team configurations
+- Added missing menu items for NewUI
+- Updated translation
+
+### Version 7.1.1660
 - Updated Sharaclub API
 - Added support for filter by year for Cbilling/Antifriz
 - Minor fixes to the location of elements in the EPG display dialog
