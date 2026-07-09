@@ -135,6 +135,48 @@
       }
     }
   },
+  "xmltv_sources": {
+    "iEdem/iLook": {
+      "name": "iEdem/iLook",
+      "url_path": "http://epg.one/epg2.xml.gz",
+      "cache_time": "auto"
+    },
+    "iEdem/iLook (square icons)": {
+      "name": "iEdem/iLook (square icons)",
+      "url_path": "http://epg.one/epg.xml.gz",
+      "cache_time": "auto"
+    },
+    "Iptvx.One": {
+      "name": "Iptvx.One",
+      "url_path": "https://iptvx.one/epg/epg.xml.gz",
+      "cache_time": "auto"
+    },
+    "Iptvx.One (Lite)": {
+      "name": "Iptvx.One (Lite)",
+      "url_path": "https://iptvx.one/epg/epg_lite.xml.gz",
+      "cache_time": "auto"
+    },
+    "TeleGuide": {
+      "name": "TeleGuide",
+      "url_path": "https://www.teleguide.info/download/new3/xmltv.xml.gz",
+      "cache_time": "auto"
+    },
+    "Gabbarit drm": {
+      "name": "Gabbarit",
+      "url_path": "http://gabbarit.drm-play.com/epg_14.xml.gz",
+      "cache_time": "auto"
+    },
+    "Gabbarit drm (Lite)": {
+      "name": "Gabbarit (Lite)",
+      "url_path": "http://gabbarit.drm-play.com/epg_lite.xml.gz",
+      "cache_time": "auto"
+    },
+    "ProgramTV": {
+      "name": "ProgramTV",
+      "url_path": "http://programtv.ru/xmltv.xml.gz",
+      "cache_time": "auto"
+    }
+  },
   "providers": [
     {
       "enable": true,
