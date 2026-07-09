@@ -1468,7 +1468,7 @@ class Dune_Default_Sqlite_Engine
                 COLUMN_GROUP_ID, COLUMN_GROUP_ID, $groups_info_table, COLUMN_DISABLED, FALSE);
         } else {
             $query .= sprintf('INSERT INTO %s (%s) SELECT %s FROM %s WHERE %s=%d AND %s=%d ORDER BY %s;',
-                $tmp_table, COLUMN_GROUP_ID, COLUMN_GROUP_ID, $groups_info_table, COLUMN_DISABLED, FALSE, COLUMN_SPECIAL, FALSE, COLUMN_GROUP_ID);
+                $tmp_table, COLUMN_GROUP_ID, COLUMN_GROUP_ID, $groups_info_table, COLUMN_DISABLED, FALSE, COLUMN_SPECIAL, FALSE, COLUMN_TITLE);
         }
         $query .= sprintf('DROP TABLE IF EXISTS %s;', $groups_order_table);
         $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name(GROUPS_ORDER));
@@ -1709,7 +1709,7 @@ class Dune_Default_Sqlite_Engine
         } else {
             $query .= sprintf('INSERT INTO %s (%s) SELECT %s FROM %s WHERE %s=%s AND %s IN (SELECT %s FROM %s) ORDER BY %s;',
                 $tmp_table, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, $channels_info_table,
-                COLUMN_GROUP_ID, $q_group_id, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, $group_table, COLUMN_TITLE);
+                COLUMN_GROUP_ID, $q_group_id, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, $group_table, COLUMN_SHOW_TITLE);
         }
         $query .= sprintf('DROP TABLE IF EXISTS %s;', $group_table);
         $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name($group_id));
