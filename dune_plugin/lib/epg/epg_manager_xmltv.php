@@ -194,7 +194,7 @@ class Epg_Manager_Xmltv
 
                                 $items[$program_start][PluginTvEpgProgram::end_tm_sec] = $program_end;
                                 $items[$program_start][PluginTvEpgProgram::name] = self::get_node_value($tag, 'title');
-                                $items[$program_start][PluginTvEpgProgram::description] = HD::unescape_entity_string(self::get_node_value($tag, 'desc'));
+                                $items[$program_start][PluginTvEpgProgram::description] = unescape_entity_string(self::get_node_value($tag, 'desc'));
                                 $items[$program_start][PluginTvEpgProgram::icon_url] = self::get_node_attribute($tag, 'icon', 'src');
 
                                 if (!self::$ext_epg_enabled) continue;

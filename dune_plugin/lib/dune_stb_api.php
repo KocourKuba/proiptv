@@ -74,6 +74,8 @@ const ACCEPT_JSON = 'Accept: application/json';
 const CONTENT_TYPE_JSON = 'Content-Type: application/json; charset=utf-8';
 const CONTENT_TYPE_WWW_FORM_URLENCODED = 'Content-Type: application/x-www-form-urlencoded';
 
+const DUNE_PARAMS_MAGIC = "|||dune_params|||";
+
 # Hard-coded constants.
 if (!defined('FONT_SIZE_LARGE')) define('FONT_SIZE_LARGE', 4);
 if (!defined('ORIENTATION_VERTICAL')) define('ORIENTATION_VERTICAL', 0);
@@ -2841,6 +2843,11 @@ function dune_params_array_to_string($value)
     return $dune_params_str;
 }
 
+/**
+ * @param int $pid
+ * @param int $sig_num
+ * @return bool
+ */
 function send_process_signal($pid, $sig_num) {
     if (function_exists('posix_kill')) {
         return posix_kill($pid, $sig_num);
@@ -2852,167 +2859,10 @@ function send_process_signal($pid, $sig_num) {
 }
 
 /**
- * Return true if palette is patched or not exist
- *
- * @return true
+ * @param string $source
+ * @param string $target
+ * @return void
  */
-function color_palette_check()
-{
-    global $dune_default_colors_values;
-
-    $skin_path = get_active_skin_path();
-    $skin_config = "$skin_path/dune_skin_config.xml";
-
-    if (!file_exists($skin_config)) {
-        hd_debug_print("'$skin_config' does not exist");
-        return true;
-    }
-
-    $result = 1;
-    $dom = new DomDocument();
-    $dom->load($skin_config);
-    $color = $dom->getElementsByTagName('color');
-    /** @var DOMElement $item */
-    foreach ($color as $item) {
-        $color_index = $item->getAttribute('index');
-        $color_value = $item->getAttribute('value');
-        if ($color_index !== '' && $color_value !== '' && isset($dune_default_colors_values[$color_index])) {
-            $result &= ($color_value === $dune_default_colors_values[$color_index]);
-        }
-    }
-
-    return (bool)$result;
-}
-
-/**
- * Patch system or custom palette for default system color
- *
- * @param string $error
- * @return array|false
- */
-function color_palette_patch(&$error)
-{
-    global $dune_default_colors_values;
-
-    $error = '';
-    clearstatcache();
-
-    $skin_path = get_active_skin_path();
-    $skin_config = "$skin_path/dune_skin_config.xml";
-    if (!file_exists($skin_config)) {
-        $error = "'$skin_config' does not exist";
-        return false;
-    }
-
-    $origin_skin_config = file_get_contents($skin_config);
-
-    $dom = new DomDocument();
-    $dom->load($skin_config);
-    $color = $dom->getElementsByTagName('color');
-
-    foreach ($color as $item) {
-        $color_index = null;
-        $color_value = null;
-        foreach ($item->attributes as $attrName => $attrNode) {
-            if ($attrName == 'index') {
-                $color_index = $attrNode->value;
-            }
-            else if ($attrName == 'value') {
-                $color_value = $attrNode->value;
-            }
-
-            if (is_null($color_index) || is_null($color_value)) continue;
-
-            if (isset($dune_default_colors_values[$color_index])) {
-                $attrNode->ownerElement->setAttribute('value', $dune_default_colors_values[$color_index]);
-            }
-        }
-    }
-
-    $reboot_action = Action_Factory::restart(true);
-    $xml = $dom->saveXML();
-    // cut <?xml> tag
-    $patched_skin_config = substr($xml, strpos($xml, '?>') + 2);
-
-    if (preg_match('/\/*firmware/', $skin_path)) {
-        // copy system skin to custom skin
-        $custom_skin_path = preg_replace('/(.*\/(flashdata|persistfs)).*$/', "$1", get_data_path()) . '/dune_skin';
-        hd_debug_print("New custom skin path: $custom_skin_path");
-
-        // clear existing custom skin
-        delete_directory($custom_skin_path);
-        if (!create_path($custom_skin_path)) {
-            $error = 'The directory for the custom skin in the system store is not available!';
-            hd_debug_print("$error Process was terminated");
-            return false;
-        }
-
-        foreach (glob("$skin_path/*") as $file) {
-            $file = realpath($file);
-            $basename = basename($file);
-
-            if (is_dir($file)) {
-                recursive_copy($file, "$custom_skin_path/$basename");
-            } else if ($basename == 'dune_skin_config.xml') {
-                if (!file_put_contents("$custom_skin_path/$basename", $patched_skin_config)) {
-                    $error = "An unexpected error occurred when saving to save the 'dune_skin_config.xml'!";
-                    hd_debug_print("$error The process was terminated");
-                    return false;
-                }
-            } else if (!copy($file, "$custom_skin_path/$basename")) {
-                $error = 'In the process of copying a skin file error occurred';
-                hd_debug_print("$error The process was terminated");
-                return false;
-            }
-        }
-
-        $system_settings = get_shell_settings();
-        if (!empty($system_settings)) {
-            $system_settings['gui_skin'] = 'custom';
-            $system_settings['appearance'] = 'custom';
-            $reboot_action = Action_Factory::change_settings($system_settings, false, true);
-        }
-    } else if (!file_put_contents($skin_config, $patched_skin_config)) {
-        $error = "An unexpected error occurred when saving to save the '$skin_config'";
-        hd_debug_print("$error The process was terminated");
-        return false;
-    }
-
-    create_path(get_data_path('skin_backup'));
-    @file_put_contents(get_data_path('skin_backup/') . md5($patched_skin_config), $origin_skin_config);
-    return Action_Factory::show_main_screen($reboot_action);
-}
-
-function color_palette_restore()
-{
-    $skin_config = get_active_skin_path() . '/dune_skin_config.xml';
-    $hash = md5(file_get_contents($skin_config));
-    $backup_storage_path = get_data_path('skin_backup');
-
-    if (!file_exists($skin_config)) {
-        hd_debug_print('Skin config file does not exist!');
-        return null;
-    }
-
-    if (!file_exists($backup_storage_path)) {
-        hd_debug_print('Backup storage path does not exist!');
-        return null;
-    }
-
-    foreach (glob($backup_storage_path . '/*') as $file) {
-        if (basename($file) !== $hash) continue;
-
-        if (copy($file, $skin_config)) {
-            safe_unlink($file);
-        }
-
-        hd_print('Skin colors restored succesfull!');
-        break;
-    }
-
-    return Action_Factory::show_main_screen(Action_Factory::restart(true));
-}
-
 function recursive_copy($source, $target)
 {
     if (!is_dir($source)) {
@@ -3040,4 +2890,580 @@ function get_uuid()
     // to 00000003-6081-4dc6-c48f-dbd4bb027cba
     $parts = explode('-', strtolower(get_serial_number()));
     return "$parts[0]$parts[1]-$parts[2]-$parts[3]-$parts[4]-$parts[5]$parts[6]$parts[7]";
+}
+
+/**
+ * @param int $code
+ * @return string
+ */
+function http_status_code_to_string($code)
+{
+    // Source: http://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+
+    switch ($code) {
+        // 1xx Informational
+        case 100:
+            $string = 'Continue';
+            break;
+        case 101:
+            $string = 'Switching Protocols';
+            break;
+        case 102:
+            $string = 'Processing';
+            break; // WebDAV
+        case 122:
+            $string = 'Request-URI too long';
+            break; // Microsoft
+
+        // 2xx Success
+        case 200:
+            $string = 'OK';
+            break;
+        case 201:
+            $string = 'Created';
+            break;
+        case 202:
+            $string = 'Accepted';
+            break;
+        case 203:
+            $string = 'Non-Authoritative Information';
+            break; // HTTP/1.1
+        case 204:
+            $string = 'No Content';
+            break;
+        case 205:
+            $string = 'Reset Content';
+            break;
+        case 206:
+            $string = 'Partial Content';
+            break;
+        case 207:
+            $string = 'Multi-Status';
+            break; // WebDAV
+
+        // 3xx Redirection
+        case 300:
+            $string = 'Multiple Choices';
+            break;
+        case 301:
+            $string = 'Moved Permanently';
+            break;
+        case 302:
+            $string = 'Found';
+            break;
+        case 303:
+            $string = 'See Other';
+            break; //HTTP/1.1
+        case 304:
+            $string = 'Not Modified';
+            break;
+        case 305:
+            $string = 'Use Proxy';
+            break; // HTTP/1.1
+        case 306:
+            $string = 'Switch Proxy';
+            break; // Depreciated
+        case 307:
+            $string = 'Temporary Redirect';
+            break; // HTTP/1.1
+
+        // 4xx Client Error
+        case 400:
+            $string = 'Bad Request';
+            break;
+        case 401:
+            $string = 'Unauthorized';
+            break;
+        case 402:
+            $string = 'Payment Required';
+            break;
+        case 403:
+            $string = 'Forbidden';
+            break;
+        case 404:
+            $string = 'Not Found';
+            break;
+        case 405:
+            $string = 'Method Not Allowed';
+            break;
+        case 406:
+            $string = 'Not Acceptable';
+            break;
+        case 407:
+            $string = 'Proxy Authentication Required';
+            break;
+        case 408:
+            $string = 'Request Timeout';
+            break;
+        case 409:
+            $string = 'Conflict';
+            break;
+        case 410:
+            $string = 'Gone';
+            break;
+        case 411:
+            $string = 'Length Required';
+            break;
+        case 412:
+            $string = 'Precondition Failed';
+            break;
+        case 413:
+            $string = 'Request Entity Too Large';
+            break;
+        case 414:
+            $string = 'Request-URI Too Long';
+            break;
+        case 415:
+            $string = 'Unsupported Media Type';
+            break;
+        case 416:
+            $string = 'Requested Range Not Satisfiable';
+            break;
+        case 417:
+            $string = 'Expectation Failed';
+            break;
+        case 422:
+            $string = 'Unprocessable Entity';
+            break; // WebDAV
+        case 423:
+            $string = 'Locked';
+            break; // WebDAV
+        case 424:
+            $string = 'Failed Dependency';
+            break; // WebDAV
+        case 425:
+            $string = 'Unordered Collection';
+            break; // WebDAV
+        case 426:
+            $string = 'Upgrade Required';
+            break;
+        case 449:
+            $string = 'Retry With';
+            break; // Microsoft
+        case 450:
+            $string = 'Blocked';
+            break; // Microsoft
+
+        // 5xx Server Error
+        case 500:
+            $string = 'Internal Server Error';
+            break;
+        case 501:
+            $string = 'Not Implemented';
+            break;
+        case 502:
+            $string = 'Bad Gateway';
+            break;
+        case 503:
+            $string = 'Service Unavailable';
+            break;
+        case 504:
+            $string = 'Gateway Timeout';
+            break;
+        case 505:
+            $string = 'HTTP Version Not Supported';
+            break;
+        case 506:
+            $string = 'Variant Also Negotiates';
+            break;
+        case 507:
+            $string = 'Insufficient Storage';
+            break; // WebDAV
+        case 509:
+            $string = 'Bandwidth Limit Exceeded';
+            break; // Apache
+        case 510:
+            $string = 'Not Extended';
+            break;
+
+        // Unknown code:
+        default:
+            $string = 'Unknown';
+            break;
+    }
+    return $string;
+}
+
+/**
+ * @param int $opt
+ * @return string
+ */
+function curlopt_to_string($opt)
+{
+    static $opts = array(
+        -1 => 'CURLOPT_MUTE',
+        1 => 'CURLOPT_DEBUGFUNCTION',
+        3 => 'CURLOPT_PORT',
+        13 => 'CURLOPT_TIMEOUT',
+        14 => 'CURLOPT_INFILESIZE',
+        19 => 'CURLOPT_LOW_SPEED_LIMIT',
+        20 => 'CURLOPT_LOW_SPEED_TIME',
+        21 => 'CURLOPT_RESUME_FROM',
+        27 => 'CURLOPT_CRLF',
+        32 => 'CURLOPT_SSLVERSION',
+        33 => 'CURLOPT_TIMECONDITION',
+        34 => 'CURLOPT_TIMEVALUE',
+        41 => 'CURLOPT_VERBOSE',
+        42 => 'CURLOPT_HEADER',
+        43 => 'CURLOPT_NOPROGRESS',
+        44 => 'CURLOPT_NOBODY',
+        45 => 'CURLOPT_FAILONERROR',
+        46 => 'CURLOPT_UPLOAD',
+        47 => 'CURLOPT_POST',
+        48 => 'CURLOPT_FTPLISTONLY',
+        50 => 'CURLOPT_FTPAPPEND',
+        51 => 'CURLOPT_NETRC',
+        52 => 'CURLOPT_FOLLOWLOCATION',
+        53 => 'CURLOPT_TRANSFERTEXT',
+        54 => 'CURLOPT_PUT',
+        58 => 'CURLOPT_AUTOREFERER',
+        59 => 'CURLOPT_PROXYPORT',
+        61 => 'CURLOPT_HTTPPROXYTUNNEL',
+        64 => 'CURLOPT_SSL_VERIFYPEER',
+        68 => 'CURLOPT_MAXREDIRS',
+        69 => 'CURLOPT_FILETIME',
+        71 => 'CURLOPT_MAXCONNECTS',
+        72 => 'CURLOPT_CLOSEPOLICY',
+        74 => 'CURLOPT_FRESH_CONNECT',
+        75 => 'CURLOPT_FORBID_REUSE',
+        78 => 'CURLOPT_CONNECTTIMEOUT',
+        80 => 'CURLOPT_HTTPGET',
+        81 => 'CURLOPT_SSL_VERIFYHOST',
+        84 => 'CURLOPT_HTTP_VERSION',
+        85 => 'CURLOPT_FTP_USE_EPSV',
+        90 => 'CURLOPT_SSLENGINE_DEFAULT',
+        91 => 'CURLOPT_DNS_USE_GLOBAL_CACHE',
+        92 => 'CURLOPT_DNS_CACHE_TIMEOUT',
+        96 => 'CURLOPT_COOKIESESSION',
+        98 => 'CURLOPT_BUFFERSIZE',
+        99 => 'CURLOPT_NOSIGNAL',
+        101 => 'CURLOPT_PROXYTYPE',
+        105 => 'CURLOPT_UNRESTRICTED_AUTH',
+        106 => 'CURLOPT_FTP_USE_EPRT',
+        107 => 'CURLOPT_HTTPAUTH',
+        110 => 'CURLOPT_FTP_CREATE_MISSING_DIRS',
+        111 => 'CURLOPT_PROXYAUTH',
+        112 => 'CURLOPT_SERVER_RESPONSE_TIMEOUT',
+        113 => 'CURLOPT_IPRESOLVE',
+        114 => 'CURLOPT_MAXFILESIZE',
+        119 => 'CURLOPT_USE_SSL',
+        121 => 'CURLOPT_TCP_NODELAY',
+        129 => 'CURLOPT_FTPSSLAUTH',
+        136 => 'CURLOPT_IGNORE_CONTENT_LENGTH',
+        137 => 'CURLOPT_FTP_SKIP_PASV_IP',
+        138 => 'CURLOPT_FTP_FILEMETHOD',
+        139 => 'CURLOPT_LOCALPORT',
+        140 => 'CURLOPT_LOCALPORTRANGE',
+        141 => 'CURLOPT_CONNECT_ONLY',
+        150 => 'CURLOPT_SSL_SESSIONID_CACHE',
+        151 => 'CURLOPT_SSH_AUTH_TYPES',
+        154 => 'CURLOPT_FTP_SSL_CCC',
+        155 => 'CURLOPT_TIMEOUT_MS',
+        156 => 'CURLOPT_CONNECTTIMEOUT_MS',
+        157 => 'CURLOPT_HTTP_TRANSFER_DECODING',
+        158 => 'CURLOPT_HTTP_CONTENT_DECODING',
+        159 => 'CURLOPT_NEW_FILE_PERMS',
+        160 => 'CURLOPT_NEW_DIRECTORY_PERMS',
+        161 => 'CURLOPT_POSTREDIR',
+        166 => 'CURLOPT_PROXY_TRANSFER_MODE',
+        171 => 'CURLOPT_ADDRESS_SCOPE',
+        172 => 'CURLOPT_CERTINFO',
+        178 => 'CURLOPT_TFTP_BLKSIZE',
+        180 => 'CURLOPT_SOCKS5_GSSAPI_NEC',
+        181 => 'CURLOPT_PROTOCOLS',
+        182 => 'CURLOPT_REDIR_PROTOCOLS',
+        188 => 'CURLOPT_FTP_USE_PRET',
+        189 => 'CURLOPT_RTSP_REQUEST',
+        193 => 'CURLOPT_RTSP_CLIENT_CSEQ',
+        194 => 'CURLOPT_RTSP_SERVER_CSEQ',
+        207 => 'CURLOPT_TRANSFER_ENCODING',
+        218 => 'CURLOPT_SASL_IR',
+        225 => 'CURLOPT_SSL_ENABLE_NPN',
+        226 => 'CURLOPT_SSL_ENABLE_ALPN',
+        227 => 'CURLOPT_EXPECT_100_TIMEOUT_MS',
+        229 => 'CURLOPT_HEADEROPT',
+        232 => 'CURLOPT_SSL_VERIFYSTATUS',
+        245 => 'CURLOPT_KEEP_SENDING_ON_ERROR',
+        248 => 'CURLOPT_PROXY_SSL_VERIFYPEER',
+        249 => 'CURLOPT_PROXY_SSL_VERIFYHOST',
+        250 => 'CURLOPT_PROXY_SSLVERSION',
+        261 => 'CURLOPT_PROXY_SSL_OPTIONS',
+        265 => 'CURLOPT_SUPPRESS_CONNECT_HEADERS',
+        267 => 'CURLOPT_SOCKS5_AUTH',
+        268 => 'CURLOPT_SSH_COMPRESSION',
+        271 => 'CURLOPT_HAPPY_EYEBALLS_TIMEOUT_MS',
+        274 => 'CURLOPT_HAPROXYPROTOCOL',
+        275 => 'CURLOPT_DNS_SHUFFLE_ADDRESSES',
+        278 => 'CURLOPT_DISALLOW_USERNAME_IN_URL',
+        280 => 'CURLOPT_UPLOAD_BUFFERSIZE',
+        281 => 'CURLOPT_UPKEEP_INTERVAL_MS',
+        285 => 'CURLOPT_HTTP09_ALLOWED',
+        286 => 'CURLOPT_ALTSVC_CTRL',
+        288 => 'CURLOPT_MAXAGE_CONN',
+        290 => 'CURLOPT_MAIL_RCPT_ALLLOWFAILS',
+        299 => 'CURLOPT_HSTS_CTRL',
+        306 => 'CURLOPT_DOH_SSL_VERIFYPEER',
+        307 => 'CURLOPT_DOH_SSL_VERIFYHOST',
+        308 => 'CURLOPT_DOH_SSL_VERIFYSTATUS',
+        314 => 'CURLOPT_MAXLIFETIME_CONN',
+        315 => 'CURLOPT_MIME_OPTIONS',
+        320 => 'CURLOPT_WS_OPTIONS',
+        321 => 'CURLOPT_CA_CACHE_TIMEOUT',
+        322 => 'CURLOPT_QUICK_EXIT',
+        326 => 'CURLOPT_TCP_KEEPCNT',
+        10001 => 'CURLOPT_FILE',
+        10002 => 'CURLOPT_URL',
+        10004 => 'CURLOPT_PROXY',
+        10005 => 'CURLOPT_USERPWD',
+        10006 => 'CURLOPT_PROXYUSERPWD',
+        10007 => 'CURLOPT_RANGE',
+        10009 => 'CURLOPT_INFILE',
+        10015 => 'CURLOPT_POSTFIELDS',
+        10017 => 'CURLOPT_FTPPORT',
+        10018 => 'CURLOPT_USERAGENT',
+        10022 => 'CURLOPT_COOKIE',
+        10023 => 'CURLOPT_HTTPHEADER',
+        10025 => 'CURLOPT_SSLCERT',
+        10026 => 'CURLOPT_SSLCERTPASSWD',
+        10028 => 'CURLOPT_QUOTE',
+        10029 => 'CURLOPT_WRITEHEADER',
+        10031 => 'CURLOPT_COOKIEFILE',
+        10036 => 'CURLOPT_CUSTOMREQUEST',
+        10037 => 'CURLOPT_STDERR',
+        10039 => 'CURLOPT_POSTQUOTE',
+        10062 => 'CURLOPT_INTERFACE',
+        10063 => 'CURLOPT_KRBLEVEL',
+        10065 => 'CURLOPT_CAINFO',
+        10076 => 'CURLOPT_RANDOM_FILE',
+        10077 => 'CURLOPT_EGDSOCKET',
+        10082 => 'CURLOPT_COOKIEJAR',
+        10083 => 'CURLOPT_SSL_CIPHER_LIST',
+        10086 => 'CURLOPT_SSLCERTTYPE',
+        10087 => 'CURLOPT_SSLKEY',
+        10088 => 'CURLOPT_SSLKEYTYPE',
+        10089 => 'CURLOPT_SSLENGINE',
+        10093 => 'CURLOPT_PREQUOTE',
+        10097 => 'CURLOPT_CAPATH',
+        10100 => 'CURLOPT_SHARE',
+        10102 => 'CURLOPT_ENCODING',
+        10103 => 'CURLOPT_PRIVATE',
+        10104 => 'CURLOPT_HTTP200ALIASES',
+        10118 => 'CURLOPT_NETRC_FILE',
+        10134 => 'CURLOPT_FTP_ACCOUNT',
+        10135 => 'CURLOPT_COOKIELIST',
+        10147 => 'CURLOPT_FTP_ALTERNATIVE_TO_USER',
+        10152 => 'CURLOPT_SSH_PUBLIC_KEYFILE',
+        10153 => 'CURLOPT_SSH_PRIVATE_KEYFILE',
+        10162 => 'CURLOPT_SSH_HOST_PUBLIC_KEY_MD5',
+        10169 => 'CURLOPT_CRLFILE',
+        10170 => 'CURLOPT_ISSUERCERT',
+        10173 => 'CURLOPT_USERNAME',
+        10174 => 'CURLOPT_PASSWORD',
+        10175 => 'CURLOPT_PROXYUSERNAME',
+        10176 => 'CURLOPT_PROXYPASSWORD',
+        10177 => 'CURLOPT_NOPROXY',
+        10179 => 'CURLOPT_SOCKS5_GSSAPI_SERVICE',
+        10183 => 'CURLOPT_SSH_KNOWNHOSTS',
+        10186 => 'CURLOPT_MAIL_FROM',
+        10187 => 'CURLOPT_MAIL_RCPT',
+        10190 => 'CURLOPT_RTSP_SESSION_ID',
+        10191 => 'CURLOPT_RTSP_STREAM_URI',
+        10192 => 'CURLOPT_RTSP_TRANSPORT',
+        10203 => 'CURLOPT_RESOLVE',
+        10211 => 'CURLOPT_DNS_SERVERS',
+        10328 => 'CURLOPT_SSL_SIGNATURE_ALGORITHMS',
+        19913 => 'CURLOPT_RETURNTRANSFER',
+        19914 => 'CURLOPT_BINARYTRANSFER',
+        20011 => 'CURLOPT_WRITEFUNCTION',
+        20012 => 'CURLOPT_READFUNCTION',
+        20056 => 'CURLOPT_PROGRESSFUNCTION',
+        20079 => 'CURLOPT_HEADERFUNCTION',
+    );
+
+    return isset($opts[$opt]) ? $opts[$opt] : 'unknown';
+}
+
+/**
+ * @param string $raw_string
+ * @return array|string|string[]
+ */
+function unescape_entity_string($raw_string)
+{
+    if (empty($raw_string)) {
+        return $raw_string;
+    }
+
+    $replace = array(
+        "&nbsp;" => ' ',
+        '&#39;' => "'",
+        '&gt;' => ">",
+        '&lt;' => "<'>",
+        '&apos;' => "'",
+        '&quot;' => '"',
+        '&amp;' => '&',
+        '&#196;' => 'Г„',
+        '&#228;' => 'Г¤',
+        '&#214;' => 'Г–',
+        '&#220;' => 'Гњ',
+        '&#223;' => 'Гџ',
+        '&#246;' => 'Г¶',
+        '&#252;' => 'Гј',
+        '&#257;' => 'ā',
+        '&#258;' => 'Ă',
+        '&#268;' => 'Č',
+        '&#326;' => 'ņ',
+        '&#327;' => 'Ň',
+        '&#363;' => 'ū',
+        '&#362;' => 'Ū',
+        '&#352;' => 'Š',
+        '&#353;' => 'š',
+        '&#382;' => 'ž',
+        '&#275;' => 'ē',
+        '&#276;' => 'Ĕ',
+        '&#298;' => 'Ī',
+        '&#299;' => 'ī',
+        '&#291;' => 'ģ',
+        '&#311;' => 'ķ',
+        '&#316;' => 'ļ',
+        '<br>' => PHP_EOL,
+    );
+
+    return str_replace(array_keys($replace), $replace, $raw_string);
+}
+
+/**
+ * @param string $url
+ * @param bool $force
+ * @return string
+ */
+function make_ts($url, $force = false)
+{
+    if (!preg_match('|^https?://ts://|', $url)) {
+        if (preg_match('/\.mp4(?=\?|$)/i', $url)) {
+            $url = preg_replace(TS_REPL_PATTERN, "$1" . "mp4://$2", $url);
+        } else if ($force || preg_match('/\.ts|\.mpeg|mpegts(?=\?|$)/i', $url)) {
+            $url = preg_replace(TS_REPL_PATTERN, "$1ts://$2", $url);
+        }
+    }
+
+    return $url;
+}
+
+/**
+ * @param string $url
+ * @return string
+ */
+function strip_ts($url)
+{
+    return preg_replace('#(https?://)((mp4|ts)://)#', '\1', $url);
+}
+
+/**
+ * @param string $url
+ * @return string
+ */
+function strip_dune_params($url)
+{
+    $pos = strpos($url, DUNE_PARAMS_MAGIC);
+    if ($pos !== false && $pos > 0) {
+        $url = substr($url, 0, $pos);
+    }
+
+    return $url;
+}
+
+/**
+ * @param string $url
+ * @return false|string
+ */
+function extract_dune_params($url)
+{
+    $pos = strpos($url, DUNE_PARAMS_MAGIC);
+    $dune_magic = '';
+    if ($pos !== false && $pos > 0) {
+        $dune_magic = substr($url, $pos + strlen(DUNE_PARAMS_MAGIC));
+    }
+
+    return $dune_magic;
+}
+
+function array_unshift_assoc(&$arr, $key, $val)
+{
+    $arr = array_reverse($arr, true);
+    $arr[$key] = $val;
+    return array_reverse($arr, true);
+}
+
+function mb_str_split($string, $num = 1, $slice = null)
+{
+    $out = array();
+    do {
+        $array[] = mb_substr($string, 0, 1, 'utf-8');
+    } while ($string = mb_substr($string, 1, mb_strlen($string), 'utf-8'));
+
+    $chunks = array_chunk($array, $num);
+    foreach ($chunks as $chunk)
+        $out[] = implode('', $chunk);
+    if ($slice !== null)
+        $out = array_slice($out, 0, $slice);
+    return $out;
+}
+
+/**
+ * @param string $string
+ * @param int $max_size
+ * @return string
+ */
+function string_ellipsis($string, $max_size = 34)
+{
+    if (is_null($string))
+        return "";
+
+    if (strlen($string) > $max_size) {
+        $string = "..." . substr($string, strlen($string) - $max_size);
+    }
+
+    return $string;
+}
+
+/**
+ * case insensitive search in array
+ * @param string|array $needle
+ * @param string|array $haystack
+ * @return false|int|string
+ */
+function array_search_i($needle, $haystack)
+{
+    return array_search(strtolower($needle), array_map('strtolower', $haystack));
+}
+
+function compress_file($source, $dest)
+{
+    $data = file_get_contents($source);
+    $gz_data = gzencode($data, -1);
+    return file_put_contents($dest, $gz_data);
+}
+
+function is_dual_system()
+{
+    $ffs = readlines("/tmp/firmware_features.txt");
+    return in_array('dual_system', $ffs);
+}
+
+function is_whale_tv()
+{
+    $ffs = readlines("/tmp/firmware_features.txt");
+    return in_array('whale_tv', $ffs);
+}
+
+/**
+ * @param string $path
+ * @return array|false
+ */
+function readlines($path)
+{
+    if (!is_file($path)) {
+        return array();
+    }
+    return file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 }

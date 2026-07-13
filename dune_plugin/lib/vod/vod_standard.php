@@ -370,7 +370,7 @@ class vod_standard extends Abstract_Vod
             $url = $this->get_vod_stream_url($url, $plugin_cookies);
         }
 
-        $url = HD::strip_dune_params(HD::strip_ts($url));
+        $url = strip_dune_params(strip_ts($url));
 
         $cmd = "am start -a android.intent.action.VIEW -t \"video/*\" -d \"$url\" 2>&1";
         hd_debug_print("play movie by the external player: $cmd");

@@ -480,7 +480,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
 
         hd_debug_print('Choosed file: ' . $selected_media_url->{PARAM_FILEPATH}, true);
-        $lines = file($selected_media_url->{PARAM_FILEPATH}, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $lines = readlines($selected_media_url->{PARAM_FILEPATH});
         if ($lines === false || (count($lines) === 1 && trim($lines[0]) === '')) {
             return Action_Factory::show_title_dialog(TR::t('error'), TR::t('edit_list_empty_file'));
         }

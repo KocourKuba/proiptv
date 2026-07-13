@@ -98,11 +98,11 @@ class vod_mirkino extends vod_standard
 
         $url = $this->jfc->getPlayUrlMaster($media_url->id, $query);
 
-        $vod_url = HD::make_ts($url);
+        $vod_url = make_ts($url);
         $dune_params = $this->plugin->collect_dune_params();
         if (!empty($dune_params)) {
             $magic = str_replace('=', ':', http_build_query($dune_params, null, ','));
-            $vod_url .= HD::DUNE_PARAMS_MAGIC . $magic;
+            $vod_url .= DUNE_PARAMS_MAGIC . $magic;
         }
 
         return $vod_url;

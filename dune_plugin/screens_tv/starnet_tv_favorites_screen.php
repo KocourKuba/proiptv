@@ -125,7 +125,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
                 if (!is_limited_apk()) break;
 
                 $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
-                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($plugin_cookies), 1000);
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map(), 1000);
                 return Action_Factory::composite($actions);
 
             case EVENT_INDEXING_DONE:
@@ -171,7 +171,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $this->toggle_move = !$this->toggle_move;
-                $actions = $this->do_get_action_map($plugin_cookies);
+                $actions = $this->do_get_action_map();
                 return Action_Factory::change_behaviour($actions);
 
             case ACTION_ITEM_UP:

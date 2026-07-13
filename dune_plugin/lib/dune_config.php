@@ -49,7 +49,7 @@ class dune_config
     private function read_conf_file($conf_file_path)
     {
         hd_silence_warnings();
-        $lines = file($conf_file_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $lines = readlines($conf_file_path);
         hd_restore_warnings();
 
         if ($lines === false) {

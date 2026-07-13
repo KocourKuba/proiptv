@@ -46,8 +46,7 @@ class List_Utils
             return $cfg;
         }
 
-        $flags = FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES;
-        $lines = file($path, $flags);
+        $lines = readlines($path);
         if (!$lines) {
             return $cfg;
         }

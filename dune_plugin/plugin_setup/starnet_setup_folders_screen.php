@@ -69,7 +69,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
 
         $history_path = $this->plugin->get_history_path();
         hd_debug_print("history path: $history_path");
-        $display_path = HD::string_ellipsis($history_path);
+        $display_path = string_ellipsis($history_path);
         Control_Factory::add_image_button($defs, $this, self::CONTROL_HISTORY_CHANGE_FOLDER,
             TR::t('setup_history_folder_path'), $display_path, $folder_icon);
 
@@ -83,7 +83,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
         // EPG cache dir
         $cache_dir = Epg_Manager_Xmltv::get_cache_dir();
         $free_size = TR::t('setup_epg_storage_info__1', HD::get_storage_size($cache_dir));
-        $cache_dir = HD::string_ellipsis($cache_dir);
+        $cache_dir = string_ellipsis($cache_dir);
         Control_Factory::add_image_button($defs, $this, self::CONTROL_CHANGE_XMLTV_CACHE_PATH, $free_size, $cache_dir, get_image_path('folder.png'));
 
         return $defs;

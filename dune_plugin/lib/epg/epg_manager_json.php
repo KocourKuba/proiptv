@@ -329,9 +329,9 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             }
             $prev_start = $program_start;
 
-            $channel_epg[$program_start][PluginTvEpgProgram::name] = HD::unescape_entity_string(safe_get_value($entry, $parser_params[self::EPG_NAME], ''));
+            $channel_epg[$program_start][PluginTvEpgProgram::name] = unescape_entity_string(safe_get_value($entry, $parser_params[self::EPG_NAME], ''));
 
-            $desc = HD::unescape_entity_string(safe_get_value($entry, $parser_params[self::EPG_DESC], ''));
+            $desc = unescape_entity_string(safe_get_value($entry, $parser_params[self::EPG_DESC], ''));
             if (!empty($desc)) {
                 $desc = str_replace(array('<br>', "<'>br>"), PHP_EOL, $desc);
             }

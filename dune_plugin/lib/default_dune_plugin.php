@@ -1970,11 +1970,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 json_decode(safe_get_value($channel_row, COLUMN_EXT_PARAMS), true));
 
             if (!empty($dune_params_str)) {
-                $stream_url .= HD::DUNE_PARAMS_MAGIC . $dune_params_str;
+                $stream_url .= DUNE_PARAMS_MAGIC . $dune_params_str;
             }
 
             $detect_ts = $this->get_bool_setting(PARAM_DUNE_FORCE_TS, false) || $force_detect;
-            $stream_url = HD::make_ts($stream_url, $detect_ts);
+            $stream_url = make_ts($stream_url, $detect_ts);
         }
 
         return $stream_url;
@@ -2724,9 +2724,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $stream_url = $this->vod->get_vod_stream_url($stream_url, $plugin_cookies);
         }
 
-        $stream_url = HD::strip_ts($stream_url);
-        $magic = HD::extract_dune_params($stream_url);
-        $stream_url = HD::strip_dune_params($stream_url);
+        $stream_url = strip_ts($stream_url);
+        $magic = extract_dune_params($stream_url);
+        $stream_url = strip_dune_params($stream_url);
 
         Control_Factory::add_vgap($defs, -20);
         Control_Factory::format_smart_label($defs, TR::load('name'), $series[PluginVodSeriesInfo::name]);
@@ -3389,7 +3389,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     throw new Exception($err_msg);
                 }
 
-                $http_code_str = HD::http_status_code_to_string($http_code);
+                $http_code_str = http_status_code_to_string($http_code);
                 if ($http_code >= 400) {
                     $err_msg = "Fetch $url failed. HTTP request failed ($http_code): $http_code_str";
                     throw new Exception($err_msg);

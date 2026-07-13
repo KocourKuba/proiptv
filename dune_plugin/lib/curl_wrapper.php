@@ -541,11 +541,11 @@ class Curl_Wrapper
         foreach ($opts as $k => $v) {
             if (LogSeverity::$is_debug) {
                 if (is_bool($v)) {
-                    hd_debug_print(HD::curlopt_to_string($k) . " = " . var_export($v, true));
+                    hd_debug_print(curlopt_to_string($k) . " = " . var_export($v, true));
                 } else if (is_array($v)) {
-                    hd_debug_print(HD::curlopt_to_string($k) . " = " . json_format_unescaped($v));
+                    hd_debug_print(curlopt_to_string($k) . " = " . json_format_unescaped($v));
                 } else {
-                    hd_debug_print(HD::curlopt_to_string($k) . " = $v");
+                    hd_debug_print(curlopt_to_string($k) . " = $v");
                 }
             }
             curl_setopt($ch, $k, $v);

@@ -82,7 +82,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // Patch palette
         $fix_palette = $this->plugin->get_parameter(PARAM_FIX_PALETTE, SwitchOnOff::off);
-        if (!color_palette_check() && $fix_palette === SwitchOnOff::on) {
+        if (!HD::color_palette_check() && $fix_palette === SwitchOnOff::on) {
             $fix_palette = SwitchOnOff::off;
             $this->plugin->set_parameter(PARAM_FIX_PALETTE, $fix_palette);
         }
@@ -155,19 +155,19 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
             case PARAM_FIX_PALETTE:
                 $new = $this->plugin->toggle_parameter(PARAM_FIX_PALETTE, false);
                 if ($new) {
-                    if (color_palette_check()) {
+                    if (HD::color_palette_check()) {
                         $error_msg = TR::t('err_no_need_patch');
                     } else {
                         $error_msg = '';
-                        $action = color_palette_patch($error_msg);
+                        $action = HD::color_palette_patch($error_msg);
                         if ($action !== false) {
                             return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), TR::t('setup_patch_success'), $action);
                         }
                     }
                     $this->plugin->set_bool_parameter(PARAM_FIX_PALETTE, false);
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_patch'), $error_msg);
-                } else if (color_palette_check()) {
-                    $action = color_palette_restore();
+                } else if (HD::color_palette_check()) {
+                    $action = HD::color_palette_restore();
                     if ($action !== null) {
                         return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), TR::t('setup_patch_success'), $action);
                     }

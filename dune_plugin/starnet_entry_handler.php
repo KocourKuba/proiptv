@@ -245,7 +245,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 return Action_Factory::composite($actions);
 
             case self::ACTION_CONTINUE_UNINSTALL:
-                $action = color_palette_restore();
+                $action = HD::color_palette_restore();
                 if ($action === null) break;
 
                 hd_debug_print('Palette restored');
@@ -310,7 +310,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                     case self::ACTION_UNINSTALL:
                         Default_Archive::clear_cache();
-                        if (!color_palette_check()) break;
+                        if (!HD::color_palette_check()) break;
 
                         return Action_Factory::show_confirmation_dialog(
                             TR::t('setup_settings_patch_palette'),
