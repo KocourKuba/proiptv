@@ -31,6 +31,8 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
 {
     const ID = 'abstract_regular_screen';
 
+    protected $view_idx_local = true;
+
     /**
      * @param string $parent_id
      * @param array $add_params
@@ -58,7 +60,11 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
             $idx = 0;
         }
 
-        $this->plugin->set_setting(static::ID . "_view_idx", $idx);
+        if ($this->view_idx_local) {
+            $this->plugin->set_setting(static::ID . "_view_idx", $idx);
+        } else {
+            $this->plugin->set_parameter(static::ID . "_view_idx", $idx);
+        }
 
         return $this->get_folder_view($media_url, $plugin_cookies);
     }
@@ -70,7 +76,11 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
     {
         hd_debug_print(null, true);
 
-        $idx = $this->plugin->get_setting(static::ID . "_view_idx", 0);
+        if ($this->view_idx_local) {
+            $idx = $this->plugin->get_setting(static::ID . "_view_idx", 0);
+        } else {
+            $idx = $this->plugin->get_parameter(static::ID . "_view_idx", 0);
+        }
 
         $folder_views = $this->get_folder_views();
         $cnt = count($folder_views);

@@ -61,10 +61,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_SETUP] = User_Input_Handler_Registry::create_action($this, ACTION_EDIT_PLAYLIST_SETTINGS);
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, ACTION_INFO_DLG);
-        $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_EDIT,
-            null,
-            array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST, PARAM_PLAYLIST_ID => $this->plugin->get_active_playlist_id())
-        );
+        if ($this->plugin->get_parameter(PARAM_PLAYLIST_FIRST, SwitchOnOff::off) === SwitchOnOff::off) {
+            $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_EDIT,
+                null,
+                array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST, PARAM_PLAYLIST_ID => $this->plugin->get_active_playlist_id())
+            );
+        }
 
         if (!is_limited_apk()) {
             // this key used to fire event from background xmltv indexing script
@@ -97,13 +99,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                if ($this->plugin->get_parameter(PARAM_PLAYLIST_FIRST, SwitchOnOff::off) === SwitchOnOff::off
-                    && $this->plugin->get_bool_parameter(PARAM_ASK_EXIT)) {
-                    return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, ACTION_CONFIRM_EXIT_DLG_APPLY);
+                $this->force_parent_reload = false;
+                if ($this->plugin->get_parameter(PARAM_PLAYLIST_FIRST, SwitchOnOff::off) === SwitchOnOff::off) {
+                    if ($this->plugin->get_bool_parameter(PARAM_ASK_EXIT)) {
+                        return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, ACTION_CONFIRM_EXIT_DLG_APPLY);
+                    }
                 }
 
-                $this->force_parent_reload = false;
-                hd_debug_print('Force parent reload', true);
                 return User_Input_Handler_Registry::create_action($this, ACTION_CONFIRM_EXIT_DLG_APPLY);
 
             case GUI_EVENT_TIMER:
@@ -176,8 +178,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 return $this->plugin->apply_protect_settings_dialog($user_input);
 
             case ACTION_CONFIRM_EXIT_DLG_APPLY:
-                $this->force_parent_reload = false;
-                hd_debug_print('Force parent reload', true);
                 return Action_Factory::invalidate_epfs_folders($plugin_cookies, Action_Factory::close_and_run());
 
             case ACTION_PLUGIN_INFO:
@@ -484,7 +484,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
 
         $menu_items = array();
-        $this->plugin->refresh_playlist_menu_items($this, $menu_items);
+        $this->plugin->playlist_menu_items($this, $menu_items, true);
         $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($this->plugin->new_search($this),
             TR::t('search'), 'search.png');
 

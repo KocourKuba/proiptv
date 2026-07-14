@@ -2454,9 +2454,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @param User_Input_Handler $handler
      * @param array $menu_items
+     * @param bool $is_classic
      * @return void
      */
-    public function refresh_playlist_menu_items($handler, &$menu_items)
+    public function playlist_menu_items($handler, &$menu_items, $is_classic)
     {
         $icon_file = 'refresh.png';
         $playlist_parameters = $this->get_playlist_parameters($this->get_active_playlist_id());
@@ -2481,12 +2482,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
             ACTION_RELOAD, $title, $icon_file,
             array(PARAM_CLEAR_PLAYLIST => true));
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-            ACTION_ITEMS_EDIT,
-            TR::t('select_edit_playlists'),
-            'm3u_file.png',
-            array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
 
+        if (!$is_classic || $this->get_parameter(PARAM_PLAYLIST_FIRST, SwitchOnOff::off) === SwitchOnOff::off) {
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+                ACTION_ITEMS_EDIT,
+                TR::t('select_edit_playlists'),
+                'm3u_file.png',
+                array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
+        }
         $menu_items[] = Control_Factory::menu_separator();
     }
 

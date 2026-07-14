@@ -1362,7 +1362,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             // popup menu for left side list
             hd_debug_print('in menu side', true);
 
-            $this->plugin->refresh_playlist_menu_items($this, $menu_items);
+            $this->plugin->playlist_menu_items($this, $menu_items, false);
 
             $group_id = safe_get_value($media_url, COLUMN_GROUP_ID);
             if ($group_id !== null) {

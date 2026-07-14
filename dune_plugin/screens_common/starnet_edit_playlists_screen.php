@@ -48,6 +48,12 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
     ///////////////////////////////////////////////////////////////////////
 
+    public function __construct(Default_Dune_Plugin $plugin)
+    {
+        parent::__construct($plugin);
+        $this->view_idx_local = false;
+    }
+
     /**
      * @inheritDoc
      */
