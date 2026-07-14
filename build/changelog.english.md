@@ -1,4 +1,14 @@
-﻿### Version 8.0.1706
+﻿### Version 8.0.1718
+- Fixed a bug with selecting the start screen if the playlist list is selected as first
+- Playlist selection has been removed from the context menu of the category screen if the playlist list is selected as the start list
+- Setting the screen view of the playlist list is now saved in the plugin settings instead of the playlist settings.
+- Fixed a bug with showing donate QR codes
+- The CLEAR button in the list of XMLTV sources now simply clears the cache. And does not delete the source. Delete only through the menu. For safety.
+- Fixed a database query error for showing favorite channels.
+- Added a setting to completely disable VOD support for the selected IPTV provider.
+- Removed VOD support for Yosso (they can't make it).
+
+### Version 8.0.1706
 - For the latest r24 firmware, the ability to lazy load icons from XMLTV is available. The plugin starts faster, icons are shown after the XMLTV processing is finished
 - Reduced memory consumption when parsing an M3U playlist
 - Added ready-made links for popular XMLTV sources
