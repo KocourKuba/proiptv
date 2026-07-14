@@ -67,7 +67,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER, TR::t('select'));
         $actions[GUI_EVENT_KEY_PLAY] = User_Input_Handler_Registry::create_action($this, ACTION_INDEX_EPG);
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
-        $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
+        $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_CLEAR_CACHE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
         if (!is_limited_apk()) {
@@ -281,7 +281,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $menu_items[] = Control_Factory::menu_separator();
 
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_INDEX_EPG, TR::t('entry_index_epg'), 'settings.png');
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_CLEAR_CACHE, TR::t('entry_epg_cache_clear'), 'brush.png');
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_CLEAR_CACHE, TR::t('entry_epg_cache_clear_menu'), 'brush.png');
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_CALL_CLEAR_ALL_EPG, TR::t('entry_epg_cache_clear_all'), 'brush.png');
 
         $menu_items[] = Control_Factory::menu_separator();
@@ -320,10 +320,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $menu_items[] = Control_Factory::menu_separator();
 
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE, TR::t('delete_menu'), 'remove.png');
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE, TR::t('delete'), 'remove.png');
         $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
             Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
-            $this, ACTION_CONFIRM_CLEAR_DLG_APPLY), TR::t('clear'), 'brush.png');
+            $this, ACTION_CONFIRM_CLEAR_DLG_APPLY), TR::t('delete_all'), 'remove.png');
 
         return Action_Factory::show_popup_menu($menu_items);
     }
