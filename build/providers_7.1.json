@@ -2027,11 +2027,9 @@
       "id": "yosso",
       "name": "Yosso TV",
       "type": "login",
-      "vod": "yosso",
       "logo": "http://iptv.esalecrm.net/res/logo_yosso.png",
       "provider_url": "https://streaming-elbrus.su/",
       "api_url": "https://{API_DOMAIN_ID}",
-      "vod_api_url": "http://jeleyka.balelbrus.com",
       "config": {
         "api_domains": {
           "streaming-elbrus.su": "streaming-elbrus",
@@ -2047,12 +2045,6 @@
           "default": {
             "name": "Default",
             "url": "{API}/p12/{LOGIN}/{PASSWORD}/BLOF/playlist.m3u8"
-          }
-        },
-        "playlists_vod": {
-          "default": {
-            "name": "Default",
-            "url": "{VOD_API}"
           }
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
