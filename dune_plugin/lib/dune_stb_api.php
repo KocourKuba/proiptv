@@ -1929,6 +1929,7 @@ function get_plugin_manifest_info()
         $result['app_release_date'] = (string)$xml->release_date;
         $result['app_background'] = (string)$xml->background;
         $result['app_manifest_path'] = $manifest_path;
+        $result['debug'] = (string)$xml->debug;
 
         foreach (func_get_args() as $node_name) {
             $result[$node_name] = json_decode(json_encode($xml->xpath("//$node_name")), true);

@@ -124,6 +124,9 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         $this->init_providers_config();
         $this->init_screen_view_parameters($this->plugin_info['app_background']);
+        if ($this->plugin_info['debug']) {
+            $plugin_cookies->{PARAM_COOKIE_ENABLE_DEBUG} = SwitchOnOff::on;
+        }
 
         hd_print_separator();
         hd_print('Plugin name:             ' . $this->plugin_info['app_caption']);
@@ -152,11 +155,15 @@ class Starnet_Plugin extends Default_Dune_Plugin
         // 3. Check previously downloaded web release version
         // 4. Check preinstalled version
         // 5. Houston we have a problem
-        $tmp_file = get_install_path('providers_debug.json');
-        if (file_exists($tmp_file)) {
-            hd_debug_print("Load debug providers configuration: $tmp_file");
-            $jsonArray = parse_json_file($tmp_file);
-        } else {
+        if ($this->plugin_info['debug']) {
+            $tmp_file = get_install_path('providers_debug.json');
+            if (file_exists($tmp_file)) {
+                hd_debug_print("Load debug providers configuration: $tmp_file");
+                $jsonArray = parse_json_file($tmp_file);
+            }
+        }
+
+        if (empty($jsonArray)) {
             $name = "providers_{$this->plugin_info['app_base_version']}.json";
             $tmp_file = get_data_path($name);
             $serial = get_serial_number();

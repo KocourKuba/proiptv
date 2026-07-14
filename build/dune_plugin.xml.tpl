@@ -7,6 +7,7 @@
     <version>0.0.0</version>
     <version_index>0</version_index>
     <release_date>2023.08.01</release_date>
+    <debug>false</debug>
     <global_actions>
         <boot_end>
             <type>plugin_system</type>

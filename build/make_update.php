@@ -11,9 +11,15 @@ $xml = file_get_contents("build/$plugin_info.tpl");
 $xml = preg_replace("|<version>(.*)</version>|", "<version>$full_version</version>", $xml);
 $xml = preg_replace("|<release_date>(.*)</release_date>|", "<release_date>$release_date</release_date>", $xml);
 $xml = preg_replace("|<version_index>(.*)</version_index>|", "<version_index>$version_index</version_index>", $xml);
+if ($is_debug === 'debug') {
+    $xml = preg_replace("|<debug>(.*)</debug>|", "<debug>true</debug>", $xml);
+}
+
 echo "version: $full_version" . PHP_EOL;
 echo "version index: $version_index" . PHP_EOL;
-echo "update date $release_date" . PHP_EOL;
+echo "update date: $release_date" . PHP_EOL;
+echo "is debug: $is_debug" . PHP_EOL;
+
 file_put_contents("./dune_plugin/$plugin_info", $xml);
 
 copy("./build/changelog.russian.md", "./dune_plugin/changelog.russian.md");
