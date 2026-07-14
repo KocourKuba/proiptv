@@ -412,18 +412,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return $this->open_playlist_screen();
         }
 
-        if (!$this->plugin->load_channels($plugin_cookies)) {
-            $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
-            $actions[] = Action_Factory::open_folder(
-                Starnet_Tv_Groups_Screen::ID,
-                $this->plugin->get_plugin_title(),
-                null,
-                null,
-                Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
-            );
-            return Action_Factory::composite($actions);
-        }
-
         $is_mandatory_playback = (int)safe_get_value($user_input, PARAM_MANDATORY_PLAYBACK);
         $auto_resume = $this->plugin->get_parameter(PARAM_AUTO_RESUME, SwitchOnOff::off);
         $auto_play = $this->plugin->get_parameter(PARAM_AUTO_PLAY, SwitchOnOff::off);
@@ -432,7 +420,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
         hd_debug_print("Auto resume:      $auto_resume");
 
         $resume_owner = safe_get_value(get_resume_state_assoc(), 'plugin_name', '');
-        hd_debug_print("resume_owner: $resume_owner", true);
+        hd_debug_print("Resume owner:     $resume_owner");
 
         if ($user_input->action_id === self::ACTION_LAUNCH) {
             if ($is_mandatory_playback !== 1 && !SwitchOnOff::to_bool($auto_play)) {
@@ -448,7 +436,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
             $archive_tm = safe_get_value($resume_state, 'plugin_tv_archive_tm', -1);
         } else if ($user_input->action_id === self::ACTION_AUTO_RESUME) {
             if (!SwitchOnOff::to_bool($auto_resume)) {
-                return null;
+                return $this->simple_start();
             }
             hd_debug_print('LANUCH PLUGIN AUTO RESUME MODE');
             $mode = safe_get_value($user_input, 'resume_mode');
@@ -497,6 +485,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
             hd_debug_print("MediaUrl" . $media_url, true);
         }
 
+        if (!$this->plugin->load_channels($plugin_cookies)) {
+            return $this->show_error($plugin_cookies);
+        }
+
         if (!$is_playlist_changed && $is_owner && $mode === "PLUGIN_TV_PLAYBACK") {
             hd_debug_print('action: continue TV playback', true);
             return Action_Factory::tv_play($media_url);
@@ -515,10 +507,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return Action_Factory::tv_play($media_url);
         }
 
-        return $this->simple_start();
+        return $this->simple_start(false);
     }
 
-    public function simple_start()
+    public function simple_start($load_channels = true)
     {
         $playlist_first = $this->plugin->get_parameter(PARAM_PLAYLIST_FIRST, SwitchOnOff::off);
         hd_debug_print('action: Simple start', true);
@@ -534,6 +526,24 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 array(PARAM_PLAYLIST_ID => $this->plugin->get_active_playlist_id()));
             return Action_Factory::composite($actions);
         }
+
+        if ($load_channels && !$this->plugin->load_channels($plugin_cookies)) {
+            return $this->show_error($plugin_cookies);
+        }
+
         return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
+    }
+
+    public function show_error($plugin_cookies)
+    {
+        $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
+        $actions[] = Action_Factory::open_folder(
+            Starnet_Tv_Groups_Screen::ID,
+            $this->plugin->get_plugin_title(),
+            null,
+            null,
+            Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
+        );
+        return Action_Factory::composite($actions);
     }
 }
