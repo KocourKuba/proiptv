@@ -1218,7 +1218,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // update group_id title and adult if changed for channels
         $query = sprintf('SELECT ch.%s, pl.%s, pl.%s, pl.%s FROM %s AS ch
-                    INNER JOIN %s as pl ON %s = pl.%s WHERE %s=%d AND (ch.%s != pl.%s OR ch.%s IS NULL OR ch.%s != pl.%s OR ch.%s OR ch.%s != pl.%s OR ch.%s);',
+                    INNER JOIN %s as pl ON ch.%s=pl.%s WHERE ch.%s=%d AND (ch.%s!=pl.%s OR ch.%s IS NULL OR ch.%s!=pl.%s OR ch.%s OR ch.%s!=pl.%s OR ch.%s);',
             COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_GROUP_ID, COLUMN_ADULT, $channel_info_table,
             $iptv_channels, COLUMN_CHANNEL_ID, $id_column, COLUMN_CHANGED, FALSE, COLUMN_TITLE, COLUMN_TITLE, COLUMN_TITLE,
             COLUMN_GROUP_ID, COLUMN_GROUP_ID, COLUMN_GROUP_ID, COLUMN_ADULT, COLUMN_ADULT, COLUMN_ADULT);

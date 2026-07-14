@@ -2278,12 +2278,12 @@ class Dune_Default_Sqlite_Engine
                 COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_DISABLED, FALSE);
         }
 
-        $query = sprintf('SELECT ord.%s, ch.%s, ch.%s, pl.*, pl.ROWID as ch_number
+        $query = sprintf('SELECT ord.%s, ch.%s, ch.%s, ch.%s, pl.*, pl.ROWID as ch_number
                     FROM %s AS pl
                     JOIN %s AS ord ON pl.%s=ord.%s
                     JOIN %s as ch ON %s
                     WHERE %s ORDER BY ord.ROWID;',
-            COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_SHOW_TITLE,
+            COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_DISABLED,
             M3uParser::CHANNELS_TABLE, self::get_table_full_name($group_id), $this->get_id_column(), COLUMN_CHANNEL_ID,
             self::get_table_full_name(CHANNELS_INFO), $on, $where);
 
