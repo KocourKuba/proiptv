@@ -375,15 +375,7 @@ class Epg_Manager_Xmltv
             return;
         }
 
-        $port = getenv('HD_HTTP_LOCAL_PORT');
-        if (empty($port)) {
-            $port = 80;
-        }
-        $res = shell_exec("wget -q -O - \"http://127.0.0.1:$port/cgi-bin/do?cmd=ui_state&result_syntax=json\"");
-        $status = json_decode($res);
-        $is_playing = isset($status->playback_state) && $status->playback_state === "playing";
-        $is_right_screen = isset($status->ui_state->screen->folder_type) && strpos($status->ui_state->screen->folder_type, ".proiptv") !== false;
-        if ($is_playing || $is_right_screen) {
+        if (self::check_active_plugin_folder()) {
             hd_print('Rise finishing event: ' . DuneIrControl::$key_codes[EVENT_INDEXING_DONE]);
             shell_exec('echo ' . DuneIrControl::$key_codes[EVENT_INDEXING_DONE] . ' > /proc/ir/button');
         } else {
@@ -1520,5 +1512,37 @@ class Epg_Manager_Xmltv
         }
         $stat[$tag] = $time;
         file_put_contents($stat_file, json_encode($stat));
+    }
+
+    protected static function check_active_plugin_folder()
+    {
+        $port = getenv('HD_HTTP_LOCAL_PORT');
+        if (empty($port)) {
+            $port = 80;
+        }
+
+        $status = json_decode(shell_exec('wget -q -O - http://127.0.0.1:' . $port . '/cgi-bin/do?cmd=ui_state&result_syntax=json"'));
+
+        $navigator_newui_top = safe_get_value($status->ui_state->screen, 'navigator_top_item_id');
+        $folder_type = safe_get_value($status->ui_state->screen, 'folder_type');
+        $folder_id = safe_get_value($status->ui_state->screen, 'folder_id');
+
+        // "folder_type": "PluginRows.proiptv",
+        // "folder_type": "PluginRegular.proiptv",
+        $is_our_screen = strpos($folder_type, '.proiptv') !== false;
+
+        // Special case if user select only TV top menu without dive down to plugin folders and only my plugin is set as main TV
+        // "navigator_top_item_id": "plugin:shell_ext:tv",
+        // "folder_type": "RowsMenu",
+        // "folder_id": "rows_menu://home",
+        $is_newui_top = Starnet_Epfs_Handler::get_current_epfs_plugin() === get_plugin_name()
+            && $navigator_newui_top == 'plugin:shell_ext:tv'
+            && $folder_type == 'RowsMenu'
+            && $folder_id == 'rows_menu://home';
+
+        // Check if some channel is playing now. But need to be sure that is our channels
+        $is_play = (isset($status->playback_state) && $status->playback_state === "playing");
+
+        return $is_play || $is_our_screen || $is_newui_top;
     }
 }

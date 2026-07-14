@@ -1214,7 +1214,6 @@ class Dune_Default_Sqlite_Engine
 
         $query .= sprintf('DROP TABLE %s;', $channels_info_table);
         $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name(CHANNELS_INFO));
-        hd_debug_print($query);
         $this->sql_playlist->exec_transaction($query);
     }
 

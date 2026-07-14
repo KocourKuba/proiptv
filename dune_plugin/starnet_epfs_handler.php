@@ -236,6 +236,17 @@ class Starnet_Epfs_Handler
         return get_temp_path('update_epfs_if_needed_flag');
     }
 
+    public static function get_current_epfs_plugin()
+    {
+        $config = getenv('FS_PREFIX') . self::EPFS_PATH . 'epf_mapping.txt';
+        foreach (readlines($config) as $line) {
+            if (strncmp($line, 'shell_ext:tv', 12) !== 0) {
+                return trim(substr($line, 12), ' =');
+            }
+        }
+        return "";
+    }
+
     ////////////////////////////////////////////////////////////////////////////
 
     protected static function get_ilang_path()
