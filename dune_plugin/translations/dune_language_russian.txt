@@ -295,6 +295,7 @@ setup_sleep_time_power = Тип отключения
 setup_top_left = Верхний левый угол
 setup_top_right = Верхний правый угол
 setup_plugin_memory = Лимит памяти плагина
+setup_use_vod = Включить Медиатеку
 
 setup_channels_src_reset_playlist = Сбросить настройки плейлиста
 setup_channels_src_choose_playlists = Плейлисты

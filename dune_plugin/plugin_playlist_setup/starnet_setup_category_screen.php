@@ -106,10 +106,10 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // show VOD
-        $show_mediateka = $this->plugin->get_setting(PARAM_SHOW_VOD, SwitchOnOff::on);
-        hd_debug_print("VOD group: $show_mediateka", true);
+        $show_vod = $this->plugin->get_setting(PARAM_SHOW_VOD, SwitchOnOff::on);
+        hd_debug_print("VOD group: $show_vod", true);
         Control_Factory::add_image_button($defs, $this, PARAM_SHOW_VOD,
-            TR::t('setup_show_vod'), SwitchOnOff::translate($show_mediateka), SwitchOnOff::to_image($show_mediateka));
+            TR::t('setup_show_vod'), SwitchOnOff::translate($show_vod), SwitchOnOff::to_image($show_vod));
 
         //////////////////////////////////////
         // show adult

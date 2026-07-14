@@ -236,7 +236,11 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             }
 
             $vod_playlists = $provider->GetPlaylistsVod();
-            if (count($vod_playlists) > 1) {
+            if (count($vod_playlists)) {
+                $use_vod = $this->plugin->get_setting(PARAM_USE_VOD, SwitchOnOff::on);
+                Control_Factory::add_image_button($defs, $this, PARAM_USE_VOD,
+                    TR::t('setup_use_vod'), SwitchOnOff::translate($use_vod), SwitchOnOff::to_image($use_vod));
+            } else if (count($vod_playlists) > 1) {
                 $pl_vod_idx = $provider->GetPlaylistVodId();
                 $pl_vod_names = extract_column($vod_playlists, COLUMN_NAME);
                 if (isset($pl_vod_names['default'])) {
@@ -390,6 +394,11 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                     ? TR::t('yes_no_confirm_to_cmn_msg')
                     : TR::t('yes_no_confirm_to_pl_msg');
                 $post_action = Action_Factory::show_confirmation_dialog($msg, $this, self::ACTION_COPY_FAVORITE);
+                break;
+
+            case PARAM_USE_VOD:
+                $this->force_parent_reload = true;
+                $this->plugin->toggle_setting($control_id);
                 break;
 
             case self::ACTION_COPY_FAVORITE:

@@ -4072,7 +4072,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $vod_class = null;
         $provider = $this->get_active_provider();
         if (!is_null($provider)) {
-            $vod_class = $provider->get_vod_class();
+            $use_vod = $this->get_bool_setting(PARAM_USE_VOD);
+            if ($use_vod) {
+                $vod_class = $provider->get_vod_class();
+            }
         } else if ($this->is_vod_playlist()) {
             $vod_class = 'vod_standard';
         }
@@ -4080,10 +4083,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if (!empty($vod_class)) {
             hd_debug_print("Using VOD: $vod_class");
             $this->vod = new $vod_class($this);
-            $provider = $this->get_active_provider();
             $this->vod_enabled = $this->vod->init_vod($provider);
             $this->vod->init_vod_screens();
-            hd_debug_print('VOD enabled: ' . SwitchOnOff::to_def($this->vod_enabled), true);
+            hd_debug_print('VOD enabled: ' . SwitchOnOff::to_def($this->vod_enabled));
         }
 
         return $this->vod_enabled;

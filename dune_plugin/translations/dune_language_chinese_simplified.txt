@@ -295,6 +295,7 @@ setup_sleep_time_power = 休眠触发操作
 setup_top_left = 左上角
 setup_top_right = 右上角
 setup_plugin_memory = 插件内存限制
+setup_use_vod = 启用 VOD 支持
 
 setup_channels_src_reset_playlist = 重置播放列表设置
 setup_channels_src_choose_playlists = 播放列表

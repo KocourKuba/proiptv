@@ -422,11 +422,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
         $resume_owner = safe_get_value(get_resume_state_assoc(), 'plugin_name', '');
         hd_debug_print("Resume owner:     $resume_owner");
 
-        if ($user_input->action_id === self::ACTION_LAUNCH) {
-            if ($is_mandatory_playback !== 1 && !SwitchOnOff::to_bool($auto_play)) {
-                return $this->simple_start();
-            }
-
+        $archive_tm = -1;
+        $resume_is_favorite = 0;
+        $mode = '';
+        if ($user_input->action_id === self::ACTION_LAUNCH
+            && ($is_mandatory_playback === 1 || SwitchOnOff::to_bool($auto_play))) {
             hd_debug_print('LANUCH PLUGIN AUTO PLAY MODE');
             $resume_state = get_resume_state_assoc();
             $mode = safe_get_value($resume_state, 'mode');
@@ -434,18 +434,21 @@ class Starnet_Entry_Handler implements User_Input_Handler
             $resume_channel = safe_get_value($resume_state, 'plugin_tv_channel', '');
             $resume_is_favorite = safe_get_value($resume_state, 'plugin_tv_is_favorite', 0);
             $archive_tm = safe_get_value($resume_state, 'plugin_tv_archive_tm', -1);
-        } else if ($user_input->action_id === self::ACTION_AUTO_RESUME) {
-            if (!SwitchOnOff::to_bool($auto_resume)) {
-                return $this->simple_start();
-            }
+            $simple_start = false;
+        } else if ($user_input->action_id === self::ACTION_AUTO_RESUME && SwitchOnOff::to_bool($auto_resume)) {
             hd_debug_print('LANUCH PLUGIN AUTO RESUME MODE');
             $mode = safe_get_value($user_input, 'resume_mode');
             $resume_group = safe_get_value($user_input, 'resume_tv_group', '');
             $resume_channel = safe_get_value($user_input, 'resume_tv_channel', '');
             $resume_is_favorite = safe_get_value($user_input, 'resume_tv_is_favorite', 0);
             $archive_tm = safe_get_value($user_input, 'resume_tv_archive_tm', -1);
+            $simple_start = false;
         } else {
-            return $this->simple_start();
+            $simple_start = true;
+        }
+
+        if ($simple_start) {
+            return $this->simple_start($plugin_cookies);
         }
 
         // $user_input:
@@ -507,10 +510,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return Action_Factory::tv_play($media_url);
         }
 
-        return $this->simple_start(false);
+        return $this->simple_start($plugin_cookies, false);
     }
 
-    public function simple_start($load_channels = true)
+    public function simple_start(&$plugin_cookies, $load_channels = true)
     {
         $playlist_first = $this->plugin->get_parameter(PARAM_PLAYLIST_FIRST, SwitchOnOff::off);
         hd_debug_print('action: Simple start', true);
