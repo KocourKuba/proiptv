@@ -314,14 +314,10 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::timer => Action_Factory::timer(1000),
         );
 
-        if ($epg_font_size) {
-            $tv_info[PluginTvInfo::epg_page_size] = 16;
-        }
-
         if ($group_font_size) {
-            $tv_info[PluginTvInfo::groups_text_size] = 28;
+            $tv_info[PluginTvInfo::groups_text_size] = 30;
             $tv_info[PluginTvInfo::groups_page_size] = 16;
-            $tv_info[PluginTvInfo::channels_text_size] = 28;
+            $tv_info[PluginTvInfo::channels_text_size] = 30;
             $tv_info[PluginTvInfo::channels_page_size] = 16;
         }
 
