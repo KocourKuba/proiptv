@@ -563,7 +563,7 @@ class vod_standard extends Abstract_Vod
         hd_debug_print("Initial index: $initial");
         $added = false;
         if ($initial !== -1) {
-            $user_filter = $this->plugin->get_table_value(VOD_FILTER_LIST, $initial);
+            $user_filter = $this->plugin->get_settings_value(VOD_FILTER_LIST, $initial);
         } else {
             $user_filter = '';
         }

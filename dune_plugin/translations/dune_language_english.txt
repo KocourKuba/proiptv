@@ -511,3 +511,4 @@ err_no_xmltv_sources = No XMLTV source selected!
 err_empty_export_list = Export list empty!
 err_no_epg_in_all_range = No EPG entries for selected time in available range for all EPG presets
 err_already_exist = XMLTV source already present in list
+err_bad_pass = Incorrect password

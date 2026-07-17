@@ -94,8 +94,9 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
         // Playlist name
 
         $params = array(PARAM_RETURN_INDEX => 1);
-        $uri = $this->plugin->get_playlist_parameter($playlist_id, PARAM_URI);
-        $name = $this->plugin->get_playlist_parameter($playlist_id, PARAM_NAME, basename($uri));
+        $pl_params = $this->plugin->get_playlist_parameters($playlist_id);
+        $uri = safe_get_value($pl_params, PARAM_URI);
+        $name = safe_get_value($pl_params, PARAM_NAME, basename($uri));
         Control_Factory::add_text_field($defs, $this, CONTROL_EDIT_NAME, TR::t('playlist_name'), $name,
             false, false, false, true, Control_Factory::SCR_CONTROLS_WIDTH,
             true, false, $params);
@@ -103,7 +104,7 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // IPTV settings
 
-        if ($this->plugin->get_playlist_parameter($playlist_id, PARAM_TYPE) === PARAM_PROVIDER) {
+        if (safe_get_value($pl_params, PARAM_TYPE) === PARAM_PROVIDER) {
             Control_Factory::add_image_button($defs, $this, self::CONTROL_EDIT_PROVIDER_SETTINGS, TR::t('edit_provider_settings'),
                 TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
         } else {
@@ -116,7 +117,7 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
         Control_Factory::add_image_button($defs, $this, self::CONTROL_EDIT_INTERFACE_SETTINGS, TR::t('setup_interface_title'),
             TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
-        if (!$this->plugin->is_vod_playlist()) {
+        if (!$this->plugin->is_vod_playlist($playlist_id)) {
             //////////////////////////////////////
             // EPG settings
             Control_Factory::add_image_button($defs, $this, self::CONTROL_EPG_SCREEN, TR::t('setup_epg_settings'),
@@ -149,6 +150,7 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $playlist_id = isset($parent_media_url->{PARAM_PLAYLIST_ID}) ? $parent_media_url->{PARAM_PLAYLIST_ID} : $this->plugin->get_active_playlist_id();
         $sel_ndx = safe_get_value($user_input, 'initial_sel_ndx', -1);
+        hd_debug_print("Process playlist: $playlist_id");
 
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -156,6 +158,8 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
                 $ret_action = null;
                 if ($this->force_parent_reload) {
                     $ret_action = ACTION_RELOAD;
+                } else {
+                    $this->plugin->init_playlist_settings_db();
                 }
                 return self::make_return_action($parent_media_url, $ret_action);
 
@@ -194,7 +198,6 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_RESET_PLAYLIST_DLG_APPLY);
 
             case self::ACTION_RESET_PLAYLIST_DLG_APPLY:
-                $playlist_id = $this->plugin->get_active_playlist_id();
                 Epg_Manager_Json::clear_epg_files($playlist_id);
                 foreach ($this->plugin->get_selected_xmltv_ids($playlist_id) as $id) {
                     Epg_Manager_Xmltv::clear_epg_files($id);
@@ -205,7 +208,7 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
             case ACTION_RELOAD:
                 $this->force_parent_reload = true;
                 $this->plugin->reset_channels_loaded();
-                if ($this->plugin->init_playlist_db(true)) {
+                if ($this->plugin->init_playlist_settings_db($playlist_id)) {
                     $post_action = Action_Factory::invalidate_all_folders($plugin_cookies);
                 } else {
                     $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_init_database'));

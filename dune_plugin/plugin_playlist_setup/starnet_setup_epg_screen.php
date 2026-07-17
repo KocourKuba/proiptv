@@ -137,7 +137,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 return self::make_return_action($parent_media_url);
 
             case PARAM_SHOW_EXT_EPG:
-                $this->plugin->toggle_setting($control_id);
+                $this->plugin->toggle_setting($control_id, true);
                 break;
 
             case PARAM_EPG_CACHE_ENGINE:

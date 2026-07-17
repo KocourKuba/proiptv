@@ -182,8 +182,11 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
                 break;
 
             case PARAM_DUNE_FORCE_TS:
+                $this->plugin->toggle_setting($control_id, false);
+                break;
+
             case PARAM_PER_CHANNELS_ZOOM:
-                $this->plugin->toggle_setting($control_id);
+                $this->plugin->toggle_setting($control_id, true);
                 break;
 
             case PARAM_USER_CATCHUP:

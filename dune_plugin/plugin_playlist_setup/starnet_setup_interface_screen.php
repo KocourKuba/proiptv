@@ -193,7 +193,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
             case ACTION_RELOAD:
                 $this->force_parent_reload = true;
                 $this->plugin->reset_channels_loaded();
-                if ($this->plugin->init_playlist_db(true)) {
+                if ($this->plugin->init_playlist_settings_db()) {
                     $post_action = Action_Factory::invalidate_all_folders($plugin_cookies);
                 } else {
                     $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_init_database'));

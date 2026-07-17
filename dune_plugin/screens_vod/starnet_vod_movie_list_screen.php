@@ -83,7 +83,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
 
             case ACTION_NEW_SEARCH:
                 $search_string = $user_input->{ACTION_NEW_SEARCH};
-                $this->plugin->arrange_table_values(VOD_SEARCH_LIST, $search_string, Ordered_Array::TOP);
+                $this->plugin->arrange_settings_values(VOD_SEARCH_LIST, $search_string, Ordered_Array::TOP);
                 return Action_Factory::close_dialog_and_run(
                     Action_Factory::invalidate_folders(
                         array(Default_Dune_Plugin::get_group_media_url_str(VOD_SEARCH_GROUP_ID)),

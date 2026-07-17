@@ -60,7 +60,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $action_return = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_SETTINGS, TR::t('edit'));
+        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_EDIT_XMLTV_SETTINGS, TR::t('edit'));
 
         $actions[GUI_EVENT_KEY_RETURN] = $action_return;
         $actions[GUI_EVENT_KEY_TOP_MENU] = $action_return;
@@ -146,7 +146,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             case GUI_EVENT_KEY_INFO:
                 return $this->do_show_xmltv_info($selected_id);
 
-            case ACTION_PLUGIN_SETTINGS:
+            case ACTION_EDIT_XMLTV_SETTINGS:
                 /** @var Named_Storage $item */
                 hd_debug_print('item: ' . $selected_id, true);
 

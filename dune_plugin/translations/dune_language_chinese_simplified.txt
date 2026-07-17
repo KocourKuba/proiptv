@@ -512,3 +512,4 @@ err_no_xmltv_sources = 未选择任何 XMLTV 节目单!
 err_empty_export_list = 导出列表为空!
 err_no_epg_in_all_range = 在所有EPG可用范围内，未找到所选时间段的EPG数据
 err_already_exist = 列表中已有的 XMLTV 源
+err_bad_pass = 密码错误

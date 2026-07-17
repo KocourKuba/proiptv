@@ -8,20 +8,28 @@ class Sql_Wrapper
     protected $db = null;
 
     /**
+     * @var string
+     */
+    protected $db_path = '';
+
+    /**
      * @var int
      */
     protected $open_mode;
 
     // Default flags SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
-    public function __construct($db_name, $flags = 6)
+    public function __construct($db_path, $flags = 6)
     {
         try {
-            $this->db = new SQLite3($db_name, $flags, '');
+            $this->db = new SQLite3($db_path, $flags, '');
             $this->db->exec('PRAGMA journal_mode=MEMORY;');
             $this->open_mode = $flags;
+            $this->db_path = $db_path;
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
             $this->db = null;
+            $this->open_mode = 0;
+            $this->db_path = '';
         }
     }
 
@@ -31,6 +39,14 @@ class Sql_Wrapper
     public function get_db()
     {
         return $this->db;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_db_path()
+    {
+        return $this->db_path;
     }
 
     /**
@@ -60,7 +76,6 @@ class Sql_Wrapper
      */
     public function attachDatabase($db_filename, $name)
     {
-        hd_debug_print(null, true);
         hd_debug_print("Trying to attach: as '$name' db: '$db_filename'", true);
         $result = $this->is_database_attached($name, $db_filename);
         if ($result === 2) {
@@ -155,18 +170,13 @@ class Sql_Wrapper
     /**
      * @param string $table_name
      * @param string $column_name
-     * @param string|null $db_name
      * @return bool
      */
-    public function is_column_exists($table_name, $column_name, $db_name = null)
+    public function is_column_exists($table_name, $column_name)
     {
-        if (!is_null($db_name) && !$this->is_database_attached($db_name)) {
-            hd_debug_print("is_column_exists: Database '$db_name' not attached!");
-            return false;
-        }
-
-        $db_name = is_null($db_name) ? 'sqlite_master' : "$db_name.sqlite_master";
-        return (int)$this->query_value("SELECT count(*) FROM $db_name WHERE type='table' AND name='$table_name' AND sql like '%$column_name%';") !== 0;
+        $query = sprintf("SELECT count(*) FROM sqlite_master WHERE type='table' AND name=%s AND sql like %s;",
+            Sql_Wrapper::sql_quote($table_name), Sql_Wrapper::sql_quote("%$column_name%"));
+        return (int)$this->query_value($query) !== 0;
     }
 
     /**
@@ -324,6 +334,10 @@ class Sql_Wrapper
      */
     public function exec($query)
     {
+        if (empty($query)) {
+            return false;
+        }
+
         $result = $this->db->exec($query);
         if ($result === false) {
             hd_debug_print();
@@ -397,12 +411,11 @@ class Sql_Wrapper
      */
     public function fetch_array($query, $column = null)
     {
-        $rows = array();
-
         if (empty($query)) {
-            return $rows;
+            return array();
         }
 
+        $rows = array();
         $result = $this->db->query($query);
         if ($result) {
             while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
@@ -410,7 +423,7 @@ class Sql_Wrapper
             }
         } else {
             hd_debug_print();
-            hd_debug_print("failed to execute query: $query");
+            hd_debug_print("failed to fetch array: $query");
         }
 
         return $rows;
@@ -425,17 +438,19 @@ class Sql_Wrapper
      */
     public function exec_transaction($query)
     {
-        if (!empty($query)) {
-            $query = 'BEGIN;' . $query . 'COMMIT;' ;
-            if (!$this->db->exec($query)) {
-                hd_debug_print();
-                hd_debug_print('Error commit transaction!');
-                hd_debug_print($query);
-                $this->db->exec('ROLLBACK;');
-                return false;
-            }
+        if (empty($query)) {
+            return false;
         }
 
-        return true;
+        $query = 'BEGIN;' . $query . 'COMMIT;' ;
+        if ($this->db->exec($query)) {
+            return true;
+        }
+
+        hd_debug_print();
+        hd_debug_print('Error commit transaction!');
+        hd_debug_print($query);
+        $this->db->exec('ROLLBACK;');
+        return false;
     }
 }

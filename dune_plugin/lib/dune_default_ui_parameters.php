@@ -175,6 +175,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
      */
     public function show_protect_settings_dialog($handler, $param_action)
     {
+        hd_debug_print(null, true);
+        hd_debug_print($param_action, true);
         $pass_settings = $this->get_parameter(PARAM_SETTINGS_PASSWORD);
         if (empty($pass_settings)) {
             return $param_action;
@@ -203,7 +205,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     public function apply_protect_settings_dialog($user_input)
     {
         if ($this->get_parameter(PARAM_SETTINGS_PASSWORD) !== $user_input->pass) {
-            return null;
+            return Action_Factory::show_error(false, TR::t('err_bad_pass'));
         }
 
         if (isset($user_input->{PARAM_ACTION})) {

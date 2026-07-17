@@ -398,7 +398,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 
             case PARAM_USE_VOD:
                 $this->force_parent_reload = true;
-                $this->plugin->toggle_setting($control_id);
+                $this->plugin->toggle_setting($control_id, true);
                 break;
 
             case self::ACTION_COPY_FAVORITE:

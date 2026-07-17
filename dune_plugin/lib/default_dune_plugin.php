@@ -665,7 +665,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print('Force playlist reload: ' . var_export($force, true));
         $base_name = $this->get_playlist_cache_filepath(true);
         $m3u_file = $base_name . '.m3u8';
-        $db_file = $base_name . '.db';
+        $m3u_db_file = $base_name . '.db';
         try {
             $playlist_id = $this->get_active_playlist_id();
             if (!$this->is_playlist_entry_exist($playlist_id)) {
@@ -716,14 +716,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             if (!$force) {
                 $is_expired = $this->is_playlist_cache_expired(true);
                 if (!$is_expired) {
-                    $database_attached = $this->sql_playlist->attachDatabase($db_file, M3uParser::IPTV_DB);
+                    $database_attached = $this->safe_sql_playlist('attachDatabase', $m3u_db_file, M3uParser::IPTV_DB);
                     if ($database_attached === 2) {
-                        hd_debug_print("Playlist up to date. Database '" . M3uParser::IPTV_DB . "'attached: '$db_file'");
+                        hd_debug_print("Playlist up to date. Database '" . M3uParser::IPTV_DB . "' is attached: '$m3u_db_file'");
                         return 1;
                     }
 
                     if ($database_attached === 0) {
-                        hd_debug_print("Can't attach to database: '" . M3uParser::IPTV_DB . "' with filename: '$db_file'");
+                        hd_debug_print("Can't attach to database: '" . M3uParser::IPTV_DB . "' with filename: '$m3u_db_file'");
                     }
                 }
             }
@@ -733,8 +733,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             safe_unlink($m3u_file);
 
             // clear playlist db
-            $this->sql_playlist->detachDatabase($db_file);
-            safe_unlink($db_file);
+            $this->safe_sql_playlist('detachDatabase', $m3u_db_file);
+            safe_unlink($m3u_db_file);
 
             $perf = new Perf_Collector();
             $perf->reset('start_download_playlist');
@@ -857,9 +857,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 }
             }
 
-            $database_attached = $this->sql_playlist->attachDatabase($db_file, M3uParser::IPTV_DB);
+            $database_attached = $this->safe_sql_playlist('attachDatabase', $m3u_db_file, M3uParser::IPTV_DB);
             if ($database_attached === 0) {
-                $exception_msg = "Can't attach to database: $db_file with name: " . M3uParser::IPTV_DB;
+                $exception_msg = "Can't attach to database: $m3u_db_file with name: " . M3uParser::IPTV_DB;
                 throw new Exception($exception_msg);
             }
 
@@ -903,9 +903,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             print_backtrace_exception($ex);
 
             safe_unlink($m3u_file);
-            $this->sql_playlist->detachDatabase(M3uParser::IPTV_DB);
-            hd_debug_print("Clear db: $db_file");
-            safe_unlink($db_file);
+            $this->safe_sql_playlist('detachDatabase', M3uParser::IPTV_DB);
+            hd_debug_print("Clear db: $m3u_db_file");
+            safe_unlink($m3u_db_file);
             hd_print_separator();
         }
 
@@ -925,10 +925,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /// init database
 
     /**
-     * @param bool $force
+     * @param bool $force_reload_playlist
      * @return int 0 - in case of error, 1 - database inited playlist reloaded and parsed, 2 - playlist up to date db loaded
      */
-    public function init_playlist_db($force = false)
+    protected function init_playlist_db($force_reload_playlist = false)
     {
         hd_debug_print(null, true);
 
@@ -943,26 +943,32 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return 0;
         }
 
+        if (!$this->init_tv_history_db()) {
+            return 0;
+        }
+        if (!$this->init_vod_history_db()) {
+            return 0;
+        }
+
         $params = $this->get_playlist_parameters($playlist_id);
         hd_debug_print("Process playlist: {$params[PARAM_NAME]} ($playlist_id)");
 
-        $db_file = get_data_path("$playlist_id.db");
-        hd_debug_print("Playlist DB: $playlist_id.db");
+        $plugin_orders_name = $this->make_base_name(PLUGIN_ORDERS, $playlist_id) . '.db';
+        $db_file = get_data_path($plugin_orders_name);
+        hd_debug_print("Playlist DB: $plugin_orders_name");
 
-        if ($this->sql_playlist) {
+        if ($this->sql_playlist && $db_file === $this->sql_playlist->get_db_path()) {
             // attach to playlist db. if db not exist it will be created
-            if (!$force && $this->sql_playlist->is_database_attached('main', $db_file) === 2) {
-                hd_debug_print("Database 'main' already inited!", true);
-                if ($this->load_and_parse_m3u_iptv_playlist() === 2) {
-                    hd_print_separator();
-                    return 2;
-                }
+            if (!$force_reload_playlist && $this->load_and_parse_m3u_iptv_playlist() === 1) {
+                hd_debug_print("Database '$plugin_orders_name' up to date!", true);
+                hd_print_separator();
+                return 2;
             }
-            hd_debug_print("Resetting database 'main'", true);
+
+            hd_debug_print("Resetting playlist db", true);
             $this->reset_playlist_db();
         }
 
-        hd_debug_print("Load playlist settings database: $db_file", true);
         $this->reset_channels();
         $this->sql_playlist = new Sql_Wrapper($db_file);
         if (!$this->sql_playlist->is_valid()) {
@@ -972,20 +978,201 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return 0;
         }
 
-        $this->CreatePlaylistSettingsTable($playlist_id);
-        $this->init_screen_view_parameters($this->get_background_image());
-        $this->init_user_agent();
+        // create group table
+        $groups_info_table = self::get_table_name(GROUPS_INFO);
+        $query = sprintf(self::CREATE_GROUPS_INFO_TABLE, $groups_info_table);
+        $this->safe_sql_playlist('exec', $query);
+        if ($this->safe_sql_playlist('is_column_exists', GROUPS_INFO, 'id')) {
+            $tmp_table = $groups_info_table . '_tmp';
+            $query = sprintf(self::CREATE_GROUPS_INFO_TABLE, $tmp_table);
+            $query .= sprintf('INSERT INTO %s (%s, %s, %s, %s, %s, %s) SELECT %s, %s, %s, %s, %s, %s FROM %s;',
+                $tmp_table, COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_ADULT, COLUMN_DISABLED, COLUMN_SPECIAL,
+                COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_ADULT, COLUMN_DISABLED, COLUMN_SPECIAL, $groups_info_table
+            );
+            $query .= sprintf('DROP TABLE %s;', $groups_info_table);
+            $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name(GROUPS_INFO));
+            $this->safe_sql_playlist('exec_transaction', $query);
+        }
 
-        if ($this->is_vod_playlist()) {
+        // create table
+        $query = sprintf(self::CREATE_CHANNELS_INFO_TABLE, self::get_table_name(CHANNELS_INFO));
+        $this->safe_sql_playlist('exec', $query);
+        if (!$this->safe_sql_playlist('is_column_exists', CHANNELS_INFO, COLUMN_EPG_SHIFT)) {
+            $query = sprintf('ALTER TABLE %s ADD COLUMN %s INTEGER DEFAULT 0;', self::get_table_name(CHANNELS_INFO), COLUMN_EPG_SHIFT);
+            $this->safe_sql_playlist('exec', $query);
+        }
+
+        if (!$this->safe_sql_playlist('is_column_exists', CHANNELS_INFO, COLUMN_SHOW_TITLE)) {
+            $query = sprintf("ALTER TABLE %s ADD COLUMN %s TEXT DEFAULT '';", self::get_table_name(CHANNELS_INFO), COLUMN_SHOW_TITLE);
+            $this->safe_sql_playlist('exec', $query);
+        }
+
+        $query = sprintf("UPDATE %s SET %s=%s WHERE %s IS NULL OR TRIM(%s) = '';", self::get_table_name(CHANNELS_INFO),
+            COLUMN_SHOW_TITLE, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_SHOW_TITLE);
+        $this->safe_sql_playlist('exec', $query);
+
+        // create order_groups table
+        $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(GROUPS_ORDER), COLUMN_GROUP_ID);
+        $this->safe_sql_playlist('exec', $query);
+        // create table for favorites
+        $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(TV_FAV_GROUP_ID), COLUMN_CHANNEL_ID);
+        $this->safe_sql_playlist('exec', $query);
+
+        // add special groups to the table if the not exists
+        $special_group = array(
+            array(COLUMN_GROUP_ID => TV_FAV_GROUP_ID, COLUMN_TITLE => TV_FAV_GROUP_CAPTION, COLUMN_ICON => TV_FAV_GROUP_ICON),
+            array(COLUMN_GROUP_ID => TV_HISTORY_GROUP_ID, COLUMN_TITLE => TV_HISTORY_GROUP_CAPTION, COLUMN_ICON => TV_HISTORY_GROUP_ICON),
+            array(COLUMN_GROUP_ID => TV_CHANGED_CHANNELS_GROUP_ID, COLUMN_TITLE => TV_CHANGED_CHANNELS_GROUP_CAPTION,
+                COLUMN_ICON => TV_CHANGED_CHANNELS_GROUP_ICON),
+            array(COLUMN_GROUP_ID => VOD_GROUP_ID, COLUMN_TITLE => VOD_GROUP_CAPTION, COLUMN_ICON => VOD_GROUP_ICON),
+            array(COLUMN_GROUP_ID => TV_ALL_CHANNELS_GROUP_ID, COLUMN_TITLE => TV_ALL_CHANNELS_GROUP_CAPTION, COLUMN_ICON => TV_ALL_CHANNELS_GROUP_ICON),
+        );
+
+        $query = '';
+        foreach ($special_group as $group) {
+            $group['disabled'] = 0;
+            $group['special'] = 1;
+            $query .= sprintf('INSERT OR IGNORE INTO %s %s;', $groups_info_table, Sql_Wrapper::sql_make_insert_list($group));
+        }
+        $this->safe_sql_playlist('exec_transaction', $query);
+
+        //////////////////////////////////////////////////////
+        /// Upgrade settings to database
+        $this->upgrade_orders($playlist_id);
+
+        if ($this->is_vod_playlist($playlist_id)) {
             hd_debug_print('VOD playlist inited', true);
-        } else if ($this->load_and_parse_m3u_iptv_playlist($force) === 0) {
+        } else if ($this->load_and_parse_m3u_iptv_playlist($force_reload_playlist) === 0) {
             return 0;
         }
+
+        hd_debug_print('Playlist db initialized.');
+        hd_print_separator();
+
+        return 1;
+    }
+
+    /**
+     * @param string|null $playlist_id
+     * @return bool
+     */
+    public function init_playlist_settings_db($playlist_id = null)
+    {
+        hd_debug_print(null, true);
+
+        $playlist_id = is_null($playlist_id) ? $this->get_active_playlist_id() : $playlist_id;
+        if (!$this->is_playlist_entry_exist($playlist_id)) {
+            $err = "Playlist info for ID: $playlist_id is not exist!";
+            Dune_Last_Error::set_last_error(LAST_ERROR_PLAYLIST, $err);
+            hd_debug_print($err);
+            return false;
+        }
+
+        $params = $this->get_playlist_parameters($playlist_id);
+        $name = safe_get_value($params, PARAM_NAME);
+        hd_debug_print("Process playlist: $name ($playlist_id)");
+
+        $db_file = get_data_path("$playlist_id.db");
+        if ($this->sql_playlist_settings && $db_file === $this->sql_playlist_settings->get_db_path()) {
+            hd_debug_print("Playlist settings db already inited!", true);
+        }
+
+        hd_debug_print("Init playlist settings db: $playlist_id.db");
+        $this->sql_playlist_settings = new Sql_Wrapper($db_file);
+        if (!$this->sql_playlist_settings->is_valid()) {
+            $err = "Database $db_file is not valid!";
+            hd_debug_print($err);
+            return false;
+        }
+
+        // create settings table
+        $query = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, self::SETTINGS_TABLE);
+        $this->safe_sql_playlist_settings('exec', $query);
+
+        // create cookies table
+        $query = sprintf(self::CREATE_COOKIES_TABLE, self::COOKIES_TABLE);
+        $this->safe_sql_playlist_settings('exec', $query);
+
+        // create common TV Favorites table
+        $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(TV_FAV_COMMON_GROUP_ID), COLUMN_CHANNEL_ID);
+        $this->safe_sql_playlist_settings('exec', $query);
+
+        $provider_class = safe_get_value($params, PARAM_PROVIDER);
+        if (!empty($provider_class)) {
+            $q_playlist_id = Sql_Wrapper::sql_quote($playlist_id);
+            $provider = $this->get_provider($playlist_id);
+            if ($provider !== null) {
+                // update xmltv playlist sources from config
+                $config_xmltv = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
+                if (!empty($config_xmltv)) {
+                    $query = '';
+                    $q_type = Sql_Wrapper::sql_quote(PARAM_CONF);
+                    $q_cache = Sql_Wrapper::sql_quote(XMLTV_CACHE_AUTO);
+                    $known_sources = array();
+                    foreach ($config_xmltv as $source) {
+                        $hash = Hashed_Array::hash($source);
+                        $q_hash = Sql_Wrapper::sql_quote($hash);
+                        $q_source = Sql_Wrapper::sql_quote($source);
+                        $q_name = Sql_Wrapper::sql_quote(basename($source));
+                        $known_sources[] = $hash;
+
+                        $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s,%s,%s,%s) VALUES (%s,%s,%s,%s,%s,%s);',
+                            self::PLAYLIST_XMLTV_TABLE,
+                            COLUMN_PLAYLIST_ID, COLUMN_HASH, COLUMN_TYPE, COLUMN_NAME, COLUMN_URI, COLUMN_CACHE,
+                            $q_playlist_id, $q_hash, $q_type, $q_name, $q_source, $q_cache);
+                    }
+
+                    if (!empty($known_sources)) {
+                        $query .= sprintf('DELETE FROM %s WHERE %s AND %s=%s;',
+                            self::PLAYLIST_XMLTV_TABLE, Sql_Wrapper::sql_make_where_clause($known_sources, COLUMN_HASH, true),
+                            COLUMN_TYPE, $q_type);
+                    }
+                    $this->safe_sql_plugin('exec_transaction', $query);
+                }
+
+                $provider->check_config_values();
+                $provider_playlist_id = $provider->GetPlaylistIptvId();
+                hd_debug_print("Provider IPTV playlist: $provider_playlist_id", true);
+
+                $query = sprintf(self::CREATE_SELECTED_JSON_TABLE, self::SELECTED_JSON_TABLE);
+                $this->safe_sql_playlist_settings('exec', $query);
+                $this->update_selected_json_source($provider);
+            }
+        }
+
+        // create tables for vod search, vod filters, vod favorites
+        if ($this->is_vod_playlist() || (!empty($provider) && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
+            hd_debug_print('Preparing tables for VOD', true);
+            $tables = array(
+                VOD_FILTER_LIST => 'item',
+                VOD_SEARCH_LIST => 'item',
+                VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID,
+            );
+
+            if (!empty($provider) && self::is_provider_m3u_vod($provider)) {
+                $tables[VOD_LIST_GROUP_ID] = COLUMN_CHANNEL_ID;
+            }
+
+            foreach ($tables as $list => $column) {
+                $table_name = self::get_table_name($list);
+                $query = sprintf(self::CREATE_ORDERED_TABLE, $table_name, $column);
+                $this->safe_sql_playlist_settings('exec', $query);
+            }
+        }
+
+        $this->update_old_settings($playlist_id);
+
+        //////////////////////////////////////////////////////
+        /// Upgrade settings 5.x to database
+        $this->upgrade_settings($playlist_id);
+
+        $this->init_screen_view_parameters($this->get_background_image());
+        $this->init_user_agent();
 
         hd_debug_print('Database initialized.');
         hd_print_separator();
 
-        return 1;
+        return true;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -1003,10 +1190,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
         hd_debug_print('Force playlist reload: ' . var_export($reload_playlist, true));
-        hd_debug_print('Channels loaded: ' . var_export($this->channels_loaded, true));
-        hd_debug_print('DB initied: ' . var_export(!is_null($this->sql_playlist), true));
+        hd_debug_print('Channels loaded:       ' . var_export($this->channels_loaded, true));
+        hd_debug_print('Settings DB initied:   ' . var_export(!is_null($this->sql_playlist_settings), true));
+        hd_debug_print('Playlist DB initied:   ' . var_export(!is_null($this->sql_playlist), true));
 
-        if ($this->channels_loaded && !$reload_playlist && $this->sql_playlist) {
+        if ($this->channels_loaded && !$reload_playlist && $this->sql_playlist_settings && $this->sql_playlist) {
             return true;
         }
 
@@ -1022,6 +1210,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         // Init playlist db
+        if (!$this->init_playlist_settings_db()) {
+            return false;
+        }
+
         $playlist_state = $this->init_playlist_db($reload_playlist);
         if ($playlist_state === 0) {
             return false;
@@ -1082,7 +1274,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         // add provider ignored groups to known_groups if config data is changed
-        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
+        $groups_info_table = self::get_table_name(GROUPS_INFO);
         $provider = $this->get_active_provider();
         if (!is_null($provider)) {
             $ignore_groups = $provider->getConfigValue(CONFIG_IGNORE_GROUPS);
@@ -1092,7 +1284,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s) VALUES (%s,%d);',
                         $groups_info_table, COLUMN_GROUP_ID, COLUMN_DISABLED, Sql_Wrapper::sql_quote($group_id), TRUE);
                 }
-                $this->sql_playlist->exec_transaction($query);
+                $this->safe_sql_playlist('exec_transaction', $query);
             }
         }
 
@@ -1110,34 +1302,34 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $playlist_entries = $this->get_playlist_entries_count();
         $playlist_groups = $this->get_playlist_group_count();
 
-        $channel_info_table = self::get_table_full_name(CHANNELS_INFO);
-        $groups_order_table = self::get_table_full_name(GROUPS_ORDER);
+        $channel_info_table = self::get_table_name(CHANNELS_INFO);
+        $groups_order_table = self::get_table_name(GROUPS_ORDER);
         $iptv_channels = M3uParser::CHANNELS_TABLE;
 
         ////////////////////////////////////////////////////////////////////////////////////
         /// update tables with removed and added groups and channels
 
         $query = sprintf('SELECT COUNT(%s) FROM %s;', COLUMN_CHANNEL_ID, $channel_info_table);
-        $is_new = $this->sql_playlist->query_value($query) === 0;
+        $is_new = $this->safe_sql_playlist('query_value', $query) === 0;
 
         // get name of the column for channel ID
         $id_column = $this->get_id_column();
 
         // update existing database for empty group_id (converted from known_channels.settings)
         $query = sprintf("SELECT COUNT(*) FROM %s WHERE %s='';", $channel_info_table, COLUMN_GROUP_ID);
-        if ($this->sql_playlist->query_value($query)) {
+        if ($this->safe_sql_playlist('query_value', $query)) {
             hd_debug_print('Update groups name for converted settings', true);
             $query = sprintf("UPDATE %s SET %s = (SELECT %s FROM %s WHERE %s=%s.%s LIMIT 1) WHERE %s=''
                                       AND EXISTS (SELECT 1 FROM %s WHERE %s=%s.%s AND %s != %s.%s);", $channel_info_table,
                 COLUMN_GROUP_ID, COLUMN_GROUP_ID, $iptv_channels, COLUMN_CHANNEL_ID, $iptv_channels, $id_column, COLUMN_GROUP_ID,
                 $iptv_channels, COLUMN_CHANNEL_ID, $iptv_channels, $id_column, COLUMN_GROUP_ID, $iptv_channels, COLUMN_GROUP_ID);
-            $this->sql_playlist->exec($query);
+            $this->safe_sql_playlist('exec', $query);
         }
 
         // select new groups that not present in groups table but exist in iptv_groups
         $query_new_groups = sprintf('SELECT * FROM %s WHERE %s NOT IN (SELECT %s FROM %s);',
             M3uParser::GROUPS_TABLE, COLUMN_GROUP_ID, COLUMN_GROUP_ID, $groups_info_table);
-        $new_groups = $this->sql_playlist->fetch_array($query_new_groups);
+        $new_groups = $this->safe_sql_playlist('fetch_array', $query_new_groups);
         if (!empty($new_groups)) {
             hd_debug_print('Adding new groups: ' . json_format_unescaped(extract_column($new_groups, COLUMN_GROUP_ID)), true);
             $query = '';
@@ -1150,16 +1342,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $q_group_id, $q_group_id, $q_group_icon, $group_row[COLUMN_ADULT]);
                 $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);', $groups_order_table, COLUMN_GROUP_ID, $q_group_id);
 
-                $group_channels_order_table = self::get_table_full_name($group_id);
+                $group_channels_order_table = self::get_table_name($group_id);
                 $query .= sprintf(self::CREATE_ORDERED_TABLE, $group_channels_order_table, COLUMN_CHANNEL_ID);
                 hd_debug_print("Added new group channels order: $group_id ($group_channels_order_table)", true);
             }
-            $this->sql_playlist->exec_transaction($query);
+            $this->safe_sql_playlist('exec_transaction', $query);
         }
 
         // Update group icons
         $query = sprintf("SELECT %s,%s from %s WHERE %s <> '';", COLUMN_GROUP_ID, COLUMN_ICON, M3uParser::GROUPS_TABLE, COLUMN_ICON);
-        $groups_rows = $this->sql_playlist->fetch_array($query);
+        $groups_rows = $this->safe_sql_playlist('fetch_array', $query);
         if (!empty($groups_rows)) {
             hd_debug_print('Update changed group id icons', true);
             $query = '';
@@ -1170,39 +1362,39 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     COLUMN_ICON, $q_group_icon, COLUMN_GROUP_ID, $q_group_id, COLUMN_ICON, $q_group_icon, COLUMN_ICON, COLUMN_ICON,
                     Sql_Wrapper::sql_quote('plugin_file://icons/default_group.png'));
             }
-            $this->sql_playlist->exec_transaction($query);
+            $this->safe_sql_playlist('exec_transaction', $query);
         }
 
         // cleanup if group removed from playlist
         $query = sprintf('SELECT %s FROM %s WHERE %s NOT IN (SELECT %s FROM %s) AND %s=%d;',
         COLUMN_GROUP_ID, $groups_info_table, COLUMN_GROUP_ID, COLUMN_GROUP_ID, M3uParser::GROUPS_TABLE, COLUMN_SPECIAL, FALSE);
-        $removed_groups = $this->sql_playlist->fetch_array($query, COLUMN_GROUP_ID);
+        $removed_groups = $this->safe_sql_playlist('fetch_array', $query, COLUMN_GROUP_ID);
         if (!empty($removed_groups)) {
-            $groups_order_table = self::get_table_full_name(GROUPS_ORDER);
+            $groups_order_table = self::get_table_name(GROUPS_ORDER);
             $where = Sql_Wrapper::sql_make_where_clause($removed_groups, COLUMN_GROUP_ID);
             $query = sprintf('DELETE FROM %s WHERE %s;', $groups_order_table, $where);
             $query .= sprintf('DELETE FROM %s WHERE %s;', $groups_info_table, $where);
             foreach ($removed_groups as $group_id) {
-                $group_channels_order_table = self::get_table_full_name($group_id);
+                $group_channels_order_table = self::get_table_name($group_id);
                 $query .= sprintf("DROP TABLE IF EXISTS %s;", $group_channels_order_table);
                 hd_debug_print("Removing group channels order: $group_id ($group_channels_order_table)", true);
             }
-            $this->sql_playlist->exec_transaction($query);
+            $this->safe_sql_playlist('exec_transaction', $query);
         }
 
         // mark as removed channels that not present iptv.iptv_channels db
         $query = sprintf("SELECT %s FROM %s WHERE %s NOT IN (SELECT %s AS %s FROM %s WHERE %s NOT NULL AND %s<>'');",
             COLUMN_CHANNEL_ID, $channel_info_table, COLUMN_CHANNEL_ID, $id_column, COLUMN_CHANNEL_ID, $iptv_channels, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID);
-        $removed_channels = $this->sql_playlist->fetch_array($query, COLUMN_CHANNEL_ID);
+        $removed_channels = $this->safe_sql_playlist('fetch_array', $query, COLUMN_CHANNEL_ID);
 
         $query = sprintf('SELECT %s AS %s FROM %s WHERE %s NOT IN (SELECT %s FROM %s WHERE %s<>%d);',
             $id_column, COLUMN_CHANNEL_ID, $iptv_channels, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, $channel_info_table, COLUMN_CHANNEL_ID, -1);
-        $new_channels = $this->sql_playlist->fetch_array($query, COLUMN_CHANNEL_ID);
+        $new_channels = $this->safe_sql_playlist('fetch_array', $query, COLUMN_CHANNEL_ID);
 
         if (!empty($removed_channels)) {
             $remove_where = Sql_Wrapper::sql_make_where_clause($removed_channels, COLUMN_CHANNEL_ID);
             $query = sprintf('UPDATE %s SET %s=%d WHERE %s;', $channel_info_table, COLUMN_CHANGED, -1, $remove_where);
-            $this->sql_playlist->exec($query);
+            $this->safe_sql_playlist('exec', $query);
             hd_debug_print("Removing not exist channels: $remove_where", true);
         }
 
@@ -1212,7 +1404,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $query = sprintf('INSERT OR REPLACE INTO %s (%s,%s,%s,%s,%s) SELECT %s AS %s,%s,%s,%s,%s FROM %s WHERE %s GROUP BY %s ORDER BY ROWID;',
                 $channel_info_table, COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_GROUP_ID, COLUMN_ADULT,
                 $id_column, COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_TITLE, COLUMN_GROUP_ID, COLUMN_ADULT, $iptv_channels, $add_where, COLUMN_CHANNEL_ID);
-            $this->sql_playlist->exec($query);
+            $this->safe_sql_playlist('exec', $query);
             hd_debug_print('Adding new channels: ' . json_format_unescaped($new_channels), true);
         }
 
@@ -1222,7 +1414,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_GROUP_ID, COLUMN_ADULT, $channel_info_table,
             $iptv_channels, COLUMN_CHANNEL_ID, $id_column, COLUMN_CHANGED, FALSE, COLUMN_TITLE, COLUMN_TITLE, COLUMN_TITLE,
             COLUMN_GROUP_ID, COLUMN_GROUP_ID, COLUMN_GROUP_ID, COLUMN_ADULT, COLUMN_ADULT, COLUMN_ADULT);
-        $changed_channels = $this->sql_playlist->fetch_array($query);
+        $changed_channels = $this->safe_sql_playlist('fetch_array', $query);
 
         if (!empty($changed_channels)) {
             hd_debug_print('Update changed info for channels', true);
@@ -1234,14 +1426,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     COLUMN_ADULT, $changed_channel[COLUMN_ADULT],
                     COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($changed_channel[COLUMN_CHANNEL_ID]));
             }
-            $this->sql_playlist->exec_transaction($query);
+            $this->safe_sql_playlist('exec_transaction', $query);
         }
 
         $query = '';
         if (!empty($new_groups)) {
             hd_debug_print('Fill new group channels orders', true);
             foreach ($new_groups as $group_row) {
-                $group_channels_order_table = self::get_table_full_name($group_row[COLUMN_GROUP_ID]);
+                $group_channels_order_table = self::get_table_name($group_row[COLUMN_GROUP_ID]);
                 $q_group_id = Sql_Wrapper::sql_quote($group_row[COLUMN_GROUP_ID]);
 
                 // Add channels to orders from iptv_channels for selected group that not disabled in known_channels
@@ -1249,7 +1441,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $group_channels_order_table, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, $channel_info_table,
                     COLUMN_GROUP_ID, $q_group_id, COLUMN_CHANGED, TRUE, COLUMN_DISABLED, FALSE);
             }
-            $this->sql_playlist->exec_transaction($query);
+            $this->safe_sql_playlist('exec_transaction', $query);
         }
 
         $existing_group_ids = $this->get_groups(PARAM_GROUP_ORDINARY, PARAM_ENABLED, COLUMN_GROUP_ID);
@@ -1260,7 +1452,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         foreach ($existing_group_ids as $group_id) {
             if (empty($group_id)) continue;
 
-            $group_channels_order_table = self::get_table_full_name($group_id);
+            $group_channels_order_table = self::get_table_name($group_id);
             $q_group_id = Sql_Wrapper::sql_quote($group_id);
             $query .= sprintf('INSERT OR IGNORE INTO %s (%s) SELECT %s FROM %s WHERE %s=%s AND %s=%d AND NOT %s=%d ORDER BY ROWID;',
                 $group_channels_order_table,
@@ -1271,17 +1463,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 COLUMN_CHANNEL_ID, $group_channels_order_table, COLUMN_CHANNEL_ID, $channel_info_table, COLUMN_GROUP_ID, $q_group_id, COLUMN_CHANGED, -1);
             if (++$num % 100 === 0) {
                 hd_debug_print("Updated $num groups", true);
-                $this->sql_playlist->exec_transaction($query);
+                $this->safe_sql_playlist('exec_transaction', $query);
                 $query = '';
             }
         }
-        $this->sql_playlist->exec_transaction($query);
+        $this->safe_sql_playlist('exec_transaction', $query);
 
         hd_debug_print('Reset changed flag for channels in disabled groups', true);
         $query = sprintf("UPDATE %s SET %s=%d, %s=%d WHERE %s IN (SELECT %s FROM %s WHERE %s=%d AND %s=%d);",
             $channel_info_table, COLUMN_CHANGED, FALSE, COLUMN_DISABLED, -1, COLUMN_GROUP_ID,
             COLUMN_GROUP_ID, $groups_info_table, COLUMN_DISABLED, TRUE, COLUMN_SPECIAL, FALSE);
-        $this->sql_playlist->exec($query);
+        $this->safe_sql_playlist('exec', $query);
 
         if ($is_new) {
             hd_debug_print('Clear changed flag for new playlist', true);
@@ -2183,12 +2375,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * Returns true if plugin is in VOD mode
      *
+     * @param string|null $playlist_id
      * @return bool
      */
-    public function is_vod_playlist()
+    public function is_vod_playlist($playlist_id = null)
     {
         $vod = false;
-        $params = $this->get_playlist_parameters($this->get_active_playlist_id());
+        $playlist_id = is_null($playlist_id) ? $this->get_active_playlist_id() : $playlist_id;
+        $params = $this->get_playlist_parameters($playlist_id);
         if (!empty($params)) {
             $vod = safe_get_value($params, PARAM_PLAYLIST_TYPE) === CONTROL_PLAYLIST_VOD;
         }
@@ -3302,14 +3496,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        $table_name = self::get_table_full_name(TV_HISTORY);
         $query = sprintf('INSERT OR IGNORE INTO %s %s;',
-            $table_name, Sql_Wrapper::sql_make_insert_list($list));
+            self::TV_HISTORY_TABLE, Sql_Wrapper::sql_make_insert_list($list));
         $query .= sprintf('UPDATE %s SET %s WHERE %s=%s;',
-            $table_name, Sql_Wrapper::sql_make_set_list($list), COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($id));
+            self::TV_HISTORY_TABLE, Sql_Wrapper::sql_make_set_list($list), COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($id));
         $query .= sprintf('DELETE FROM %s WHERE ROWID NOT IN (SELECT ROWID FROM %s ORDER BY %s DESC LIMIT 7);',
-            $table_name, $table_name, COLUMN_TIMESTAMP);
-        $this->sql_playlist->exec_transaction($query);
+            self::TV_HISTORY_TABLE, self::TV_HISTORY_TABLE, COLUMN_TIMESTAMP);
+        $this->safe_sql_tv_history('exec_transaction', $query);
 
         unset($this->playback_points[$id]);
 
@@ -3502,19 +3695,86 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $backup_path;
     }
 
+    /**
+     * @return bool
+     */
+    public function init_vod_class($force = false)
+    {
+        if (!$force && $this->vod !== null) {
+            return true;
+        }
+
+        $this->vod_enabled = false;
+        $vod_class = null;
+        $provider = $this->get_active_provider();
+        if (!is_null($provider)) {
+            $use_vod = $this->get_bool_setting(PARAM_USE_VOD);
+            if ($use_vod) {
+                $vod_class = $provider->get_vod_class();
+            }
+        } else if ($this->is_vod_playlist()) {
+            $vod_class = 'vod_standard';
+        }
+
+        if (!empty($vod_class)) {
+            hd_debug_print("Using VOD: $vod_class");
+            $this->vod = new $vod_class($this);
+            $this->vod_enabled = $this->vod->init_vod($provider);
+            $this->vod->init_vod_screens();
+            hd_debug_print('VOD enabled: ' . SwitchOnOff::to_def($this->vod_enabled));
+        }
+
+        return $this->vod_enabled;
+    }
+
     //////////////////////////////////////////////////////////////////
     /// protected methods
+    protected function update_old_settings($playlist_id)
+    {
+        // move playlist xmltv sources to new database table
+        if ($this->is_playlist_settings_table_exists(self::XMLTV_TABLE)) {
+            $old_table = self::XMLTV_TABLE;
+            $rows = $this->safe_sql_playlist_settings('fetch_array', "SELECT * FROM $old_table;");
 
+            $query = '';
+            foreach ($rows as $row) {
+                $row[COLUMN_PLAYLIST_ID] = $playlist_id;
+                $query .= sprintf('INSERT OR IGNORE INTO %s $%s;',
+                    self::PLAYLIST_XMLTV_TABLE, Sql_Wrapper::sql_make_insert_list($row));
+            }
+            $this->safe_sql_plugin('exec_transaction', $query);
+            $this->safe_sql_playlist_settings('exec', "DROP TABLE $old_table;");
+        }
+
+        // move selected xmltv sources to new database table
+        if ($this->is_playlist_settings_table_exists(self::SELECTED_XMLTV_TABLE)) {
+            $table_name = self::SELECTED_XMLTV_TABLE;
+            $query = sprintf('SELECT %s FROM %s;', COLUMN_HASH, $table_name);
+            $rows = $this->safe_sql_playlist_settings('fetch_array', $query, COLUMN_HASH);
+            $q_playlist_id = Sql_Wrapper::sql_quote($playlist_id);
+            $query = '';
+            foreach ($rows as $hash) {
+                $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s) VALUES (%s,%s);',
+                    self::SELECTED_XMLTV_TABLE, COLUMN_PLAYLIST_ID, COLUMN_HASH, $q_playlist_id, Sql_Wrapper::sql_quote($hash));
+            }
+            $this->safe_sql_plugin('exec_transaction', $query);
+            $this->safe_sql_playlist_settings('exec', "DROP TABLE $table_name;");
+        }
+
+        // remove unused settings from db
+        $query = sprintf('DELETE FROM %s WHERE %s;',
+            self::SETTINGS_TABLE, Sql_Wrapper::sql_make_where_clause(array('cur_xmltv_source', 'cur_xmltv_key'), COLUMN_NAME));
+        $this->safe_sql_playlist_settings('exec', $query);
+    }
     /**
      * @param $playlist_id
-     * @return Hashed_Array<string, array>
+     * @return void
      */
     protected function upgrade_settings($playlist_id)
     {
-        $group_icons = new Hashed_Array();
         $settings_path = get_data_path("$playlist_id.settings");
         if (!file_exists($settings_path)) {
-            return $group_icons;
+            return;
         }
 
         hd_debug_print("Load (PLUGIN_SETTINGS): $playlist_id.settings");
@@ -3570,7 +3830,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
             unset($plugin_settings[$key]);
         }
-        $this->sql_playlist->exec_transaction($query);
+        $this->safe_sql_playlist_settings('exec_transaction', $query);
 
         // Move epg_playlist, selected_xmltv_sorces, channel_zoom, channel_player to tables
         foreach ($plugin_settings as $key => $value) {
@@ -3592,7 +3852,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     );
                     $query .= sprintf('INSERT OR IGNORE INTO %s %s;', self::PLAYLIST_XMLTV_TABLE, Sql_Wrapper::sql_make_insert_list($list));
                 }
-                $this->sql_params->exec_transaction($query);
+                $this->safe_sql_plugin('exec_transaction', $query);
                 unset($plugin_settings[PARAM_EPG_PLAYLIST]);
             } else if ($key === PARAM_SELECTED_XMLTV_SOURCES) {
                 hd_debug_print("Convert 'selected_xmltv_sources' to 'selected_xmltv' table");
@@ -3601,7 +3861,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s) VALUES (%s,%s);', self::SELECTED_XMLTV_TABLE,
                         COLUMN_PLAYLIST_ID, COLUMN_HASH, Sql_Wrapper::sql_quote($playlist_id), Sql_Wrapper::sql_quote($hash));
                 }
-                $this->sql_params->exec_transaction($query);
+                $this->safe_sql_plugin('exec_transaction', $query);
                 unset($plugin_settings[PARAM_SELECTED_XMLTV_SOURCES]);
             } else if ($key === 'channels_zoom' || $key === 'channel_player') {
                 // obsolete
@@ -3619,7 +3879,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // move group icons from settings to db (for old plugin settings)
         if (array_key_exists(PARAM_GROUPS_ICONS, $plugin_settings)) {
-            $group_icons = $plugin_settings[PARAM_GROUPS_ICONS];
             unset($plugin_settings[PARAM_GROUPS_ICONS]);
         }
 
@@ -3642,21 +3901,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $query = sprintf('INSERT INTO %s (%s,%s,%s) VALUES(%s,%s,%s);', self::COOKIES_TABLE,
                 COLUMN_PARAM, COLUMN_VALUE, COLUMN_TIMESTAMP,
                     Sql_Wrapper::sql_quote($key), Sql_Wrapper::sql_quote(file_get_contents($token_path)), filemtime($token_path));
-                $this->sql_playlist->exec($query);
+                $this->safe_sql_playlist_settings('exec', $query);
                 hd_debug_print("Remove cookie: $token_path");
                 safe_unlink($token_path);
             }
         }
-
-        return $group_icons;
     }
 
     /**
      * @param string $playlist_id
-     * @param Hashed_Array<string, array> $group_icons
      * @return void
      */
-    protected function upgrade_orders($playlist_id, $group_icons)
+    protected function upgrade_orders($playlist_id)
     {
         $plugin_orders_name = $this->make_base_name(PLUGIN_ORDERS, $playlist_id);
         $orders_file = get_data_path("$plugin_orders_name.settings");
@@ -3673,11 +3929,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // Current group icons in the orders settings
         if (isset($plugin_orders[PARAM_GROUPS_ICONS])){
             // get group icons from orders
-            $group_icons = $plugin_orders[PARAM_GROUPS_ICONS];
             unset($plugin_orders[PARAM_GROUPS_ICONS]);
         }
 
-        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
+        $groups_info_table = self::get_table_name(GROUPS_INFO);
         // move groups order to database
         if (isset($plugin_orders[PARAM_GROUPS_ORDER]) && $plugin_orders[PARAM_GROUPS_ORDER]->size() !== 0) {
             hd_debug_print("Move 'group_orders' to 'groups' db table");
@@ -3685,14 +3940,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             foreach ($plugin_orders[PARAM_GROUPS_ORDER] as $group_id) {
                 $adult = M3uParser::is_adult_group($group_id);
                 $q_group_id = Sql_Wrapper::sql_quote($group_id);
-                $group_icon = Sql_Wrapper::sql_quote($group_icons->has($group_id) ? $group_icons->get($group_id) : DEFAULT_GROUP_ICON);
+                $group_icon = Sql_Wrapper::sql_quote(DEFAULT_GROUP_ICON);
                 $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s,%s) VALUES (%s,%s,%s,%d);', $groups_info_table,
                 COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_ADULT,
                     $q_group_id, $q_group_id, $group_icon, $adult);
                 $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);',
-                    self::get_table_full_name(GROUPS_ORDER), COLUMN_GROUP_ID, $q_group_id);
+                    self::get_table_name(GROUPS_ORDER), COLUMN_GROUP_ID, $q_group_id);
             }
-            $this->sql_playlist->exec_transaction($query);
+            $this->safe_sql_playlist('exec_transaction', $query);
 
             unset($plugin_orders[PARAM_GROUPS_ORDER]);
         }
@@ -3704,17 +3959,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             foreach ($plugin_orders[PARAM_DISABLED_GROUPS] as $group_id) {
                 $adult = M3uParser::is_adult_group($group_id);
                 $q_group_id = Sql_Wrapper::sql_quote($group_id);
-                $group_icon = Sql_Wrapper::sql_quote($group_icons->has($group_id) ? $group_icons->get($group_id) : DEFAULT_GROUP_ICON);
+                $group_icon = Sql_Wrapper::sql_quote(DEFAULT_GROUP_ICON);
                 $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s,%s,%s) VALUES (%s,%s,%s,%d,%d);', $groups_info_table,
                 COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_DISABLED, COLUMN_ADULT,
                     $q_group_id, $q_group_id, $group_icon, TRUE, $adult);
             }
-            $this->sql_playlist->exec_transaction($query);
+            $this->safe_sql_playlist('exec_transaction', $query);
             unset($plugin_orders[PARAM_DISABLED_GROUPS]);
         }
 
         // create known_channels db if not exist and import old orders settings
-        $channels_info_table = self::get_table_full_name(CHANNELS_INFO);
+        $channels_info_table = self::get_table_name(CHANNELS_INFO);
         if (isset($plugin_orders[PARAM_KNOWN_CHANNELS]) && $plugin_orders[PARAM_KNOWN_CHANNELS]->size() !== 0) {
             hd_debug_print("Move 'known_channels' to 'channels' db table");
             $query = '';
@@ -3724,7 +3979,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s,%s) VALUES (%s,%s,%s,%d);', $channels_info_table,
                 COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_CHANGED, $q_channel_id, $q_title, $q_title, FALSE);
             }
-            $this->sql_playlist->exec_transaction($query);
+            $this->safe_sql_playlist('exec_transaction', $query);
             unset($plugin_orders[PARAM_KNOWN_CHANNELS]);
         }
 
@@ -3732,19 +3987,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             hd_debug_print("Move 'disabled_channels' to 'channels' db table");
             $where = Sql_Wrapper::sql_make_where_clause($plugin_orders[PARAM_DISABLED_CHANNELS]->get_order(), COLUMN_CHANNEL_ID);
             $query = sprintf('UPDATE %s SET %s=%d WHERE %s;', $channels_info_table, COLUMN_DISABLED, TRUE, $where);
-            $this->sql_playlist->exec($query);
+            $this->safe_sql_playlist('exec', $query);
             unset($plugin_orders[PARAM_DISABLED_CHANNELS]);
         }
 
         foreach ($plugin_orders as $order_name => $order) {
-            $table_name = self::get_table_full_name($order_name);
+            $table_name = self::get_table_name($order_name);
             hd_debug_print("Move '$order_name' channels orders to $table_name db table");
             $query = sprintf(self::CREATE_ORDERED_TABLE, $table_name, COLUMN_CHANNEL_ID);
             foreach ($order as $channel_id) {
                 $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);',
                     $table_name, COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($channel_id));
             }
-            $this->sql_playlist->exec_transaction($query);
+            $this->safe_sql_playlist('exec_transaction', $query);
             unset($plugin_orders[$order_name]);
         }
 
@@ -3770,15 +4025,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
         $points = HD::get_items($tv_history_name);
         hd_debug_print("Load (PLUGIN TV HISTORY) from: $tv_history_name", true);
-        $tv_history_table = self::get_table_full_name(TV_HISTORY);
         $query = '';
         foreach ($points as $key => $item) {
-            $query .= sprintf("INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES (%s,%d, '');", $tv_history_table,
+            $query .= sprintf("INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES (%s,%d, '');", self::TV_HISTORY_TABLE,
                 COLUMN_CHANNEL_ID, COLUMN_TIMESTAMP, COLUMN_PROGRAM_TITLE, Sql_Wrapper::sql_quote($key), (int)$item);
         }
         $query .= sprintf("DELETE FROM %s WHERE ROWID NOT IN (SELECT ROWID FROM %s ORDER BY %s DESC LIMIT 7);",
-            $tv_history_table, $tv_history_table, COLUMN_TIMESTAMP);
-        $this->sql_playlist->exec_transaction($query);
+            self::TV_HISTORY_TABLE, self::TV_HISTORY_TABLE, COLUMN_TIMESTAMP);
+        $this->safe_sql_tv_history('exec_transaction', $query);
         hd_debug_print("Remove TV History: $tv_history_name");
         HD::erase_items($tv_history_name);
     }
@@ -3797,7 +4051,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         /** @var array $history */
         $history = HD::get_items($vod_history_filename, true, false);
         if (isset($history[VOD_HISTORY]) && $history[VOD_HISTORY]->size() !== 0) {
-            $vod_history_table = self::get_table_full_name(VOD_HISTORY);
             hd_debug_print("Move '" . VOD_HISTORY . "' to 'vod_history' db table");
             $query = '';
             /** @var array $param */
@@ -3808,12 +4061,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 foreach ($param as $series_id => $item) {
                     $q_series_id = Sql_Wrapper::sql_quote($series_id);
                     $watched = (int)$item->watched;
-                    $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s,%s,%s,%s) VALUES (%s,%s,%s,%s,%s,%s);', $vod_history_table,
+                    $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s,%s,%s,%s) VALUES (%s,%s,%s,%s,%s,%s);', self::VOD_HISTORY_TABLE,
                         COLUMN_MOVIE_ID, COLUMN_SERIES_ID, COLUMN_WATCHED, COLUMN_POSITION, COLUMN_DURATION, COLUMN_TIMESTAMP,
                         $q_movie_id, $q_series_id, $watched, $item->position, $item->duration, $item->date);
                 }
             }
-            $this->sql_playlist->exec_transaction($query);
+            $this->safe_sql_vod_history('exec_transaction', $query);
             unset($history[VOD_HISTORY]);
         }
 
@@ -3821,7 +4074,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         foreach (array(VOD_FILTER_LIST, VOD_SEARCH_LIST) as $list) {
             if (!isset($history[$list]) || $history[$list]->size() === 0) continue;
 
-            $table_name = self::get_table_full_name($list);
+            $table_name = self::get_table_name($list);
             hd_debug_print("Move '$list' to '$table_name' db table");
 
             foreach ($history[$list]->get_order() as $value) {
@@ -3831,267 +4084,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             unset($history[$list]);
         }
-        $this->sql_playlist->exec_transaction($query);
 
-        if (empty($history)) {
-            hd_debug_print("Remove VOD history: $vod_history_filename");
-            safe_unlink($vod_history_filename);
-        } else {
-            HD::put_items($vod_history_filename, $history, false);
-            foreach ($history as $type => $param) {
-                hd_debug_print("!!!!! Vod history $type is not imported: " . (is_array($param) ? json_format_unescaped($param) : $param), true);
-            }
-        }
-    }
-
-    /**
-     * @param string $playlist_id
-     * @return void
-     */
-    public function CreatePlaylistSettingsTable($playlist_id)
-    {
-        // create settings table
-        $query = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, self::SETTINGS_TABLE);
-        $this->sql_playlist->exec($query);
-
-        // create cookies table
-        $query = sprintf(self::CREATE_COOKIES_TABLE, self::COOKIES_TABLE);
-        $this->sql_playlist->exec($query);
-
-        // create common TV Favorites table
-        $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_full_name(TV_FAV_COMMON_GROUP_ID), COLUMN_CHANNEL_ID);
-        $this->sql_playlist->exec($query);
-
-        $provider_class = $this->get_playlist_parameter($playlist_id, PARAM_PROVIDER);
-        $q_playlist_id = Sql_Wrapper::sql_quote($playlist_id);
-
-        if (!empty($provider_class)) {
-            $provider = $this->get_provider($playlist_id);
-            if ($provider !== null) {
-                // update xmltv playlist sources from config
-                $config_xmltv = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
-                if (!empty($config_xmltv)) {
-                    $query = '';
-                    $q_type = Sql_Wrapper::sql_quote(PARAM_CONF);
-                    $q_cache = Sql_Wrapper::sql_quote(XMLTV_CACHE_AUTO);
-                    $known_sources = array();
-                    foreach ($config_xmltv as $source) {
-                        $hash = Hashed_Array::hash($source);
-                        $q_hash = Sql_Wrapper::sql_quote($hash);
-                        $q_source = Sql_Wrapper::sql_quote($source);
-                        $q_name = Sql_Wrapper::sql_quote(basename($source));
-                        $known_sources[] = $hash;
-
-                        $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s,%s,%s,%s) VALUES (%s,%s,%s,%s,%s,%s);',
-                            self::PLAYLIST_XMLTV_TABLE,
-                            COLUMN_PLAYLIST_ID, COLUMN_HASH, COLUMN_TYPE, COLUMN_NAME, COLUMN_URI, COLUMN_CACHE,
-                            $q_playlist_id, $q_hash, $q_type, $q_name, $q_source, $q_cache);
-                    }
-
-                    if (!empty($known_sources)) {
-                        $query .= sprintf('DELETE FROM %s WHERE %s AND %s=%s;',
-                            self::PLAYLIST_XMLTV_TABLE, Sql_Wrapper::sql_make_where_clause($known_sources, COLUMN_HASH, true),
-                            COLUMN_TYPE, $q_type);
-                    }
-                    $this->sql_params->exec_transaction($query);
-                }
-
-                $provider->check_config_values();
-                $provider_playlist_id = $provider->GetPlaylistIptvId();
-                hd_debug_print("Provider IPTV playlist: $provider_playlist_id", true);
-
-                $query = sprintf(self::CREATE_SELECTED_JSON_TABLE, self::SELECTED_JSON_TABLE);
-                $this->sql_playlist->exec($query);
-                $this->update_selected_json_source($provider);
-            }
-        }
-
-        $db_file = get_data_path($this->make_base_name(PLUGIN_ORDERS) . '.db');
-        hd_debug_print("Orders database path: $db_file", true);
-        if ($this->sql_playlist->attachDatabase($db_file, self::PLAYLIST_ORDERS_DB) === 0) {
-            hd_debug_print("Can't attach to database with name: " . self::PLAYLIST_ORDERS_DB);
-        }
-
-        // create tables for vod search, vod filters, vod favorites
-        if ($this->is_vod_playlist() || (!empty($provider) && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
-            hd_debug_print('Preparing tables for VOD', true);
-            $tables = array(
-                VOD_FILTER_LIST => 'item',
-                VOD_SEARCH_LIST => 'item',
-                VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID,
-            );
-
-            if (!empty($provider) && self::is_provider_m3u_vod($provider)) {
-                $tables[VOD_LIST_GROUP_ID] = COLUMN_CHANNEL_ID;
-            }
-
-            foreach ($tables as $list => $column) {
-                $table_name = self::get_table_full_name($list);
-                $query = sprintf(self::CREATE_ORDERED_TABLE, $table_name, $column);
-                $this->sql_playlist->exec($query);
-            }
-        }
-
-        // create group table
-        $groups_info_table = self::get_table_full_name(GROUPS_INFO);
-        $query = sprintf(self::CREATE_GROUPS_INFO_TABLE, $groups_info_table);
-        $this->sql_playlist->exec($query);
-        if ($this->sql_playlist->is_column_exists(GROUPS_INFO, 'id', self::PLAYLIST_ORDERS_DB)) {
-            $tmp_table = $groups_info_table . '_tmp';
-            $query = sprintf(self::CREATE_GROUPS_INFO_TABLE, $tmp_table);
-            $query .= sprintf('INSERT INTO %s (%s, %s, %s, %s, %s, %s) SELECT %s, %s, %s, %s, %s, %s FROM %s;',
-                $tmp_table, COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_ADULT, COLUMN_DISABLED, COLUMN_SPECIAL,
-                COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_ADULT, COLUMN_DISABLED, COLUMN_SPECIAL, $groups_info_table
-            );
-            $query .= sprintf('DROP TABLE %s;', $groups_info_table);
-            $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name(GROUPS_INFO));
-            $this->sql_playlist->exec_transaction($query);
-        }
-
-        // create table
-        $query = sprintf(self::CREATE_CHANNELS_INFO_TABLE, self::get_table_full_name(CHANNELS_INFO));
-        $this->sql_playlist->exec($query);
-        if (!$this->sql_playlist->is_column_exists(CHANNELS_INFO, COLUMN_EPG_SHIFT, self::PLAYLIST_ORDERS_DB)) {
-            $query = sprintf('ALTER TABLE %s ADD COLUMN %s INTEGER DEFAULT 0;', self::get_table_full_name(CHANNELS_INFO), COLUMN_EPG_SHIFT);
-            $this->sql_playlist->exec($query);
-        }
-
-        if (!$this->sql_playlist->is_column_exists(CHANNELS_INFO, COLUMN_SHOW_TITLE, self::PLAYLIST_ORDERS_DB)) {
-            $query = sprintf("ALTER TABLE %s ADD COLUMN %s TEXT DEFAULT '';", self::get_table_full_name(CHANNELS_INFO), COLUMN_SHOW_TITLE);
-            $this->sql_playlist->exec($query);
-        }
-        $query = sprintf("UPDATE %s SET %s=%s WHERE %s IS NULL OR TRIM(%s) = '';", self::get_table_full_name(CHANNELS_INFO),
-            COLUMN_SHOW_TITLE, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_SHOW_TITLE);
-        $this->sql_playlist->exec($query);
-
-        // create order_groups table
-        $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_full_name(GROUPS_ORDER), COLUMN_GROUP_ID);
-        $this->sql_playlist->exec($query);
-        // create table for favorites
-        $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_full_name(TV_FAV_GROUP_ID), COLUMN_CHANNEL_ID);
-        $this->sql_playlist->exec($query);
-
-        // add special groups to the table if the not exists
-        $special_group = array(
-            array(COLUMN_GROUP_ID => TV_FAV_GROUP_ID, COLUMN_TITLE => TV_FAV_GROUP_CAPTION, COLUMN_ICON => TV_FAV_GROUP_ICON),
-            array(COLUMN_GROUP_ID => TV_HISTORY_GROUP_ID, COLUMN_TITLE => TV_HISTORY_GROUP_CAPTION, COLUMN_ICON => TV_HISTORY_GROUP_ICON),
-            array(COLUMN_GROUP_ID => TV_CHANGED_CHANNELS_GROUP_ID, COLUMN_TITLE => TV_CHANGED_CHANNELS_GROUP_CAPTION,
-                COLUMN_ICON => TV_CHANGED_CHANNELS_GROUP_ICON),
-            array(COLUMN_GROUP_ID => VOD_GROUP_ID, COLUMN_TITLE => VOD_GROUP_CAPTION, COLUMN_ICON => VOD_GROUP_ICON),
-            array(COLUMN_GROUP_ID => TV_ALL_CHANNELS_GROUP_ID, COLUMN_TITLE => TV_ALL_CHANNELS_GROUP_CAPTION, COLUMN_ICON => TV_ALL_CHANNELS_GROUP_ICON),
-        );
-
-        $query = '';
-        foreach ($special_group as $group) {
-            $group['disabled'] = 0;
-            $group['special'] = 1;
-            $query .= sprintf('INSERT OR IGNORE INTO %s %s;', $groups_info_table, Sql_Wrapper::sql_make_insert_list($group));
-        }
-        $this->sql_playlist->exec_transaction($query);
-
-        $history_path = $this->get_history_path();
-        $tv_history_db = $history_path . $this->make_base_name(TV_HISTORY, null, false) . ".db";
-        // attach to tv_history db. if db not exist it will be created
-        if ($this->sql_playlist->attachDatabase($tv_history_db, self::TV_HISTORY_DB) === 0) {
-            hd_debug_print("Can't attach to database: $tv_history_db with name: " . self::TV_HISTORY_DB);
-        } else {
-            // create tv history table
-            $tv_history_table = self::get_table_full_name(TV_HISTORY);
-            $query = sprintf(self::CREATE_TV_HISTORY_TABLE, $tv_history_table);
-            $this->sql_playlist->exec($query);
-            if (!$this->sql_playlist->is_column_exists(self::TV_HISTORY_TABLE, COLUMN_TIME_START, self::TV_HISTORY_DB)) {
-                $query = sprintf('ALTER TABLE %s ADD COLUMN %s INTEGER DEFAULT 0;', $tv_history_table, COLUMN_TIME_START);
-                $query .= sprintf('ALTER TABLE %s ADD COLUMN %s INTEGER DEFAULT 0;', $tv_history_table, COLUMN_TIME_END);
-                $this->sql_playlist->exec_transaction($query);
-            }
-        }
-
-        // move playlist xmltv sources to new database table
-        if ($this->is_playlist_table_exists(self::XMLTV_TABLE)) {
-            $old_table = self::XMLTV_TABLE;
-            $rows = $this->sql_playlist->fetch_array("SELECT * FROM $old_table;");
-
-            $table_name = self::PLAYLIST_XMLTV_TABLE;
-            $query = '';
-            foreach ($rows as $row) {
-                $row[COLUMN_PLAYLIST_ID] = $playlist_id;
-                $values = Sql_Wrapper::sql_make_insert_list($row);
-                $query .= "INSERT OR IGNORE INTO $table_name $values;";
-            }
-            $this->sql_params->exec_transaction($query);
-            $this->sql_playlist->exec("DROP TABLE $old_table;");
-        }
-
-        // move selected xmltv sources to new database table
-        if ($this->is_playlist_table_exists(self::SELECTED_XMLTV_TABLE)) {
-            $table_name = self::SELECTED_XMLTV_TABLE;
-            $query = sprintf('SELECT %s FROM %s;', COLUMN_HASH, $table_name);
-            $rows = $this->sql_playlist->fetch_array($query, COLUMN_HASH);
-            $query = '';
-            foreach ($rows as $hash) {
-                $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s) VALUES (%s,%s);',
-                    self::SELECTED_XMLTV_TABLE, COLUMN_PLAYLIST_ID, COLUMN_HASH, $q_playlist_id, Sql_Wrapper::sql_quote($hash));
-            }
-            $this->sql_params->exec_transaction($query);
-            $this->sql_playlist->exec("DROP TABLE $table_name;");
-        }
-
-        // remove unused settings from db
-        $query = sprintf('DELETE FROM %s WHERE %s;',
-            self::SETTINGS_TABLE, Sql_Wrapper::sql_make_where_clause(array('cur_xmltv_source', 'cur_xmltv_key'), COLUMN_NAME));
-        $this->sql_playlist->exec($query);
-
-        //////////////////////////////////////////////////////
-        /// Upgrade settings to database
-        $group_icons = $this->upgrade_settings($playlist_id);
-        $this->upgrade_orders($playlist_id, $group_icons);
-
-        // tv history is per playlist or per provider playlist
-        $this->upgrade_tv_history();
-
-        // create vod history table
-        if ($this->is_vod_playlist() || (!empty($provider) && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
-            $vod_history_db = $this->get_history_path() . $this->make_base_name(VOD_HISTORY, null, false) . ".db";
-            if ($this->sql_playlist->attachDatabase($vod_history_db, self::VOD_HISTORY_DB) === 0) {
-                hd_debug_print("Can't attach to database: $vod_history_db with name: " . self::VOD_HISTORY_DB);
-            } else {
-                $query = sprintf(self::CREATE_VOD_HISTORY_TABLE, self::get_table_full_name(VOD_HISTORY));
-                $this->sql_playlist->exec($query);
-                $this->upgrade_vod_history();
-            }
-        }
-    }
-
-    /**
-     * @return bool
-     */
-    public function init_vod_class($force = false)
-    {
-        if (!$force && $this->vod !== null) {
-            return true;
-        }
-
-        $this->vod_enabled = false;
-        $vod_class = null;
-        $provider = $this->get_active_provider();
-        if (!is_null($provider)) {
-            $use_vod = $this->get_bool_setting(PARAM_USE_VOD);
-            if ($use_vod) {
-                $vod_class = $provider->get_vod_class();
-            }
-        } else if ($this->is_vod_playlist()) {
-            $vod_class = 'vod_standard';
-        }
-
-        if (!empty($vod_class)) {
-            hd_debug_print("Using VOD: $vod_class");
-            $this->vod = new $vod_class($this);
-            $this->vod_enabled = $this->vod->init_vod($provider);
-            $this->vod->init_vod_screens();
-            hd_debug_print('VOD enabled: ' . SwitchOnOff::to_def($this->vod_enabled));
-        }
-
-        return $this->vod_enabled;
+        $this->safe_sql_playlist('exec_transaction', $query);
     }
 
     /**
@@ -4117,7 +4111,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print('new order: ' . json_format_unescaped($order), true);
         $selected_json_table = self::SELECTED_JSON_TABLE;
         $query = "DELETE FROM $selected_json_table;";
-        $this->sql_playlist->exec($query);
+        $this->safe_sql_playlist_settings('exec', $query);
         foreach ($this->get_provider_epg_presets($provider) as $id => $preset) {
             if (!isset($order[$id])) {
                 $order[$id] = 1;
@@ -4129,10 +4123,55 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $query .= "INSERT INTO $selected_json_table (name, enabled) VALUES ('$id', $enabled);";
         }
 
-        if (!empty($query)) {
-            $this->sql_playlist->exec($query);
-        }
+        $this->safe_sql_playlist_settings('exec', $query);
         safe_unlink(List_Utils::config_file_path($config_name));
+    }
+
+    protected function init_tv_history_db()
+    {
+        $tv_history_db = $this->get_history_path() . $this->make_base_name(TV_HISTORY, null, false) . ".db";
+        // load to tv_history db. if db not exist it will be created
+        $this->sql_tv_history = new Sql_Wrapper($tv_history_db);
+        if (!$this->sql_tv_history->is_valid()) {
+            hd_debug_print("Tv history db '$tv_history_db' is not valid!");
+            return false;
+        }
+
+        // create tv history table
+        $query = sprintf(self::CREATE_TV_HISTORY_TABLE, self::TV_HISTORY_TABLE);
+        $this->safe_sql_tv_history('exec', $query);
+
+        if (!$this->safe_sql_tv_history('is_column_exists', self::TV_HISTORY_TABLE, COLUMN_TIME_START)) {
+            $query = sprintf('ALTER TABLE %s ADD COLUMN %s INTEGER DEFAULT 0;', self::TV_HISTORY_TABLE, COLUMN_TIME_START);
+            $query .= sprintf('ALTER TABLE %s ADD COLUMN %s INTEGER DEFAULT 0;', self::TV_HISTORY_TABLE, COLUMN_TIME_END);
+            $this->safe_sql_tv_history('exec_transaction', $query);
+        }
+
+        // tv history is per playlist or per provider playlist
+        $this->upgrade_tv_history();
+        hd_debug_print("Tv history db inited!");
+        return true;
+    }
+
+    protected function init_vod_history_db()
+    {
+        // create vod history table
+        if ($this->is_vod_playlist() || (!empty($provider) && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
+            $vod_history_db = $this->get_history_path() . $this->make_base_name(VOD_HISTORY, null, false) . ".db";
+            $this->sql_vod_history = new Sql_Wrapper($vod_history_db);
+            if (!$this->sql_vod_history->is_valid()) {
+                $err = "Database $vod_history_db is not valid!";
+                Dune_Last_Error::set_last_error(LAST_ERROR_PLAYLIST, $err);
+                hd_debug_print($err);
+                return false;
+            }
+
+            $query = sprintf(self::CREATE_VOD_HISTORY_TABLE, self::VOD_HISTORY_TABLE);
+            $this->sql_vod_history->exec($query);
+            $this->upgrade_vod_history();
+            hd_debug_print("Tv history db inited!");
+        }
+        return true;
     }
 
     /**

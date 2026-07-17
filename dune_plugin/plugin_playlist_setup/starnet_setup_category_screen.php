@@ -155,10 +155,15 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
             case PARAM_SHOW_CHANGED_CHANNELS:
             case PARAM_SHOW_VOD:
             case PARAM_SHOW_ADULT:
+                $this->force_parent_reload = true;
+                $this->plugin->toggle_setting($control_id, true);
+                $this->plugin->update_ui_settings();
+                break;
+
             case PARAM_PICONS_DELAY_LOAD:
             case PARAM_SHOW_CLASSIC_CHANNEL_COUNT:
                 $this->force_parent_reload = true;
-                $this->plugin->toggle_setting($control_id);
+                $this->plugin->toggle_setting($control_id, false);
                 $this->plugin->update_ui_settings();
                 break;
 

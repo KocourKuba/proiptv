@@ -512,3 +512,4 @@ err_no_xmltv_sources = Не выбраны источники XMLTV!
 err_empty_export_list = Список экспорта пустой!
 err_no_epg_in_all_range = Нет записей EPG для выбранного времени в данных для всех вариантов источников EPG
 err_already_exist = XMLTV источник уже есть в списке
+err_bad_pass = Неверный пароль

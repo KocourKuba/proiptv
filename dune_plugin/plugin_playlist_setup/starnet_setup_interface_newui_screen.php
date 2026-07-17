@@ -129,11 +129,15 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen
                 $this->force_parent_reload = true;
                 break;
 
-            case PARAM_NEWUI_SQUARE_ICONS:
-            case PARAM_NEWUI_SHOW_CHANNEL_CAPTION:
             case PARAM_NEWUI_SHOW_CHANNEL_COUNT:
-            case PARAM_NEWUI_SHOW_CONTINUES:
                 $this->plugin->toggle_setting($control_id, false);
+                $this->force_parent_reload = true;
+                break;
+
+            case PARAM_NEWUI_SHOW_CHANNEL_CAPTION:
+            case PARAM_NEWUI_SQUARE_ICONS:
+            case PARAM_NEWUI_SHOW_CONTINUES:
+                $this->plugin->toggle_setting($control_id, true);
                 $this->force_parent_reload = true;
                 break;
         }

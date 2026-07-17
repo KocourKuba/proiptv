@@ -77,7 +77,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             }
         }
 
-        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_SETTINGS, TR::t('edit'));
+        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_EDIT_PLAYLIST_SETTINGS, TR::t('edit'));
 
         $action_return = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
@@ -120,8 +120,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::close_and_run($target_action);
 
             case GUI_EVENT_KEY_ENTER:
-                $type = $this->plugin->get_playlist_parameter($selected_id, PARAM_TYPE);
-                $uri = $this->plugin->get_playlist_parameter($selected_id, PARAM_URI);
+                $params = $this->plugin->get_playlist_parameters($selected_id);
+                $type = safe_get_value($params, PARAM_TYPE);
+                $uri = safe_get_value($params, PARAM_URI);
                 if ($type === PARAM_FILE && !file_exists($uri)) {
                     return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_error_file_not_found'));
                 }
@@ -155,22 +156,24 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             case GUI_EVENT_KEY_INFO:
                 if (!$this->plugin->is_playlist_entry_exist($selected_id)) {
                     hd_debug_print("Unknown playlist: $selected_id", true);
-                    return null;
+                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_file_exist'));
                 }
 
                 return $this->show_playlist_info($selected_id);
 
-            case ACTION_PLUGIN_SETTINGS:
+            case ACTION_EDIT_PLAYLIST_SETTINGS:
+                return $this->plugin->show_protect_settings_dialog($this, User_Input_Handler_Registry::create_action($this, ACTION_PASSWORD_APPLY));
+
+            case ACTION_PASSWORD_APPLY:
                 if (!$this->plugin->is_playlist_entry_exist($selected_id)) {
                     hd_debug_print("Unknown playlist: $selected_id", true);
-                    return null;
+                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_file_exist'));
                 }
 
-                return $this->plugin->show_protect_settings_dialog($this,
-                    Action_Factory::open_folder(
-                        Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID, $user_input->sel_ndx, $selected_id),
-                        TR::t('setup_playlist')
-                    )
+                $this->plugin->init_playlist_settings_db($selected_id);
+                return Action_Factory::open_folder(
+                    Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID, $user_input->sel_ndx, $selected_id),
+                    TR::t('setup_playlist')
                 );
 
             case ACTION_ITEM_TOGGLE_MOVE:

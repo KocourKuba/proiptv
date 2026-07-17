@@ -81,7 +81,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
                 }
 
                 if ($user_input->{ACTION_FILTER} === ACTION_ITEMS_EDIT) {
-                    $filter_idx = $this->plugin->get_table_value_id(VOD_FILTER_LIST, $selected_media_url->genre_id);
+                    $filter_idx = $this->plugin->get_settings_value_id(VOD_FILTER_LIST, $selected_media_url->genre_id);
                 } else {
                     $filter_idx = -1;
                 }
@@ -98,7 +98,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
                 } else {
                     $idx = -1;
                 }
-                $this->plugin->set_table_value(VOD_FILTER_LIST, $filter_string, $idx);
+                $this->plugin->set_settings_value(VOD_FILTER_LIST, $filter_string, $idx);
 
                 return Action_Factory::invalidate_folders(
                     array($user_input->parent_media_url),
@@ -130,7 +130,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
                         if ($sel_ndx < 1) {
                             return null;
                         }
-                        $this->plugin->arrange_table_values(VOD_FILTER_LIST, $selected_media_url->genre_id, Ordered_Array::UP);
+                        $this->plugin->arrange_settings_values(VOD_FILTER_LIST, $selected_media_url->genre_id, Ordered_Array::UP);
                         break;
 
                     case ACTION_ITEM_DOWN:
@@ -139,11 +139,11 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
                         if ($sel_ndx > $max_sel) {
                             return null;
                         }
-                        $this->plugin->arrange_table_values(VOD_FILTER_LIST, $selected_media_url->genre_id, Ordered_Array::DOWN);
+                        $this->plugin->arrange_settings_values(VOD_FILTER_LIST, $selected_media_url->genre_id, Ordered_Array::DOWN);
                         break;
 
                     case ACTION_ITEM_DELETE:
-                        $this->plugin->remove_table_value(VOD_FILTER_LIST, $selected_media_url->genre_id);
+                        $this->plugin->remove_settings_value(VOD_FILTER_LIST, $selected_media_url->genre_id);
                         break;
                 }
 
@@ -184,7 +184,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen
             ),
         );
 
-        foreach ($this->plugin->get_table_values(VOD_FILTER_LIST) as $item_row) {
+        foreach ($this->plugin->get_settings_values(VOD_FILTER_LIST) as $item_row) {
             if (empty($item_row)) continue;
 
             $items[] = array(

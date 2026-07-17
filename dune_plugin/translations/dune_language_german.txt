@@ -512,3 +512,4 @@ err_no_xmltv_sources = Keine XMLTV-Quelle ausgewählt!
 err_empty_export_list = Exportliste leer!
 err_no_epg_in_all_range = Keine EPG-Einträge für ausgewählte Zeit im verfügbaren Bereich für alle EPG-Voreinstellungen
 err_already_exist = XMLTV-Quelle, die bereits in der Liste vorhanden ist
+err_bad_pass = Falsches Passwort

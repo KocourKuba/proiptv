@@ -634,8 +634,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             $end_tm = $channel_row[COLUMN_TIME_END];
             $epg_len = $end_tm - $start_tm;
             $progress = 0;
+            $channel_info = $this->plugin->get_channel_info($channel_id);
 
-            $title = $channel_row[COLUMN_TITLE];
+            $title = $channel_info[COLUMN_TITLE];
             // program epg available
             if ($channel_ts > 0) {
                 $title = format_datetime('d.m H:i', $channel_ts);
@@ -645,7 +646,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                     $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
                 }
 
-                if ($channel_ts >= $now - $channel_row[COLUMN_ARCHIVE] * 86400 - 60 && $epg_len !== 0) {
+                if ($channel_ts >= $now - $channel_info[COLUMN_ARCHIVE] * 86400 - 60 && $epg_len !== 0) {
                     $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2)));
                 }
             }
