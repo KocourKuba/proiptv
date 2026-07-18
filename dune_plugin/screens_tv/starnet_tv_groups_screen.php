@@ -496,7 +496,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             $action_clear = Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
                 $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
 
-            if ($group_id === $fav_id && $this->plugin->get_order_count($fav_id)) {
+            if ($group_id === TV_FAV_GROUP_ID && $this->plugin->get_order_count($fav_id)) {
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($action_clear, TR::t('clear_favorites'), 'brush.png');
             }
             if ($group_id === TV_HISTORY_GROUP_ID && $this->plugin->get_tv_history_count() !== 0) {
@@ -529,7 +529,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 "move.png",
                 array(CONTROL_ACTION_EDIT => Starnet_Edit_Group_List_Screen::PARAM_EDIT_GROUPS));
 
-            if ($group_id !== $fav_id &&
+            if ($group_id !== TV_FAV_GROUP_ID &&
                 $group_id !== TV_CHANGED_CHANNELS_GROUP_ID &&
                 $group_id !== TV_HISTORY_GROUP_ID &&
                 $group_id !== VOD_GROUP_ID) {

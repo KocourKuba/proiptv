@@ -429,6 +429,7 @@ tv_screen_internal_player = Play by internal player
 tv_screen_toggle_icons_aspect = Square channels icons
 tv_screen_edit_channel = Edit channel
 tv_screen_channel_zoom = Zoom
+tv_screen_edit_ch_channel_info__1 = Name:|%s
 
 vod_screen_new_filter = [New filter]
 vod_screen_no_film_info = Movie information not available
@@ -462,6 +463,7 @@ epg_no_sources = No XMLTV EPG
 epg_no_sources_desc = No XMLTV EPG source selected. Can't show EPG!
 fake_epg_program = Program
 playlist_name_msg__1 = Refresh playlist: %s
+edit_help = ||Select|Enter/Ok||Move up|LEFT button||Move down|RIGHT button||A|Change mode
 
 warn_msg2__1 = Missed or not full data for URL generation.\nPossible not entered account data or channel not present in the current subscription.\n %s
 warn_msg3 = Unable to display subscription details.

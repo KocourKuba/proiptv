@@ -430,6 +430,7 @@ tv_screen_internal_player = internen Spieler
 tv_screen_toggle_icons_aspect = Symbole für quadratische Kanäle
 tv_screen_edit_channel = Kanal bearbeiten
 tv_screen_channel_zoom = Zoom
+tv_screen_edit_ch_channel_info__1 = Name:|%s
 
 vod_screen_new_filter = [Neuer Filter]
 vod_screen_no_film_info = Filminformationen nicht verfügbar
@@ -463,6 +464,7 @@ epg_no_sources = Kein XMLTV-EPG
 epg_no_sources_desc = Keine XMLTV-EPG-Quelle ausgewählt. EPG kann nicht angezeigt werden!
 fake_epg_program = Programm
 playlist_name_msg__1 = Wiedergabeliste aktualisieren: %s
+edit_help = ||Auswählen|Herein/Ok||Vorrücken|Taste LINKS||Runtergehen|Taste RECHTS||A|Moduswechsel
 
 warn_msg2__1 = Fehlende oder nicht vollständige Daten für die URL-Generierung.\nMöglicherweise wurden keine Kontodaten eingegeben oder der Kanal ist im aktuellen Abonnement nicht vorhanden.\n %s
 warn_msg3 = Abonnementdetails können nicht angezeigt werden.

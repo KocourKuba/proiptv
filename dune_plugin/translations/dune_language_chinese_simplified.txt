@@ -430,6 +430,7 @@ tv_screen_internal_player = 使用内置播放器
 tv_screen_toggle_icons_aspect = 切换为方形频道图标
 tv_screen_edit_channel = 编辑频道
 tv_screen_channel_zoom = 频道画面缩放
+tv_screen_edit_ch_channel_info__1 = 名称:|%s
 
 vod_screen_new_filter = [新建筛选条件]
 vod_screen_no_film_info = 影片信息不可用
@@ -463,6 +464,7 @@ epg_no_sources = 无本地节目单（EPG）
 epg_no_sources_desc = 未选择任何 XMLTV 节目单（EPG），无法显示节目单!
 fake_epg_program = 节目单点位符
 playlist_name_msg__1 = 刷新播放列表: %s
+edit_help = ||选取|进来/好的||往前走|左键||往下挪|右键||A|切换模式
 
 warn_msg2__1 = 生成播放地址时数据缺失或不完整.\n未填写账户信息，或当前订阅不包含该频道.\n %s
 warn_msg3 = 	无法显示订阅详情.

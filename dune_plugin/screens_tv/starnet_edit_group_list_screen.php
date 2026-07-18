@@ -278,10 +278,12 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print($media_url, true);
 
         $items = array();
+        $help = TR::load('edit_help');
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         foreach ($this->plugin->get_groups_by_order($show_adult) as $group_row) {
             $icon = get_cached_image(safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON));
             $selected = in_array($group_row[COLUMN_GROUP_ID], $this->selected_items);
+            $detailed_info = TR::load('tv_screen_edit_ch_channel_info__1', $group_row[COLUMN_TITLE]) . $help;
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
                     array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => $group_row[COLUMN_GROUP_ID])),
@@ -292,6 +294,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                     ViewItemParams::item_caption_color => $selected ? DEF_LABEL_TEXT_COLOR_YELLOW : DEF_LABEL_TEXT_COLOR_WHITE,
                     ViewItemParams::icon_path => $icon,
                     ViewItemParams::item_detailed_icon_path => $icon,
+                    ViewItemParams::item_detailed_info => $detailed_info,
                 )
             );
         }
@@ -330,15 +333,13 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
 
     protected function create_popup_menu()
     {
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_ENTER, TR::t('select_enter'), 'mark.png');
-
         if ($this->selected_items) {
             $menu_items[] = Control_Factory::menu_separator();
             $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                 ACTION_ITEMS_CLEAR, TR::t('clear_selection'), 'brush.png');
+            $menu_items[] = Control_Factory::menu_separator();
         }
 
-        $menu_items[] = Control_Factory::menu_separator();
         $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
             array(
                 PARAM_EXTENSION => IMAGE_PREVIEW_PATTERN,

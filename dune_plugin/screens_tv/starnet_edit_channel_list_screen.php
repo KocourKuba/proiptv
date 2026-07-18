@@ -293,7 +293,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::show_popup_menu($menu_items);
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                return $this->create_popup_menu();
+                return $this->create_popup_menu($parent_group);
 
             case ACTION_EMPTY:
             default:
@@ -314,8 +314,10 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         $fav_ids = $this->plugin->get_channels_order($this->plugin->get_fav_id());
 
         if ($media_url->{PARAM_GROUP_ID} === TV_ALL_CHANNELS_GROUP_ID) {
+            $help = '';
             $groups_order = $this->plugin->get_groups_by_order($show_adult);
         } else {
+            $help = TR::load('edit_help');
             $groups_order = array();
             $group = $this->plugin->get_group($media_url->{PARAM_GROUP_ID}, PARAM_GROUP_ORDINARY, $show_adult);
             if (!empty($group)) {
@@ -333,6 +335,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $title = $channel_row[COLUMN_SHOW_TITLE];
                 $selected = in_array($channel_id, $this->selected_items);
 
+                $detailed_info = TR::load('tv_screen_edit_ch_channel_info__1', $title) . $help;
                 $items[] = array(
                     PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_CHANNEL_ID => $channel_id, PARAM_GROUP_ID => $group_id)),
                     PluginRegularFolderItem::caption => $title,
@@ -343,7 +346,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                         ViewItemParams::item_caption_color => $selected ? DEF_LABEL_TEXT_COLOR_YELLOW : DEF_LABEL_TEXT_COLOR_WHITE,
                         ViewItemParams::icon_path => $icon_url,
                         ViewItemParams::item_detailed_icon_path => $icon_url,
-                        ViewItemParams::item_detailed_info => $title,
+                        ViewItemParams::item_detailed_info => $detailed_info,
                     ),
                 );
             }
@@ -380,21 +383,23 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// Protected methods
 
-    protected function create_popup_menu()
+    protected function create_popup_menu($parent_group)
     {
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_ENTER, TR::t('select_enter'));
-        if ($this->selected_items) {
-            $menu_items[] = Control_Factory::menu_separator();
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                ACTION_ITEMS_CLEAR, TR::t('clear_selection'), 'brush.png');
-        }
-        $menu_items[] = Control_Factory::menu_separator();
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-            ACTION_ITEMS_SORT, TR::t('sort_channels'), 'sort.png');
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RESET_ITEMS_SORT,
-            TR::t('reset_channels_sort'), 'brush.png');
+        if ($parent_group != TV_ALL_CHANNELS_GROUP_ID) {
+            if ($this->selected_items) {
+                $menu_items[] = Control_Factory::menu_separator();
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                    ACTION_ITEMS_CLEAR, TR::t('clear_selection'), 'brush.png');
+                $menu_items[] = Control_Factory::menu_separator();
+            }
 
-        $menu_items[] = Control_Factory::menu_separator();
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                ACTION_ITEMS_SORT, TR::t('sort_channels'), 'sort.png');
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RESET_ITEMS_SORT,
+                TR::t('reset_channels_sort'), 'brush.png');
+            $menu_items[] = Control_Factory::menu_separator();
+        }
+
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             ACTION_ITEM_DELETE_CHANNELS, TR::t('tv_screen_hide_group_channels'), 'remove.png');
 

@@ -430,6 +430,7 @@ tv_screen_internal_player = Воспроизводить внутренним п
 tv_screen_toggle_icons_aspect = Квадратные иконки каналов
 tv_screen_edit_channel = Редактировать канал
 tv_screen_channel_zoom = Масштабирование
+tv_screen_edit_ch_channel_info__1 = Название:|%s
 
 vod_screen_new_filter = [Новый фильтр]
 vod_screen_no_film_info = Информация о фильме недоступна
@@ -463,6 +464,7 @@ epg_no_sources = Нет EPG
 epg_no_sources_desc = Источник XMLTV EPG не задан. Программа передач недоступна!
 fake_epg_program = Телепрограмма
 playlist_name_msg__1 = Обновить плейлист: %s
+edit_help = ||Отметить|Enter/Ok||Переместить вверх|кнопка Влево||Переместить вниз|кнопка Вправо||A|Смена режима
 
 warn_msg2__1 = Отсутствуют или неполные данные для формирования ссылки.\nВозможно не введены данные для просмотра или канал отсутствует в подписке.\n %s
 warn_msg3 = Невозможно отобразить данные о подписке.
