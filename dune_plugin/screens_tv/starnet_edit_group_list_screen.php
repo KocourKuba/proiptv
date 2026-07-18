@@ -258,6 +258,10 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
             case GUI_EVENT_KEY_POPUP_MENU:
                 return $this->create_popup_menu();
 
+            case ACTION_INVALIDATE:
+                $this->force_parent_reload = true;
+                break;
+
             case ACTION_EMPTY:
             default:
         }

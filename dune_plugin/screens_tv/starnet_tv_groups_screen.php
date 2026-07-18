@@ -355,7 +355,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     $detailed_info = TR::t('tv_screen_group_info__1', $caption);
                 }
 
-                $ordinary_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_WHITE, $detailed_info);
+                $group_icon = safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON);
+                $ordinary_items[] = $this->add_item($group_row[COLUMN_GROUP_ID], $group_icon, $caption, DEF_LABEL_TEXT_COLOR_WHITE, $detailed_info);
             }
         }
 
@@ -365,8 +366,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
         $special_items = array();
         foreach ($this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ALL) as $group_row) {
             $group_id = $group_row[COLUMN_GROUP_ID];
+            hd_debug_print("Group id: $group_id", true);
             if (($this->plugin->is_vod_playlist() && $group_id !== VOD_GROUP_ID) || ($group_id !== VOD_GROUP_ID && $no_channels)) continue;
 
+            $group_icon = safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON);
             switch ($group_id) {
                 case TV_ALL_CHANNELS_GROUP_ID:
                     if (!$this->plugin->get_bool_setting(PARAM_SHOW_ALL)) break;
@@ -381,23 +384,22 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     } else {
                         $detailed_info = TR::t('tv_screen_group_info__1', $caption);
                     }
-                    $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_SKYBLUE, $detailed_info);
+                    $special_items[] = $this->add_item($group_id, $group_icon, $caption, DEF_LABEL_TEXT_COLOR_SKYBLUE, $detailed_info);
                     break;
 
                 case TV_FAV_GROUP_ID:
                     if (!$this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) break;
                     $fav_id = $this->plugin->get_fav_id();
-
-                    $channels_cnt = $this->plugin->get_channels_by_order_cnt($fav_id, $show_adult, true);
+                    $channels_cnt = $this->plugin->get_fav_ids_by_order_cnt($fav_id);
                     if (!$channels_cnt) break;
 
-                    $caption = $fav_id === TV_FAV_COMMON_GROUP_ID ? TR::t('plugin_common_favorites') : TR::t('plugin_favorites');
+                    $caption = $this->plugin->get_fav_caption();
                     if ($show_count) {
                         $detailed_info = TR::t('tv_screen_group_info__2', $caption, $channels_cnt);
                     } else {
                         $detailed_info = TR::t('tv_screen_group_info__1', $caption);
                     }
-                    $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_GOLD, $detailed_info);
+                    $special_items[] = $this->add_item($group_id, $group_icon, $caption, DEF_LABEL_TEXT_COLOR_GOLD, $detailed_info);
                     break;
 
                 case TV_HISTORY_GROUP_ID:
@@ -412,7 +414,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     } else {
                         $detailed_info = TR::t('tv_screen_group_info__1', $caption);
                     }
-                    $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_TURQUOISE, $detailed_info);
+                    $special_items[] = $this->add_item($group_id, $group_icon, $caption, DEF_LABEL_TEXT_COLOR_TURQUOISE, $detailed_info);
                     break;
 
                 case TV_CHANGED_CHANNELS_GROUP_ID:
@@ -423,13 +425,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     $removed = $this->plugin->get_changed_channels_count(PARAM_REMOVED);
                     $caption = TR::t('plugin_changed');
                     $detailed_info = TR::t('tv_screen_group_changed_info__3', $caption, $new, $removed);
-                    $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_RED, $detailed_info);
+                    $special_items[] = $this->add_item($group_id, $group_icon, $caption, DEF_LABEL_TEXT_COLOR_RED, $detailed_info);
                     break;
 
                 case VOD_GROUP_ID:
                     if ($this->plugin->is_vod_enabled() && $this->plugin->get_bool_setting(PARAM_SHOW_VOD)) {
                         $caption = TR::t(VOD_GROUP_CAPTION);
-                        $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_LIGHTGREEN, $caption);
+                        $special_items[] = $this->add_item($group_id, $group_icon, $caption, DEF_LABEL_TEXT_COLOR_LIGHTGREEN, $caption);
                     }
                     break;
             }
@@ -553,18 +555,19 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
     }
 
     /**
-     * @param array $group_row
+     * @param string $group_id
+     * @param string $group_icon
      * @param string $caption
      * @param string $color
      * @param string $item_detailed_info
      * @return array
      */
-    private function add_item($group_row, $caption, $color, $item_detailed_info)
+    private function add_item($group_id, $group_icon, $caption, $color, $item_detailed_info)
     {
-        $icon = get_cached_image(safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON));
+        $icon = get_cached_image($group_icon);
 
         return array(
-            PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group_row[COLUMN_GROUP_ID]),
+            PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group_id),
             PluginRegularFolderItem::caption => $caption,
             PluginRegularFolderItem::view_item_params => array(
                 ViewItemParams::item_caption_color => $color,

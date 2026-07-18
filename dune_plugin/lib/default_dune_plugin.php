@@ -647,6 +647,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             if ($not_found) {
                 hd_debug_print('No entries in range for selected time in ' . count($day_epg) . ' entries');
+                return array();
             }
         }
 
@@ -944,9 +945,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         if (!$this->init_tv_history_db()) {
+            hd_debug_print("Can't connect to history database!");
             return 0;
         }
+
         if (!$this->init_vod_history_db()) {
+            hd_debug_print("Can't connect to vod history database!");
             return 0;
         }
 
@@ -2304,9 +2308,20 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return null;
     }
 
+    /**
+     * @return string
+     */
     public function get_fav_id()
     {
         return $this->get_bool_setting(PARAM_USE_COMMON_FAV, false) ? TV_FAV_COMMON_GROUP_ID : TV_FAV_GROUP_ID;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_fav_caption()
+    {
+        return $this->get_bool_setting(PARAM_USE_COMMON_FAV, false) ? TR::t('plugin_common_favorites') : TR::t('plugin_favorites');
     }
 
     /**
@@ -2726,6 +2741,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function do_edit_list_screen($source_screen_id, $action_edit, $group_id = null,
                                         $ret_action = array(PARAM_END_ACTION => ACTION_INVALIDATE, PARAM_CANCEL_ACTION => ACTION_EMPTY))
     {
+        hd_debug_print("source screen: $source_screen_id, action edit: $action_edit, group_id: $group_id, ret_action: " .
+            json_format_unescaped($ret_action), true);
+
         $post_action = null;
         if (!is_null($group_id)) {
             $ret_action[PARAM_GROUP_ID] = $group_id;
@@ -2774,6 +2792,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 return null;
         }
 
+        hd_debug_print("call url: " . $new_media_url_str);
         return Action_Factory::open_folder($new_media_url_str, $title, null, null, $post_action);
     }
 
@@ -2785,7 +2804,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function do_show_channel_info($handler, $channel_id, $is_classic)
     {
-        $channel_row = $this->get_channel_info($channel_id);
+        $channel_row = $this->get_channel_info($channel_id, false);
         if (empty($channel_row)) {
             return null;
         }
@@ -3358,7 +3377,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         return ($group_id === TV_ALL_CHANNELS_GROUP_ID
             || $group_id === TV_FAV_GROUP_ID
-            || $group_id === TV_FAV_COMMON_GROUP_ID
             || $group_id === TV_HISTORY_GROUP_ID
             || $group_id === TV_CHANGED_CHANNELS_GROUP_ID
             || $group_id === VOD_GROUP_ID);
@@ -4132,6 +4150,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     protected function init_tv_history_db()
     {
+        hd_debug_print(null, true);
+
         $tv_history_db = $this->get_history_path() . $this->make_base_name(TV_HISTORY, null, false) . ".db";
         // load to tv_history db. if db not exist it will be created
         $this->sql_tv_history = new Sql_Wrapper($tv_history_db);
@@ -4152,12 +4172,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // tv history is per playlist or per provider playlist
         $this->upgrade_tv_history();
-        hd_debug_print("Tv history db inited!");
+        hd_debug_print("Tv history db '$tv_history_db' inited!");
         return true;
     }
 
     protected function init_vod_history_db()
     {
+        hd_debug_print(null, true);
+
+        $provider = $this->get_active_provider();
         // create vod history table
         if ($this->is_vod_playlist() || (!empty($provider) && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
             $vod_history_db = $this->get_history_path() . $this->make_base_name(VOD_HISTORY, null, false) . ".db";
@@ -4172,7 +4195,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $query = sprintf(self::CREATE_VOD_HISTORY_TABLE, self::VOD_HISTORY_TABLE);
             $this->sql_vod_history->exec($query);
             $this->upgrade_vod_history();
-            hd_debug_print("Tv history db inited!");
+            hd_debug_print("VOD history db '$vod_history_db' inited!");
+        } else {
+            hd_debug_print('Playlist does not support VOD');
         }
         return true;
     }

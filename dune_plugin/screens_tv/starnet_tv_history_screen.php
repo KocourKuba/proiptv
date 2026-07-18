@@ -200,24 +200,29 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
         $items = array();
         $now = time();
         foreach ($this->plugin->get_tv_history() as $history_row) {
+            hd_debug_print(json_encode($history_row), true);
             $channel_id = $history_row[COLUMN_CHANNEL_ID];
             $channel_ts = $history_row[COLUMN_TIMESTAMP];
-            $prog_info = $this->plugin->get_epg_info($channel_id, $channel_ts);
             $channel_info = $this->plugin->get_channel_info($channel_id);
+            if (empty($channel_info)) continue;
+
+            $prog_info = $this->plugin->get_epg_info($channel_id, $channel_ts);
+            if (empty($prog_info)) continue;
+
             $description = '';
             if (!isset($prog_info[PluginTvEpgProgram::start_tm_sec])) {
-                $title = $channel_info[COLUMN_TITLE];
-            } else {
-                // program epg available
-                $title = $prog_info[PluginTvEpgProgram::name];
-                if ($channel_ts > 0) {
-                    $start_tm = $prog_info[PluginTvEpgProgram::start_tm_sec];
-                    $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
-                    if ($channel_ts >= $now - $channel_info[COLUMN_ARCHIVE] * 86400 - 60) {
-                        $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2))) * 100;
-                        $title = "$title | " . date('j.m H:i', $channel_ts) . " [$progress%]";
-                        $description = "{$channel_info[COLUMN_TITLE]}|{$prog_info[PluginTvEpgProgram::description]}";
-                    }
+                continue;
+            }
+
+            // program epg available
+            $title = $prog_info[PluginTvEpgProgram::name];
+            if ($channel_ts > 0) {
+                $start_tm = $prog_info[PluginTvEpgProgram::start_tm_sec];
+                $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
+                if ($channel_ts >= $now - $channel_info[COLUMN_ARCHIVE] * 86400 - 60) {
+                    $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2))) * 100;
+                    $title = "$title | " . date('j.m H:i', $channel_ts) . " [$progress%]";
+                    $description = "{$channel_info[COLUMN_SHOW_TITLE]}|{$prog_info[PluginTvEpgProgram::description]}";
                 }
             }
 

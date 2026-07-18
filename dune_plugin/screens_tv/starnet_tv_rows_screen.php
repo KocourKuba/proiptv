@@ -635,6 +635,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             $epg_len = $end_tm - $start_tm;
             $progress = 0;
             $channel_info = $this->plugin->get_channel_info($channel_id);
+            hd_debug_print("ret: " . json_format_unescaped($channel_info));
 
             $title = $channel_info[COLUMN_TITLE];
             // program epg available
@@ -736,7 +737,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             );
         }
 
-        $caption = $this->plugin->get_bool_setting(PARAM_USE_COMMON_FAV, false) ? TR::t('plugin_common_favorites') : TR::t('plugin_favorites');
+        $caption = $this->plugin->get_fav_caption();
         $rows = $this->create_row($items, $headers,
             $fav_id,
             $caption,

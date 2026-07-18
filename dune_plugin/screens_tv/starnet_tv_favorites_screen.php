@@ -65,6 +65,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
         $actions[GUI_EVENT_KEY_SUBTITLE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_SUBTITLE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+        $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
 
         if (!is_limited_apk()) {
             // this key used to fire event from background xmltv indexing script
@@ -130,6 +131,9 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
 
             case EVENT_INDEXING_DONE:
                 return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
+
+            case GUI_EVENT_KEY_INFO:
+                return $this->plugin->do_show_channel_info($this, $channel_id, true);
 
             case GUI_EVENT_KEY_SUBTITLE:
                 $attrs['initial_sel_ndx'] = 2;
@@ -262,15 +266,16 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print($media_url, true);
 
         $items = array();
-        $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
-        foreach ($this->plugin->get_channels_by_order($this->plugin->get_fav_id(), $show_adult, true) as $channel_row) {
+        $fav_id = $this->plugin->get_fav_id();
+        foreach ($this->plugin->get_fav_ids_by_order($fav_id) as $id) {
+            $channel_row = $this->plugin->get_channel_info($id, false);
             $icon_url = $this->plugin->get_channel_picon($channel_row, true);
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
-                    array(PARAM_CHANNEL_ID => $channel_row[COLUMN_CHANNEL_ID], PARAM_GROUP_ID => TV_FAV_GROUP_ID)
+                    array(PARAM_CHANNEL_ID => $channel_row[COLUMN_CHANNEL_ID], PARAM_GROUP_ID => $fav_id)
                 ),
-                PluginRegularFolderItem::caption => $channel_row[COLUMN_TITLE],
+                PluginRegularFolderItem::caption => $channel_row[COLUMN_SHOW_TITLE],
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::locked => $channel_row[COLUMN_DISABLED],
                 PluginRegularFolderItem::view_item_params => array(

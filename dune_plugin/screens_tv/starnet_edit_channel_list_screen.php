@@ -97,7 +97,8 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         $channels_order = $this->plugin->get_channels_ids_by_order($selected_media_url->{PARAM_GROUP_ID}, $show_adult);
         $selected_channel = $selected_media_url->{PARAM_CHANNEL_ID};
-        $parent_group = $selected_media_url->{PARAM_GROUP_ID};
+        $parent_group = $parent_media_url->{PARAM_GROUP_ID};
+        $parent_group_for_item = $selected_media_url->{PARAM_GROUP_ID};
 
         if (empty($this->selected_items)) {
             $selected_items[] = $selected_channel;
@@ -160,7 +161,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 }
 
                 $channels_order = array_diff($channels_order, $selected_items);
-                $sel_ndx = $this->update_channel_order($parent_group, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
+                $sel_ndx = $this->update_channel_order($parent_group_for_item, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
                 break;
 
             case ACTION_ITEM_DOWN:
@@ -170,7 +171,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                     break;
                 }
 
-                $sel_ndx = $this->update_channel_order($parent_group, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
+                $sel_ndx = $this->update_channel_order($parent_group_for_item, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
                 break;
 
             case ACTION_ITEM_PAGE_UP:
@@ -185,7 +186,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 }
 
                 $channels_order = array_diff($channels_order, $selected_items);
-                $sel_ndx = $this->update_channel_order($parent_group, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
+                $sel_ndx = $this->update_channel_order($parent_group_for_item, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
                 break;
 
             case ACTION_ITEM_PAGE_DOWN:
@@ -197,19 +198,19 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                     $sel_ndx_top = $max;
                 }
 
-                $sel_ndx = $this->update_channel_order($parent_group, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
+                $sel_ndx = $this->update_channel_order($parent_group_for_item, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
                 break;
 
             case ACTION_ITEM_TOP:
                 $this->force_parent_reload = true;
                 $channels_order = array_diff($channels_order, $selected_items);
-                $sel_ndx = $this->update_channel_order($parent_group, 0, $selected_channel, $selected_items, $channels_order);
+                $sel_ndx = $this->update_channel_order($parent_group_for_item, 0, $selected_channel, $selected_items, $channels_order);
                 break;
 
             case ACTION_ITEM_BOTTOM:
                 $this->force_parent_reload = true;
                 $channels_order = array_diff($channels_order, $selected_items);
-                $sel_ndx = $this->update_channel_order($parent_group, count($channels_order), $selected_channel, $selected_items, $channels_order);
+                $sel_ndx = $this->update_channel_order($parent_group_for_item, count($channels_order), $selected_channel, $selected_items, $channels_order);
                 break;
 
             case ACTION_ITEM_DELETE:
@@ -222,7 +223,8 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_ITEMS_EDIT:
                 $cnt = $this->plugin->get_channels_count($parent_group, PARAM_DISABLED);
                 if ($cnt > 0) {
-                    return $this->plugin->do_edit_list_screen(static::ID, Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_CHANNELS);
+                    return $this->plugin->do_edit_list_screen(static::ID,
+                        Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_CHANNELS, $parent_group);
                 }
                 break;
 
@@ -232,12 +234,12 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEMS_SORT:
                 $this->force_parent_reload = true;
-                $this->plugin->sort_channels_order($parent_group);
+                $this->plugin->sort_channels_order($parent_group_for_item);
                 break;
 
             case ACTION_RESET_ITEMS_SORT:
                 $this->force_parent_reload = true;
-                $this->plugin->sort_channels_order($parent_group, true);
+                $this->plugin->sort_channels_order($parent_group_for_item, true);
                 break;
 
             case ACTION_ITEM_DELETE_CHANNELS:
@@ -256,9 +258,9 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEM_DELETE_BY_STRING:
                 if ($user_input->hide === 'hide_sd') {
-                    $this->force_parent_reload = $this->plugin->hide_sd_channels($parent_group) !== 0;
+                    $this->force_parent_reload = $this->plugin->hide_sd_channels($parent_group_for_item) !== 0;
                 } else if ($user_input->hide !== 'custom_string') {
-                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($user_input->hide, $parent_group) !== 0;
+                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($user_input->hide, $parent_group_for_item) !== 0;
                 } else {
                     $defs = array();
                     Control_Factory::add_text_field($defs, $this, self::ACTION_CUSTOM_DELETE, '',
@@ -278,7 +280,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $custom_string = $user_input->{self::ACTION_CUSTOM_DELETE};
                 if (!empty($custom_string)) {
                     $this->plugin->set_parameter(PARAM_CUSTOM_DELETE_STRING, $custom_string);
-                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($custom_string, $parent_group, false) !== 0;
+                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($custom_string, $parent_group_for_item, false) !== 0;
                 }
                 break;
 
