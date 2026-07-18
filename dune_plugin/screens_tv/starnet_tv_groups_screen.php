@@ -503,20 +503,23 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($action_clear, TR::t('clear_changed'), 'brush.png');
             }
 
-            $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
-                array(
-                    PARAM_EXTENSION => IMAGE_PREVIEW_PATTERN,
-                    PARAM_RECENT_FOLDER => $this->plugin->get_setting(PARAM_RECENT_IMAGE_FOLDER, ''),
-                    Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_ICON_SELECTED,
-                    Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_ICON_DEFAULT,
-                    Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
-                    Starnet_Folder_Screen::PARAM_ALLOW_IMAGE_LIB => true,
-                    Starnet_Folder_Screen::PARAM_READ_ONLY => true,
-                )
-            );
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
-                Action_Factory::open_folder($media_url, TR::t('select_file')),
-                TR::t('change_group_icon'), 'image.png');
+            $special_groups = $this->plugin->get_group($group_id, PARAM_GROUP_SPECIAL);
+            if (!empty($special_groups)) {
+                $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
+                    array(
+                        PARAM_EXTENSION => IMAGE_PREVIEW_PATTERN,
+                        PARAM_RECENT_FOLDER => $this->plugin->get_setting(PARAM_RECENT_IMAGE_FOLDER, ''),
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_ICON_SELECTED,
+                        Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_ICON_DEFAULT,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
+                        Starnet_Folder_Screen::PARAM_ALLOW_IMAGE_LIB => true,
+                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
+                    )
+                );
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
+                    Action_Factory::open_folder($media_url, TR::t('select_file')),
+                    TR::t('change_group_icon'), 'image.png');
+            }
 
             $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                 ACTION_ITEMS_EDIT,
