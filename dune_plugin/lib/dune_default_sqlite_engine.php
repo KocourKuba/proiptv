@@ -2218,22 +2218,17 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string $channel_id
-     * @param bool $full
      * @return array
      */
-    public function get_channel_info($channel_id, $full = true)
+    public function get_channel_info($channel_id)
     {
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         $table_name = self::get_table_name(CHANNELS_INFO);
-        if ($full) {
-            $query = sprintf('SELECT ch.%s, ch.%s, pl.*, pl.ROWID AS ch_number FROM %s as pl
-                                        JOIN %s AS ch ON pl.%s = ch.%s WHERE ch.%s=%s AND ch.%s=%d;',
-                COLUMN_CHANNEL_ID, COLUMN_EPG_SHIFT, M3uParser::CHANNELS_TABLE, $table_name, $this->get_id_column(), COLUMN_CHANNEL_ID,
-                COLUMN_CHANNEL_ID, $q_channel_id, COLUMN_DISABLED, FALSE);
-        } else {
-            $query = sprintf('SELECT * FROM %s WHERE %s=%s AND %s=%d;',
-                $table_name, COLUMN_CHANNEL_ID, $q_channel_id, COLUMN_DISABLED, FALSE);
-        }
+        $query = sprintf('SELECT ch.%s,ch.%s,ch.%s,pl.*,pl.ROWID AS ch_number FROM %s as pl
+                                    JOIN %s AS ch ON pl.%s=ch.%s WHERE ch.%s=%s AND ch.%s=%d;',
+            COLUMN_CHANNEL_ID, COLUMN_EPG_SHIFT, COLUMN_SHOW_TITLE, M3uParser::CHANNELS_TABLE,
+            $table_name, $this->get_id_column(), COLUMN_CHANNEL_ID,
+            COLUMN_CHANNEL_ID, $q_channel_id, COLUMN_DISABLED, FALSE);
 
         return $this->safe_sql_playlist('query_value', $query, true);
     }

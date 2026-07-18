@@ -2704,20 +2704,38 @@ function json_format($content, $options = 0)
  *
  * @param string $long_string
  * @param int $max_chars
- * @param string $separator
  * @return array
  */
-function wrap_string_to_array($long_string, $max_chars, $separator = PHP_EOL)
+function wrap_string_to_array($long_string, $max_chars)
 {
-    return array_slice(
-        explode(PHP_EOL,
-            iconv('Windows-1251', 'UTF-8',
-                wordwrap(iconv('UTF-8', 'Windows-1251',
-                    trim(preg_replace('/([!?])\.+\s*$/Uu', '$1', $long_string))),
-                    $max_chars, $separator, true))
-        ),
-        0, 15
-    );
+    $string = trim($long_string);
+    if (($len = mb_strlen($string, 'UTF-8')) <= $max_chars) {
+        return array($string);
+    }
+
+    $wrapped = array();
+    $last_space = 0;
+    $i = 0;
+
+    do {
+        if (mb_substr($string, $i, 1, 'UTF-8') === ' ') {
+            $last_space = $i;
+        }
+
+        if ($i > $max_chars) {
+            $last_space = ($last_space == 0) ? $max_chars : $last_space;
+            $wrapped[] = trim(mb_substr($string, 0, $last_space, 'UTF-8'));
+            $string = mb_substr($string, $last_space, $len, 'UTF-8');
+            $len = mb_strlen($string, 'UTF-8');
+            $i = 0;
+        }
+
+        $i++;
+    } while ($i < $len);
+
+    $wrapped[] = trim($string);
+
+    return $wrapped;
 }
 
 /**
@@ -2730,7 +2748,7 @@ function wrap_string_to_array($long_string, $max_chars, $separator = PHP_EOL)
  */
 function wrap_string_to_lines($long_string, $max_chars, $separator = PHP_EOL)
 {
-    return implode(PHP_EOL, wrap_string_to_array($long_string, $max_chars, $separator));
+    return implode($separator, wrap_string_to_array($long_string, $max_chars));
 }
 
 function is_assoc_array($array)

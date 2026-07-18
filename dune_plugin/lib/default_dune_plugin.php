@@ -2814,9 +2814,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         Control_Factory::add_vgap($defs, -20);
         $title = sprintf('%s (ID) %s', rtrim(TR::load('number'), ':'), TR::load('name'));
-        Control_Factory::format_smart_label($defs, $title,
-            "{$channel_row[COLUMN_CH_NUMBER]} ({$channel_row[COLUMN_CHANNEL_ID]}) '{$channel_row[COLUMN_TITLE]}'");
-        Control_Factory::format_smart_label($defs, TR::load('group'), $channel_row[COLUMN_GROUP_ID]);
+        $text = "{$channel_row[COLUMN_CH_NUMBER]} ({$channel_row[COLUMN_CHANNEL_ID]}) - '{$channel_row[COLUMN_TITLE]}'";
+        if ($channel_row[COLUMN_TITLE] != $channel_row[COLUMN_SHOW_TITLE]) {
+            $text .= " ({$channel_row[COLUMN_SHOW_TITLE]})";
+        }
+        Control_Factory::format_smart_label($defs, $title, $text, 120);
+        Control_Factory::format_smart_label($defs, TR::load('group'), $channel_row[COLUMN_GROUP_ID], 120);
         Control_Factory::format_smart_label($defs, TR::load('archive'), $channel_row[COLUMN_ARCHIVE] . ' ' . TR::load('days'));
         Control_Factory::format_smart_label($defs, TR::load('adult'),
             $channel_row[COLUMN_ADULT] ? TR::load('yes') : TR::load('no'));
