@@ -1,6 +1,7 @@
 <?php
 
 require_once 'dunelib/config_utils.php';
+require_once 'dunelib/dune_countries.php';
 
 class Expr
 {
@@ -54,7 +55,15 @@ class Expr
             $expr->country_code_2 = $wc;
         }
         else
+        {
             $expr->country_code_2 = strtolower($loc->country_code_2);
+            if ($wc && strlen($wc) > 2)
+            {
+                $code2 = DuneCountries::get_code_by_name($wc);
+                if ($code2)
+                    $expr->country_code_2 = strtolower($code2);
+            }
+        }
 
         $expr->firmware_features = self::get_firmware_features();
 

@@ -74,6 +74,8 @@ class ConfigUtils
             'watched_marks_format' => "percents",
             'enter_on_file_behaviour_new' => "playlist",
             'play_on_file_behaviour' => "playlist",
+            'sync_enabled' => "disabled",
+            'sync_folder_url' => '',
         );
 
         $path = "/config/settings.properties";
@@ -170,9 +172,12 @@ class ConfigUtils
     public static function load_firmware_features()
     {
         $path = "/tmp/firmware_features.txt";
+        $path2 = "/tmp/ro_features.txt";
 
         $ffset = array();
         foreach (HD::readlines($path) as $ff)
+            $ffset[$ff] = 1;
+        foreach (HD::readlines($path2) as $ff)
             $ffset[$ff] = 1;
         return $ffset;
     }
