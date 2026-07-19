@@ -304,7 +304,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
             $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($clear_action, TR::t('clear_history'), 'brush.png');
         }
 
-        if ($group_id === VOD_LIST_GROUP_ID && $this->plugin->get_order_count(VOD_LIST_GROUP_CAPTION)) {
+        if ($group_id === VOD_LIST_GROUP_ID && $this->plugin->get_order_count(VOD_LIST_GROUP_ID)) {
             $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($clear_action, TR::t('clear_list'), 'brush.png');
         }
 
