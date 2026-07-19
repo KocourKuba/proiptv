@@ -161,12 +161,12 @@
       "url_path": "https://www.teleguide.info/download/new3/xmltv.xml.gz",
       "cache_time": "auto"
     },
-    "Gabbarit": {
+    "Gabbarit drm": {
       "name": "Gabbarit",
       "url_path": "http://gabbarit.drm-play.com/epg_14.xml.gz",
       "cache_time": "auto"
     },
-    "Gabbarit (Lite)": {
+    "Gabbarit drm (Lite)": {
       "name": "Gabbarit (Lite)",
       "url_path": "http://gabbarit.drm-play.com/epg_lite.xml.gz",
       "cache_time": "auto"
@@ -2089,6 +2089,13 @@
             "url": "{API}/p12/{LOGIN}/{PASSWORD}/BLOF/playlist.m3u8"
           }
         },
+        "playlists_vod": {
+          "default": {
+            "name": "Default",
+            "url": "{API}/vod/{LOGIN}/{PASSWORD}/a/p.m3u8"
+          }
+        },
+        "vod_parser": "/^(?<title>[^\\(]+)\\s\\((?<year>\\d+)\\).*$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     }
