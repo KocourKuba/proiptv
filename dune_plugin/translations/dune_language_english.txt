@@ -159,6 +159,7 @@ edit_account = Edit account accesss
 edit_provider_settings = Provider settings
 edit_iptv_settings = IPTV settings
 jump_to_channel = Jump to the channel in the group
+jump_to_list_group = Jump to play list group
 provider_info = Link to IPTV provider
 auto = Automatic
 required_firmware = Required firmware:

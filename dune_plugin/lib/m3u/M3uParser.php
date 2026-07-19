@@ -30,17 +30,12 @@ require_once 'lib/ordered_array.php';
 class M3uParser extends Json_Serializer
 {
     const IPTV_DB = 'iptv';
-    const VOD_DB = 'vod';
     const S_CHANNELS_TABLE = 'iptv_channels';
     const S_GROUPS_TABLE = 'iptv_groups';
+    const VOD_TABLE = 'vod_entries';
 
     const CHANNELS_TABLE = 'iptv.iptv_channels';
     const GROUPS_TABLE = 'iptv.iptv_groups';
-    const VOD_TABLE = 'vod.vod_entries';
-
-    private $channels_table = self::CHANNELS_TABLE;
-    private $groups_table = self::GROUPS_TABLE;
-    private $vod_table = self::VOD_TABLE;
 
     /*
     * Map attributes to database columns
@@ -66,11 +61,6 @@ class M3uParser extends Json_Serializer
      * @var string
      */
     protected $file_name;
-
-    /**
-     * @var string
-     */
-    protected $db_name;
 
     /**
      * @var Entry
@@ -144,28 +134,11 @@ class M3uParser extends Json_Serializer
 
     /**
      * @param string $file_name
-     * @param string $db_name
      */
-    public function setVodPlaylist($file_name, $db_name)
+    public function setVodPlaylist($file_name)
     {
         $this->clear_data();
-        $this->db_name = null;
-        $this->file_name = null;
-        try {
-            if (empty($file_name)) {
-                throw new Exception('File name cannot be empty');
-            }
-
-            if (!file_exists($file_name)) {
-                throw new Exception("File not exists: $file_name");
-            }
-
-            $this->db_name = $db_name;
-            $this->file_name = $file_name;
-        } catch (Exception $ex) {
-            hd_debug_print("Can't read file: $file_name");
-            print_backtrace_exception($ex);
-        }
+        $this->file_name = $file_name;
     }
 
     /**
@@ -286,17 +259,17 @@ class M3uParser extends Json_Serializer
         $channels_columns = Sql_Wrapper::make_table_columns($init_channels);
         $channels_groups = Sql_Wrapper::make_table_columns($init_groups);
 
-        $query = "DROP TABLE IF EXISTS $this->channels_table;";
-        $query .= "CREATE TABLE IF NOT EXISTS $this->channels_table ($channels_columns);";
-        $query .= "DROP TABLE IF EXISTS $this->groups_table;";
-        $query .= "CREATE TABLE IF NOT EXISTS $this->groups_table ($channels_groups);";
+        $query = sprintf('DROP TABLE IF EXISTS %s;', self::CHANNELS_TABLE);
+        $query .= sprintf('CREATE TABLE IF NOT EXISTS %s (%s);', self::CHANNELS_TABLE, $channels_columns);
+        $query .= sprintf('DROP TABLE IF EXISTS %s;', self::GROUPS_TABLE);
+        $query .= sprintf('CREATE TABLE IF NOT EXISTS %s (%s);', self::GROUPS_TABLE, $channels_groups);
         $res = $db->exec_transaction($query);
         if (!$res) {
-            hd_debug_print("Can't create table: $this->channels_table");
+            hd_debug_print("Can't create table: " . self::CHANNELS_TABLE);
             return false;
         }
 
-        $stm_channels = $db->prepare_bind('INSERT OR IGNORE', $this->channels_table, array_keys($init_channels));
+        $stm_channels = $db->prepare_bind('INSERT OR IGNORE', self::CHANNELS_TABLE, array_keys($init_channels));
         if ($stm_channels === false) {
             hd_debug_print("Can't prepare bind statement");
             return false;
@@ -372,7 +345,7 @@ class M3uParser extends Json_Serializer
         $db->exec('COMMIT;');
         fclose($file_handle);
 
-        $stm_groups = $db->prepare_bind('INSERT OR IGNORE', $this->groups_table, array_keys($init_groups));
+        $stm_groups = $db->prepare_bind('INSERT OR IGNORE', self::GROUPS_TABLE, array_keys($init_groups));
         $db->exec('BEGIN;');
         foreach ($groups_cache as $group_title => $group) {
             $stm_groups->bindValue(':' . COLUMN_GROUP_ID, $group_title);
@@ -382,7 +355,8 @@ class M3uParser extends Json_Serializer
         }
         $db->exec('COMMIT;');
 
-        return $db->query_value("SELECT COUNT(*) FROM $this->channels_table;");
+        $query = sprintf("SELECT COUNT(*) FROM %s;", self::CHANNELS_TABLE);
+        return $db->query_value($query);
     }
 
 
@@ -410,16 +384,18 @@ class M3uParser extends Json_Serializer
             COLUMN_TITLE => 'TEXT NOT NULL',
             COLUMN_ICON => 'TEXT',
             COLUMN_PATH => 'TEXT NOT NULL',
+            COLUMN_DESC => 'TEXT',
         );
         $vod_columns = Sql_Wrapper::make_table_columns($init_vod);
 
-        $db->exec("ATTACH DATABASE '$this->db_name' AS " . self::VOD_DB);
-
-        $query = "DROP TABLE IF EXISTS $this->vod_table;";
-        $query .= "CREATE TABLE IF NOT EXISTS $this->vod_table ($vod_columns);";
+        $query = sprintf('DROP TABLE IF EXISTS %s;', self::VOD_TABLE);
+        $query .= sprintf('CREATE TABLE IF NOT EXISTS %s (%s);', self::VOD_TABLE, $vod_columns);
         $db->exec($query);
 
-        $stm_index = $db->prepare_bind('INSERT OR IGNORE', $this->vod_table, array_keys($init_vod));
+        $perf = new Perf_Collector();
+        $perf->reset('start');
+
+        $stm_index = $db->prepare_bind('INSERT OR IGNORE', self::VOD_TABLE, array_keys($init_vod));
         $db->exec('BEGIN;');
         $entry = new Entry();
         while (!feof($file_handle)) {
@@ -434,6 +410,7 @@ class M3uParser extends Json_Serializer
                     $stm_index->bindValue(':' . COLUMN_TITLE, $entry->getTitle());
                     $stm_index->bindValue(':' . COLUMN_ICON, $entry->getIcon());
                     $stm_index->bindValue(':' . COLUMN_PATH, $entry->getPath());
+                    $stm_index->bindValue(':' . COLUMN_DESC, $entry->getDescription());
                     $stm_index->execute();
                     $entry = new Entry();
                     break;
@@ -450,6 +427,14 @@ class M3uParser extends Json_Serializer
         fclose($file_handle);
 
         $db->exec('COMMIT;');
+
+        $perf->setLabel('end');
+        $report = $perf->getFullReport();
+
+        hd_print_separator();
+        hd_debug_print("IndexFile: {$report[Perf_Collector::TIME]} secs");
+        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+        hd_print_separator();
 
         return true;
     }
@@ -639,6 +624,7 @@ class M3uParser extends Json_Serializer
         $entry->updateIcon($this->icon_base_url);
         $entry->updateGroupTitle();
         $entry->updateTitle();
+        $entry->updateDescription();
 
         return 1;
     }

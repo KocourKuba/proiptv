@@ -2095,7 +2095,7 @@
             "url": "{API}/vod/{LOGIN}/{PASSWORD}/a/p.m3u8"
           }
         },
-        "vod_parser": "/^(?<title>[^\\(]+)\\s\\((?<year>\\d+)\\).*$/",
+        "vod_parser": "/^(?<title>[^\\(]+)\\s\\((?<year>\\d+)\\)(?:\\s*(?<title_orig>.*)?)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     }

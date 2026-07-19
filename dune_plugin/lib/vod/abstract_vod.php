@@ -68,7 +68,7 @@ abstract class Abstract_Vod extends vod_pagination
         hd_debug_print("set movie to cache: {$movie->get_id()}, movie: " . $movie, true);
         $this->movie_by_id[$movie->get_id()] = $movie;
         $movie_info = $movie->get_movie_info();
-        $this->set_cached_short_movie(new Short_Movie($movie->get_id(), $movie_info[PluginMovie::name], $movie_info[PluginMovie::poster_url]));
+        $this->set_cached_short_movie(new Short_Movie($movie->get_id(), $movie->make_movie_caption(), $movie_info[PluginMovie::poster_url]));
     }
 
     /**

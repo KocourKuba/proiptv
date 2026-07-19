@@ -97,11 +97,6 @@ class vod_standard extends Abstract_Vod
     protected $vod_m3u_parser;
 
     /**
-     * @var Sql_Wrapper
-     */
-    protected $wrapper = null;
-
-    /**
      * @param Default_Dune_Plugin $plugin
      */
     public function __construct(Default_Dune_Plugin $plugin)
@@ -127,7 +122,6 @@ class vod_standard extends Abstract_Vod
             $this->vod_parser = $this->provider->getConfigValue(CONFIG_VOD_PARSER);
         }
 
-        $this->wrapper = $this->plugin->get_sql_playlist();
         $this->category_index = null;
 
         return true;
@@ -299,6 +293,7 @@ class vod_standard extends Abstract_Vod
             $title = $entry[COLUMN_TITLE];
             $category = $entry[COLUMN_GROUP_ID];
             $url = $entry[COLUMN_PATH];
+            $description = $entry[COLUMN_DESC];
             $title_orig = '';
             $country = '';
             $year = '';
@@ -317,7 +312,7 @@ class vod_standard extends Abstract_Vod
             $movie->set_data(
                 $title,         // caption,
                 $title_orig,    // caption_original,
-                '',             // description,
+                $description,   // description,
                 $logo,          // poster_url,
                 '',             // length,
                 $year,          // year,
@@ -397,27 +392,6 @@ class vod_standard extends Abstract_Vod
             return false;
         }
 
-        if ($this->plugin->get_sql_playlist()->is_database_attached('vod') === 0) {
-            $perf = new Perf_Collector();
-            $perf->reset('start');
-
-            if ($this->vod_m3u_parser->parseVodPlaylist($this->wrapper) === false) {
-                hd_debug_print('Parse VOD failed');
-                return false;
-            }
-
-            $perf->setLabel('end');
-            $report = $perf->getFullReport();
-
-            hd_print_separator();
-            hd_debug_print("IndexFile: {$report[Perf_Collector::TIME]} secs");
-            hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-            hd_print_separator();
-        }
-
-        $perf = new Perf_Collector();
-        $perf->reset('start');
-
         $this->category_index = array();
 
         // all movies must be first
@@ -442,13 +416,8 @@ class vod_standard extends Abstract_Vod
             }
         }
 
-        $perf->setLabel('end');
-        $report = $perf->getFullReport();
-
         hd_debug_print("Categories read: $category_count");
         hd_debug_print("Total movies: $all_count");
-        hd_debug_print("Fetch time: {$report[Perf_Collector::TIME]} secs");
-        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
         hd_print_separator();
 
         return true;
@@ -486,7 +455,11 @@ class vod_standard extends Abstract_Vod
             $title = $entry[COLUMN_TITLE];
             /** @var array $m */
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $m)) {
-                $title = safe_get_value($m, COLUMN_TITLE, $title);
+                $title = safe_get_value($m, 'title', $title);
+                $title_orig = safe_get_value($m, 'title_orig', '');
+                if (!empty($title_orig)) {
+                    $title = "$title ($title_orig)";
+                }
             }
 
             $movies[] = new Short_Movie($entry[COLUMN_HASH], trim($title), $entry[COLUMN_ICON], $title);
@@ -521,7 +494,11 @@ class vod_standard extends Abstract_Vod
 
             /** @var array $m */
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $m)) {
-                $title = safe_get_value($m, COLUMN_TITLE, $title);
+                $title = safe_get_value($m, 'title', $title);
+                $title_orig = safe_get_value($m, 'title_orig', '');
+                if (!empty($title_orig)) {
+                    $title = "$title ($title_orig)";
+                }
             }
 
             $poster_url = $entry[COLUMN_ICON];
@@ -689,17 +666,13 @@ class vod_standard extends Abstract_Vod
      */
     public function getVodCount($group_id)
     {
-        if ($this->wrapper === null) {
-            return 0;
-        }
-
         if (empty($group_id)) {
             $query = sprintf("SELECT COUNT(*) FROM %s", M3uParser::VOD_TABLE);
         } else {
             $query = sprintf("SELECT COUNT(*) FROM %s WHERE %s=%s", M3uParser::VOD_TABLE, COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($group_id));
         }
 
-        return (int)$this->wrapper->query_value($query);
+        return (int)$this->plugin->safe_sql_vod('query_value', $query);
     }
 
     /**
@@ -710,10 +683,6 @@ class vod_standard extends Abstract_Vod
      */
     public function getVodEntries($group_id, $from = 0, $limit = 0)
     {
-        if ($this->wrapper === null) {
-            return array();
-        }
-
         $query = sprintf("SELECT * FROM %s", M3uParser::VOD_TABLE);
         if (!empty($group_id)) {
             $query = sprintf("%s WHERE %s=%s", $query, COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($group_id));
@@ -721,7 +690,7 @@ class vod_standard extends Abstract_Vod
         if ($limit > 0) {
             $query = sprintf("%s LIMIT %s, %s;", $query, $from, $limit);
         }
-        return $this->wrapper->fetch_array($query);
+        return $this->plugin->safe_sql_vod('fetch_array', $query);
     }
 
     /**
@@ -731,12 +700,8 @@ class vod_standard extends Abstract_Vod
      */
     public function getVodGroups()
     {
-        if ($this->wrapper === null) {
-            return array();
-        }
-
         $query = sprintf("SELECT DISTINCT %s FROM %s;", COLUMN_GROUP_ID, M3uParser::VOD_TABLE);
-        return $this->wrapper->fetch_array($query, COLUMN_GROUP_ID);
+        return $this->plugin->safe_sql_vod('fetch_array', $query, COLUMN_GROUP_ID);
     }
 
     /**
@@ -747,12 +712,8 @@ class vod_standard extends Abstract_Vod
      */
     public function getVod($hash)
     {
-        if ($this->wrapper === null) {
-            return array();
-        }
-
         $query = sprintf("SELECT * FROM %s WHERE %s=%s;", M3uParser::VOD_TABLE, COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
-        return $this->wrapper->query_value($query, true);
+        return $this->plugin->safe_sql_vod('query_value', $query, true);
     }
 
     /**
@@ -815,10 +776,16 @@ class vod_standard extends Abstract_Vod
         $base_name = $this->plugin->get_playlist_cache_filepath(false);
         $m3u_file = "$base_name.m3u8";
         $db_file = "$base_name.db";
+        $db = new Sql_Wrapper($db_file);
+        if (!$db->is_valid()) {
+            $err = "Database $db_file is not valid!";
+            hd_debug_print($err);
+            return false;
+        }
+        $this->plugin->set_sql_vod($db);
 
         try {
-            $reload_playlist = $this->plugin->is_playlist_cache_expired(false);
-            if ($reload_playlist || $this->vod_m3u_parser->get_filename() !== $m3u_file) {
+            if ($this->plugin->is_playlist_cache_expired(false)) {
                 $uri = safe_get_value($params, PARAM_URI);
                 if ($type === PARAM_PROVIDER) {
                     hd_debug_print('download provider vod');
@@ -866,7 +833,13 @@ class vod_standard extends Abstract_Vod
 
                 $mtime = filemtime($m3u_file);
                 hd_debug_print("Stored $m3u_file (timestamp: $mtime)");
-                $this->vod_m3u_parser->setVodPlaylist($m3u_file, $db_file);
+                $this->vod_m3u_parser->setVodPlaylist($m3u_file);
+
+                if ($this->vod_m3u_parser->parseVodPlaylist($db) === false) {
+                    $msg = 'Parse VOD failed';
+                    hd_debug_print($msg);
+                    throw new Exception($msg);
+                }
             }
         } catch (Exception $ex) {
             hd_debug_print('Unable to load VOD playlist');

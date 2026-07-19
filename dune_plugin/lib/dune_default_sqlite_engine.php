@@ -92,6 +92,11 @@ class Dune_Default_Sqlite_Engine
     /**
      * @var Sql_Wrapper
      */
+    protected $sql_vod;
+
+    /**
+     * @var Sql_Wrapper
+     */
     protected $sql_tv_history;
 
     /**
@@ -117,6 +122,20 @@ class Dune_Default_Sqlite_Engine
     public function get_sql_playlist()
     {
         return $this->sql_playlist;
+    }
+
+    public function get_sql_vod()
+    {
+        return $this->sql_vod;
+    }
+
+    /**
+     * @param Sql_Wrapper|null $sql_vod
+     * @return void
+     */
+    public function set_sql_vod($sql_vod)
+    {
+        $this->sql_vod = $sql_vod;
     }
 
     public function get_plugin_cookies()
@@ -894,11 +913,12 @@ class Dune_Default_Sqlite_Engine
     /**
      * Get all custom table values ordered by ROWID
      *
-     * @param string $table
+     * @param string $name
      * @return array
      */
-    public function get_settings_values($table)
+    public function get_settings_values($name)
     {
+        $table = self::get_table_name($name);
         $query = sprintf('SELECT * FROM %s ORDER BY ROWID;', $table);
         return $this->safe_sql_playlist_settings('fetch_array', $query);
     }
@@ -2581,6 +2601,25 @@ class Dune_Default_Sqlite_Engine
         }
 
         hd_debug_print("Playlist db not set. '$function' is not executed!");
+        print_backtrace();
+        if ($function === 'fetch_array') {
+            return array();
+        }
+        return false;
+    }
+
+    /**
+     * @param string $function
+     * @return string|array|int|false
+     */
+    public function safe_sql_vod($function)
+    {
+        if ($this->sql_vod) {
+            $extra_args = array_slice(func_get_args(), 1);
+            return call_user_func_array(array($this->sql_vod, $function), $extra_args);
+        }
+
+        hd_debug_print("VOD db not set. '$function' is not executed!");
         print_backtrace();
         if ($function === 'fetch_array') {
             return array();

@@ -101,7 +101,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
 
                         $movie_info = $movie->get_movie_info();
 
-                        $series = new Movie_Series($movie_id, $movie_info[PluginMovie::name], $movie->get_series($movie_id)->default_playback_url);
+                        $series = new Movie_Series($movie_id, $movie->make_movie_caption(), $movie->get_series($movie_id)->default_playback_url);
                         $list_movie->add_series_data($series);
                     }
                     $this->plugin->vod->set_cached_movie($list_movie);
@@ -207,7 +207,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
             $movie_history = $this->plugin->get_vod_history($movie_id);
             $movie_info = $movie->get_movie_info();
             $detailed_info = '';
-            $caption = $movie_info[PluginMovie::name];
+            $caption = $movie->make_movie_caption();
             $color = DEF_LABEL_TEXT_COLOR_WHITE;
             foreach ($movie_history as $history) {
                 $view_date = format_datetime('d.m.Y H:i', $history[COLUMN_TIMESTAMP]);
@@ -230,9 +230,11 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
                 PluginRegularFolderItem::media_url => self::make_group_media_url_str($movie_id),
                 PluginRegularFolderItem::caption => $caption,
                 PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::icon_path => $movie_info[PluginMovie::poster_url],
-                    ViewItemParams::item_detailed_info => $detailed_info,
                     ViewItemParams::item_caption_color => $color,
+                    ViewItemParams::icon_path => $movie_info[PluginMovie::poster_url],
+                    ViewItemParams::icon_keep_aspect_ratio => true,
+                    ViewItemParams::item_detailed_icon_path => $movie_info[PluginMovie::poster_url],
+                    ViewItemParams::item_detailed_info => $detailed_info,
                 )
             );
         }
