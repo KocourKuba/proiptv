@@ -159,6 +159,7 @@ edit_account = Редактировать данные доступа
 edit_provider_settings = Настройки провайдера
 edit_iptv_settings = Настройки IPTV
 jump_to_channel = Перейти к каналу в группе
+jump_to_list_group = Перейти к списку просмотра
 provider_info = Ссылка на провайдера
 auto = Автоматически
 required_firmware = Требуемая прошивка:

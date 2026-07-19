@@ -669,7 +669,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
 
         return array(
             PluginVodInfo::id => $this->id,
-            PluginVodInfo::name => $this->movie_info[PluginMovie::name],
+            PluginVodInfo::name => $this->make_movie_caption(),
             PluginVodInfo::description => $this->movie_info[PluginMovie::description],
             PluginVodInfo::poster_url => $this->movie_info[PluginMovie::poster_url],
             PluginVodInfo::series => $series_array,
@@ -678,5 +678,14 @@ class Movie extends Json_Serializer implements User_Input_Handler
             PluginVodInfo::actions => $this->do_get_action_map(),
             PluginVodInfo::initial_position_ms => $initial_start,
         );
+    }
+
+    public function make_movie_caption()
+    {
+        $caption = $this->movie_info[PluginMovie::name];
+        if (!empty($this->movie_info[PluginMovie::name_original])) {
+            $caption = "$caption ({$this->movie_info[PluginMovie::name_original]})";
+        }
+        return $caption;
     }
 }

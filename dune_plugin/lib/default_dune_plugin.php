@@ -3087,6 +3087,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         $cache_time = $is_tv ? PARAM_PLAYLIST_CACHE_TIME_IPTV : PARAM_PLAYLIST_CACHE_TIME_VOD;
         if ($this->get_setting($cache_time, 1) === PHP_INT_MAX) {
+            hd_debug_print("Playlist cache always valid");
             return false;
         }
 
@@ -3108,6 +3109,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $mtime = filemtime($m3u_file);
         $cache_expired = $mtime + $this->get_setting($cache_time, 1) * 3600;
         if ($cache_expired > $now) {
+            hd_debug_print("Playlist cache $m3u_file is not expired");
             return false;
         }
 

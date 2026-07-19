@@ -56,6 +56,7 @@ const ATTR_X_TVG_URL = 'x-tvg-url';
 const ATTR_TVG_LOGO = 'tvg-logo';
 const ATTR_URL_LOGO = 'url-logo';
 const ATTR_GROUP_LOGO = 'group-logo';
+const ATTR_TVG_DESC = 'tvg-description';
 
 const ATTR_ADULT = 'adult';
 const ATTR_PARENT_CODE = 'parent-code';

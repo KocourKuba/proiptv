@@ -1736,7 +1736,8 @@
       "logo": "http://iptv.esalecrm.net/res/logo_yosso.png",
       "provider_url": "https://streaming-elbrus.su/",
       "api_commands": {
-        "get_playlist": "https://{SERVER_ID}/p12/{LOGIN}/{PASSWORD}/BLOF/playlist.m3u8"
+        "get_playlist": "https://{SERVER_ID}/p12/{LOGIN}/{PASSWORD}/BLOF/playlist.m3u8",
+        "get_vod": "{API}/vod/{LOGIN}/{PASSWORD}/a/p.m3u8"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/ottplayer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
@@ -1750,6 +1751,7 @@
           "streaming-elbrus.su": "streaming-elbrus.su",
           "p.rapidnas.org": "p.rapidnas.org"
         },
+        "vod_parser": "/^(?<title>[^\\(]+)\\s\\((?<year>\\d+)\\).*$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     }

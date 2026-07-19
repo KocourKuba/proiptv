@@ -67,6 +67,12 @@ class Entry extends Json_Serializer
     public static $icon_attrs = array(ATTR_TVG_LOGO, ATTR_URL_LOGO);
 
     /*
+     * Attributes contains description
+     * "tvg-description"
+     */
+    public static $desc_attrs = array(ATTR_TVG_DESC);
+
+    /*
      * Attributes contains epg id
      * "adult", "parent-code", "censored"
      */
@@ -116,6 +122,11 @@ class Entry extends Json_Serializer
      * @var string
      */
     protected $icon;
+
+    /**
+     * @var string
+     */
+    protected $description;
 
     /**
      * @var array
@@ -355,6 +366,16 @@ class Entry extends Json_Serializer
     {
         $extInf = $this->getEntryTag(TAG_EXTINF);
         $this->title = is_null($extInf) ? 'no name' : $extInf->getTagValue();
+    }
+
+    public function getDescription()
+    {
+        return $this->description;
+    }
+
+    public function updateDescription()
+    {
+        $this->description = $this->getAnyEntryAttribute(self::$desc_attrs, TAG_EXTINF);
     }
 
     /**

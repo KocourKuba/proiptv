@@ -164,7 +164,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
             $movie_info = $movie->get_movie_info();
             $items[] = array(
                 PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::make_vod_media_url_str($movie_id),
-                PluginRegularFolderItem::caption => $movie_info[PluginMovie::name],
+                PluginRegularFolderItem::caption => $movie->make_movie_caption(),
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $movie_info[PluginMovie::poster_url],
                 )

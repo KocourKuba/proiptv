@@ -159,6 +159,7 @@ edit_account = 编辑账户信息
 edit_provider_settings = 服务商设置
 edit_iptv_settings = IPTV设置
 jump_to_channel = 跳转到分组中的频道
+jump_to_list_group = 跳转至播放列表组
 provider_info = 链接到IPTV服务商
 auto = 自动模式
 required_firmware = 所需固件版本:

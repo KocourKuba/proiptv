@@ -206,6 +206,7 @@ const COLUMN_TIMESHIFT = 'timeshift';
 const COLUMN_CATCHUP = 'catchup';
 const COLUMN_CATCHUP_SOURCE = 'catchup_source';
 const COLUMN_PATH = 'path';
+const COLUMN_DESC = 'desc';
 const COLUMN_EXT_PARAMS = 'ext_params';
 const COLUMN_CACHE = 'cache';
 const COLUMN_WATCHED = 'watched';

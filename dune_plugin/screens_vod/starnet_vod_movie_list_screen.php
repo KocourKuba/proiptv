@@ -56,6 +56,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
         if (!empty($provider) && Default_Dune_Plugin::is_provider_m3u_vod($provider)) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_TO_LIST, TR::t('add_to_list'));
         }
+        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
 
         return $actions;
     }
@@ -119,6 +120,19 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
                         Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID),
                     )
                 );
+
+            case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
+                return Action_Factory::close_and_run(Action_Factory::open_folder(
+                    Default_Dune_Plugin::get_group_media_url_str(VOD_LIST_GROUP_ID), TR::t('movie_list')));
+
+            case GUI_EVENT_KEY_POPUP_MENU:
+                $menu_items = array();
+                $cnt = $this->plugin->get_order_count(VOD_LIST_GROUP_ID);
+                if ($cnt) {
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                        ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_list_group'));
+                }
+                return Action_Factory::show_popup_menu($menu_items);
         }
 
         return null;
