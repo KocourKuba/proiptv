@@ -107,6 +107,14 @@ class HD
         return strpos($str, $pattern) === 0;
     }
 
+    public static function ends_with($str, $suffix)
+    {
+        $len = strlen($str);
+        $suf_len = strlen($suffix);
+        return $len >= $suf_len &&
+            !strcmp($suffix, substr($str, $len - $suf_len));
+    }
+
     ///////////////////////////////////////////////////////////////////////
 
     public static function format_timestamp($ts, $fmt = null)
@@ -970,6 +978,14 @@ class HD
         return substr($str, 0, $ndx);
     }
 
+    public static function filemtime($path)
+    {
+        if (!is_file($path))
+            return -1;
+        $res = filemtime($path);
+        return $res === false || $res <= 0 ? -1 : $res;
+    }
+
     public static function ensure_plugin_name(&$action)
     {
         if (!isset($action['plugin_name']))
@@ -1055,6 +1071,29 @@ class HD
 
     public static function get_item($path,$dummy=null) {
         return false;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    private static $whale_tv = null; 
+    private static $dual_system = null; 
+
+    public static function is_whale_tv() {
+        self::ensure_ff_loaded();
+        return self::$whale_tv;
+    }
+
+    public static function is_dual_system() {
+        self::ensure_ff_loaded();
+        return self::$dual_system;
+    }
+
+    private static function ensure_ff_loaded() {
+        if (!isset(self::$whale_tv)) {
+            $ffs = ConfigUtils::load_firmware_features();
+            self::$whale_tv = isset($ffs['whale_tv']);
+            self::$dual_system = isset($ffs['dual_system']);
+        }
     }
 }
 
