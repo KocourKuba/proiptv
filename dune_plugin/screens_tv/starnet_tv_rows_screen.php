@@ -725,11 +725,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         $fav_id = $this->plugin->get_fav_id();
         $items = array();
-        foreach ($this->plugin->get_channels_by_order($fav_id, $show_adult) as $channel_row) {
-            if (empty($channel_row)) continue;
-
-            $channel_id = $channel_row[COLUMN_CHANNEL_ID];
-            $row_id = array(PARAM_GROUP_ID => $fav_id, PARAM_CHANNEL_ID => $channel_id);
+        foreach ($this->plugin->get_fav_ids_by_order($fav_id) as $id) {
+            $channel_row = $this->plugin->get_channel_info($id, false);
+            $row_id = array(PARAM_GROUP_ID => $fav_id, PARAM_CHANNEL_ID => $id);
             $items[] = Rows_Factory::add_regular_item(
                 self::row_id_encoder($row_id),
                 $this->plugin->get_channel_picon($channel_row, false),
