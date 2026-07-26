@@ -338,8 +338,12 @@ class Entry extends Json_Serializer
     {
         // set channel id, first use id url parser
         /** @var array $m */
-        if (!empty($id_parser) && preg_match($id_parser, $this->path, $m) && isset($m['id'])) {
-            $this->parsed_id = $m['id'];
+        if (!empty($id_parser)) {
+            if (preg_match($id_parser, $this->path, $m) && isset($m['id'])) {
+                $this->parsed_id = $m['id'];
+            } else {
+                $this->parsed_id = $this->hash;
+            }
         }
     }
 
