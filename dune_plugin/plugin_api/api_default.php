@@ -520,7 +520,11 @@ class api_default
         }
 
         hd_debug_print("ApiCommandUrl: $command_url", true);
-        $this->plugin->reset_curl($this->curl_wrapper);
+        if ($this->curl_wrapper) {
+            $this->plugin->reset_curl($this->curl_wrapper);
+        } else {
+            $this->set_provider_playlist_id($this->playlist_id);
+        }
 
         $add_headers = $this->get_additional_headers($command);
 

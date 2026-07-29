@@ -1140,6 +1140,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                 $query = sprintf(self::CREATE_SELECTED_JSON_TABLE, self::SELECTED_JSON_TABLE);
                 $this->safe_sql_playlist_settings('exec', $query);
+                $all_sources = $this->get_selected_json_sources(false);
+                if (empty($all_sources)) {
+                    $query = '';
+                    foreach ($this->get_provider_epg_presets($provider) as $id => $preset) {
+                        $query .= sprintf('INSERT INTO %s (name, enabled) VALUES (%s, %d);',
+                            self::SELECTED_JSON_TABLE, Sql_Wrapper::sql_quote($id), 1);
+                    }
+                    $this->safe_sql_playlist_settings('exec', $query);
+                }
+
                 $this->update_selected_json_source($provider);
             }
         }
@@ -1579,6 +1589,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function reset_curl($curl_wrapper)
     {
+        hd_debug_print(null, true);
+
         $curl_wrapper->reset();
         $curl_wrapper->set_connect_timeout($this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
         $curl_wrapper->set_download_timeout($this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));

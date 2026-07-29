@@ -275,7 +275,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 return $this->edit_provider_dlg($user_input);
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
-                return $this->apply_edit_provider_dlg($user_input, $parent_media_url);
+                return $this->apply_edit_provider_dlg($user_input, $parent_media_url, $plugin_cookies);
 
             case self::ACTION_IMPORT_FOLDER_SELECTED:
                 return $this->do_select_folder($user_input);
@@ -388,7 +388,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         return Action_Factory::show_dialog($defs, "{$provider->getName()} ({$provider->getId()})");
     }
 
-    protected function apply_edit_provider_dlg($user_input, $parent_media_url)
+    protected function apply_edit_provider_dlg($user_input, $parent_media_url, $plugin_cookies)
     {
         hd_debug_print(null, true);
 
