@@ -1,4 +1,7 @@
-﻿### Version 8.0.1734
+﻿### Version 8.0.1736
+- Added check for Favorite channels if the channel has been deleted or its ID has changed
+
+### Version 8.0.1734
 - Slightly tweaked the font size in the channel browser for categories/channels
 - Added category icon reset to the context menu
 - Fixed a bug with the processing of shared Favorites
