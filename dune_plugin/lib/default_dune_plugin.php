@@ -2516,7 +2516,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // if selected xmltv or combined mode look into xmltv source
         // in combined mode search is not performed if already got picon from playlist
         do {
-            $pl_icon_url = $channel_row[COLUMN_ICON];
+            $pl_icon_url = isset($channel_row[COLUMN_ICON]) ? $channel_row[COLUMN_ICON] : '';
             if ($this->picons_source === PLAYLIST_PICONS) {
                 // playlist icons first in priority
                 return empty($pl_icon_url) ? $this->get_default_channel_icon($is_classic) : $pl_icon_url;

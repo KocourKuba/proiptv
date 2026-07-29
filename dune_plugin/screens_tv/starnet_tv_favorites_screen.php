@@ -269,6 +269,8 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
         $fav_id = $this->plugin->get_fav_id();
         foreach ($this->plugin->get_fav_ids_by_order($fav_id) as $id) {
             $channel_row = $this->plugin->get_channel_info($id, false);
+            if (empty($channel_row)) continue;
+
             $icon_url = $this->plugin->get_channel_picon($channel_row, true);
 
             $items[] = array(
