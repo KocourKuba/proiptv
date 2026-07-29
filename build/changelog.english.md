@@ -1,4 +1,18 @@
-﻿### Version 8.0.1718
+﻿### Version 8.0.1734
+- Slightly tweaked the font size in the channel browser for categories/channels
+- Added category icon reset to the context menu
+- Fixed a bug with the processing of shared Favorites
+- Added "help" for editing channels/categories
+- The Yosso media library has been switched to standard M3U. Not the best option - but at least something
+- Added support for the tvg-description attribute for the Yosso media library. But Yosso removed this attribute to please the crooked developers of Android players
+- Fixed context menu for m3u VOD playlist playlist
+- If the link in the provider's playlist does not match the template common template, the channel ID is automatically switched to the link hash. (Hello "borrowed" Wink channels links of the Yosso regional playlists)
+- When resetting the User-Agent, the changes took effect only after the plugin was reloaded
+- Fixed a plugin crash when adding a new Sharaclub template
+- Fixed a bug when creating an Internet source list, which led to the inability to use the Internet source for a new IPTV provider template.
+- Fix translation
+
+### Version 8.0.1718
 - Fixed a bug with selecting the start screen if the playlist list is selected as first
 - Playlist selection has been removed from the context menu of the category screen if the playlist list is selected as the start list
 - Setting the screen view of the playlist list is now saved in the plugin settings instead of the playlist settings.
