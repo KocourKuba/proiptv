@@ -99,8 +99,6 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
                         $movie = $this->plugin->vod->get_loaded_movie($movie_id);
                         if (empty($movie)) continue;
 
-                        $movie_info = $movie->get_movie_info();
-
                         $series = new Movie_Series($movie_id, $movie->make_movie_caption(), $movie->get_series($movie_id)->default_playback_url);
                         $list_movie->add_series_data($series);
                     }

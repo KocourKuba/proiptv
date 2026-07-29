@@ -722,7 +722,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             return;
         }
 
-        $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         $fav_id = $this->plugin->get_fav_id();
         $items = array();
         foreach ($this->plugin->get_fav_ids_by_order($fav_id) as $id) {
