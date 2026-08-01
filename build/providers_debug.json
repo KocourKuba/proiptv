@@ -43,6 +43,16 @@
         "epg_icon": "icon"
       }
     },
+    "proiptv": {
+      "json_source": "http://epg.esalecrm.com/{PROVIDER}/epg/{EPG_ID}.json",
+      "parser": {
+        "epg_root": "epg_data",
+        "epg_name": "name",
+        "epg_desc": "descr",
+        "epg_start": "time",
+        "epg_icon": "icon"
+      }
+    },
     "itvlive": {
       "json_source": "http://api.itv.live/epg/{EPG_ID}",
       "parser": {
@@ -549,6 +559,9 @@
         "domain": "junior.edmonst.net",
         "epg_presets": [
           {
+            "name": "proiptv"
+          },
+          {
             "name": "drm-play"
           }
         ],
@@ -673,6 +686,9 @@
           "sprintplay.ru": "sprintplay"
         },
         "epg_presets": [
+          {
+            "name": "proiptv"
+          },
           {
             "name": "drm-play",
             "alias": "ottg"
@@ -1557,6 +1573,9 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
         "epg_presets": [
           {
+            "name": "proiptv"
+          },
+          {
             "name": "drm-play",
             "alias": "sharavoz"
           }
@@ -1844,10 +1863,10 @@
         },
         "epg_presets": [
           {
-            "name": "drm-play"
+            "name": "tvteam"
           },
           {
-            "name": "tvteam"
+            "name": "drm-play"
           }
         ],
         "playlists": {
@@ -2079,6 +2098,9 @@
         },
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/ottplayer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
         "epg_presets": [
+          {
+            "name": "proiptv"
+          },
           {
             "name": "drm-play"
           }

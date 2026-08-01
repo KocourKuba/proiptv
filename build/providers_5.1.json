@@ -43,6 +43,16 @@
         "epg_icon": "icon"
       }
     },
+    "proiptv": {
+      "json_source": "http://epg.esalecrm.com/{PROVIDER}/epg/{EPG_ID}.json",
+      "parser": {
+        "epg_root": "epg_data",
+        "epg_name": "name",
+        "epg_desc": "descr",
+        "epg_start": "time",
+        "epg_icon": "icon"
+      }
+    },
     "itvlive": {
       "json_source": "http://api.itv.live/epg/{EPG_ID}",
       "parser": {
@@ -361,6 +371,10 @@
         "id_map": "name",
         "epg_presets": [
           {
+            "name": "proiptv",
+            "title": "proiptv"
+          },
+          {
             "name": "drm",
             "title": "epg.drm-play",
             "alias": "bcu"
@@ -455,6 +469,10 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/iptv\\/(?<ottkey>.+)\\/(?<id>.+)\\/.*\\.m3u8?$/",
         "domain": "junior.edmonst.net",
         "epg_presets": [
+          {
+            "name": "proiptv",
+            "title": "proiptv"
+          },
           {
             "name": "drm",
             "title": "epg.drm-play"
@@ -565,6 +583,10 @@
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "epg_presets": [
+          {
+            "name": "proiptv",
+            "title": "proiptv"
+          },
           {
             "name": "drm",
             "title": "epg.drm-play",
@@ -1295,7 +1317,8 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
         "epg_presets": [
           {
-            "name": "sharavoz"
+            "name": "proiptv",
+            "title": "proiptv"
           },
           {
             "name": "drm",
@@ -1742,6 +1765,10 @@
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/ottplayer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
         "epg_presets": [
+          {
+            "name": "proiptv",
+            "title": "proiptv"
+          },
           {
             "name": "drm",
             "title": "epg.drm-play"
