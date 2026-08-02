@@ -1140,16 +1140,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                 $query = sprintf(self::CREATE_SELECTED_JSON_TABLE, self::SELECTED_JSON_TABLE);
                 $this->safe_sql_playlist_settings('exec', $query);
-                $all_sources = $this->get_selected_json_sources(false);
-                if (empty($all_sources)) {
-                    $query = '';
-                    foreach ($this->get_provider_epg_presets($provider) as $id => $preset) {
-                        $query .= sprintf('INSERT INTO %s (name, enabled) VALUES (%s, %d);',
-                            self::SELECTED_JSON_TABLE, Sql_Wrapper::sql_quote($id), 1);
-                    }
-                    $this->safe_sql_playlist_settings('exec', $query);
-                }
-
                 $this->update_selected_json_source($provider);
             }
         }
@@ -4140,6 +4130,23 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $playlist_id = $provider->get_provider_playlist_id();
         $config_name = $this->get_active_epg_config($playlist_id);
+        $all_presets = $this->get_provider_epg_presets($provider);
+
+        $all_sources = $this->get_selected_json_sources(false);
+        // update selected json table for new or removed config presets
+        $query = '';
+        foreach ($all_presets as $id => $preset) {
+            $query .= sprintf('INSERT OR IGNORE INTO %s (name, enabled) VALUES (%s, %d);',
+                self::SELECTED_JSON_TABLE, Sql_Wrapper::sql_quote($id), 1);
+        }
+        foreach ($all_sources as $id => $enabled) {
+            if (isset($all_presets[$id])) continue;
+
+            $query .= sprintf('DELETE FROM %s WHERE %s=%s;',
+                self::SELECTED_JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($id));
+        }
+        $this->safe_sql_playlist_settings('exec', $query);
+
         // read existing order
         $order = List_Utils::read_config_file($config_name);
         if (empty($order)) {
@@ -4150,7 +4157,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $selected_json_table = self::SELECTED_JSON_TABLE;
         $query = "DELETE FROM $selected_json_table;";
         $this->safe_sql_playlist_settings('exec', $query);
-        foreach ($this->get_provider_epg_presets($provider) as $id => $preset) {
+        foreach ($all_presets as $id => $preset) {
             if (!isset($order[$id])) {
                 $order[$id] = 1;
             }
