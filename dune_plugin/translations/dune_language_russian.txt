@@ -74,6 +74,7 @@ reset_default = Сбросить по умолчанию
 scroll_page = Прокрутка страницы
 change_group_icon = Изменить иконку категории
 change_background = Изменить обои
+media_info_dlg = Информация о потоке
 channel_info_dlg = Информация о канале (INFO)
 vod_info_dlg = Информация о фильме (INFO)
 channel_epg_dlg = Текущая передача (SUBTITLE)

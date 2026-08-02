@@ -74,6 +74,7 @@ reset_default = Zurücksetzen to default
 scroll_page = Seite scrollen
 change_group_icon = Kategoriesymbole ändern
 change_background = Hintergrundbild ändern
+media_info_dlg = Medieninformationen
 channel_info_dlg = Kanalinformationen (INFO)
 vod_info_dlg = VOD-Informationen (INFO)
 channel_epg_dlg = Kanal EPG (SUBTITLE)

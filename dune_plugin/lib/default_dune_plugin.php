@@ -2802,7 +2802,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @param User_Input_Handler|null $handler
+     * @param User_Input_Handler $handler
      * @param string $channel_id
      * @param bool $is_classic
      * @return array|null
@@ -2895,8 +2895,37 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             Control_Factory::format_smart_label($defs, 'dune_params:', $dune_params);
         }
 
-        if (!empty($live_url) && !is_limited_apk()) {
-            $streams = $this->get_streams_info($live_url);
+        Control_Factory::add_vgap($defs, 15);
+        Control_Factory::add_ok_button($defs, true);
+        if ($is_classic) {
+            Control_Factory::add_button($defs, $handler,
+                GUI_EVENT_KEY_SUBTITLE, null, TR::t('show_epg'),
+                null, Control_Factory::DLG_BUTTON_WIDTH, true);
+        }
+
+        return Action_Factory::show_dialog($defs, TR::t('channel_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
+    }
+
+    /**
+     * @param string $channel_id
+     * @return array|null
+     */
+    public function do_show_media_info($channel_id)
+    {
+        $channel_row = $this->get_channel_info($channel_id, false);
+        if (empty($channel_row)) {
+            return null;
+        }
+
+        Control_Factory::add_vgap($defs, -20);
+
+        try {
+            $live_url = $this->generate_stream_url($channel_row, -1, true);
+            if (empty($live_url)) {
+                return null;
+            }
+
+            $streams = $this->get_streams_info(htmlspecialchars($live_url));
             $out = null;
             $title = '';
             if (!empty($streams['streams'])) {
@@ -2906,24 +2935,23 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $out = $streams['log'];
             }
 
-            if (!empty($out)) {
-                Control_Factory::add_vgap($defs, 15);
-                Control_Factory::format_smart_label($defs, 'ffmpeg info:', '');
-                foreach ($out as $line) {
-                    Control_Factory::format_smart_label($defs, $title, $line);
-                }
+            if (empty($out)) {
+                return null;
             }
+
+            Control_Factory::add_vgap($defs, 15);
+            foreach ($out as $line) {
+                Control_Factory::format_smart_label($defs, $title, $line);
+            }
+            Control_Factory::add_vgap($defs, 15);
+            Control_Factory::add_ok_button($defs, true);
+
+            return Action_Factory::show_dialog($defs, TR::t('media_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
         }
 
-        Control_Factory::add_vgap($defs, 15);
-        Control_Factory::add_ok_button($defs, true);
-        if ($handler) {
-            Control_Factory::add_button($defs, $handler,
-                GUI_EVENT_KEY_SUBTITLE, null, TR::t('show_epg'),
-                null, Control_Factory::DLG_BUTTON_WIDTH, true);
-        }
-
-        return Action_Factory::show_dialog($defs, TR::t('channel_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
+        return null;
     }
 
     /**

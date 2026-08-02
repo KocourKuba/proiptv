@@ -139,6 +139,9 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
                 $attrs['initial_sel_ndx'] = 2;
                 return $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id, -1), $attrs);
 
+            case ACTION_MEDIA_INFO:
+                return $this->plugin->do_show_media_info($channel_id);
+
             case PARAM_EPG_SHIFT_HOURS:
             case PARAM_EPG_SHIFT_MINS:
                 hd_debug_print('Applying epg shift hours: ' . $user_input->{PARAM_EPG_SHIFT_HOURS}, true);
@@ -339,6 +342,13 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             GUI_EVENT_KEY_SUBTITLE, TR::t('channel_epg_dlg'), 'epg.png');
 
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+            GUI_EVENT_KEY_INFO, TR::t('channel_info_dlg'), 'info.png');
+
+        if(!is_limited_apk()) {
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                ACTION_MEDIA_INFO, TR::t('media_info_dlg'), 'info.png');
+        }
         return Action_Factory::show_popup_menu($menu_items);
     }
 }

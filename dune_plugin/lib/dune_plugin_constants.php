@@ -109,6 +109,7 @@ const ACTION_SLEEP_TIMER_CLEAR = 'sleep_timer_clear';
 const ACTION_CONFIRM_EXIT_DLG_APPLY = 'confirm_apply_dlg';
 const ACTION_RESET_ICON_DEFAULT = 'reset_icon_default';
 const ACTION_ICON_SELECTED = 'icon_selected';
+const ACTION_MEDIA_INFO = 'media_info';
 
 const CONTROL_ACTION_EDIT = 'action_edit';
 const CONTROL_EDIT_NAME = 'set_item_name';
