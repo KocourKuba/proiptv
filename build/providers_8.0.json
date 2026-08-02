@@ -33,16 +33,6 @@
         "epg_start": "time"
       }
     },
-    "drm-play": {
-      "json_source": "http://epg.drm-play.com/{PROVIDER}%2Fepg%2F{EPG_ID}.json",
-      "parser": {
-        "epg_root": "epg_data",
-        "epg_name": "name",
-        "epg_desc": "descr",
-        "epg_start": "time",
-        "epg_icon": "icon"
-      }
-    },
     "iptvx.one": {
       "json_source": "http://epg.iptvx.one/api/id/{EPG_ID}.json",
       "parser": {
@@ -210,7 +200,8 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm-play"
+            "name": "proiptv",
+            "alias": "smile"
           }
         ],
         "playlists": {
@@ -242,10 +233,6 @@
           {
             "name": "iptvx.one",
             "alias": "iptvx.one"
-          },
-          {
-            "name": "drm-play",
-            "alias": "only4"
           }
         ],
         "playlists": {
@@ -278,7 +265,7 @@
         "token_response": "token",
         "epg_presets": [
           {
-            "name": "drm-play"
+            "name": "shuratv"
           }
         ],
         "playlists": {
@@ -311,10 +298,6 @@
         "epg_presets": [
           {
             "name": "tvteam"
-          },
-          {
-            "name": "drm-play",
-            "alias": "tvteam"
           }
         ],
         "playlists": {
@@ -387,10 +370,6 @@
           {
             "name": "proiptv",
             "alias": "edem"
-          },
-          {
-            "name": "drm-play",
-            "alias": "edem"
           }
         ],
         "playlists": {
@@ -427,10 +406,6 @@
         "epg_presets": [
           {
             "name": "cbilling"
-          },
-          {
-            "name": "drm-play",
-            "alias": "cbilling"
           }
         ],
         "playlists": {
@@ -460,10 +435,6 @@
         "epg_presets": [
           {
             "name": "proiptv"
-          },
-          {
-            "name": "drm-play",
-            "alias": "bcu"
           }
         ],
         "playlists": {
@@ -483,11 +454,11 @@
       "logo": "http://iptv.esalecrm.net/res/logo_bittv.png",
       "provider_url": "https://bittv.ltd/",
       "config": {
-        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.*\\.m3u8\\?.*$/",
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>[^\\/]+)\\/(?<id>.+)\\/.*\\.m3u8\\?token=(?<token>.+)$/",
         "epg_presets": [
           {
-            "name": "iptvx.one",
-            "alias": "iptvx.one"
+            "name": "proiptv",
+            "alias": "yosso"
           }
         ],
         "playlists": {
@@ -523,9 +494,6 @@
         "epg_presets": [
           {
             "name": "cbilling"
-          },
-          {
-            "name": "drm-play"
           }
         ],
         "playlists": {
@@ -578,9 +546,6 @@
         "epg_presets": [
           {
             "name": "proiptv"
-          },
-          {
-            "name": "drm-play"
           }
         ],
         "replace_icon_patterns": [
@@ -669,10 +634,6 @@
         "epg_presets": [
           {
             "name": "proiptv"
-          },
-          {
-            "name": "drm-play",
-            "alias": "fox-tv"
           }
         ],
         "playlists": {
@@ -712,8 +673,7 @@
             "name": "proiptv"
           },
           {
-            "name": "drm-play",
-            "alias": "ottg"
+            "name": "iptvx.one"
           }
         ],
         "playlists": {
@@ -845,34 +805,6 @@
     },
     {
       "enable": true,
-      "id": "iptvplay",
-      "name": "IPTV Play",
-      "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptvplay.png",
-      "provider_url": "https://iptv-play.ru/",
-      "config": {
-        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
-        "epg_presets": [
-          {
-            "name": "iptvx.one",
-            "alias": "iptvx.one"
-          },
-          {
-            "name": "drm-play",
-            "alias": "only4"
-          }
-        ],
-        "playlists": {
-          "default": {
-            "name": "Default",
-            "url": "https://iptv-play.ru/billing/?m3u8&token={PASSWORD}"
-          }
-        },
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
-      }
-    },
-    {
-      "enable": true,
       "id": "iptvonline",
       "class": "iptvonline",
       "vod": "iptvonline",
@@ -916,6 +848,30 @@
         "streams": {
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "iptvplay",
+      "name": "IPTV Play",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_iptvplay.png",
+      "provider_url": "https://iptv-play.ru/",
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
+        "epg_presets": [
+          {
+            "name": "iptvx.one",
+            "alias": "iptvx.one"
+          }
+        ],
+        "playlists": {
+          "default": {
+            "name": "Default",
+            "url": "https://iptv-play.ru/billing/?m3u8&token={PASSWORD}"
+          }
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
@@ -968,7 +924,7 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/.+\\.m3u8$/",
         "epg_presets": [
           {
-            "name": "drm-play"
+            "name": "proiptv"
           }
         ],
         "playlists": {
@@ -1007,9 +963,6 @@
         "epg_presets": [
           {
             "name": "korona"
-          },
-          {
-            "name": "drm-play"
           }
         ],
         "playlists": {
@@ -1044,6 +997,11 @@
       "provider_url": "https://klimedia.space/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
+        "epg_presets": [
+          {
+            "name": "proiptv"
+          }
+        ],
         "playlists": {
           "default": {
             "name": "Default",
@@ -1068,7 +1026,7 @@
         "id_map": "name",
         "epg_presets": [
           {
-            "name": "drm-play"
+            "name": "proiptv"
           }
         ],
         "playlists": {
@@ -1124,8 +1082,8 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm-play",
-            "alias": "magic"
+            "name": "proiptv",
+            "alias": "mymagic"
           }
         ],
         "playlists": {
@@ -1253,10 +1211,6 @@
           {
             "name": "proiptv",
             "alias": "iptvonline"
-          },
-          {
-            "name": "drm-play",
-            "alias": "iptv.online"
           }
         ],
         "playlists": {
@@ -1299,7 +1253,8 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm-play"
+            "name": "proiptv",
+            "alias": "yosso"
           }
         ],
         "playlists": {
@@ -1333,10 +1288,6 @@
         "epg_presets": [
           {
             "name": "korona"
-          },
-          {
-            "name": "drm-play",
-            "alias": "korona"
           }
         ],
         "playlists": {
@@ -1375,10 +1326,6 @@
           {
             "name": "proiptv",
             "alias": "fox"
-          },
-          {
-            "name": "drm-play",
-            "alias": "fox-tv"
           }
         ],
         "playlists": {
@@ -1431,8 +1378,7 @@
         "id_map": "CUID",
         "epg_presets": [
           {
-            "name": "drm-play",
-            "alias": "rutv"
+            "name": "proiptv"
           }
         ],
         "playlists": {
@@ -1535,8 +1481,7 @@
         "id_map": "tvg-id",
         "epg_presets": [
           {
-            "name": "drm-play",
-            "alias": "shara-tv"
+            "name": "proiptv"
           }
         ],
         "playlists": {
@@ -1605,10 +1550,6 @@
         "epg_presets": [
           {
             "name": "proiptv"
-          },
-          {
-            "name": "drm-play",
-            "alias": "sharavoz"
           }
         ],
         "playlists": {
@@ -1748,7 +1689,7 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm-play"
+            "name": "proiptv"
           }
         ],
         "playlists": {
@@ -1887,9 +1828,6 @@
         "epg_presets": [
           {
             "name": "tvteam"
-          },
-          {
-            "name": "drm-play"
           }
         ],
         "playlists": {
@@ -1968,7 +1906,11 @@
       "provider_url": "https://uspeh.tv/",
       "config": {
         "id_map": "tvg-id",
-        "epg_presets": [],
+        "epg_presets": [
+          {
+            "name": "proiptv"
+          }
+        ],
         "playlist_mirrors": {
           "EU": "https://m3u.uspeh.my/hls",
           "RU": "https://m3u.uspeh-bil.ru/ru"
@@ -1991,6 +1933,12 @@
       "provider_url": "https://velestore.su/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+):(?<port>[^\\/]+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
+        "epg_presets": [
+          {
+            "name": "proiptv",
+            "alias": "yosso"
+          }
+        ],
         "playlists": {
           "default": {
             "name": "Default",
@@ -2043,7 +1991,7 @@
         "id_map": "tvg-id",
         "epg_presets": [
           {
-            "name": "drm-play"
+            "name": "proiptv"
           }
         ],
         "playlists": {
@@ -2087,6 +2035,12 @@
       "api_url": "https://pl.vivamax.pro",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>[^\\/]+)\\/(?<id>.+)\\/(?<var1>.+)\\.m3u8\\?token=(?<token>.+)$/",
+        "epg_presets": [
+          {
+            "name": "proiptv",
+            "alias": "vivamax"
+          }
+        ],
         "playlists": {
           "default": {
             "name": "Default",
@@ -2123,9 +2077,6 @@
         "epg_presets": [
           {
             "name": "proiptv"
-          },
-          {
-            "name": "drm-play"
           }
         ],
         "playlists": {

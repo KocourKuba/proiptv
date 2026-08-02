@@ -1,5 +1,4 @@
 <?php
-/** @noinspection PhpLanguageLevelInspection */
 require_once($_SERVER["DOCUMENT_ROOT"] . "/shared_scripts/iptv_utils.php");
 
 $white_list = [];
@@ -115,6 +114,8 @@ if ($rev < 21) {
     write_to_log($logbuf, 'old.log');
 } else if ($rev < 22) {
     write_to_log($logbuf, 'mid.log');
+} else if ($name == "providers_disabled.json") {
+    write_to_log($logbuf, 'disabled.log');
 } else {
     write_to_log($logbuf, 'providers.log');
 }
