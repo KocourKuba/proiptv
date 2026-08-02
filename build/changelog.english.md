@@ -1,4 +1,12 @@
-﻿### Version 8.0.1736
+﻿### Version 8.0.1744
+- Due to drm-play issues, added own EPG server for a limited number of XMLTV sources
+- Added EPG Internet source for iptvx.one
+- Information about channel stream info is placed in a separate dialog
+- Playlist list sorting did not work
+- Completely disabled plugin launch when auto resume is disabled.
+- Fixed a bug with updating selected Internet EPG sources
+
+### Version 8.0.1736
 - Added check for Favorite channels if the channel has been deleted or its ID has changed
 
 ### Version 8.0.1734
