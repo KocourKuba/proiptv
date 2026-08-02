@@ -2431,27 +2431,27 @@ class Dune_Default_Sqlite_Engine
     /// database methods
 
     /**
-     * @param string $table
+     * @param string $group
      * @param string $column
      * @param string $item
      * @param int $direction
      * @return bool
      */
-    protected function arrange_rows($table, $column, $item, $direction)
+    protected function arrange_rows($group, $column, $item, $direction)
     {
-        if ($table === self::PLAYLISTS_TABLE) {
+        if ($group === self::PLAYLISTS_TABLE) {
             $script = self::CREATE_PLAYLISTS_TABLE;
             $sql_wrapper = $this->sql_plugin;
+            $table_name = self::PLAYLISTS_TABLE;
         } else {
             $script = self::CREATE_ORDERED_TABLE;
             $sql_wrapper = $this->sql_playlist;
+            $table_name = self::get_table_full_name($group);
         }
 
         if (!$sql_wrapper) {
             return false;
         }
-
-        $table_name = self::get_table_full_name($table);
 
         $q_item = Sql_Wrapper::sql_quote($item);
         $cur = '';
@@ -2504,7 +2504,7 @@ class Dune_Default_Sqlite_Engine
             $query .= sprintf('UPDATE %s SET ROWID=%d WHERE ROWID=%d;', $table_name, $new, $cur);
             $query .= sprintf('INSERT INTO %s SELECT * FROM %s ORDER BY ROWID;', $tmp_table, $table_name);
             $query .= sprintf('DROP TABLE IF EXISTS %s;', $table_name);
-            $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name($table));
+            $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name($group));
         } else {
             return false;
         }
