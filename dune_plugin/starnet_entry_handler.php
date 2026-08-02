@@ -402,7 +402,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
             $resume_is_favorite = safe_get_value($resume_state, 'plugin_tv_is_favorite', 0);
             $archive_tm = safe_get_value($resume_state, 'plugin_tv_archive_tm', -1);
             $simple_start = false;
-        } else if ($user_input->action_id === self::ACTION_AUTO_RESUME && SwitchOnOff::to_bool($auto_resume)) {
+        } else if ($user_input->action_id === self::ACTION_AUTO_RESUME) {
+            if (!SwitchOnOff::to_bool($auto_resume)) {
+                return null;
+            }
             hd_debug_print('LANUCH PLUGIN AUTO RESUME MODE');
             $mode = safe_get_value($user_input, 'resume_mode');
             $resume_group = safe_get_value($user_input, 'resume_tv_group', '');
