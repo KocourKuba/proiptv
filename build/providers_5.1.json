@@ -186,6 +186,16 @@
             "name": "drm",
             "title": "epg.drm-play",
             "alias": "only4"
+          },
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "ipvx.one"
+          },
+          {
+            "name": "proiptv",
+            "title": "proiptv",
+            "alias": "ipvx.one"
           }
         ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
@@ -282,9 +292,9 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
         "epg_presets": [
           {
-            "name": "drm",
-            "alias": "iptv.online",
-            "title": "epg.drm-play"
+            "name": "proiptv",
+            "title": "proiptv",
+            "alias": "iptvonline"
           }
         ],
         "ext_params": true,
@@ -343,6 +353,11 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/.+\\/iptv\\/users\\/(?<login>.+)\\/(?<id>.+)\\.m3u8$/",
         "epg_presets": [
           {
+            "name": "proiptv",
+            "title": "proiptv",
+            "alias": "edem"
+          },
+          {
             "name": "drm",
             "title": "epg.drm-play",
             "alias": "edem"
@@ -396,6 +411,11 @@
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.*\\.m3u8\\?.*$/",
         "epg_presets": [
+          {
+            "name": "proiptv",
+            "title": "proiptv",
+            "alias": "iptvx.one"
+          },
           {
             "name": "drm",
             "title": "epg.drm-play",
@@ -560,6 +580,10 @@
         "id_map": "CUID",
         "epg_presets": [
           {
+            "name": "proiptv",
+            "title": "proiptv"
+          },
+          {
             "name": "drm",
             "title": "epg.drm-play",
             "alias": "fox-tv"
@@ -660,9 +684,9 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "iptv.online"
+            "name": "proiptv",
+            "title": "proiptv",
+            "alias": "iptvonline"
           }
         ],
         "ext_params": true,
@@ -754,6 +778,9 @@
       "config": {
         "epg_presets": [
           {
+            "name": "proiptv",
+            "title": "proiptv",
+            "alias": "iptvonline"
           }
         ],
         "ext_params": true,
@@ -1038,9 +1065,9 @@
         },
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "iptv.online"
+            "name": "proiptv",
+            "title": "proiptv",
+            "alias": "iptvonline"
           }
         ],
         "ext_params": true,
@@ -1138,6 +1165,11 @@
       },
       "config": {
         "epg_presets": [
+          {
+            "name": "proiptv",
+            "title": "proiptv",
+            "alias": "fox"
+          },
           {
             "name": "drm",
             "title": "epg.drm-play",
@@ -1492,7 +1524,23 @@
       "provider_url": "https://tvboom.vip/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
-        "epg_presets": [],
+        "epg_presets": [
+          {
+            "name": "proiptv",
+            "title": "proiptv",
+            "alias": "edem"
+          },
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "iptvx.one"
+          },
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "edem"
+          }
+        ],
         "playlists": {
           "default": {
             "name": "Default",
@@ -1606,9 +1654,9 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "iptv.online"
+            "name": "proiptv",
+            "title": "proiptv",
+            "alias": "iptvonline"
           }
         ],
         "ext_params": true,

@@ -43,14 +43,15 @@
         "epg_icon": "icon"
       }
     },
-    "proiptv": {
-      "json_source": "http://epg.esalecrm.com/{PROVIDER}/epg/{EPG_ID}.json",
+    "iptvx.one": {
+      "json_source": "http://epg.iptvx.one/api/id/{EPG_ID}.json",
       "parser": {
-        "epg_root": "epg_data",
-        "epg_name": "name",
-        "epg_desc": "descr",
-        "epg_start": "time",
-        "epg_icon": "icon"
+        "epg_root": "ch_programme",
+        "epg_name": "title",
+        "epg_desc": "description",
+        "epg_start": "start",
+        "epg_time_format": "{DAY}-{MONTH}-{YEAR} {HOUR}:{MIN}",
+        "epg_timezone": 3
       }
     },
     "itvlive": {
@@ -79,6 +80,16 @@
         "epg_name": "name",
         "epg_desc": "descr",
         "epg_start": "time"
+      }
+    },
+    "proiptv": {
+      "json_source": "http://epg.esalecrm.com/{PROVIDER}/epg/{EPG_ID}.json",
+      "parser": {
+        "epg_root": "epg_data",
+        "epg_name": "name",
+        "epg_desc": "descr",
+        "epg_start": "time",
+        "epg_icon": "icon"
       }
     },
     "shuratv": {
@@ -229,12 +240,12 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8\\?.+$/",
         "epg_presets": [
           {
-            "name": "drm-play",
-            "alias": "only4"
+            "name": "iptvx.one",
+            "alias": "iptvx.one"
           },
           {
             "name": "drm-play",
-            "alias": "iptx.one"
+            "alias": "only4"
           }
         ],
         "playlists": {
@@ -299,11 +310,11 @@
         },
         "epg_presets": [
           {
-            "name": "drm-play",
-            "alias": "tvteam"
+            "name": "tvteam"
           },
           {
-            "name": "tvteam"
+            "name": "drm-play",
+            "alias": "tvteam"
           }
         ],
         "playlists": {
@@ -335,8 +346,8 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
         "epg_presets": [
           {
-            "name": "drm-play",
-            "alias": "iptv.online"
+            "name": "proiptv",
+            "alias": "iptvonline"
           }
         ],
         "playlists": {
@@ -373,6 +384,10 @@
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/.+\\/iptv\\/users\\/(?<login>.+)\\/(?<id>.+)\\.m3u8$/",
         "epg_presets": [
+          {
+            "name": "proiptv",
+            "alias": "edem"
+          },
           {
             "name": "drm-play",
             "alias": "edem"
@@ -444,6 +459,9 @@
         "id_map": "name",
         "epg_presets": [
           {
+            "name": "proiptv"
+          },
+          {
             "name": "drm-play",
             "alias": "bcu"
           }
@@ -468,7 +486,7 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.*\\.m3u8\\?.*$/",
         "epg_presets": [
           {
-            "name": "drm-play",
+            "name": "iptvx.one",
             "alias": "iptvx.one"
           }
         ],
@@ -613,7 +631,8 @@
         "id_map": "name",
         "epg_presets": [
           {
-            "name": "drm-play"
+            "name": "proiptv",
+            "alias": "gabbarit"
           }
         ],
         "domains": {
@@ -648,6 +667,9 @@
       "config": {
         "id_map": "CUID",
         "epg_presets": [
+          {
+            "name": "proiptv"
+          },
           {
             "name": "drm-play",
             "alias": "fox-tv"
@@ -767,8 +789,8 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm-play",
-            "alias": "iptv.online"
+            "name": "proiptv",
+            "alias": "iptvonline"
           }
         ],
         "playlists": {
@@ -832,12 +854,12 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "epg_presets": [
           {
-            "name": "drm-play",
-            "alias": "only4"
+            "name": "iptvx.one",
+            "alias": "iptvx.one"
           },
           {
             "name": "drm-play",
-            "alias": "iptvx.one"
+            "alias": "only4"
           }
         ],
         "playlists": {
@@ -874,6 +896,7 @@
         },
         "epg_presets": [
           {
+            "name": "proiptv"
           }
         ],
         "playlists": {
@@ -1138,7 +1161,7 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm-play",
+            "name": "iptvx.one",
             "alias": "iptvx.one"
           }
         ],
@@ -1227,6 +1250,10 @@
           "replace": "$1{SERVER_ID}$2{STREAM_ID}"
         },
         "epg_presets": [
+          {
+            "name": "proiptv",
+            "alias": "iptvonline"
+          },
           {
             "name": "drm-play",
             "alias": "iptv.online"
@@ -1346,6 +1373,10 @@
       "config": {
         "epg_presets": [
           {
+            "name": "proiptv",
+            "alias": "fox"
+          },
+          {
             "name": "drm-play",
             "alias": "fox-tv"
           }
@@ -1459,7 +1490,7 @@
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+?token=(?<token>.+)$/",
         "epg_presets": [
           {
-            "name": "drm-play",
+            "name": "iptvx.one",
             "alias": "iptvx.one"
           }
         ],
@@ -1690,10 +1721,6 @@
         },
         "epg_presets": [
           {
-            "name": "drm-play",
-            "alias": "tvteam"
-          },
-          {
             "name": "tvteam"
           }
         ],
@@ -1776,12 +1803,8 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
         "epg_presets": [
           {
-            "name": "drm-play",
-            "alias": "edem"
-          },
-          {
-            "name": "drm-play",
-            "alias": "iptvx.one"
+            "name": "proiptv",
+            "alias": "gabbarit"
           }
         ],
         "playlists": {
@@ -1911,8 +1934,8 @@
         },
         "epg_presets": [
           {
-            "name": "drm-play",
-            "alias": "iptv.online"
+            "name": "proiptv",
+            "alias": "iptvonline"
           }
         ],
         "playlists": {
