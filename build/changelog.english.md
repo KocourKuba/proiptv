@@ -1,4 +1,11 @@
-﻿### Version 5.1.1028
+﻿### Version 5.1.1032
+- Added missing provider logos to the plugin package
+- Added preset for EPG server iptvx.one
+- Removed drm-play from EPG sources
+- Added support for own EPG server
+- Updated template configurations
+
+### Version 5.1.1028
 - Added missing provider logos to the plugin delivery
 
 ### Version 5.1.1024
