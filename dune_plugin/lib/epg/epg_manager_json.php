@@ -258,7 +258,13 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         hd_debug_print("json title: " . $parser_params[Epg_Params::EPG_NAME], true);
         hd_debug_print("json desc: " . $parser_params[Epg_Params::EPG_DESC], true);
         if (isset($parser_params[Epg_Params::EPG_ICON])) {
-            hd_debug_print("json icon: " . $parser_params[Epg_Params::EPG_ICON], true);
+            hd_debug_print('json icon: ' . $parser_params[Epg_Params::EPG_ICON], true);
+        }
+        if (isset($parser_params[Epg_Params::EPG_TIME_FORMAT])) {
+            hd_debug_print('json time format: ' . $parser_params[Epg_Params::EPG_TIME_FORMAT], true);
+        }
+        if (isset($parser_params[Epg_Params::EPG_TIMEZONE])) {
+            hd_debug_print('json timezone: ' . $parser_params[Epg_Params::EPG_TIMEZONE], true);
         }
 
         // collect all program that starts after day start and before day end
@@ -267,6 +273,20 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             if (!isset($entry[$parser_params[Epg_Params::EPG_START]])) continue;
 
             $program_start = $entry[$parser_params[Epg_Params::EPG_START]];
+
+            if (isset($parser_params[Epg_Params::EPG_TIME_FORMAT])) {
+                $time_format = str_replace(
+                    array(MACRO_YEAR, MACRO_MONTH, MACRO_DAY, MACRO_HOUR, MACRO_MIN),
+                    array('Y', 'm', 'd', 'H', 'i'),
+                    $parser_params[Epg_Params::EPG_TIME_FORMAT]);
+
+                $start = date_parse_from_format($time_format, $program_start);
+                $program_start = gmmktime($start['hour'], $start['minute'], $start['second'], $start['month'], $start['day'], $start['year']);
+            }
+
+            if (isset($parser_params[Epg_Params::EPG_TIMEZONE])) {
+                $program_start -= $parser_params[Epg_Params::EPG_TIMEZONE] * 3600;
+            }
 
             if ($prev_start !== 0) {
                 $channel_epg[$prev_start][Epg_Params::EPG_END] = $program_start;

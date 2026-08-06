@@ -259,6 +259,8 @@ const MACRO_TIMESTAMP = '{TIMESTAMP}';
 const MACRO_YEAR = '{YEAR}';
 const MACRO_MONTH = '{MONTH}';
 const MACRO_DAY = '{DAY}';
+const MACRO_HOUR = '{HOUR}';
+const MACRO_MIN = '{MIN}';
 const MACRO_EPG_ID = '{EPG_ID}';
 
 // provider type access

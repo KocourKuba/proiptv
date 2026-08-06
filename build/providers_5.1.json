@@ -33,14 +33,25 @@
         "epg_start": "time"
       }
     },
-    "drm": {
-      "json_source": "http://epg.drm-play.com/{PROVIDER}%2Fepg%2F{EPG_ID}.json",
+    "proiptv": {
+      "json_source": "http://epg.esalecrm.com/{PROVIDER}/epg/{EPG_ID}.json",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
         "epg_desc": "descr",
         "epg_start": "time",
         "epg_icon": "icon"
+      }
+    },
+    "iptvx.one": {
+      "json_source": "http://epg.iptvx.one/api/id/{EPG_ID}.json",
+      "parser": {
+        "epg_root": "ch_programme",
+        "epg_name": "title",
+        "epg_desc": "description",
+        "epg_start": "start",
+        "epg_time_format": "{DAY}-{MONTH}-{YEAR} {HOUR}:{MIN}",
+        "epg_timezone": 3
       }
     },
     "itvlive": {
@@ -151,8 +162,8 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play"
+            "name": "proiptv",
+            "alias": "smile"
           }
         ],
         "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/",
@@ -173,9 +184,7 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8\\?.+$/",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "only4"
+            "name": "iptvx.one"
           }
         ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
@@ -202,8 +211,7 @@
         "token_response": "token",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play"
+            "name": "shuratv"
           }
         ],
         "ext_params": true,
@@ -229,12 +237,6 @@
         "epg_presets": [
           {
             "name": "tvteam",
-            "epg_map": "tvg-id"
-          },
-          {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "tvteam",
             "epg_map": "tvg-id"
           }
         ],
@@ -272,9 +274,8 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
         "epg_presets": [
           {
-            "name": "drm",
-            "alias": "iptv.online",
-            "title": "epg.drm-play"
+            "name": "proiptv",
+            "alias": "iptvonline"
           }
         ],
         "ext_params": true,
@@ -309,11 +310,33 @@
         "epg_presets": [
           {
             "name": "cbilling"
-          },
+          }
+        ],
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "allwaytv",
+      "name": "Allway TV",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_allwaytv.png",
+      "provider_url": "https://allway.tv/",
+      "api_commands": {
+        "get_playlist": "http://allway.tv/iptv/users/{PASSWORD}/playlist.m3u"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/.+\\/iptv\\/users\\/(?<login>.+)\\/(?<id>.+)\\.m3u8$/",
+        "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "cbilling"
+            "name": "proiptv",
+            "alias": "edem"
+          }
+        ],
+        "replace_icon_patterns": [
+          {
+            "search": "|/img/|",
+            "replace": "/img2/"
           }
         ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -333,9 +356,7 @@
         "id_map": "name",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "bcu"
+            "name": "proiptv"
           }
         ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -355,9 +376,8 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.*\\.m3u8\\?.*$/",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "iptvx.one"
+            "name": "proiptv",
+            "alias": "yosso"
           }
         ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -373,30 +393,25 @@
       "api_url": "http://protected-api.com",
       "api_commands": {
         "account_info": "{API}/auth/info",
-        "get_playlist": "http://248on.com/playlist/{PASSWORD}_otp_dev{DEVICE_ID}.m3u8",
+        "get_playlist": "http://{DOMAIN_ID}/x/{PASSWORD}.m3u8",
         "get_vod": "{API}",
         "get_servers": "{API}/servers"
       },
       "config": {
         "id_map": "tvg-id",
+        "domains": {
+          "248on.com": "EU",
+          "ru.248on.com": "RU"
+        },
         "epg_presets": [
           {
             "name": "cbilling"
-          },
-          {
-            "name": "drm",
-            "title": "epg.drm-play"
           }
         ],
         "ext_params": true,
         "url_subst": {
           "regex": "/^(https?:\\/\\/).+(:.+)$/",
           "replace": "$1{SERVER_ID}$2"
-        },
-        "devices": {
-          "1": "1",
-          "2": "2",
-          "3": "3"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
@@ -429,8 +444,7 @@
         "domain": "junior.edmonst.net",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play"
+            "name": "proiptv"
           }
         ],
         "ext_params": true,
@@ -479,8 +493,8 @@
         "id_map": "name",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play"
+            "name": "proiptv",
+            "alias": "gabbarit"
           }
         ],
         "ext_params": true,
@@ -515,9 +529,7 @@
         "id_map": "CUID",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "fox-tv"
+            "name": "proiptv"
           }
         ],
         "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/",
@@ -539,9 +551,7 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "ottg"
+            "name": "proiptv"
           }
         ],
         "ext_params": true,
@@ -611,9 +621,8 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "iptv.online"
+            "name": "proiptv",
+            "alias": "iptvonline"
           }
         ],
         "ext_params": true,
@@ -641,6 +650,25 @@
     },
     {
       "enable": true,
+      "id": "iptvcinema",
+      "name": "IPTV Cinema",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_iptvcinema.png",
+      "provider_url": "https://iptvcinema.ru/",
+      "api_commands": {
+        "get_playlist": "https://iptvcinema.ru/{LOGIN}/{PASSWORD}/playlist.{STREAM_ID}"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
+        "streams": {
+          "m3u8": "HLS",
+          "m3u": "MPEG-TS"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "iptvplay",
       "name": "IPTV Play",
       "type": "pin",
@@ -653,14 +681,7 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play.only4",
-            "alias": "only4"
-          },
-          {
-            "name": "drm",
-            "title": "epg.drm-play.iptvx.one",
-            "alias": "iptvx.one"
+            "name": "iptvx.one"
           }
         ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -686,9 +707,8 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "iptv.online"
+            "name": "proiptv",
+            "alias": "iptvonline"
           }
         ],
         "ext_params": true,
@@ -723,7 +743,7 @@
         ],
         "ext_params": true,
         "url_subst": {
-          "regex": "/^(.+\\/)video\\.m3u8(.+)$/",
+          "regex": "/^(.+\\/)index\\.m3u8(.+)$/",
           "replace": "$1{STREAM_ID}$2"
         },
         "streams": {
@@ -747,8 +767,7 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/.+\\.m3u8$/",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play"
+            "name": "proiptv"
           }
         ],
         "ext_params": true,
@@ -782,10 +801,6 @@
         "epg_presets": [
           {
             "name": "korona"
-          },
-          {
-            "name": "drm",
-            "title": "epg.drm-play"
           }
         ],
         "ext_params": true,
@@ -834,8 +849,7 @@
         "id_map": "name",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play"
+            "name": "proiptv"
           }
         ],
         "ext_params": true,
@@ -864,9 +878,7 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "magic"
+            "name": "proiptv"
           }
         ],
         "ext_params": true,
@@ -901,9 +913,7 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "iptvx.one"
+            "name": "iptvx.one"
           }
         ],
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8?\\?(?<token>.+)$/",
@@ -973,9 +983,8 @@
         },
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "iptv.online"
+            "name": "proiptv",
+            "alias": "iptvonline"
           }
         ],
         "ext_params": true,
@@ -1010,8 +1019,8 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play"
+            "name": "proiptv",
+            "alias": "yosso"
           }
         ],
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/balancer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
@@ -1040,11 +1049,6 @@
           {
             "name": "korona",
             "title": "piktv"
-          },
-          {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "korona"
           }
         ],
         "ext_params": true,
@@ -1074,9 +1078,8 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "fox-tv"
+            "name": "proiptv",
+            "alias": "fox"
           }
         ],
         "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/",
@@ -1154,9 +1157,7 @@
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+?token=(?<token>.+)$/",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "iptvx.one"
+            "name": "iptvx.one"
           }
         ],
         "url_subst": {
@@ -1197,9 +1198,7 @@
         "id_map": "tvg-id",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "shara-tv"
+            "name": "proiptv"
           }
         ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
@@ -1213,7 +1212,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_sharaclub.png",
       "provider_url": "https://shara.club/",
-      "api_url": "http://list.sharatv.pro/api/players.php",
+      "api_url": "http://list.sh-tv.pro/api/players.php",
       "api_commands": {
         "get_playlist": "http://{PLAYLIST}/tv_live-{STREAM_ID}/{LOGIN}-{PASSWORD}",
         "get_vod": "http://{PLAYLIST}/kino-full/{LOGIN}-{PASSWORD}",
@@ -1243,7 +1242,7 @@
       "name": "Sharavoz",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
-      "provider_url": "https://sh365.org/",
+      "provider_url": "https://sharavoz.tv/",
       "api_commands": {
         "get_playlist": "http://{DOMAIN_ID}/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
         "get_vod": "http://app.media24.cc/json/c"
@@ -1252,44 +1251,36 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
         "epg_presets": [
           {
-            "name": "sharavoz"
-          },
-          {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "sharavoz",
-            "epg_map": "id"
+            "name": "proiptv"
           }
         ],
         "ext_params": true,
         "url_subst": {
-          "regex": "/^(.+\\/\\/).+(\\/.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
+          "regex": "/^(.+\\/\\/)[^\\.]+(\\..+\\/.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
           "replace": "$1{SERVER_ID}$2{STREAM_ID}$3"
         },
         "domains": {
-          "sh365.org": "sh365.org",
-          "tv1.shrv30.online": "shrv30.online",
-          "www.sharavoz.tv": "sharavoz.tv",
-          "sharavoz.space": "sharavoz.space",
-          "sh24.one": "sh24.one",
-          "sh24.xyz": "sh24.xyz",
-          "sh385.cc": "sh385.cc",
-          "www.spr24.net": "spr24.net"
+          "www.spr24.net": "spr24",
+          "linkspile.cc": "linkspile cc",
+          "linkspile.su": "linkspile su",
+          "link-pile.ch": "linkspile sh",
+          "link-pile.vg": "linkspile vg",
+          "sharavoz.tv": "sharavoz.tv",
+          "sharavoz.space": "sharavoz.space"
         },
         "streams": {
           "index.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
         "servers": {
-          "ru01.spr24.net": "Russia (RU01)",
-          "ru02.spr24.net": "Moscow (RU02)",
-          "ru03.spr24.net": "Moscow (RU03)",
-          "nl01.spr24.net": "Amsterdam (NL01)",
-          "am01.spr24.net": "Amsterdam (AM01)",
-          "fr01.spr24.net": "France (FR01)",
-          "ch01.spr24.net": "Zurich (CH01)",
-          "eu01.spr24.net": "Europe (EU01)",
-          "pl01.spr24.net": "Poland (PL01)"
+          "as01": "CDN",
+          "ru01": "Russia (RU01)",
+          "ru02": "Moscow (RU02)",
+          "nl01": "Amsterdam (NL01)",
+          "am01": "Amsterdam (AM01)",
+          "am02": "Amsterdam (AM02)",
+          "ch01": "Zurich (CH01)",
+          "ro01": "Romania (RO01)"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
@@ -1357,12 +1348,6 @@
           {
             "name": "tvteam",
             "epg_map": "tvg-id"
-          },
-          {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "tvteam",
-            "epg_map": "tvg-id"
           }
         ],
         "ext_params": true,
@@ -1388,8 +1373,7 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play"
+            "name": "proiptv"
           }
         ],
         "ext_params": true,
@@ -1428,7 +1412,12 @@
       "provider_url": "https://tvboom.vip/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
-        "epg_presets": [],
+        "epg_presets": [
+          {
+            "name": "proiptv",
+            "alias": "gabbarit"
+          }
+        ],
         "playlists": {
           "default": {
             "name": "Default",
@@ -1482,7 +1471,7 @@
       "api_url": "http://{DOMAIN_ID}/api",
       "api_commands": {
         "account_info": "{API}/?apiAction=getUserData,getServersGroups,getUserPackages&sessionId={SESSION_ID}",
-        "get_playlist": "http://team.ga/pl/11/{TOKEN}/playlist.m3u8",
+        "get_playlist": "http://hls.gd/pl/11/{TOKEN}/playlist.m3u8",
         "get_servers": "{API}/?apiAction=getServersGroups&sessionId={SESSION_ID}",
         "set_server": "{API}/?apiAction=updateUserData&groupId={SERVER_ID}&sessionId={SESSION_ID}",
         "get_packages": "{API}/?apiAction=getUserPackages&sessionId={SESSION_ID}",
@@ -1494,12 +1483,6 @@
           {
             "name": "tvteam",
             "epg_map": "tvg-id"
-          },
-          {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "tvteam",
-            "epg_map": "tvg-id"
           }
         ],
         "ext_params": true,
@@ -1509,7 +1492,6 @@
           "replace": "$1{STREAM_ID}$2"
         },
         "domains": {
-          "tv.team": "tv.team",
           "tvteam.eu": "tvteam.eu",
           "tvteam.pro": "tvteam.pro"
         },
@@ -1543,9 +1525,8 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "iptv.online"
+            "name": "proiptv",
+            "alias": "iptvonline"
           }
         ],
         "ext_params": true,
@@ -1571,16 +1552,14 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "ext_params": true,
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "uspeh"
+            "name": "proiptv"
           }
         ],
+        "ext_params": true,
         "servers": {
-          "m3u.biluspeh.com/hls": "EU",
+          "m3u.uspeh.my/hls": "EU",
           "m3u.uspeh-bil.ru/ru": "Russia"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -1598,6 +1577,12 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+):(?<port>[^\\/]+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
+        "epg_presets": [
+          {
+            "name": "proiptv",
+            "alias": "yosso"
+          }
+        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1641,8 +1626,7 @@
         "id_map": "tvg-id",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play"
+            "name": "proiptv"
           }
         ],
         "ext_params": true,
@@ -1681,6 +1665,11 @@
           }
         },
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>[^\\/]+)\\/(?<id>.+)\\/(?<var1>.+)\\.m3u8\\?token=(?<token>.+)$/",
+        "epg_presets": [
+          {
+            "name": "proiptv"
+          }
+        ],
         "url_subst": {
           "regex": "/^(.+:\\/\\/)[^\\/]+(.+)$/",
           "replace": "$1{SERVER_ID}$2"
@@ -1702,20 +1691,22 @@
       "logo": "http://iptv.esalecrm.net/res/logo_yosso.png",
       "provider_url": "https://streaming-elbrus.su/",
       "api_commands": {
-        "get_playlist": "https://streaming-elbrus.su/p12/{LOGIN}/{PASSWORD}/BL/playlist.m3u8"
+        "get_playlist": "https://{SERVER_ID}/p12/{LOGIN}/{PASSWORD}/BLOF/playlist.m3u8",
+        "get_vod": "{API}/vod/{LOGIN}/{PASSWORD}/a/p.m3u8"
       },
       "config": {
-        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/balancer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
+        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/ottplayer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
         "epg_presets": [
           {
-            "name": "drm",
-            "title": "epg.drm-play"
+            "name": "proiptv"
           }
         ],
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
-        "xmltv_sources": [
-          "http://epg.streaming-elbrus.su/xmltv/epg.xml.gz"
-        ]
+        "servers": {
+          "streaming-elbrus.su": "streaming-elbrus.su",
+          "p.rapidnas.org": "p.rapidnas.org"
+        },
+        "vod_parser": "/^(?<title>[^\\(]+)\\s\\((?<year>\\d+)\\).*$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     }
   ]
