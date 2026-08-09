@@ -125,6 +125,7 @@ class api_sharaclub extends api_default
                 return null;
             }
 
+            $defs = array();
             Control_Factory::add_vgap($defs, 20);
 
             if (file_exists($img)) {

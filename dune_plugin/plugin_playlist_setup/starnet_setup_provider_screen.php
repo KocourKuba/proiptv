@@ -343,6 +343,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                 break;
 
             case api_default::CONTROL_SERVER:
+                $msg = '';
                 $provider->SetServer($user_input->{$control_id}, $msg);
                 if (!empty($msg)) {
                     return Action_Factory::show_title_dialog(TR::t('error'), wrap_string_to_lines($msg, 80));

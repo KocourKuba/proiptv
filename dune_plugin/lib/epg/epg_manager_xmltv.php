@@ -199,11 +199,12 @@ class Epg_Manager_Xmltv
 
                                 if (!self::$ext_epg_enabled) continue;
 
+                                $items[$program_start][PluginTvExtEpgProgram::main_icon] = $items[$program_start][PluginTvEpgProgram::icon_url];
                                 $items[$program_start][PluginTvExtEpgProgram::sub_title] = self::get_node_value($tag, 'sub-title');
                                 $items[$program_start][PluginTvExtEpgProgram::main_category] = self::get_node_value($tag, 'category');
                                 $items[$program_start][PluginTvExtEpgProgram::year] = self::get_node_value($tag, 'date');
                                 $items[$program_start][PluginTvExtEpgProgram::country] = self::get_node_value($tag, 'country');
-                                $items[$program_start][PluginTvExtEpgProgram::icon_urls] = self::get_node_values($tag, 'image');
+                                $items[$program_start][PluginTvExtEpgProgram::icons] = self::get_node_values($tag, 'image');
                                 foreach ($tag->getElementsByTagName('credits') as $sub_tag) {
                                     $items[$program_start][PluginTvExtEpgProgram::director] = self::get_node_values($sub_tag, 'director');
                                     $items[$program_start][PluginTvExtEpgProgram::producer] = self::get_node_values($sub_tag, 'producer');

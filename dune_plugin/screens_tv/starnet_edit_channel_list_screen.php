@@ -258,9 +258,9 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_ITEM_DELETE_BY_STRING:
                 if ($user_input->hide === 'hide_sd') {
-                    $this->force_parent_reload = $this->plugin->hide_sd_channels($parent_group_for_item) !== 0;
+                    $this->force_parent_reload = $this->plugin->hide_sd_channels($parent_group) !== 0;
                 } else if ($user_input->hide !== 'custom_string') {
-                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($user_input->hide, $parent_group_for_item) !== 0;
+                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($user_input->hide, $parent_group) !== 0;
                 } else {
                     $defs = array();
                     Control_Factory::add_text_field($defs, $this, self::ACTION_CUSTOM_DELETE, '',

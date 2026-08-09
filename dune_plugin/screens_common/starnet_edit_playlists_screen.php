@@ -323,6 +323,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $playlist_params = $this->plugin->get_playlist_parameters($playlist_id);
         $type = safe_get_value($playlist_params, PARAM_TYPE);
         $vod_url = '';
+        $defs = array();
         if ($type === PARAM_PROVIDER) {
             $provider = $this->plugin->get_provider($playlist_id);
             if (is_null($provider)) {
@@ -735,7 +736,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 continue;
             }
 
-            $params = $provider->fill_default_provider_info($m, $playlist_id);
+            $params = $provider->fill_default_provider_info($m);
             if ($params === false) {
                 hd_debug_print("Incorrect provider parameters: $m[2]");
                 continue;

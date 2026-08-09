@@ -35,7 +35,7 @@ class api_edem extends api_default
     /**
      * @inheritDoc
      */
-    public function fill_default_provider_info($matches, &$playlist_id)
+    public function fill_default_provider_info($matches, &$playlist_id = '')
     {
         $info = parent::fill_default_provider_info($matches, $playlist_id);
 

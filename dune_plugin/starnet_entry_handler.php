@@ -271,10 +271,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
                         return Action_Factory::refresh_entry_points();
 
-                    case self::ACTION_INSTALL:
-                        Curl_Wrapper::getInstance()->clear_cache(true);
-                        break;
-
                     case self::ACTION_UNINSTALL:
                         Default_Archive::clear_cache();
                         if (!HD::color_palette_check()) break;

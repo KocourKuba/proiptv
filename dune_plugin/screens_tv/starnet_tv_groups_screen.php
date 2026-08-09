@@ -188,6 +188,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 return $this->create_popup_menu(safe_get_value($selected_media_url, COLUMN_GROUP_ID));
 
             case ACTION_EPG_CACHE_ENGINE:
+                $menu_items = array();
                 $this->plugin->epg_engine_menu_items($this, $menu_items);
                 return Action_Factory::show_popup_menu($menu_items);
 

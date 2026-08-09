@@ -79,7 +79,7 @@ class Starnet_Setup_Download_Screen extends Abstract_Controls_Screen
             $cache_range[$hour] = $hour;
         }
         Control_Factory::add_combobox($defs, $this, PARAM_CURL_FILE_CACHE_TIME, TR::t('setup_cache_time'),
-            $this->plugin->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 1),
+            $this->plugin->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 4),
             $cache_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////

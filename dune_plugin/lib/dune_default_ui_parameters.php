@@ -299,6 +299,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             $curl_wrapper->download_file(self::RESOURCE_URL . "QR_YM.png", $img_ym, Curl_Wrapper::CACHE_RESPONSE);
             $curl_wrapper->download_file(self::RESOURCE_URL . "QR_PP.png", $img_pp, Curl_Wrapper::CACHE_RESPONSE);
 
+            $defs = array();
             Control_Factory::add_vgap($defs, 50);
             Control_Factory::add_smart_label($defs, '<text>YooMoney</text><gap width=400/><text>PayPal</text>');
             Control_Factory::add_smart_label($defs, "<icon>$img_ym</icon><gap width=140/><icon>$img_pp</icon>");
@@ -328,6 +329,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             return null;
         }
 
+        $defs = array();
         if (!isset($prog_info[PluginTvEpgProgram::name])) {
             $title = TR::t('epg_not_exist');
         } else {
@@ -345,6 +347,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 TR::load('live'),
                 format_duration_seconds($diff)
             );
+
             Control_Factory::add_smart_label($defs, $elapsed_text);
 
             // Progress bar placed after elapsed time on the same line

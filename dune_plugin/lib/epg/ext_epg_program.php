@@ -29,7 +29,7 @@ class PluginTvExtEpgProgram extends PluginTvEpgProgram
     const    /* (char *)	*/ sub_title = 'sub-title';         // подзаголовок телепередачи
     const    /* (char *)	*/ main_category = 'main_category'; // категория, жанр, возрастной ценз
     const    /* (char *)	*/ main_icon = 'main_icon';         // титульная картинка (рекомендуемый размер 400х300)
-    const    /* array       */ icon_urls = 'icons';             // дополнительные картинки (рекомендуемый размер 400х300)
+    const    /* array       */ icons = 'icons';             // дополнительные картинки (рекомендуемый размер 400х300)
     const    /* (char *)	*/ year = 'year';                   // год выпуска (в прокате)
     const    /* (char *)    */ country = 'country';             // страна
     const    /* array       */ director = 'director';           // режиссер(ы)

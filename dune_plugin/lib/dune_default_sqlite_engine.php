@@ -203,9 +203,9 @@ class Dune_Default_Sqlite_Engine
         }
 
         // 1h - 24h
-        $param = $this->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 1);
+        $param = $this->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 4);
         if ($param < 1 || $param > 24) {
-            $this->set_parameter(PARAM_CURL_FILE_CACHE_TIME, 1);
+            $this->set_parameter(PARAM_CURL_FILE_CACHE_TIME, 4);
         }
     }
 

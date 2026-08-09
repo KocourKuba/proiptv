@@ -106,6 +106,7 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
                     if (!$res) break;
                 }
 
+                $defs = array();
                 Control_Factory::add_vgap($defs, 20);
                 Control_Factory::add_smart_label($defs, "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
                 Control_Factory::add_vgap($defs, 450);

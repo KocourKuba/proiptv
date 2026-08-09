@@ -1074,7 +1074,7 @@ class api_default
      * @param string $playlist_id
      * @return bool|array
      */
-    public function fill_default_provider_info($matches, &$playlist_id)
+    public function fill_default_provider_info($matches, &$playlist_id = '')
     {
         $info[PARAM_TYPE] = PARAM_PROVIDER;
         $info[PARAM_NAME] = $this->getName();

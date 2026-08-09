@@ -49,6 +49,7 @@ class OSD_Component_Factory
         if (is_null(self::$instance))
             self::init();
 
+        $comps = array();
         $path = rtrim(self::$instance->osd_glass_path, '/');
         $ext = self::$instance->osd_glass_manifest['ext'];
         Action_Factory::add_osd_image($comps, "$path/osd_glass_top_left.$ext", 0, 0, 1, 1);

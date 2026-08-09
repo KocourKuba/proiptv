@@ -342,6 +342,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $show_ext_epg = $this->is_ext_epg_enabled();
 
             $cached = false;
+            /** @noinspection PhpConditionAlreadyCheckedInspection */
             $day_epg_items = $this->epg_manager->get_day_epg_items($channel_row, $utc_day_start_tm_sec, $cached);
             if (isset($day_epg_items['error'])) {
                 $day_epg[] = array(
@@ -367,10 +368,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     PluginTvEpgProgram::description => $value[PluginTvEpgProgram::description],
                 );
 
+                /** @noinspection PhpConditionAlreadyCheckedInspection */
                 if (LogSeverity::$is_debug && !$cached) {
-                    hd_debug_print(format_datetime('m-d H:i', $tm_start)
+                    $str = format_datetime('m-d H:i', $tm_start)
                         . " ($tm_start) - " . format_datetime('m-d H:i', $tm_end)
-                        . " ($tm_end) {$value[PluginTvEpgProgram::name]}", true);
+                        . " ($tm_end) {$value[PluginTvEpgProgram::name]}";
+                    if (isset($value[PluginTvEpgProgram::icon_url])) {
+                        $str .= ", " . $value[PluginTvEpgProgram::icon_url];
+                    }
+                    hd_debug_print($str, true);
                 }
 
                 if (!$show_ext_epg || in_array($channel_id, Epg_Manager_Xmltv::get_delayed_epg())) continue;
@@ -391,8 +397,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $ext_epg[$start][PluginTvExtEpgProgram::main_category] = $value[PluginTvExtEpgProgram::main_category];
                 }
 
-                if (!empty($value[PluginTvExtEpgProgram::icon_urls])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::icon_urls] = $value[PluginTvExtEpgProgram::icon_urls];
+                if (!empty($value[PluginTvExtEpgProgram::icons])) {
+                    $ext_epg[$start][PluginTvExtEpgProgram::icons] = $value[PluginTvExtEpgProgram::icons];
                 }
 
                 if (!empty($value[PluginTvExtEpgProgram::year])) {
@@ -1584,7 +1590,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $curl_wrapper->reset();
         $curl_wrapper->set_connect_timeout($this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
         $curl_wrapper->set_download_timeout($this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
-        $curl_wrapper->set_file_cache_time($this->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 1));
+        $curl_wrapper->set_file_cache_time($this->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 4));
     }
 
     /**
@@ -1740,11 +1746,23 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @param array $provider_preset
+     * @param string $preset_id
      * @return array|false
      */
-    public function get_configured_preset($provider_preset)
+    public function get_configured_preset($preset_id)
     {
+        hd_debug_print(null, true);
+        hd_debug_print("Preset id: '$preset_id'");
+        if (empty($preset_id)) {
+            return false;
+        }
+
+        $presets_ids = $this->get_provider_epg_presets();
+        if (!isset($presets_ids[$preset_id])) {
+            return false;
+        }
+
+        $provider_preset = $presets_ids[$preset_id];
         if (!$this->epg_presets->size()) {
             hd_debug_print('No configured EPG presets for plugin', true);
             return false;
@@ -1764,7 +1782,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $config_preset[EPG_JSON_PRESET_ALIAS] = $provider_preset[EPG_JSON_PRESET_ALIAS];
         }
 
-        hd_debug_print('get_configured_preset: ' . json_format_unescaped($config_preset), true);
         return $config_preset;
     }
 
@@ -2815,25 +2832,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $epg_urls = array();
-        $epg_ids = array();
+        $epg_ids = Epg_Manager_Json::get_epg_ids($channel_row);
         if ($this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_JSON) {
-            $epg_id = Epg_Manager_Json::get_epg_id($channel_row);
-            if (!empty($epg_id)) {
-                $epg_ids[] = $epg_id;
+            if (!empty($epg_ids)) {
                 $day_start_ts = from_local_time_zone_offset(strtotime(date('Y-m-d')));
                 $provider = $this->get_active_provider();
-                foreach ($this->get_provider_epg_presets() as $preset) {
+                foreach ($this->get_selected_json_sources(true) as $preset) {
                     $config_preset = $this->get_configured_preset($preset);
                     if (empty($config_preset)) {
                         continue;
                     }
-                    $epg_urls[] = Epg_Manager_Json::get_epg_url($provider, $config_preset, $channel_row, $day_start_ts, $epg_id);
+                    $epg_urls[] = Epg_Manager_Json::get_epg_url($provider, $config_preset, $day_start_ts, $epg_ids[0]);
                 }
             }
-        } else {
-            $epg_ids = self::make_epg_ids($channel_row);
         }
-        $epg_id = implode(', ', array_unique(array_filter($epg_ids)));
+        $epg_ids_str = implode(', ', $epg_ids);
         $defs = array();
 
         Control_Factory::add_vgap($defs, -20);
@@ -2847,7 +2860,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         Control_Factory::format_smart_label($defs, TR::load('archive'), $channel_row[COLUMN_ARCHIVE] . ' ' . TR::load('days'));
         Control_Factory::format_smart_label($defs, TR::load('adult'),
             $channel_row[COLUMN_ADULT] ? TR::load('yes') : TR::load('no'));
-        Control_Factory::format_smart_label($defs, 'EPG IDs:', $epg_id);
+        Control_Factory::format_smart_label($defs, 'EPG IDs:', $epg_ids_str);
 
         if ($channel_row[COLUMN_TIMESHIFT] != 0) {
             Control_Factory::format_smart_label($defs, TR::load('time_shift'),
@@ -2917,6 +2930,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return null;
         }
 
+        $defs = array();
         Control_Factory::add_vgap($defs, -20);
 
         try {
@@ -2980,6 +2994,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $magic = extract_dune_params($stream_url);
         $stream_url = strip_dune_params($stream_url);
 
+        $defs = array();
         Control_Factory::add_vgap($defs, -20);
         Control_Factory::format_smart_label($defs, TR::load('name'), $series[PluginVodSeriesInfo::name]);
 
@@ -3405,7 +3420,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     public static function make_epg_ids($channel_row)
     {
-        return array('epg_id' => $channel_row[COLUMN_EPG_ID], 'id' => $channel_row[COLUMN_CHANNEL_ID], 'name' => $channel_row[COLUMN_TITLE]);
+        return array('epg_id' => $channel_row[COLUMN_EPG_ID],
+            'id' => $channel_row[COLUMN_CHANNEL_ID],
+            'name' => $channel_row[COLUMN_TITLE],
+            ATTR_TVG_NAME => $channel_row[COLUMN_TITLE],
+            ATTR_TVG_ID => $channel_row[COLUMN_CHANNEL_ID]
+        );
     }
 
     public static function is_special_group_id($group_id)

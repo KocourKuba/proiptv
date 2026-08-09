@@ -734,7 +734,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             $cache = TR::t('days__1', $params[COLUMN_CACHE]);
         }
 
-        Control_Factory::add_smart_label($defs, 
+        $defs = array();
+        Control_Factory::add_smart_label($defs,
             sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>",
                 DEF_LABEL_TEXT_COLOR_GOLD, TR::t('name'),
                 DEF_LABEL_TEXT_COLOR_WHITE, $params[COLUMN_NAME]),
