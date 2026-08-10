@@ -1,4 +1,4 @@
-﻿### Version 8.1.1750
+﻿### Version 8.1.1752
 - The use of drm-play sources has been completely removed from the plugin
 - Added Internet sources for providers that were not in drm-play. Now all templates have their own Internet EPG source
 - The plugin uses the new features of my xmltv -> json converter on the EPG server.
