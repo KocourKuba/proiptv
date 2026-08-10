@@ -1,4 +1,13 @@
-﻿### Version 8.0.1744
+﻿### Version 8.1.1748
+- The use of drm-play sources has been completely removed from the plugin
+- Added Internet sources for providers that were not in drm-play. Now all templates have their own Internet EPG source
+- The plugin uses the new features of my xmltv -> json converter on the EPG server.
+- Added advanced EPG search for Internet source, the same as implemented for XMLTV. If the EPG ID specified in the playlist is not found, a search will be performed by the channel name. This partially corrects the shortcomings of the playlist compilers.
+- Optimized requests to my EPG Internet server. The plugin checks whether the specified EPG IDs are on the server at all, and if they are not, then a request to the server is not made. This reduces unnecessary load on the server.
+- The new converter also provides additional information extracted from XMLTV, so it is now possible to use Ext EPG (extended EPG) for Internet sources. But it all depends on the source XMLTV
+- Improved caching for EPG to reduce server load.
+
+### Version 8.0.1744
 - Due to drm-play issues, added own EPG server for a limited number of XMLTV sources
 - Added EPG Internet source for iptvx.one
 - Information about channel stream info is placed in a separate dialog
