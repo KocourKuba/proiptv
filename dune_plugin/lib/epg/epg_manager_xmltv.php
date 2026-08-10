@@ -1370,6 +1370,7 @@ class Epg_Manager_Xmltv
         safe_unlink("$cached_file.stat");
 
         hd_debug_print("Download: $url");
+        Curl_Wrapper::getInstance();
         Curl_Wrapper::clear_cached_etag($url);
 
         $curl_wrapper = Curl_Wrapper::getInstance();
