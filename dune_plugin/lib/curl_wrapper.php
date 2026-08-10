@@ -106,20 +106,7 @@ class Curl_Wrapper
      */
     protected function __construct($cache_subdir = 'common')
     {
-        create_path(get_data_path(CURL_CACHE_SUBDIR));
-        self::$etag_db = new Sql_Wrapper(get_data_path(CURL_CACHE_SUBDIR . '/' . self::CACHE_TAG_FILE));
-        self::$etag_db->exec('CREATE TABLE IF NOT EXISTS etags (hash TEXT PRIMARY KEY, etag TEXT);');
-        $old_etags = get_data_path('etag_cache.dat');
-        if (file_exists($old_etags)) {
-            $data = json_decode(file_get_contents($old_etags), true);
-            $query = '';
-            foreach ($data as $etag => $value) {
-                $query .= sprintf('INSERT OR IGNORE INTO etags (hash, etag) VALUES (%s, %s)', Sql_Wrapper::sql_quote($etag), Sql_Wrapper::sql_quote($value));
-            }
-            self::$etag_db->exec($query);
-            unlink($old_etags);
-        }
-
+        self::init_etag_db();
         $this->set_cache_path($cache_subdir);
         $this->reset();
     }
@@ -304,11 +291,6 @@ class Curl_Wrapper
     {
         return self::$error_desc;
     }
-
-
-    /////////////////////////////////////////////////////////////
-    /// static functions
-
     public function clear_cache($all = false)
     {
         if ($all) {
@@ -323,6 +305,21 @@ class Curl_Wrapper
         }
     }
 
+    /////////////////////////////////////////////////////////////
+    /// static functions
+
+    public static function init_etag_db()
+    {
+        if (self::$etag_db === null) {
+            create_path(get_data_path(CURL_CACHE_SUBDIR));
+            self::$etag_db = new Sql_Wrapper(get_data_path(CURL_CACHE_SUBDIR . '/' . self::CACHE_TAG_FILE));
+            self::$etag_db->exec('CREATE TABLE IF NOT EXISTS etags (hash TEXT PRIMARY KEY, etag TEXT);');
+            $old_etags = get_data_path('etag_cache.dat');
+            if (file_exists($old_etags)) {
+                unlink($old_etags);
+            }
+        }
+    }
     /**
      * @param string $url
      */
@@ -375,6 +372,7 @@ class Curl_Wrapper
      */
     public static function get_cached_etag($url, $by_hash = false)
     {
+        self::init_etag_db();
         $hash = $by_hash ? $url : self::get_url_hash($url);
         if (empty($hash)) {
             return '';
@@ -389,9 +387,10 @@ class Curl_Wrapper
      */
     public static function set_cached_etag($url, $etag)
     {
+        self::init_etag_db();
         if (!empty($url) && !empty($etag)) {
             $query = sprintf('INSERT OR REPLACE INTO etags (hash, etag) VALUES(%s, %s);',
-                Sql_Wrapper::sql_quote($etag), Sql_Wrapper::sql_quote(self::get_url_hash($url)));
+                Sql_Wrapper::sql_quote(self::get_url_hash($url)), Sql_Wrapper::sql_quote($etag));
             self::$etag_db->exec($query);
         }
     }
@@ -403,6 +402,7 @@ class Curl_Wrapper
      */
     public static function clear_cached_etag($url, $by_hash = false)
     {
+        self::init_etag_db();
         if (!empty($url)) {
             $hash = $by_hash ? $url : self::get_url_hash($url);
             $query = sprintf('DELETE FROM etags WHERE hash=%s;', Sql_Wrapper::sql_quote($hash));

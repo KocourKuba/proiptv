@@ -603,6 +603,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $title = TR::t('edit_list_title_info__2', $title, $dl_date);
 
                 $etag = Curl_Wrapper::get_cached_etag($item[PARAM_URI]);
+                hd_debug_print("Download xmltv source: {$item[PARAM_URI]} etag: '$etag' hash: " . Curl_Wrapper::get_url_hash($item[PARAM_URI]));
                 if (empty($etag) && $item[PARAM_CACHE] === XMLTV_CACHE_AUTO) {
                     $info = TR::load('edit_list_wrong_cache_type');
                 } else {
