@@ -373,9 +373,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $str = format_datetime('m-d H:i', $tm_start)
                         . " ($tm_start) - " . format_datetime('m-d H:i', $tm_end)
                         . " ($tm_end) {$value[PluginTvEpgProgram::name]}";
-                    if (isset($value[PluginTvEpgProgram::icon_url])) {
-                        $str .= ", " . $value[PluginTvEpgProgram::icon_url];
-                    }
                     hd_debug_print($str, true);
                 }
 
@@ -424,14 +421,22 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $ext_epg[$start][PluginTvExtEpgProgram::writer] = $value[PluginTvExtEpgProgram::writer];
                 }
 
-                if (!empty($value[PluginTvExtEpgProgram::actor]))
+                if (!empty($value[PluginTvExtEpgProgram::actor])) {
                     $ext_epg[$start][PluginTvExtEpgProgram::actor] = $value[PluginTvExtEpgProgram::actor];
+                }
 
-                if (!empty($value[PluginTvExtEpgProgram::presenter]))
+                if (!empty($value[PluginTvExtEpgProgram::presenter])) {
                     $ext_epg[$start][PluginTvExtEpgProgram::presenter] = $value[PluginTvExtEpgProgram::presenter];
+                }
 
-                if (!empty($value[PluginTvExtEpgProgram::imdb_rating]))
+                if (!empty($value[PluginTvExtEpgProgram::imdb_rating])) {
                     $ext_epg[$start][PluginTvExtEpgProgram::imdb_rating] = $value[PluginTvExtEpgProgram::imdb_rating];
+                } else if (!empty($value[PluginTvExtEpgProgram::kp_rating])) {
+                    $ext_epg[$start][PluginTvExtEpgProgram::imdb_rating] = $value[PluginTvExtEpgProgram::kp_rating];
+                } else if (!empty($value[PluginTvExtEpgProgram::km_rating])) {
+                    $ext_epg[$start][PluginTvExtEpgProgram::imdb_rating] = $value[PluginTvExtEpgProgram::km_rating];
+                }
+
             }
 
             if (!empty($day_epg) && !empty($ext_epg)) {

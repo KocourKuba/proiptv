@@ -29,7 +29,7 @@ class PluginTvExtEpgProgram extends PluginTvEpgProgram
     const    /* (char *)	*/ sub_title = 'sub-title';         // подзаголовок телепередачи
     const    /* (char *)	*/ main_category = 'main_category'; // категория, жанр, возрастной ценз
     const    /* (char *)	*/ main_icon = 'main_icon';         // титульная картинка (рекомендуемый размер 400х300)
-    const    /* array       */ icons = 'icons';             // дополнительные картинки (рекомендуемый размер 400х300)
+    const    /* array       */ icons = 'icons';                 // дополнительные картинки (рекомендуемый размер 400х300)
     const    /* (char *)	*/ year = 'year';                   // год выпуска (в прокате)
     const    /* (char *)    */ country = 'country';             // страна
     const    /* array       */ director = 'director';           // режиссер(ы)
@@ -41,4 +41,5 @@ class PluginTvExtEpgProgram extends PluginTvEpgProgram
     const    /* array	    */ composer = 'composer';           // композитор(ы)
     const    /* (char *)	*/ imdb_rating = 'imdb_rating';     // рейтинг IMDB
     const    /* (char *)	*/ kp_rating = 'kp_rating';         // рейтинг Кинопоиск
+    const    /* (char *)	*/ km_rating = 'km_rating';         // рейтинг Kinomail
 }

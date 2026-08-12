@@ -640,7 +640,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             $epg_len = $end_tm - $start_tm;
             $progress = 0;
             $channel_info = $this->plugin->get_channel_info($channel_id);
-            hd_debug_print("ret: " . json_format_unescaped($channel_info));
+            if (empty($channel_info)) continue;
 
             $title = $channel_info[COLUMN_TITLE];
             // program epg available

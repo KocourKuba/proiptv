@@ -309,7 +309,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         hd_debug_print("Fetching channels info from server: $channels_info_url");
         try {
             $ch_data = Curl_Wrapper::getInstance()->download_content($channels_info_url,
-                Curl_Wrapper::RET_ARRAY|Curl_Wrapper::USE_ETAG|Curl_Wrapper::CACHE_RESPONSE
+                Curl_Wrapper::RET_ARRAY | Curl_Wrapper::USE_ETAG | Curl_Wrapper::CACHE_RESPONSE
             );
 
             if (empty($ch_data)) {
@@ -346,7 +346,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             if (isset($preset[EPG_JSON_AUTH])) {
                 $opts[CURLOPT_HTTPHEADER] = array($provider->replace_macros($preset[EPG_JSON_AUTH]));
             }
-            $ch_data = Curl_Wrapper::getInstance()->download_content($url, Curl_Wrapper::RET_ARRAY|Curl_Wrapper::USE_ETAG|Curl_Wrapper::CACHE_RESPONSE);
+            $ch_data = Curl_Wrapper::getInstance()->download_content($url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::USE_ETAG | Curl_Wrapper::CACHE_RESPONSE);
             if ($ch_data === false) {
                 return $channel_epg;
             }
@@ -410,12 +410,17 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             $channel_epg[$program_start][PluginTvEpgProgram::name] = unescape_entity_string(safe_get_value($entry, $parser_params[self::EPG_NAME], ''));
 
             $desc = unescape_entity_string(safe_get_value($entry, $parser_params[self::EPG_DESC], ''));
-            if (!empty($desc)) {
-                $desc = str_replace(array('<br>', "<'>br>"), PHP_EOL, $desc);
-            }
-            $channel_epg[$program_start][PluginTvEpgProgram::description] = $desc;
+            $icon = safe_get_value($entry, safe_get_value($parser_params, self::EPG_ICON), '');
 
-            $channel_epg[$program_start][PluginTvEpgProgram::icon_url] = safe_get_value($entry, safe_get_value($parser_params, self::EPG_ICON), '');
+            if (!empty($desc) && $preset[EPG_JSON_PRESET_NAME] === 'proiptv') {
+                $reformatted = self::reformat_description($desc, $icon);
+                foreach ($reformatted as $key => $value) {
+                    $channel_epg[$program_start][$key] = $value;
+                }
+            } else {
+                $channel_epg[$program_start][PluginTvEpgProgram::description] = $desc;
+                $channel_epg[$program_start][PluginTvEpgProgram::icon_url] = $icon;
+            }
         }
 
         if ($prev_start !== 0) {
