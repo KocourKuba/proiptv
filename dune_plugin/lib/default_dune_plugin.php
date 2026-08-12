@@ -1694,7 +1694,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $ext_php = get_platform_php();
         $script_path = get_install_path('bin/index_epg.php');
         $log_path = get_temp_path("{$source_id}_bg_error.log");
-        $cmd = "$ext_php -f $script_path $config_file >$log_path 2>&1 &";
+        $cmd = "$ext_php -f \"$script_path\" \"$config_file\" >$log_path 2>&1 &";
         hd_debug_print("exec: $cmd", true);
         shell_exec($cmd);
         return true;

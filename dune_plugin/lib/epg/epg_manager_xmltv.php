@@ -23,6 +23,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+require_once 'starnet_epfs_handler.php';
 require_once 'lib/tr.php';
 require_once 'lib/hd.php';
 require_once 'lib/hashed_array.php';
@@ -1544,7 +1545,7 @@ class Epg_Manager_Xmltv
             $port = 80;
         }
 
-        $status = json_decode(shell_exec('wget -q -O - http://127.0.0.1:' . $port . '/cgi-bin/do?cmd=ui_state&result_syntax=json"'));
+        $status = json_decode(shell_exec('wget -q -O - "http://127.0.0.1:' . $port . '/cgi-bin/do?cmd=ui_state&result_syntax=json"'));
 
         $navigator_newui_top = safe_get_value($status->ui_state->screen, 'navigator_top_item_id');
         $folder_type = safe_get_value($status->ui_state->screen, 'folder_type');
