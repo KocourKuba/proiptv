@@ -269,6 +269,14 @@ class Curl_Wrapper
     }
 
     /**
+     * @return  int $time in hours
+     */
+    public function get_file_cache_time()
+    {
+        return $this->file_cache_time;
+    }
+
+    /**
      * @return int
      */
     public static function get_http_code()

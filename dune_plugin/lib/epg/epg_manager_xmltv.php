@@ -245,6 +245,12 @@ class Epg_Manager_Xmltv
                         if (!empty($items)) break;
                     }
                 }
+
+                if (self::check_epg_range($items, $day_start_ts)) {
+                    break;
+                }
+
+                $items = array();
             } catch (Exception $ex) {
                 print_backtrace_exception($ex);
             }
@@ -274,8 +280,9 @@ class Epg_Manager_Xmltv
             }
         } else {
             hd_debug_print('Store day epg to memory cache');
-            self::$epg_cache[$channel_id][$day_start_ts] = $items;
             ksort($items);
+            $items = self::check_epg_intervals($items);
+            self::$epg_cache[$channel_id][$day_start_ts] = $items;
         }
         $day_epg['items'] = $items;
 
@@ -1093,6 +1100,7 @@ class Epg_Manager_Xmltv
     {
         return self::$cache_dir;
     }
+
     /**
      * Clear memory cache
      * @return void
@@ -1187,13 +1195,13 @@ class Epg_Manager_Xmltv
         $channel_id = $channel_row[COLUMN_CHANNEL_ID];
         $channel_title = $channel_row[COLUMN_TITLE];
         $epg_ids = array_unique(array_filter(array(
-            $channel_row[COLUMN_EPG_ID],
-            $channel_id,
-            $channel_row[COLUMN_TVG_NAME],
-            $channel_title))
+                $channel_row[COLUMN_EPG_ID],
+                $channel_id,
+                $channel_row[COLUMN_TVG_NAME],
+                $channel_title))
         );
 
-        $aliases = Sql_Wrapper::sql_make_list_from_values(array_map(function($value) {
+        $aliases = Sql_Wrapper::sql_make_list_from_values(array_map(function ($value) {
             return mb_convert_case($value, MB_CASE_LOWER, "UTF-8");
         }, $epg_ids));
 
@@ -1262,7 +1270,7 @@ class Epg_Manager_Xmltv
      * @param string $name
      * @return string
      */
-    protected static function get_node_value($node, $name)
+    public static function get_node_value($node, $name)
     {
         $value = '';
         foreach ($node->getElementsByTagName($name) as $element) {
@@ -1280,7 +1288,7 @@ class Epg_Manager_Xmltv
      * @param string $name
      * @return array
      */
-    protected static function get_node_values($node, $name)
+    public static function get_node_values($node, $name)
     {
         $values = array();
         foreach ($node->getElementsByTagName($name) as $element) {
@@ -1312,6 +1320,61 @@ class Epg_Manager_Xmltv
     protected static function clear_log($hash)
     {
         safe_unlink(get_temp_path("{$hash}_indexing.log"));
+    }
+
+    protected static function check_epg_range($all_epg, $day_start_ts)
+    {
+        $first_tm = key($all_epg);
+        $first = format_datetime('Y-m-d H:i', $first_tm);
+        $last_tm = $all_epg[key(array_slice($all_epg, -1, 1, true))][PluginTvEpgProgram::end_tm_sec];
+        $last = format_datetime('Y-m-d H:i', $last_tm);
+        hd_debug_print("Entries time range: $first ($first_tm) - $last ($last_tm)");
+        $day_end_ts = $day_start_ts + 86400;
+
+        if ($day_start_ts > $last_tm || $day_end_ts < $first_tm) {
+            hd_debug_print("Selected time is out of range. Available EPG time range: $first - $last");
+            return false;
+        }
+
+        return true;
+    }
+
+    protected static function check_epg_intervals($items)
+    {
+        $prev_end = 0;
+        $fixed = array();
+        foreach ($items as $start => $value) {
+            $end = $value[PluginTvEpgProgram::end_tm_sec];
+            // first entry
+            if ($prev_end === 0) {
+                $prev_end = $end;
+                $fixed[$start] = $value;
+                continue;
+            }
+
+            // found gap between programs.
+            // fix start next program to previous end
+            if ($start - $prev_end > 0) {
+                $fixed[$prev_end] = $value;
+                $prev_end = $end;
+            } else if ($start < $prev_end) {
+                // found overlap. new program start before previous ending
+                if ($end > $prev_end) {
+                    // end of program is later than previous program ending
+                    // normalize start. shift start to previous ending
+                    $fixed[$prev_end] = $value;
+                    $prev_end = $end;
+                } else {
+                    // This program fully inside previous. Just drop this program
+                    unset($fixed[$prev_end]);
+                }
+            } else {
+                // all fine. store it
+                $fixed[$prev_end] = $value;
+            }
+        }
+
+        return $fixed;
     }
 
     /**
