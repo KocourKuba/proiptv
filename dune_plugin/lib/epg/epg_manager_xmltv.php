@@ -119,6 +119,11 @@ class Epg_Manager_Xmltv
         self::$delayed_epg = array();
     }
 
+    public static function set_ext_epg_enabled($enabled)
+    {
+        self::$ext_epg_enabled = $enabled;
+    }
+
     /**
      * Try to load epg from cached file
      *
@@ -213,19 +218,21 @@ class Epg_Manager_Xmltv
                                 $items[$program_start][PluginTvEpgProgram::end_tm_sec] = $program_end;
                                 $items[$program_start][PluginTvEpgProgram::name] = self::get_node_value($tag, 'title');
 
-                                $reformatted = self::reformat_description($desc, $icon);
-                                foreach ($reformatted as $key => $value) {
-                                    $items[$program_start][$key] = $value;
+                                if (empty($desc)) {
+                                    $items[$program_start][PluginTvEpgProgram::description] = '';
+                                } else {
+                                    $reformatted = self::reformat_description($desc, $icon);
+                                    foreach ($reformatted as $key => $value) {
+                                        $items[$program_start][$key] = $value;
+                                    }
                                 }
-                                $items[$program_start][PluginTvEpgProgram::description] = $desc;
 
                                 if (!self::$ext_epg_enabled) continue;
 
                                 $update_ext_epg(PluginTvExtEpgProgram::sub_title, 'sub-title', $tag, $items[$program_start]);
                                 $update_ext_epg(PluginTvExtEpgProgram::main_category, 'category', $tag, $items[$program_start]);
                                 $update_ext_epg(PluginTvExtEpgProgram::year, 'date', $tag, $items[$program_start]);
-                                $update_ext_epg(PluginTvExtEpgProgram::country, 'category', $tag, $items[$program_start]);
-                                $update_ext_epg(PluginTvExtEpgProgram::sub_title, 'country', $tag, $items[$program_start]);
+                                $update_ext_epg(PluginTvExtEpgProgram::country, 'country', $tag, $items[$program_start]);
 
                                 $collect_ext_epg(PluginTvExtEpgProgram::icons, 'image', $tag, $items[$program_start]);
                                 foreach ($tag->getElementsByTagName('credits') as $sub_tag) {
@@ -1642,7 +1649,7 @@ class Epg_Manager_Xmltv
                 $m = preg_split($pattern, $raw_descr, 0, PREG_SPLIT_DELIM_CAPTURE);
                 if (!isset($m[1])) continue;
 
-                $total[$key] = $m[1];
+                $total[$key] = trim($m[1]);
                 $raw_descr = preg_replace($pattern, '', $raw_descr);
             }
 
@@ -1657,42 +1664,54 @@ class Epg_Manager_Xmltv
             $icon = $icon . "?cover=true&w=320&h=180&crop=true";
 
             $chunks = array(
-                "genre" => "/Жанр: (.*?)\n/",
-                "country" => "/Страна: (.*?)(\.|,)/",
-                "year" => "/Год: (\d\d\d\d)(\.|,)/",
-                "kp_rating" => "/КиноПоиск\[(.*?)\]/",
-                "imdb_rating" => "/IMDb(.*?)\n/",
-                "director" => "/Режиссёры?: (.*?)\n/u",
-                "producers" => "/Продюсеры?:/u",
-                "writer" => "/Сценарий:/",
-                "editor" => "/Операторы?:/u",
-                "composer" => "/Композиторы?:/u",
-                "actor" => "/В [Рр]олях: (.*?)$/u",
-                "presenter" => "/Ведущий:/"
+                'year' => "/Год: (\d\d\d\d)/",
+                'country' => "/Страна: (.*?)(\.|,|\s)/u",
+                'genre' => "/Жанр: (.*?)[\.\n]/u",
+                'imdb_rating' => "/(?:Рейтинг:?\s*)?IMDb\s*\[(.*?)\]/u",
+                'kp_rating' => "/КиноПоиск\[(.*?)\]/u",
+                'director' => "/Режисс[её]ры?: (.*?)(\.|\n)/u",
+                'actor' => "/В [Рр]олях: (.*?)$/u",
             );
 
             $raw_descr = $find_chunks($chunks, $raw_descr);
         } else if (strpos($icon, "resizer.mail.ru") !== false || strpos($icon, "kinopoisk-ru") !== false) {
             // mail.ru
             $chunks = array(
-                "genre" => "/Жанр: ([^\.\n]*?)\n/",
-                "country" => "/Страна: (.*?)\./",
-                "year" => "/Год: (\d\d\d\d)\.?/",
-                "kp_rating" => "/Рейтинг Кинопоиска \[(.*?)\]\.?/",
-                "imdb_rating" => "/(?:Рейтинг:? )?IMDb \[(.*?)\]/",
-                "kinomail_rating" => "/(?:Рейтинг )?KinoMail \[(.*?)\]\.?/",
-                "director" => "/Режиссеры?: (.*?)\.?\n/u",
-                "actor" => "/В [Рр]олях: (.*?)\.?\n/u",
-                "writer" => "/Сценарий: (.*?)[\.\n]/",
-                "editor" => "/Операторы?: (.*?)\.?\n/u",
-                "composer" => "/Композиторы?: (.*?)\.?\n/u",
-                "rating" => "/Рейтинг: \((.*?)\)/",
-                "producer" => "/Продюсеры?: (.*?)\.?\n/u",
-                "budget" => "/Бюджет: (.*?)\./",
-                "original_name" => "/Оригинальное название: (.*?)\.?$/"
+                'year' => "/Год: (\d\d\d\d)/",
+                'country' => "/Страна: (.*?)(\.|,|\s)/u",
+                'genre' => "/Жанр: (.*?)[\.\n]/u",
+                'imdb_rating' => "/(?:Рейтинг:?\s*)?IMDb\s*\[(.*?)\]/u",
+                'kp_rating' => "/Рейтинг Кинопоиска \[(.*?)\]\.?/u",
+                'kinomail_rating' => "/(?:Рейтинг )?KinoMail \[(.*?)\]\./u",
+                'director' => "/Режисс[её]ры?: (.*?)(\.|\n)/u",
+                'actor' => "/В [Рр]олях: (.*?)\.?\n/u",
+                'writer' => "/Сценарий: (.*?)[\.\n]/u",
+                'editor' => "/Операторы?: (.*?)\.?\n/u",
+                'composer' => "/Композиторы?: (.*?)\.?\n/u",
+                'rating' => "/Рейтинг: \((.*?)\)/u",
+                'producer' => "/Продюсеры?: (.*?)\.?\n/u",
+                'budget' => "/Бюджет: (.*?)\./u",
+                'original_name' => "/Оригинальное название: (.*?)\.?$/"
             );
 
             $raw_descr = $find_chunks($chunks, $raw_descr);
+        } else {
+            $common_chunks = array(
+                'year' => "/Год: (\d\d\d\d)/",
+                'country' => "/Страна: (.*?)(\.|,|\s)/u",
+                'genre' => "/Жанр: (.*?)[\.\n]/u",
+                'imdb_rating' => "/(?:Рейтинг:?\s*)?IMDb\s*\[(.*?)\]/u",
+                'director' => "/Режисс[её]ры?: (.*?)(\.|\n)/u",
+                'actor' => "/В [Рр]олях: (.*)[\.\n]/u",
+            );
+            $raw_descr = $find_chunks($common_chunks, $raw_descr);
+
+            if (!isset($total['director'])) {
+                $common_chunks = array(
+                    'director' => "/Реж\.: (.*?)[\.\n]/u"
+                );
+                $raw_descr = $find_chunks($common_chunks, $raw_descr);
+            }
         }
 
         $raw_descr = preg_replace("/Нет описания/", '', $raw_descr);
@@ -1704,7 +1723,7 @@ class Epg_Manager_Xmltv
         $raw_descr = preg_replace('/,\s{2}\((.*?)\)/', '', $raw_descr);
         $raw_descr = str_replace(array('“', '”'), '', $raw_descr);
         $raw_descr = str_replace(array("\n\n", '<br>', "<'>br>"), "\n", $raw_descr);
-        $raw_descr = trim($raw_descr);
+        $raw_descr = trim($raw_descr," .,\n\r\t\v\0");
         //$raw_descr = mb_substr($raw_descr, 0, 1670);
 
         $result = array();

@@ -350,6 +350,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     PluginTvEpgProgram::name => TR::load('epg_not_exist'),
                     PluginTvEpgProgram::description => $day_epg_items['error']
                 );
+                return $day_epg;
             }
 
             foreach ($day_epg_items['items'] as $start => $value) {
@@ -357,6 +358,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     hd_debug_print('malformed epg data: ' . json_format_unescaped($value));
                     continue;
                 }
+
+                $update_ext_epg = function ($pSet, $pGet = null) use (&$params, $value) {
+                    if (is_null($pGet)) {
+                        $pGet = $pSet;
+                    }
+                    if (!empty($value[$pGet])) {
+                        $params[$pSet] = $value[$pGet];
+                    }
+                };
 
                 // calculate program start and end based on total time shift
                 $tm_start = (int)$start - $time_shift;
@@ -379,63 +389,29 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                 $channel_picon = $this->get_channel_picon($channel_row, true);
 
-                $ext_epg[$start]["start_tm"] = $tm_start;
-                $ext_epg[$start]["title"] = $value[PluginTvEpgProgram::name];
-                $ext_epg[$start]["desc"] = $value[PluginTvEpgProgram::description];
+                $params = array();
+                $update_ext_epg(PluginTvExtEpgProgram::title, PluginTvEpgProgram::name);
+                $update_ext_epg(PluginTvExtEpgProgram::desc, PluginTvEpgProgram::description);
 
                 if (empty($value[PluginTvEpgProgram::icon_url])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::main_icon] = $channel_picon;
+                    $params[PluginTvExtEpgProgram::main_icon] = $channel_picon;
                 } else {
-                    $ext_epg[$start][PluginTvExtEpgProgram::main_icon] = $value[PluginTvEpgProgram::icon_url];
+                    $update_ext_epg(PluginTvExtEpgProgram::main_icon, PluginTvEpgProgram::icon_url);
                 }
 
-                if (!empty($value[PluginTvExtEpgProgram::main_category])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::main_category] = $value[PluginTvExtEpgProgram::main_category];
-                }
+                $update_ext_epg(PluginTvExtEpgProgram::main_category);
+                $update_ext_epg(PluginTvExtEpgProgram::icons);
+                $update_ext_epg(PluginTvExtEpgProgram::year);
+                $update_ext_epg(PluginTvExtEpgProgram::country);
+                $update_ext_epg(PluginTvExtEpgProgram::director);
+                $update_ext_epg(PluginTvExtEpgProgram::composer);
+                $update_ext_epg(PluginTvExtEpgProgram::editor);
+                $update_ext_epg(PluginTvExtEpgProgram::writer);
+                $update_ext_epg(PluginTvExtEpgProgram::actor);
+                $update_ext_epg(PluginTvExtEpgProgram::presenter);
+                $update_ext_epg(PluginTvExtEpgProgram::imdb_rating);
 
-                if (!empty($value[PluginTvExtEpgProgram::icons])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::icons] = $value[PluginTvExtEpgProgram::icons];
-                }
-
-                if (!empty($value[PluginTvExtEpgProgram::year])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::year] = $value[PluginTvExtEpgProgram::year];
-                }
-
-                if (!empty($value[PluginTvExtEpgProgram::country])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::country] = $value[PluginTvExtEpgProgram::country];
-                }
-
-                if (!empty($value[PluginTvExtEpgProgram::director])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::director] = $value[PluginTvExtEpgProgram::director];
-                }
-                if (!empty($value[PluginTvExtEpgProgram::composer])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::composer] = $value[PluginTvExtEpgProgram::composer];
-                }
-
-                if (!empty($value[PluginTvExtEpgProgram::editor])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::editor] = $value[PluginTvExtEpgProgram::editor];
-                }
-
-                if (!empty($value[PluginTvExtEpgProgram::writer])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::writer] = $value[PluginTvExtEpgProgram::writer];
-                }
-
-                if (!empty($value[PluginTvExtEpgProgram::actor])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::actor] = $value[PluginTvExtEpgProgram::actor];
-                }
-
-                if (!empty($value[PluginTvExtEpgProgram::presenter])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::presenter] = $value[PluginTvExtEpgProgram::presenter];
-                }
-
-                if (!empty($value[PluginTvExtEpgProgram::imdb_rating])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::imdb_rating] = $value[PluginTvExtEpgProgram::imdb_rating];
-                } else if (!empty($value[PluginTvExtEpgProgram::kp_rating])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::imdb_rating] = $value[PluginTvExtEpgProgram::kp_rating];
-                } else if (!empty($value[PluginTvExtEpgProgram::km_rating])) {
-                    $ext_epg[$start][PluginTvExtEpgProgram::imdb_rating] = $value[PluginTvExtEpgProgram::km_rating];
-                }
-
+                $ext_epg[$start] = $params;
             }
 
             if (!empty($day_epg) && !empty($ext_epg)) {

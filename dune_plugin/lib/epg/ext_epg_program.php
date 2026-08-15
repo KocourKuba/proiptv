@@ -27,33 +27,36 @@
 if (!defined('PluginTvEpgProgram::start_tm_sec')) {
     class PluginTvEpgProgram
     {
-        const /* time_t                           */ start_tm_sec                     = 'start_tm_sec';
-        const /* time_t                           */ end_tm_sec                       = 'end_tm_sec';
-        const /* (char *)                         */ name                             = 'name';
-        const /* (char *)                         */ description                      = 'description';
-        const /* bool                             */ have_archive                     = 'have_archive';
-        const /* int                              */ flags                            = 'flags';
-        const /* (char *)                         */ icon_url                         = 'icon_url';
-        const /* (char *)                         */ ext_id                           = 'ext_id';
+        const /* time_t   */ start_tm_sec  = 'start_tm_sec';
+        const /* time_t   */ end_tm_sec    = 'end_tm_sec';
+        const /* (char *) */ name          = 'name';
+        const /* (char *) */ description   = 'description';
+        const /* bool     */ have_archive  = 'have_archive';
+        const /* int      */ flags         = 'flags';
+        const /* (char *) */ icon_url      = 'icon_url';
+        const /* (char *) */ ext_id        = 'ext_id';
     }
 }
 
 class PluginTvExtEpgProgram extends PluginTvEpgProgram
 {
-    const    /* (char *)	*/ sub_title = 'sub-title';         // подзаголовок телепередачи
-    const    /* (char *)	*/ main_category = 'main_category'; // категория, жанр, возрастной ценз
-    const    /* (char *)	*/ main_icon = 'main_icon';         // титульная картинка (рекомендуемый размер 400х300)
-    const    /* array       */ icons = 'icons';                 // дополнительные картинки (рекомендуемый размер 400х300)
-    const    /* (char *)	*/ year = 'year';                   // год выпуска (в прокате)
-    const    /* (char *)    */ country = 'country';             // страна
-    const    /* array       */ director = 'director';           // режиссер(ы)
-    const    /* array       */ producer = 'producer';           // продюсер(ы)
-    const    /* array       */ actor = 'actor';                 // актер(ы)
-    const    /* array       */ presenter = 'presenter';         // ведущий(е)
-    const    /* array       */ writer = 'writer';               // сценарист(ы)
-    const    /* array       */ editor = 'editor';               // оператор(ы)
-    const    /* array	    */ composer = 'composer';           // композитор(ы)
-    const    /* (char *)	*/ imdb_rating = 'imdb_rating';     // рейтинг IMDB
-    const    /* (char *)	*/ kp_rating = 'kp_rating';         // рейтинг Кинопоиск
-    const    /* (char *)	*/ km_rating = 'km_rating';         // рейтинг Kinomail
+    const    /* (char *) */ start_tm      = 'start_tm';      // начало программы
+    const    /* (char *) */ title         = 'title';         // заголовок телепередачи
+    const    /* (char *) */ desc          = 'desc';          // описание телепередачи
+    const    /* (char *) */ sub_title     = 'sub-title';     // подзаголовок телепередачи
+    const    /* (char *) */ main_category = 'main_category'; // категория, жанр, возрастной ценз
+    const    /* (char *) */ main_icon     = 'main_icon';     // титульная картинка (рекомендуемый размер 400х300)
+    const    /* array    */ icons         = 'icons';         // дополнительные картинки (рекомендуемый размер 400х300)
+    const    /* (char *) */ year          = 'year';          // год выпуска (в прокате)
+    const    /* (char *) */ country       = 'country';       // страна
+    const    /* array    */ director      = 'director';      // режиссер(ы)
+    const    /* array    */ producer      = 'producer';      // продюсер(ы)
+    const    /* array    */ actor         = 'actor';         // актер(ы)
+    const    /* array    */ presenter     = 'presenter';     // ведущий(е)
+    const    /* array    */ writer        = 'writer';        // сценарист(ы)
+    const    /* array    */ editor        = 'editor';        // оператор(ы)
+    const    /* array	 */ composer      = 'composer';      // композитор(ы)
+    const    /* (char *) */ imdb_rating   = 'imdb_rating';   // рейтинг IMDB
+    const    /* (char *) */ kp_rating     = 'kp_rating';     // рейтинг Кинопоиск
+    const    /* (char *) */ km_rating     = 'km_rating';     // рейтинг Kinomail
 }
