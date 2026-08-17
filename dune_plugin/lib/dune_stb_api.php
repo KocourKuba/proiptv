@@ -1860,6 +1860,8 @@ function export_DuneSystem()
     putenv('PLUGIN_TMP_DIR_PATH=' . DuneSystem::$properties['tmp_dir_path']);
     putenv('PLUGIN_WWW_URL=' . DuneSystem::$properties['plugin_www_url']);
     putenv('PLUGIN_CGI_URL=' . DuneSystem::$properties['plugin_cgi_url']);
+    putenv('PHP_PATH=' . get_include_path() . ':' . getenv('FS_PREFIX') . "/firmware_ext/php");
+    // include_path='.:/data/data/com.dunehd.app/flashdata/plugins/proiptv:/data/data/com.dunehd.app/firmware_ext/php/include'
 }
 
 /**
@@ -2122,6 +2124,7 @@ function print_sysinfo()
         'Dune IP Addr' => get_ip_address(),
         'Dune DNS servers' => $dns,
         'PHP Version' => PHP_VERSION,
+        'PHP Path' => get_include_path(),
         'Plugin Memory' => ini_get('memory_limit'),
         'libCURL Version' => "{$values['version']} ({$values['host']}) {$values['ssl_version']} zlib/{$values['libz_version']})",
     );

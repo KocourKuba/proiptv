@@ -1656,8 +1656,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $config = array(
             PARAM_COOKIE_ENABLE_DEBUG => LogSeverity::$is_debug,
             PARAM_CACHE_DIR => Epg_Manager_Xmltv::get_cache_dir(),
-            PARAMS_XMLTV => $item,
             PARAM_INDEXING_FLAG => $indexing_flag,
+            PARAMS_XMLTV => $item,
         );
 
         $config_file = get_temp_path(sprintf(self::PARSE_CONFIG, $source_id));

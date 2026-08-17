@@ -402,6 +402,7 @@ class Epg_Manager_Xmltv
             hd_print('Cache dir:   ' . self::$cache_dir);
             hd_print('Index flag:  ' . $config[PARAM_INDEXING_FLAG]);
             hd_print('XMLTV param: ' . json_format_unescaped($config[PARAMS_XMLTV]));
+            hd_print('PHP_PATH:    ' . get_include_path());
 
             self::reindex_xmltv($config[PARAMS_XMLTV], $config[PARAM_INDEXING_FLAG]);
         } catch (Exception $ex) {

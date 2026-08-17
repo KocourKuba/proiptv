@@ -55,12 +55,16 @@ DuneSystem::$properties['plugin_www_url'] = getenv('PLUGIN_WWW_URL');
 DuneSystem::$properties['plugin_cgi_url'] = getenv('PLUGIN_CGI_URL');
 DuneSystem::$properties['data_dir_path'] = getenv('PLUGIN_DATA_DIR_PATH');
 
-$LOG_FILE = DuneSystem::$properties['tmp_dir_path'] . "/error.log";
 
-set_include_path(get_include_path() . PATH_SEPARATOR . DuneSystem::$properties['install_dir_path']);
-
-require_once 'lib/epg/epg_manager_xmltv.php';
+$env = getenv('PHP_PATH');
+if (empty($env)) {
+    set_include_path(get_include_path() . PATH_SEPARATOR . DuneSystem::$properties['install_dir_path']);
+} else {
+    set_include_path($env);
+}
 
 list(, $config) = $argv;
+
+require_once 'lib/epg/epg_manager_xmltv.php';
 
 Epg_Manager_Xmltv::index_by_config($config);

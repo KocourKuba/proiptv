@@ -24,21 +24,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-if (!defined('PluginTvEpgProgram::start_tm_sec')) {
-    class PluginTvEpgProgram
-    {
-        const /* time_t   */ start_tm_sec  = 'start_tm_sec';
-        const /* time_t   */ end_tm_sec    = 'end_tm_sec';
-        const /* (char *) */ name          = 'name';
-        const /* (char *) */ description   = 'description';
-        const /* bool     */ have_archive  = 'have_archive';
-        const /* int      */ flags         = 'flags';
-        const /* (char *) */ icon_url      = 'icon_url';
-        const /* (char *) */ ext_id        = 'ext_id';
-    }
-}
-
-class PluginTvExtEpgProgram extends PluginTvEpgProgram
+class PluginTvExtEpgProgram
 {
     const    /* (char *) */ start_tm      = 'start_tm';      // начало программы
     const    /* (char *) */ title         = 'title';         // заголовок телепередачи
