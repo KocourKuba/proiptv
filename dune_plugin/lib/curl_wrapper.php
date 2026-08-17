@@ -36,6 +36,11 @@ class Curl_Wrapper
     const USE_ETAG = 4;
     const CACHE_RESPONSE = 8;
 
+    const UPLOAD = -1;
+    const HEADERS_ONLY = 0;
+    const GET_CONTENT = 1;
+    const SAVE_FILE = 2;
+
     /**
      * @var int
      */
@@ -333,7 +338,7 @@ class Curl_Wrapper
      */
     public static function get_url_hash($url)
     {
-        return hash('crc32', $url);
+        return hash('md5', $url);
     }
 
     /**
@@ -469,17 +474,17 @@ class Curl_Wrapper
             $opts = safe_merge_array($opts, $this->options);
         }
 
-        $fp = null;
-        $tmp_file = '';
         if (isset($opts[CURLOPT_INFILE]) || isset($opts[CURLOPT_INFILESIZE])) {
             $opts[CURLOPT_PUT] = 1;
+            $mode = self::UPLOAD;
         } else if ($save_file === false) {
             $opts[CURLOPT_NOBODY] = 1;
+            $mode = self::HEADERS_ONLY;
         } else if ($save_file !== null){
             hd_debug_print("Save to file: '$save_file'", true);
-            $tmp_file = tempnam(pathinfo($save_file, PATHINFO_DIRNAME), 'curl');
-            $fp = fopen($tmp_file, "w+");
-            $opts[CURLOPT_FILE] = $fp;
+            $mode = self::SAVE_FILE;
+        } else {
+            $mode = self::GET_CONTENT;
         }
 
         $opts[CURLOPT_HTTPHEADER][] = "Accept: */*";
@@ -547,6 +552,18 @@ class Curl_Wrapper
             }
         }
 
+        if ($mode === self::SAVE_FILE) {
+            $tmp_file = tempnam(pathinfo($save_file, PATHINFO_DIRNAME), 'curl');
+            $fp = fopen($tmp_file, "w+");
+            if (is_null($fp)) {
+                hd_debug_print("Unable to open temp file: $tmp_file!");
+                return false;
+            }
+            $opts[CURLOPT_FILE] = $fp;
+        } else {
+            $fp = null;
+            $tmp_file = '';
+        }
 
         $ch = curl_init();
 
@@ -570,8 +587,19 @@ class Curl_Wrapper
         self::$error_desc = curl_error($ch);
         self::$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-        if (!is_null($fp)) {
+        if ($mode === self::SAVE_FILE) {
             fclose($fp);
+            if (file_exists($tmp_file)) {
+                if (filesize($tmp_file) > 0) {
+                    if (file_exists($save_file)) {
+                        unlink($save_file);
+                    }
+                    rename($tmp_file, $save_file);
+                } else {
+                    unlink($tmp_file);
+                }
+                clearstatcache();
+            }
         }
 
         if (!empty(self::$http_response_headers) && LogSeverity::$is_debug) {
@@ -593,6 +621,8 @@ class Curl_Wrapper
             return false;
         }
 
+        hd_debug_print(sprintf('HTTP code: %d time: %.3fs', self::$http_code, $execution_tm), true);
+
         if ($cache_opts & self::USE_ETAG) {
             $new_etag = self::get_response_header('etag');
             if (!empty($new_etag)) {
@@ -610,19 +640,28 @@ class Curl_Wrapper
             file_put_contents($cached_path, $content);
         }
 
-        if ($save_file === null) {
-            hd_debug_print(sprintf('Return content: HTTP OK (%d, %d) in %.3fs', self::$http_code, strlen($content), $execution_tm), true);
-        } else if ($save_file === false) {
-            hd_debug_print(sprintf('Head response: HTTP OK (%d) in %.3fs', self::$http_code, $execution_tm), true);
-        } else if (!empty($tmp_file) && file_exists($tmp_file)) {
-            rename($tmp_file, $save_file);
-            hd_debug_print(sprintf('Save file: HTTP OK (%d, %d bytes) in %.3fs', self::$http_code, filesize($save_file), $execution_tm), true);
-        } else {
-            hd_debug_print(sprintf('HTTP code (%d) in %.3fs', self::$http_code, $execution_tm), true);
-            hd_debug_print("Saved file '$save_file' is not exist!");
-            return false;
+        if ($mode === self::HEADERS_ONLY) {
+            return true;
         }
 
-        return $save_file === null ? $content : true;
+        if ($mode === self::GET_CONTENT) {
+            hd_debug_print(sprintf('Content size: %d', strlen($content)), true);
+            return $content;
+        }
+
+        if ($mode === self::SAVE_FILE) {
+            if (!file_exists($save_file)) {
+                hd_debug_print("Download file '$save_file' not exist!");
+                return false;
+            }
+
+            hd_debug_print(sprintf('File size: %d bytes', filesize($save_file)), true);
+        }
+
+        if ($mode === self::UPLOAD) {
+            hd_debug_print('Upload done', true);
+        }
+
+        return true;
     }
 }
