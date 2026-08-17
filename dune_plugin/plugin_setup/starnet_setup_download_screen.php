@@ -59,19 +59,22 @@ class Starnet_Setup_Download_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // Curl connect timeout
-        foreach (array(30, 60, 90, 120, 180, 240, 300) as $sec) {
-            $time_range[$sec] = $sec;
+        foreach (array(10, 20, 30) as $sec) {
+            $conn_time_range[$sec] = $sec;
         }
         $params = array();
         Control_Factory::add_combobox($defs, $this, PARAM_CURL_CONNECT_TIMEOUT, TR::t('setup_connect_timeout'),
             $this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30),
-            $time_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+            $conn_time_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////
         // Curl download timeout
+        foreach (array(30, 60, 90, 120, 180, 240, 300) as $sec) {
+            $dl_time_range[$sec] = $sec;
+        }
         Control_Factory::add_combobox($defs, $this, PARAM_CURL_DOWNLOAD_TIMEOUT, TR::t('setup_download_timeout'),
             $this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120),
-            $time_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
+            $dl_time_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////
         // Curl cache time
