@@ -152,7 +152,7 @@ class api_sharaclub extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS);
             hd_debug_print('GetServers: ' . json_format_unescaped($response), true);
             if (isset($response['status'])) {
                 foreach (safe_get_value($response, 'allow_nums', array()) as $server) {
@@ -175,7 +175,7 @@ class api_sharaclub extends api_default
     {
         parent::SetServer($server, $error_msg);
 
-        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_SET_SERVER, Curl_Wrapper::RET_ARRAY);
+        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_SET_SERVER);
         $status = (int)safe_get_value($response, 'status', 0);
         if ($status !== 1) {
             return false;

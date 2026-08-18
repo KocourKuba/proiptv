@@ -246,7 +246,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
         $lang = strtolower(TR::get_current_language());
         if (empty($history_txt)) {
-            $doc = Curl_Wrapper::getInstance()->download_content(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md", Curl_Wrapper::CACHE_RESPONSE);
+            $doc = Curl_Wrapper::getInstance()->download_content(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md",
+                0, Curl_Wrapper::CACHE_RESPONSE);
             if ($doc === false) {
                 hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
                 $path = get_install_path("changelog.$lang.md");

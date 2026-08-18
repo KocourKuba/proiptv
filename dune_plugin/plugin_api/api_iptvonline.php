@@ -115,7 +115,8 @@ class api_iptvonline extends api_default
             return false;
         }
 
-        $response = Curl_Wrapper::decodeJsonResponse(true, $file);
+        $data = file_get_contents($file);
+        $response = json_decode($data, true);
         if ($response === false || $response === null) {
             hd_debug_print("Can't decode response on request: " . $command, true);
         }
@@ -204,7 +205,8 @@ class api_iptvonline extends api_default
             foreach (safe_get_value($data, 'subscriptions', array()) as $subscription) {
                 $packages .= safe_get_value($subscription, 'name', '') . PHP_EOL;
                 $packages .= TR::load('end_date__1', safe_get_value($subscription, 'end_date', '')) . PHP_EOL;
-                $packages .= TR::load('recurring__1', TR::load(safe_get_value($subscription, 'auto_prolong', false) ? 'yes' : 'no')) . PHP_EOL;
+                $packages .= TR::load('recurring__1',
+                        TR::load(safe_get_value($subscription, 'auto_prolong', false) ? 'yes' : 'no')) . PHP_EOL;
             }
             if (!empty($packages)) {
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);

@@ -173,6 +173,6 @@ class xtream_codes_api
     protected function json_request($url)
     {
         $this->plugin->reset_curl($this->curl_wrapper);
-        return $this->curl_wrapper->download_content($url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+        return $this->curl_wrapper->download_content($url, Curl_Wrapper::RET_ARRAY, Curl_Wrapper::CACHE_RESPONSE);
     }
 }

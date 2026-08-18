@@ -452,7 +452,7 @@ class api_default
         if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
-            $account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_ARRAY);
+            $account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO);
             if ($account_info === false) {
                 hd_debug_print('Failed to request_provider_info');
             } else if (isset($account_info['error'])) {
@@ -500,10 +500,11 @@ class api_default
      * @param string $command
      * @param string $file
      * @param array $curl_opt
+     * @param int $decode_opt
      * @param int $cache_opt
      * @return bool|object|array
      */
-    public function execApiCommand($command, $file, $curl_opt, $cache_opt)
+    public function execApiCommand($command, $file, $curl_opt, $decode_opt = 0, $cache_opt = 0)
     {
         hd_debug_print(null, true);
         hd_debug_print("execApiCommand: $command", true);
@@ -557,7 +558,7 @@ class api_default
         }
 
         if (is_null($file)) {
-            $response = $this->curl_wrapper->download_content($command_url, $cache_opt);
+            $response = $this->curl_wrapper->download_content($command_url, $decode_opt, $cache_opt);
         } else {
             $response = $this->curl_wrapper->download_file($command_url, $file);
         }
@@ -573,12 +574,12 @@ class api_default
     /**
      * @param string $command
      * @param array $curl_opt
-     * @param int $decode
+     * @param int $decode_opt
      * @return array|bool|object
      */
-    public function execApiCommandResponse($command, $curl_opt, $decode)
+    public function execApiCommandResponse($command, $curl_opt, $decode_opt = 0, $cache_opt = 0)
     {
-        return $this->execApiCommand($command, null, $curl_opt, $decode);
+        return $this->execApiCommand($command, null, $curl_opt, $decode_opt, $cache_opt);
     }
 
     /**
@@ -589,17 +590,18 @@ class api_default
      */
     public function execApiCommandWithPostResponse($command, $curl_opt, &$error_msg = null)
     {
-        return $this->postExecAction($command, $this->execApiCommandResponse($command, $curl_opt, 0), null,  $error_msg);
+        return $this->postExecAction($command, $this->execApiCommandResponse($command, $curl_opt), null,  $error_msg);
     }
 
     /**
      * @param string $command
-     * @param int $decode
+     * @param int $decode_opt
+     * @param int $cache_opt
      * @return array|bool|object
      */
-    public function execApiCommandResponseNoOpt($command, $decode)
+    public function execApiCommandResponseNoOpt($command, $decode_opt = Curl_Wrapper::RET_ARRAY, $cache_opt = 0)
     {
-        return $this->execApiCommandResponse($command, array(), $decode);
+        return $this->execApiCommandResponse($command, array(), $decode_opt, $cache_opt);
     }
 
     /**
@@ -610,7 +612,7 @@ class api_default
      */
     public function execApiCommandFile($command, $file, $curl_opt = array())
     {
-        return $this->execApiCommand($command, $file, $curl_opt, 0);
+        return $this->execApiCommand($command, $file, $curl_opt);
     }
 
     /**

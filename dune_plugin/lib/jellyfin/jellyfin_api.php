@@ -347,7 +347,7 @@ class jellyfin_api
             $command_url .= '?' . http_build_query($query);
         }
 
-        $response = $this->curl_wrapper->download_content($command_url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+        $response = $this->curl_wrapper->download_content($command_url, Curl_Wrapper::RET_ARRAY, Curl_Wrapper::CACHE_RESPONSE);
         if ($response !== false) {
             return $response;
         }

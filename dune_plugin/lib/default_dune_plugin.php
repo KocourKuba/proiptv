@@ -110,6 +110,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     protected $epg_presets;
 
     /**
+     * @var array
+     */
+    protected $desc_parsers = array();
+
+    /**
+     * @var Hashed_Array
+     */
+    protected $desc_cleanup;
+
+    /**
      * @var Hashed_Array
      */
     protected $epg_xmltv_presets;
@@ -1723,6 +1733,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function get_epg_xmltv_presets()
     {
         return $this->epg_xmltv_presets;
+    }
+
+    /**
+     * @return array
+     */
+    public function get_epg_desc_parsers()
+    {
+        return $this->desc_parsers;
     }
 
     /**

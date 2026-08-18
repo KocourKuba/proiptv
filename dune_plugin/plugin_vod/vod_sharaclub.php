@@ -40,7 +40,7 @@ class vod_sharaclub extends vod_standard
     {
         if (parent::init_vod($provider)) {
             $this->vod_filters = array('genre', 'country', 'from', 'to');
-            $json_data = $provider->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_ARRAY);
+            $json_data = $provider->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO);
             $data = safe_get_value($json_data, array('data', 'vod'));
             return !empty($data);
         }
@@ -165,7 +165,8 @@ class vod_sharaclub extends vod_standard
     {
         hd_debug_print(null, true);
 
-        $response = $this->provider->execApiCommandResponseNoOpt(API_COMMAND_GET_VOD, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::CACHE_RESPONSE);
+        $response = $this->provider->execApiCommandResponseNoOpt(API_COMMAND_GET_VOD,
+            Curl_Wrapper::RET_ARRAY, Curl_Wrapper::CACHE_RESPONSE);
         if (empty($response)) {
             $this->vod_items = false;
             $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();

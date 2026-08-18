@@ -204,6 +204,10 @@ class Starnet_Plugin extends Default_Dune_Plugin
             $this->epg_xmltv_presets->set($key, $value);
         }
 
+        if (isset($jsonArray['desc_parsers'])) {
+            $this->desc_parsers = $jsonArray['desc_parsers'];
+        }
+
         if ($jsonArray === false || !isset($jsonArray['providers'])) {
             hd_debug_print('Problem to get providers configuration');
             return;

@@ -55,7 +55,7 @@ class vod_cbilling extends vod_standard
             $filter_types['year_to'] = array('title' => TR::t('year_to'), 'text' => true);
             $this->set_filter_types($filter_types);
 
-            $acc_data = $provider->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO, Curl_Wrapper::RET_ARRAY);
+            $acc_data = $provider->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO);
             if (isset($acc_data['data'])) {
                 $info_data = safe_get_value($acc_data, 'data');
                 hd_debug_print('VOD Data: ' . json_encode($info_data));

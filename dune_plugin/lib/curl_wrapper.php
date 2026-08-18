@@ -31,10 +31,12 @@ class Curl_Wrapper
 {
     const CACHE_TAG_FILE = "etags.db";
 
+    const RET_RAW = 0;
     const RET_ARRAY = 1;
     const RET_OBJECT = 2;
-    const USE_ETAG = 4;
-    const CACHE_RESPONSE = 8;
+
+    const USE_ETAG = 1;
+    const CACHE_RESPONSE = 2;
 
     const UPLOAD = -1;
     const HEADERS_ONLY = 0;
@@ -160,24 +162,22 @@ class Curl_Wrapper
      * download and decode return contents
      *
      * @param string $url
-     * @param int $opts options
+     * @param int $decode_opt
+     * @param int $cache_opts options
      * @return bool|string|array|object content of the downloaded file or result of operation or decoded json response
      */
-    public function download_content($url, $opts = 0)
+    public function download_content($url, $decode_opt = self::RET_RAW, $cache_opts = 0)
     {
         hd_debug_print(null, true);
 
-        $res = $this->exec_php_curl($url, null, $opts);
+        $res = $this->exec_php_curl($url, null, $cache_opts);
 
-        if (($opts & self::RET_ARRAY) === self::RET_ARRAY) {
-            $contents = json_decode($res, true);
-        } else if (($opts & self::RET_OBJECT) === self::RET_OBJECT) {
-            $contents = json_decode($res, false);
-        } else {
+        if ($decode_opt === self::RET_RAW) {
             hd_debug_print('Returns RAW response', true);
             return $res;
         }
 
+        $contents = json_decode($res, $decode_opt === self::RET_ARRAY);
         if ($contents === false) {
             hd_debug_print('failed to decode json');
             hd_debug_print("doc: $res", true);
@@ -339,43 +339,6 @@ class Curl_Wrapper
     public static function get_url_hash($url)
     {
         return hash('md5', $url);
-    }
-
-    /**
-     * @param bool $is_file
-     * @param string $source contains data or file name
-     * @param int $decode
-     * @return mixed|false
-     */
-    public static function decodeJsonResponse($is_file, $source, $decode = Curl_Wrapper::RET_ARRAY)
-    {
-        if ($source === false) {
-            return false;
-        }
-
-        if ($is_file) {
-            $data = file_get_contents($source);
-        } else {
-            $data = $source;
-        }
-
-        if (($decode & self::RET_ARRAY) === self::RET_ARRAY) {
-            $contents = json_decode($data, true);
-        } else if (($decode & self::RET_OBJECT) === self::RET_OBJECT) {
-            $contents = json_decode($data, false);
-        } else {
-            hd_debug_print('Returns RAW response', true);
-            return $data;
-        }
-
-        if ($contents !== null && $contents !== false) {
-            return $contents;
-        }
-
-        hd_debug_print('failed to decode json');
-        hd_debug_print("doc: $data", true);
-
-        return false;
     }
 
     /**

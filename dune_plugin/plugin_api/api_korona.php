@@ -121,7 +121,7 @@ class api_korona extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS, Curl_Wrapper::RET_ARRAY);
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS);
             hd_debug_print('GetServers: ' . json_format_unescaped($response), true);
             foreach (safe_get_value($response, 'data', array()) as $server) {
                 if (isset($server['id'])) {

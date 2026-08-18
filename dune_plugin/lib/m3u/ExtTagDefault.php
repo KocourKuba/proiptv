@@ -146,7 +146,7 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
                     $m[2] = trim($nm[1]);
                 }
                 if (empty($name)) {
-                    $name = 'noname';
+                    $name = 'no name';
                 }
                 $this->setTagValue($name);
             } else if (!$this->isTag(TAG_EXTM3U)){
