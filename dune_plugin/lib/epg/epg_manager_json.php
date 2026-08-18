@@ -185,13 +185,15 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                     $mtime = filemtime($epg_cache_file);
                     $cache_expired = $mtime + $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1) * 3600;
                     if ($cache_expired > time()) {
-                        $all_epg = parse_json_file($epg_cache_file);
+                        $all_epg = json_decode(file_get_contents($epg_cache_file), true);
                         $from_cache = true;
                         hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
                     } else {
                         hd_debug_print("EPG cache $epg_cache_file expired " . ($now - $cache_expired) . " sec ago. Timestamp $mtime. Remove cache file");
                         safe_unlink($epg_cache_file);
                     }
+                } else {
+                    hd_debug_print("Cache file '$epg_cache_file' not found");
                 }
 
                 if ($from_cache === false) {
@@ -199,8 +201,30 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                         // no need to spam server if epg_id not exist in known epg source
                         if (!in_array($epg_id, $channels_info['channels'])) continue;
                     }
+
                     hd_debug_print("Fetching EPG ID: '$epg_id' from server: $epg_url");
-                    $all_epg = self::get_epg_json($epg_url, $provider, $config_preset);
+                    if (empty($config_preset[EPG_JSON_PARSER])) {
+                        hd_debug_print('No EPG JSON parser preset found!');
+                        continue;
+                    }
+
+                    $curl_wrapper = Curl_Wrapper::getInstance();
+                    if (isset($config_preset[EPG_JSON_AUTH])) {
+                        $opts[CURLOPT_HTTPHEADER] = array($provider->replace_macros($config_preset[EPG_JSON_AUTH]));
+                        $curl_wrapper->set_options($opts);
+                    }
+
+                    $content = $curl_wrapper->download_content($epg_url,
+                        Curl_Wrapper::RET_ARRAY, Curl_Wrapper::USE_ETAG | Curl_Wrapper::CACHE_RESPONSE);
+
+                    if (empty($content)) {
+                        hd_debug_print('Empty document returned.');
+                        continue;
+                    }
+
+                    hd_debug_print('Parse EPG Description.');
+                    $all_epg = self::parse_epg_json($content, $config_preset);
+
                     if (!empty($all_epg)) {
                         hd_debug_print("Save EPG ID: '$epg_id' to file cache $epg_cache_file");
                         store_to_json_file($epg_cache_file, $all_epg);
@@ -308,7 +332,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             $channels_info_url = substr($channel_info_url, 0, strlen($channel_info_url) - strlen(basename($channel_info_url))) . 'channels_info.json';
             hd_debug_print("Fetching channels info from server: $channels_info_url");
             $ch_data = $curl_wrapper->download_content($channels_info_url,
-                Curl_Wrapper::RET_ARRAY | Curl_Wrapper::USE_ETAG | Curl_Wrapper::CACHE_RESPONSE
+                Curl_Wrapper::RET_ARRAY, Curl_Wrapper::USE_ETAG | Curl_Wrapper::CACHE_RESPONSE
             );
 
             self::$all_channels_info[$provider_id] = new ChannelInfo();
@@ -349,39 +373,14 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     }
 
     /**
-     * request server for epg and parse json response
-     * @param string $url
-     * @param api_default $provider
+     * parse json epg response
+     * @param array $ch_data
      * @param array $preset
      * @return array
      */
-    protected static function get_epg_json($url, $provider, $preset)
+    protected static function parse_epg_json($ch_data, $preset)
     {
         $channel_epg = array();
-
-        if (empty($preset[EPG_JSON_PARSER])) {
-            return $channel_epg;
-        }
-
-        try {
-            $opts = null;
-            if (isset($preset[EPG_JSON_AUTH])) {
-                $opts[CURLOPT_HTTPHEADER] = array($provider->replace_macros($preset[EPG_JSON_AUTH]));
-            }
-            $ch_data = Curl_Wrapper::getInstance()->download_content($url, Curl_Wrapper::RET_ARRAY | Curl_Wrapper::USE_ETAG | Curl_Wrapper::CACHE_RESPONSE);
-            if ($ch_data === false) {
-                return $channel_epg;
-            }
-
-            if (empty($ch_data)) {
-                hd_debug_print('Empty document returned.');
-                return $channel_epg;
-            }
-        } catch (Exception $ex) {
-            print_backtrace_exception($ex);
-            return $channel_epg;
-        }
-
         $parser_params = $preset[EPG_JSON_PARSER];
         hd_debug_print('parser params: ' . json_format_unescaped($parser_params), true);
 
@@ -408,6 +407,15 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             }
         }
 
+        $update_value = function (&$values, $v_name, &$entry, $e_name, $unescape = false, $default = '') {
+            if (!isset($entry[$e_name])) {
+                $values[$v_name] = $default;
+            } else {
+                $values[$v_name] = $unescape ? unescape_entity_string($entry[$e_name]) : $entry[$e_name];
+                unset($entry[$e_name]);
+            }
+        };
+
         // collect all program that starts after day start and before day end
         $prev_start = 0;
         foreach ($ch_data as $entry) {
@@ -431,25 +439,25 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             if ($prev_start !== 0) {
                 $channel_epg[$prev_start][PluginTvEpgProgram::end_tm_sec] = $program_start;
             }
+
             $prev_start = $program_start;
+            $values = array();
 
-            $channel_epg[$program_start][PluginTvEpgProgram::name] = unescape_entity_string(safe_get_value($entry, $param_epg_name, ''));
-
-            $desc = unescape_entity_string(safe_get_value($entry, $param_epg_desc, ''));
-            $icon = safe_get_value($entry, $param_epg_icon, '');
-
-            if (empty($desc)) {
-                $channel_epg[$program_start][PluginTvEpgProgram::description] = '';
-            } else {
-                $reformatted = self::reformat_description($desc, $icon);
+            $update_value($values, PluginTvEpgProgram::name, $entry, $param_epg_name, true, 'no name');
+            $update_value($values, PluginTvEpgProgram::description, $entry, $param_epg_desc, true, 'no name');
+            $update_value($values, PluginTvEpgProgram::icon_url, $entry, $param_epg_icon);
+            if (self::$ext_epg_enabled) {
+                $reformatted = self::reformat_description($values[PluginTvEpgProgram::description], $values[PluginTvEpgProgram::icon_url]);
                 foreach ($reformatted as $key => $value) {
-                    $channel_epg[$program_start][$key] = $value;
+                    $values[$key] = $value;
                 }
             }
 
-            if (!isset($channel_epg[$program_start][PluginTvEpgProgram::icon_url])) {
-                $channel_epg[$program_start][PluginTvEpgProgram::icon_url] = $icon;
+            if (!empty($values)) {
+                hd_debug_print("remaining entries: " . json_format_unescaped($entry), true);
+                $values = array_merge($values, $entry);
             }
+            $channel_epg[$program_start] = $values;
         }
 
         if ($prev_start !== 0) {

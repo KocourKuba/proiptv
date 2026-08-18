@@ -30,7 +30,7 @@ For Dune HD ATV devices (Homatics, Boxy, Premier) and Dune HD Whale TV there are
 
 01. [Antifriz](https://antifriz.tv/)
 02. [BCU Media](https://bcumedia.pro/)
-03. [iEdem](https://iedem.tv/) / [iLook](https://ilook.tv/) / [JinoPro](https://jinopro.net/) / [MeLord](https://melord.net/) / [TVLider](https://tvlider.net/)
+03. [iEdem](https://iedem.tv/) / [iLook](https://ilook.tv/) / [JinoPro](https://jinopro.net/) / [MeLord](https://melord.net/) / [TVLider](https://tvlider.net/)  / [VipDrive](https://vipdrive.net/)
 04. [Fox](http://info.fox-tv.fun/)
 05. [ITV Live](https://itv.live/)
 06. [Glanz](http://ottg.cc/)
