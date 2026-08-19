@@ -351,8 +351,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $show_ext_epg = $this->is_ext_epg_enabled();
 
-            $cached = false;
-            $day_epg_items = $this->epg_manager->get_day_epg_items($channel_row, $utc_day_start_tm_sec, $cached);
+            $day_epg_items = $this->epg_manager->get_day_epg_items($channel_row, $utc_day_start_tm_sec);
             if (isset($day_epg_items['error'])) {
                 $day_epg[] = array(
                     PluginTvEpgProgram::start_tm_sec => $utc_day_start_tm_sec,
@@ -388,7 +387,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     PluginTvEpgProgram::description => $value[PluginTvEpgProgram::description],
                 );
 
-                if (LogSeverity::$is_debug && !$cached) {
+                if (LogSeverity::$is_debug) {
                     $str = format_datetime('m-d H:i', $tm_start)
                         . " ($tm_start) - " . format_datetime('m-d H:i', $tm_end)
                         . " ($tm_end) {$value[PluginTvEpgProgram::name]}";

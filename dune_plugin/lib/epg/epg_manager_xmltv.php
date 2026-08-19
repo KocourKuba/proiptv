@@ -51,12 +51,6 @@ class Epg_Manager_Xmltv
     protected static $cache_dir;
 
     /**
-     * contains memory epg cache
-     * @var array
-     */
-    protected static $epg_cache = array();
-
-    /**
      * @var Sql_Wrapper[]
      */
     protected static $epg_db = array();
@@ -95,7 +89,6 @@ class Epg_Manager_Xmltv
         self::$flags = $plugin->get_bool_setting(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
         self::set_desc_parsers($plugin->get_epg_desc_parsers());
         self::update_active_sources($plugin->get_active_sources());
-        self::clear_epg_memory_cache();
     }
 
     /**
@@ -140,24 +133,14 @@ class Epg_Manager_Xmltv
      *
      * @param array $channel_row
      * @param int $day_start_ts timestamp for day start in local time
-     * @param bool $cached
      * @return array of entries started from day start for entire day
      */
-    public function get_day_epg_items($channel_row, $day_start_ts, &$cached)
+    public function get_day_epg_items($channel_row, $day_start_ts)
     {
         $day_epg = array();
         $channel_id = safe_get_value($channel_row, COLUMN_CHANNEL_ID);
         if (empty($channel_id)) {
             return array();
-        }
-
-        $cached = false;
-        if (isset(static::$epg_cache[$channel_id][$day_start_ts])) {
-            hd_debug_print("Load day Channel ID $channel_id from day start: ($day_start_ts) "
-                . format_datetime('Y-m-d H:i', $day_start_ts) . ' from memory cache ');
-            $cached = true;
-            $day_epg['items'] = static::$epg_cache[$channel_id][$day_start_ts];
-            return $day_epg;
         }
 
         $day_end_ts = $day_start_ts + 86400;
@@ -308,10 +291,8 @@ class Epg_Manager_Xmltv
                 $channel_epg = self::getFakeEpg($channel_row, $day_start_ts, $channel_epg);
             }
         } else {
-            hd_debug_print('Store day epg to memory cache');
             ksort($channel_epg);
             $channel_epg = self::check_epg_intervals($channel_epg);
-            self::$epg_cache[$channel_id][$day_start_ts] = $channel_epg;
         }
         $day_epg['items'] = $channel_epg;
 
@@ -1061,8 +1042,6 @@ class Epg_Manager_Xmltv
     {
         hd_debug_print(null, true);
 
-        self::clear_epg_memory_cache();
-
         if (empty(self::$cache_dir)) {
             hd_debug_print('Cache directory not set');
             return;
@@ -1129,15 +1108,6 @@ class Epg_Manager_Xmltv
     public static function get_cache_dir()
     {
         return self::$cache_dir;
-    }
-
-    /**
-     * Clear memory cache
-     * @return void
-     */
-    protected static function clear_epg_memory_cache()
-    {
-        self::$epg_cache = array();
     }
 
     /**
@@ -1705,7 +1675,6 @@ class Epg_Manager_Xmltv
         }
 
         if (isset(self::$parsers['matchers'][$matcher]['chunks'])) {
-            hd_debug_print("Use description parser matcher: $matcher");
             $raw_descr = $find_chunks(self::$parsers['matchers'][$matcher]['chunks'], $raw_descr);
         }
 

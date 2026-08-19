@@ -30,7 +30,8 @@
         "epg_root": "",
         "epg_name": "name",
         "epg_desc": "descr",
-        "epg_start": "time"
+        "epg_start": "time",
+        "epg_end": "time_to"
       }
     },
     "iptvx.one": {
@@ -40,6 +41,7 @@
         "epg_name": "title",
         "epg_desc": "description",
         "epg_start": "start",
+        "epg_end": "stop",
         "epg_time_format": "{DAY}-{MONTH}-{YEAR} {HOUR}:{MIN}",
         "epg_timezone": 3
       }
@@ -50,7 +52,8 @@
         "epg_root": "res",
         "epg_name": "title",
         "epg_desc": "desc",
-        "epg_start": "startTime"
+        "epg_start": "startTime",
+        "epg_end": "stopTime"
       }
     },
     "korona": {
@@ -69,7 +72,8 @@
         "epg_root": "epg_data",
         "epg_name": "name",
         "epg_desc": "descr",
-        "epg_start": "time"
+        "epg_start": "time",
+        "epg_end": "time_to"
       }
     },
     "proiptv": {
@@ -79,6 +83,7 @@
         "epg_name": "name",
         "epg_desc": "descr",
         "epg_start": "time",
+        "epg_end": "time_to",
         "epg_icon": "icon"
       }
     },
@@ -88,7 +93,8 @@
         "epg_root": "",
         "epg_name": "epg",
         "epg_desc": "desc",
-        "epg_start": "start"
+        "epg_start": "start",
+        "epg_end": "stop"
       }
     },
     "sharaclub": {
@@ -97,7 +103,8 @@
         "epg_root": "",
         "epg_name": "name",
         "epg_desc": "descr",
-        "epg_start": "time"
+        "epg_start": "time",
+        "epg_end": "time_to"
       }
     },
     "sharavoz": {
@@ -115,7 +122,8 @@
         "epg_root": "data",
         "epg_name": "title",
         "epg_desc": "description",
-        "epg_start": "begin"
+        "epg_start": "begin",
+        "epg_end": "end"
       }
     },
     "tvclub": {
@@ -133,7 +141,8 @@
         "epg_root": "epg_data",
         "epg_name": "name",
         "epg_desc": "descr",
-        "epg_start": "time"
+        "epg_start": "time",
+        "epg_end": "time_to"
       }
     },
     "vidok": {

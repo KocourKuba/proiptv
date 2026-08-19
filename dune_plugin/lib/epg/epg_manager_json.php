@@ -45,6 +45,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 {
     const EPG_ROOT = 'epg_root';
     const EPG_START = 'epg_start';
+    const EPG_END = 'epg_end';
     const EPG_NAME = 'epg_name';
     const EPG_DESC = 'epg_desc';
     const EPG_URL = 'epg_url';
@@ -119,7 +120,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
      * @inheritDoc
      * @override
      */
-    public function get_day_epg_items($channel_row, $day_start_ts, &$cached)
+    public function get_day_epg_items($channel_row, $day_start_ts)
     {
         $cached = false;
 
@@ -148,13 +149,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             // in JSON engine only one EPG ID is available
             // epg id or mapped id always first
             $epg_id = $epg_ids[0];
-            $day_start_ts_str = format_datetime('Y-m-d H:i', $day_start_ts);
-            if (isset(static::$epg_cache[$epg_id][$day_start_ts])) {
-                hd_debug_print("EPG memory cache: Load EPG ID: $epg_id for day start: $day_start_ts ($day_start_ts_str)");
-                $day_epg['items'] = static::$epg_cache[$epg_id][$day_start_ts];
-                return $day_epg;
-            }
-
             $preset_order = $this->plugin->get_selected_json_sources(true);
             hd_debug_print('EPG servers order: ' . json_format_unescaped($preset_order), true);
             foreach ($preset_order as $preset_id) {
@@ -214,8 +208,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                         $curl_wrapper->set_options($opts);
                     }
 
-                    $content = $curl_wrapper->download_content($epg_url,
-                        Curl_Wrapper::RET_ARRAY, Curl_Wrapper::USE_ETAG | Curl_Wrapper::CACHE_RESPONSE);
+                    $content = $curl_wrapper->download_content($epg_url, Curl_Wrapper::RET_ARRAY);
 
                     if (empty($content)) {
                         hd_debug_print('Empty document returned.');
@@ -268,14 +261,13 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 throw new Exception(TR::load('err_no_epg_in_all_range'));
             }
 
-            hd_debug_print("Memory cache: Store EPG ID: $epg_id for day start: $day_start_ts ($day_start_ts_str)");
             $items = self::check_epg_intervals($items);
-            self::$epg_cache[$epg_id][$day_start_ts] = $items;
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
             $day_epg['error'] = $ex->getMessage();
             $items = static::getFakeEpg($channel_row, $day_start_ts, $items);
         }
+
         $day_epg['items'] = $items;
         return $day_epg;
     }
@@ -386,6 +378,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
         $param_epg_root = safe_get_value($parser_params, self::EPG_ROOT);
         $param_epg_start = safe_get_value($parser_params, self::EPG_START);
+        $param_epg_end = safe_get_value($parser_params, self::EPG_END);
         $param_epg_name = safe_get_value($parser_params, self::EPG_NAME);
         $param_epg_desc = safe_get_value($parser_params, self::EPG_DESC);
         $param_epg_icon = safe_get_value($parser_params, self::EPG_ICON);
@@ -394,6 +387,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
         hd_debug_print("json epg root:    $param_epg_root", true);
         hd_debug_print("json start:       $param_epg_start", true);
+        hd_debug_print("json end:         $param_epg_end", true);
         hd_debug_print("json title:       $param_epg_name", true);
         hd_debug_print("json desc:        $param_epg_desc", true);
         hd_debug_print("json icon:        $param_epg_icon", true);
@@ -417,10 +411,20 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         };
 
         // collect all program that starts after day start and before day end
-        $prev_start = 0;
+        $prev_start = -1;
         foreach ($ch_data as $entry) {
-            $program_start = safe_get_value($entry, $param_epg_start);
-            if (empty($program_start)) continue;
+            if (!isset($entry[$param_epg_start])) {
+                continue;
+            }
+            $program_start = (int)$entry[$param_epg_start];
+            unset($entry[$param_epg_start]);
+
+            if (!empty($param_epg_end) && isset($entry[$param_epg_end])) {
+                $program_end = (int)$entry[$param_epg_end];
+                unset($entry[$param_epg_end]);
+            } else {
+                $program_end = -1;
+            }
 
             if (!empty($param_epg_time_format)) {
                 $time_format = str_replace(
@@ -430,18 +434,26 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
                 $start = date_parse_from_format($time_format, $program_start);
                 $program_start = gmmktime($start['hour'], $start['minute'], $start['second'], $start['month'], $start['day'], $start['year']);
+
+                if ($program_end !== -1) {
+                    $end = date_parse_from_format($time_format, $program_end);
+                    $program_end = gmmktime($end['hour'], $end['minute'], $end['second'], $end['month'], $end['day'], $end['year']);
+                }
             }
 
             if ($param_epg_timezone !== 0) {
                 $program_start -= $param_epg_timezone * 3600;
             }
 
-            if ($prev_start !== 0) {
-                $channel_epg[$prev_start][PluginTvEpgProgram::end_tm_sec] = $program_start;
-            }
-
-            $prev_start = $program_start;
             $values = array();
+            if ($program_end === -1) {
+                if ($prev_start !== -1) {
+                    $channel_epg[$prev_start][PluginTvEpgProgram::end_tm_sec] = $program_start;
+                }
+                $prev_start = $program_start;
+            } else {
+                $values[PluginTvEpgProgram::end_tm_sec] = $program_end;
+            }
 
             $update_value($values, PluginTvEpgProgram::name, $entry, $param_epg_name, true, 'no name');
             $update_value($values, PluginTvEpgProgram::description, $entry, $param_epg_desc, true, 'no name');
@@ -453,14 +465,19 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 }
             }
 
-            if (!empty($values)) {
-                hd_debug_print("remaining entries: " . json_format_unescaped($entry), true);
-                $values = array_merge($values, $entry);
+            if (!empty($entry)) {
+                foreach ($entry as $key => $value) {
+                    if (isset($values[$key])) {
+                        $values[$key] .= ',' . $value;
+                    } else {
+                        $values[$key] = $value;
+                    }
+                }
             }
             $channel_epg[$program_start] = $values;
         }
 
-        if ($prev_start !== 0) {
+        if ($prev_start !== -1) {
             $channel_epg[$prev_start][PluginTvEpgProgram::end_tm_sec] = $prev_start + 3600; // fake end
         }
 
@@ -476,7 +493,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     {
         hd_debug_print(null, true);
 
-        self::clear_epg_memory_cache();
         self::$all_channels_info = array();
         $files = self::$cache_dir . (empty($hash) ? '*.cache' : "$hash*.cache");
         hd_debug_print("clear cache files: $files");
