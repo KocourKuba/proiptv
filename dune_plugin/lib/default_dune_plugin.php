@@ -780,8 +780,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         throw new Exception("Incorrect playlist url: $uri");
                     }
 
-                    $curl_wrapper = Curl_Wrapper::getInstance($playlist_id);
-                    $this->reset_curl($curl_wrapper);
+                    $curl_wrapper = $this->setup_curl($playlist_id);
                     $res = $curl_wrapper->download_file($uri, $m3u_file, Curl_Wrapper::CACHE_RESPONSE);
                     $logfile = 'Error code: ' . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc();
                 } else {
@@ -1203,8 +1202,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if ($reload_playlist) {
             // need to fully reset plugin and clear cache
             $this->reset_channels();
-            $curl_wrapper = Curl_Wrapper::getInstance($playlist_id);
-            $this->reset_curl($curl_wrapper);
+            $curl_wrapper = $this->setup_curl($playlist_id);
             $curl_wrapper->clear_cache();
         }
 
@@ -1562,9 +1560,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @return Curl_Wrapper
      */
-    public function setup_curl()
+    public function setup_curl($playlist_id = null)
     {
-        $curl_wrapper = Curl_Wrapper::getInstance($this->get_active_playlist_id());
+        if (is_null($playlist_id)) {
+            $playlist_id = $this->get_active_playlist_id();
+        }
+        $curl_wrapper = Curl_Wrapper::getInstance($playlist_id);
         $this->reset_curl($curl_wrapper);
         return $curl_wrapper;
     }

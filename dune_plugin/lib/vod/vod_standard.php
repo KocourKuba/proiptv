@@ -813,8 +813,7 @@ class vod_standard extends Abstract_Vod
                         throw new Exception('Empty playlist url');
                     }
 
-                    $curl_wrapper = Curl_Wrapper::getInstance($playlist_id);
-                    $this->plugin->reset_curl($curl_wrapper);
+                    $curl_wrapper = $this->plugin->setup_curl();
                     $res = $curl_wrapper->download_file($uri, $m3u_file);
                     if ($res === false) {
                         $msg = sprintf("%s\nError code: %s\n%s",

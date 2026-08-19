@@ -197,7 +197,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                         continue;
                     }
 
-                    $curl_wrapper = Curl_Wrapper::getInstance();
+                    $curl_wrapper = $this->plugin->setup_curl();
                     if (isset($config_preset[EPG_JSON_AUTH])) {
                         $opts[CURLOPT_HTTPHEADER] = array($provider->replace_macros($config_preset[EPG_JSON_AUTH]));
                         $curl_wrapper->set_options($opts);
@@ -307,8 +307,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         if (!isset(self::$all_channels_info[$provider_id])
             || self::$all_channels_info[$provider_id]->expired < time()
             || empty(self::$all_channels_info[$provider_id])) {
-            $curl_wrapper = Curl_Wrapper::getInstance();
-            $this->plugin->reset_curl($curl_wrapper);
+            $curl_wrapper = $this->plugin->setup_curl();
             $channel_info_url = str_replace(MACRO_PROVIDER, $provider_id, $config_preset[EPG_JSON_SOURCE]);
             $channels_info_url = substr($channel_info_url, 0, strlen($channel_info_url) - strlen(basename($channel_info_url))) . 'channels_info.json';
             hd_debug_print("Fetching channels info from server: $channels_info_url");

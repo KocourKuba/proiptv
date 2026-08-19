@@ -381,8 +381,7 @@ class api_default
     public function set_provider_playlist_id($playlist_id)
     {
         $this->playlist_id = $playlist_id;
-        $this->curl_wrapper = Curl_Wrapper::getInstance($this->playlist_id);
-        $this->plugin->reset_curl($this->curl_wrapper);
+        $this->curl_wrapper = $this->plugin->setup_curl($playlist_id);
     }
 
     /**
