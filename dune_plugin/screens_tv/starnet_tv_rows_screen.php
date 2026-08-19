@@ -912,7 +912,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
             if (empty($items)) continue;
 
-            $title = $group_id;
+            $title = str_replace('|', '¦', $group_row[COLUMN_TITLE]);
             if ($show_count) {
                 $title .= " (" . count($items) . ")";
             }
