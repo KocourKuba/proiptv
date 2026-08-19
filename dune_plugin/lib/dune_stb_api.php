@@ -2153,7 +2153,7 @@ function print_sysinfo()
 function get_dune_model()
 {
     static $models = array(
-        // android models
+        // android/google models
         'boxy_apk' => 'Homatics Boxy',
         'dune_apk' => 'Homatics Models',
         'dune_whale_apk' => 'Dune HD TV',
@@ -2194,6 +2194,7 @@ function get_dune_model()
         'tv794a' => 'Max 4K Vision',
         'tv993a' => 'Ultra 4K',
         'tv994a' => 'Ultra 4K Vision',
+        'tv989a' => 'Ultra 8K',
 
         // sigma chipsets r11
         // SMP8672
