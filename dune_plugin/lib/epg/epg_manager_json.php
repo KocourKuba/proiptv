@@ -122,8 +122,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
      */
     public function get_day_epg_items($channel_row, $day_start_ts)
     {
-        $cached = false;
-
         $day_end_ts = $day_start_ts + 86400;
         $day_epg = array();
         $items = array();
@@ -172,25 +170,22 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
                 $epg_cache_file = self::$cache_dir . $provider->get_provider_playlist_id() . "_" . Hashed_Array::hash($epg_url) . ".cache";
                 hd_debug_print("Check cache file: $epg_cache_file");
-                $from_cache = false;
-                $all_epg = array();
+                $now = time();
                 if (file_exists($epg_cache_file)) {
-                    $now = time();
                     $mtime = filemtime($epg_cache_file);
-                    $cache_expired = $mtime + $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1) * 3600;
-                    if ($cache_expired > time()) {
-                        $all_epg = json_decode(file_get_contents($epg_cache_file), true);
-                        $from_cache = true;
-                        hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
-                    } else {
-                        hd_debug_print("EPG cache $epg_cache_file expired " . ($now - $cache_expired) . " sec ago. Timestamp $mtime. Remove cache file");
-                        safe_unlink($epg_cache_file);
-                    }
+                    $cache_expired_at = $mtime + $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1) * 3600;
                 } else {
                     hd_debug_print("Cache file '$epg_cache_file' not found");
+                    $cache_expired_at = 0;
                 }
 
-                if ($from_cache === false) {
+                if ($cache_expired_at > $now) {
+                    $all_epg = json_decode(file_get_contents($epg_cache_file), true);
+                    hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
+                } else {
+                    hd_debug_print("EPG cache $epg_cache_file expired " . ($now - $cache_expired_at) . " sec ago.");
+                    safe_unlink($epg_cache_file);
+
                     if (!empty($channels_info) && !empty($channels_info['channels'])) {
                         // no need to spam server if epg_id not exist in known epg source
                         if (!in_array($epg_id, $channels_info['channels'])) continue;
@@ -232,9 +227,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
                 hd_debug_print("Total $counts EPG entries loaded");
 
-                if (!self::check_epg_range($all_epg, $day_start_ts)) {
-                    continue;
-                }
+                if (!self::check_epg_range($all_epg, $day_start_ts)) continue;
 
                 if (LogSeverity::$is_debug) {
                     $date_start_l = format_datetime('Y-m-d H:i', $day_start_ts);
@@ -250,20 +243,16 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                     $items[$program_start] = $entry;
                 }
 
-                if (!empty($items)) {
-                    break;
-                }
-
-                hd_debug_print('No EPG entries for selected time in available range');
+                if (!empty($items)) break;
             }
 
             if (empty($items)) {
+                hd_debug_print('No EPG entries for selected time in available range');
                 throw new Exception(TR::load('err_no_epg_in_all_range'));
             }
 
             $items = self::check_epg_intervals($items);
         } catch (Exception $ex) {
-            hd_debug_print($ex->getMessage());
             $day_epg['error'] = $ex->getMessage();
             $items = static::getFakeEpg($channel_row, $day_start_ts, $items);
         }
