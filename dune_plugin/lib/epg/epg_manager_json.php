@@ -124,7 +124,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     {
         $day_end_ts = $day_start_ts + 86400;
         $day_epg = array();
-        $items = array();
+        $day_items = array();
         try {
             $provider = $this->plugin->get_active_provider();
             if (empty($provider)) {
@@ -240,24 +240,24 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                     if ($program_start < $day_start_ts && $entry[PluginTvEpgProgram::end_tm_sec] < $day_start_ts) continue;
                     if ($program_start >= $day_end_ts) break;
 
-                    $items[$program_start] = $entry;
+                    $day_items[$program_start] = $entry;
                 }
 
-                if (!empty($items)) break;
+                if (!empty($day_items)) break;
             }
 
-            if (empty($items)) {
+            if (empty($day_items)) {
                 hd_debug_print('No EPG entries for selected time in available range');
                 throw new Exception(TR::load('err_no_epg_in_all_range'));
             }
 
-            $items = self::check_epg_intervals($items);
+            $day_items = self::check_epg_intervals($day_items);
         } catch (Exception $ex) {
             $day_epg['error'] = $ex->getMessage();
-            $items = static::getFakeEpg($channel_row, $day_start_ts, $items);
+            $day_items = static::getFakeEpg($channel_row, $day_start_ts, $day_items);
         }
 
-        $day_epg['items'] = $items;
+        $day_epg['items'] = $day_items;
         return $day_epg;
     }
 
