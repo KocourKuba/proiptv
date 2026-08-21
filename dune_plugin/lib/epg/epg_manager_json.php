@@ -227,14 +227,12 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 hd_debug_print("Total $counts EPG entries loaded");
 
                 $first_tm = key($all_epg);
-                $first = format_datetime('Y-m-d H:i', $first_tm);
                 $last_tm = $all_epg[key(array_slice($all_epg, -1, 1, true))][PluginTvEpgProgram::end_tm_sec];
-                $last = format_datetime('Y-m-d H:i', $last_tm);
-                hd_debug_print("Entries time range: $first ($first_tm) - $last ($last_tm)");
                 $day_end_ts = $day_start_ts + 86400;
-
                 if ($day_start_ts > $last_tm || $day_end_ts < $first_tm) {
-                    hd_debug_print("Selected time is out of range. Available EPG time range: $first - $last");
+                    $first = format_datetime('Y-m-d H:i', $first_tm);
+                    $last = format_datetime('Y-m-d H:i', $last_tm);
+                    hd_debug_print("Selected time is out of range. Available EPG time range: $first ($first_tm) - $last ($last_tm)");
                     continue;
                 }
 

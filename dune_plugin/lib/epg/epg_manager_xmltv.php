@@ -251,13 +251,11 @@ class Epg_Manager_Xmltv
                     }
                 }
 
-                $first = format_datetime('Y-m-d H:i', $first_in_range);
-                $last = format_datetime('Y-m-d H:i', $last_in_range);
-                hd_debug_print("Entries time range: $first ($first_in_range) - $last ($last_in_range)");
                 $day_end_ts = $day_start_ts + 86400;
-
                 if ($day_start_ts > $last_in_range || $day_end_ts < $first_in_range) {
-                    hd_debug_print("Selected time is out of range. Available EPG time range: $first - $last");
+                    $first = format_datetime('Y-m-d H:i', $first_in_range);
+                    $last = format_datetime('Y-m-d H:i', $last_in_range);
+                    hd_debug_print("Selected time is out of range. Available EPG time range: $first ($first_in_range) - $last ($last_in_range)");
                     $day_items = array();
                     continue;
                 }
