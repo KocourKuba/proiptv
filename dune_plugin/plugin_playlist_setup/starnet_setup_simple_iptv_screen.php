@@ -82,6 +82,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
         // Plugin name
         $this->plugin->create_setup_header($defs);
 
+        $params = array();
         //////////////////////////////////////
         // URI
 

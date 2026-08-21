@@ -61,6 +61,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
         // Plugin name
         $this->plugin->create_setup_header($defs);
 
+        $params = array();
         //////////////////////////////////////
         // EPG cache engine
         $has_presets = count($this->plugin->get_provider_epg_presets());

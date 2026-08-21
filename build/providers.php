@@ -1,4 +1,6 @@
 <?php
+/** @noinspection PhpLanguageLevelInspection */
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/shared_scripts/iptv_utils.php");
 
 $white_list = [];

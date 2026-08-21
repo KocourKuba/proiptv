@@ -60,6 +60,7 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
         // Plugin name
         $this->plugin->create_setup_header($defs);
 
+        $params = array();
         //////////////////////////////////////
         // buffering time
         $show_buf_time_ops = array();

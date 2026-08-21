@@ -57,6 +57,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
         // Plugin name
         $this->plugin->create_setup_header($defs);
 
+        $params = array();
         //////////////////////////////////////
         // picon settings
 

@@ -537,6 +537,8 @@ class vod_standard extends Abstract_Vod
             return null;
         }
 
+        $params = array();
+
         hd_debug_print("Initial index: $initial");
         $added = false;
         if ($initial !== -1) {

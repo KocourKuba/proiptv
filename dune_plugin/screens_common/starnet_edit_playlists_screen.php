@@ -567,6 +567,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
         $defs = array();
 
+        $params = array();
+
         $window_title = TR::t('edit_list_add_url');
         $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
         Control_Factory::add_vgap($defs, 20);

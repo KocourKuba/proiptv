@@ -56,6 +56,7 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen
         // Plugin name
         $this->plugin->create_setup_header($defs);
 
+        $params = array();
         //////////////////////////////////////
         // Square icons
         $square_icon = $this->plugin->get_setting(PARAM_NEWUI_SQUARE_ICONS, SwitchOnOff::on);

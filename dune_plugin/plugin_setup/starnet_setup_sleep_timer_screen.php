@@ -54,6 +54,7 @@ class Starnet_Setup_Sleep_Timer_Screen extends Abstract_Controls_Screen
         // Plugin name
         $this->plugin->create_setup_header($defs);
 
+        $params = array();
         //////////////////////////////////////
         // sleep timer position
         $sleep_enabled = $this->plugin->get_parameter(PARAM_SLEEP_TIMER_ENABLED, SwitchOnOff::on);
