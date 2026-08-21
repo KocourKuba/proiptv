@@ -81,7 +81,6 @@ class Epg_Manager_Xmltv
     public function __construct($plugin)
     {
         self::$ext_epg_enabled = is_ext_epg_supported() && $plugin->get_bool_setting(PARAM_SHOW_EXT_EPG);
-        self::$flags = $plugin->get_bool_setting(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
         self::update_active_sources($plugin->get_active_sources());
     }
 
@@ -112,11 +111,6 @@ class Epg_Manager_Xmltv
         self::$delayed_epg = array();
     }
 
-    public static function set_ext_epg_enabled($enabled)
-    {
-        self::$ext_epg_enabled = $enabled;
-    }
-
     /**
      * Try to load epg from cached file
      *
@@ -133,6 +127,11 @@ class Epg_Manager_Xmltv
         }
 
         $day_end_ts = $day_start_ts + 86400;
+
+        $error_message = '';
+        if (self::$xmltv_sources->size() === 0) {
+            $error_message = "No selected XMLTV sources!";
+        }
 
         $day_items = array();
         $has_locks = false;
@@ -251,21 +250,17 @@ class Epg_Manager_Xmltv
                     }
                 }
 
-                $day_end_ts = $day_start_ts + 86400;
                 if ($day_start_ts > $last_in_range || $day_end_ts < $first_in_range) {
                     $first = format_datetime('Y-m-d H:i', $first_in_range);
                     $last = format_datetime('Y-m-d H:i', $last_in_range);
-                    hd_debug_print("Selected time is out of range. Available EPG time range: $first ($first_in_range) - $last ($last_in_range)");
+                    $error_message = "Selected time is out of range. Available EPG time range: $first ($first_in_range) - $last ($last_in_range)";
+                    hd_debug_print($error_message);
                     $day_items = array();
                     continue;
                 }
-
-                if (LogSeverity::$is_debug) {
-                    $date_start_l = format_datetime('Y-m-d H:i', $day_start_ts);
-                    $date_end_l = format_datetime('Y-m-d H:i', $day_end_ts);
-                    hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l");
-                }
+                if (!empty($day_items)) break;
             } catch (Exception $ex) {
+                $error_message = $ex->getMessage();
                 print_backtrace_exception($ex);
                 $day_items = array();
             }
@@ -273,27 +268,19 @@ class Epg_Manager_Xmltv
 
         self::$delayed_epg = array_unique(self::$delayed_epg);
 
-        if (!empty($day_items)) {
-            ksort($day_items);
-        } else if (self::$xmltv_sources->size() === 0) {
-            $day_items = self::getFakeEpg($channel_row, $day_start_ts, $day_items);
-        } else if (!empty(self::$delayed_epg) && $has_locks) {
-            hd_debug_print('Delayed epg: ' . json_format_unescaped(self::$delayed_epg), true);
-            $day_items = array($day_start_ts => array(
-                PluginTvEpgProgram::end_tm_sec => $day_end_ts,
-                PluginTvEpgProgram::name => TR::load('epg_not_ready'),
-                PluginTvEpgProgram::description => TR::load('epg_not_ready_desc'))
-            );
-        } else {
-            $day_items = self::getFakeEpg($channel_row, $day_start_ts, $day_items);
-        }
+        ksort($day_items);
 
         if (empty($day_items)) {
-            $day_items = array($day_start_ts => array(
-                PluginTvEpgProgram::end_tm_sec => $day_end_ts,
-                PluginTvEpgProgram::name => TR::load('epg_no_sources'),
-                PluginTvEpgProgram::description => TR::load('epg_no_sources_desc'))
-            );
+            if ($has_locks && !empty(self::$delayed_epg)) {
+                hd_debug_print('Delayed epg: ' . json_format_unescaped(self::$delayed_epg), true);
+                $day_items = array($day_start_ts => array(
+                    PluginTvEpgProgram::end_tm_sec => $day_end_ts,
+                    PluginTvEpgProgram::name => TR::load('epg_not_ready'),
+                    PluginTvEpgProgram::description => TR::load('epg_not_ready_desc'))
+                );
+            } else if (empty($error_message)) {
+                $day_epg['error'] = TR::load('epg_no_sources_desc');
+            }
         }
 
         $day_epg['items'] = $day_items;
@@ -1295,26 +1282,6 @@ class Epg_Manager_Xmltv
     protected static function clear_log($hash)
     {
         safe_unlink(get_temp_path("{$hash}_indexing.log"));
-    }
-
-    /**
-     * @param array $channel_row
-     * @param int $day_start_ts
-     * @param array $day_epg
-     * @return array
-     */
-    protected static function getFakeEpg($channel_row, $day_start_ts, $day_epg)
-    {
-        if ((self::$flags & EPG_FAKE_EPG) && $channel_row[COLUMN_ARCHIVE] !== 0) {
-            hd_debug_print('Create fake data for non existing EPG data');
-            for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, ++$n) {
-                $day_epg[$start][PluginTvEpgProgram::end_tm_sec] = $start + 3600;
-                $day_epg[$start][PluginTvEpgProgram::name] = TR::load('fake_epg_program') . " $n";
-                $day_epg[$start][PluginTvEpgProgram::description] = '';
-            }
-        }
-
-        return $day_epg;
     }
 
     /**

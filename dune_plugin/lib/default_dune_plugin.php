@@ -338,9 +338,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $channel_picon = $this->get_channel_picon($channel_row, true);
 
-            $show_ext_epg = $this->is_ext_epg_enabled();
-
             $day_epg_items = $this->epg_manager->get_day_epg_items($channel_row, $utc_day_start_tm_sec);
+
             if (isset($day_epg_items['error'])) {
                 $day_epg[] = array(
                     PluginTvEpgProgram::start_tm_sec => $utc_day_start_tm_sec,
@@ -350,6 +349,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 );
                 return $day_epg;
             }
+
+            if (empty($day_epg_items['items'])) {
+                return $this->getFakeEpg($channel_row, $utc_day_start_tm_sec);
+            }
+
+            $show_ext_epg = $this->is_ext_epg_enabled();
 
             foreach (self::check_epg_intervals($day_epg_items['items']) as $start => $item) {
                 if (!isset($item[PluginTvEpgProgram::end_tm_sec], $item[PluginTvEpgProgram::name], $item[PluginTvEpgProgram::description])) {
@@ -4376,5 +4381,25 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         return $fixed;
+    }
+
+    /**
+     * @param array $channel_row
+     * @param int $day_start_ts
+     * @return array
+     */
+    protected function getFakeEpg($channel_row, $day_start_ts)
+    {
+        $day_epg = array();
+        if ($this->get_bool_setting(PARAM_FAKE_EPG, false) && $channel_row[COLUMN_ARCHIVE] !== 0) {
+            hd_debug_print('Create fake data for non existing EPG data');
+            for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, ++$n) {
+                $day_epg[$start][PluginTvEpgProgram::end_tm_sec] = $start + 3600;
+                $day_epg[$start][PluginTvEpgProgram::name] = TR::load('fake_epg_program') . " $n";
+                $day_epg[$start][PluginTvEpgProgram::description] = '';
+            }
+        }
+
+        return $day_epg;
     }
 }

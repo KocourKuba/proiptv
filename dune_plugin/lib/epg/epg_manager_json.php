@@ -122,8 +122,10 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
      */
     public function get_day_epg_items($channel_row, $day_start_ts)
     {
+        $day_end_ts = $day_start_ts + 86400;
         $day_epg = array();
         $day_items = array();
+
         try {
             $provider = $this->plugin->get_active_provider();
             if (empty($provider)) {
@@ -132,14 +134,12 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
             $presets_ids = $this->plugin->get_provider_epg_presets();
             if (empty($presets_ids)) {
-                $day_epg['error'] = "No EPG preset";
-                $day_epg['items'] = array();
-                return $day_epg;
+                throw new Exception("No defined EPG preset for provider: {$provider->getId()}");
             }
 
             $epg_ids = self::get_epg_ids($channel_row);
             if (empty($epg_ids)) {
-                throw new Exception("No EPG ID's defined");
+                throw new Exception("No EPG ID's defined for channel: {$channel_row[COLUMN_TITLE]}");
             }
 
             // try to find in memory cache
@@ -228,7 +228,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
                 $first_tm = key($all_epg);
                 $last_tm = $all_epg[key(array_slice($all_epg, -1, 1, true))][PluginTvEpgProgram::end_tm_sec];
-                $day_end_ts = $day_start_ts + 86400;
                 if ($day_start_ts > $last_tm || $day_end_ts < $first_tm) {
                     $first = format_datetime('Y-m-d H:i', $first_tm);
                     $last = format_datetime('Y-m-d H:i', $last_tm);
@@ -254,12 +253,12 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             }
 
             if (empty($day_items)) {
-                hd_debug_print('No EPG entries for selected time in available range');
                 throw new Exception(TR::load('err_no_epg_in_all_range'));
             }
         } catch (Exception $ex) {
+            hd_debug_print($ex->getMessage());
             $day_epg['error'] = $ex->getMessage();
-            $day_items = static::getFakeEpg($channel_row, $day_start_ts, $day_items);
+            $day_items = array();
         }
 
         $day_epg['items'] = $day_items;
