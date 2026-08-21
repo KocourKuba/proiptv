@@ -153,8 +153,10 @@ class Epg_Manager_Xmltv
             }
 
             try {
-                $positions = self::load_program_index($params, $channel_row);
+                $first_in_range = PHP_INT_MAX;
+                $last_in_range = -1;
 
+                $positions = self::load_program_index($params, $channel_row);
                 if (!empty($positions)) {
                     $cached_file = self::$cache_dir . $params[PARAM_HASH] . ".xmltv";
                     if (!file_exists($cached_file)) {
@@ -204,6 +206,8 @@ class Epg_Manager_Xmltv
                         foreach ($xml_node->getElementsByTagName('programme') as $tag) {
                             $program_start = strtotime($tag->getAttribute('start'));
                             $program_end = strtotime($tag->getAttribute('stop'));
+                            $first_in_range = min($program_start, $first_in_range);
+                            $last_in_range = max($program_end, $last_in_range);
 
                             if ($program_start < $day_start_ts && $program_end < $day_start_ts) continue;
                             if ($program_start >= $day_end_ts) break;
@@ -247,7 +251,13 @@ class Epg_Manager_Xmltv
                     }
                 }
 
-                if (!self::check_epg_range($day_items, $day_start_ts)) {
+                $first = format_datetime('Y-m-d H:i', $first_in_range);
+                $last = format_datetime('Y-m-d H:i', $last_in_range);
+                hd_debug_print("Entries time range: $first ($first_in_range) - $last ($last_in_range)");
+                $day_end_ts = $day_start_ts + 86400;
+
+                if ($day_start_ts > $last_in_range || $day_end_ts < $first_in_range) {
+                    hd_debug_print("Selected time is out of range. Available EPG time range: $first - $last");
                     $day_items = array();
                     continue;
                 }
@@ -344,7 +354,7 @@ class Epg_Manager_Xmltv
         $query = sprintf('SELECT DISTINCT %s FROM %s INNER JOIN %s ON %s.%s=%s.%s WHERE %s IN (%s);', COLUMN_PICON_URL,
             $picons_table_name, $ch_table_name, $picons_table_name, COLUMN_PICON_HASH, $ch_table_name, COLUMN_PICON_HASH, COLUMN_ALIAS, $placeHolders);
 
-        $db = self::open_sqlite_db($db_name, self::TABLE_CHANNELS, true);
+        $db = self::open_sqlite_db($db_name, true);
         if ($db === false) {
             return false;
         }
@@ -540,13 +550,13 @@ class Epg_Manager_Xmltv
         hd_debug_print(null, true);
         $result = array(self::TABLE_CHANNELS => -1, self::TABLE_PICONS => -1, self::TABLE_ENTRIES => -1, 'epg_ids' => -1);
 
-        $db_name = $params[PARAM_HASH];
+        $db = self::open_sqlite_db($params[PARAM_HASH], true);
+        if (empty($db)) {
+            return $result;
+        }
 
         foreach ($result as $key => $name) {
-            if ($key === 'epg_ids') continue;
-
-            $db = self::open_sqlite_db($db_name, $key, true);
-            if (empty($db) || !$db->is_table_exists($key)) continue;
+            if ($key === 'epg_ids' || !$db->is_table_exists($key)) continue;
 
             if ($key === self::TABLE_CHANNELS) {
                 $result[$key] = (int)$db->query_value(sprintf('SELECT COUNT(DISTINCT %s) FROM %s;', COLUMN_CHANNEL_ID, $key));
@@ -598,15 +608,17 @@ class Epg_Manager_Xmltv
 
             Dune_Last_Error::clear_last_error(LAST_ERROR_XMLTV);
 
+            if (preg_match("/jtv.?\.zip$/", basename(urldecode($url)))) {
+                $msg = 'Unsupported EPG format (JTV)';
+                hd_debug_print($msg);
+                Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $msg);
+                return;
+            }
+
             self::lock_index($url_hash, INDEXING_DOWNLOAD);
             $success = false;
 
             try {
-                if (preg_match("/jtv.?\.zip$/", basename(urldecode($url)))) {
-                    hd_debug_print('Unsupported EPG format (JTV)');
-                    throw new Exception('Unsupported EPG format (JTV)');
-                }
-
                 $perf->setLabel('start_download');
                 self::download_xmltv($params);
                 $perf->setLabel('start_unpack');
@@ -615,8 +627,6 @@ class Epg_Manager_Xmltv
             } catch (Exception $ex) {
                 hd_debug_print($ex->getMessage());
                 Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $ex->getMessage());
-                $tmp_filename = $cached_file . ".tmp";
-                safe_unlink($tmp_filename);
                 safe_unlink($cached_file);
             }
 
@@ -627,281 +637,256 @@ class Epg_Manager_Xmltv
             }
         }
 
+        if (!file_exists($cached_file)) {
+            hd_debug_print("reindex_xmltv_channels: Cache file $cached_file not exist");
+            return;
+        }
+
+        $file = fopen($cached_file, 'rb');
+        if (!$file) {
+            hd_debug_print("reindex_xmltv_channels: Can't open file: $cached_file");
+            return;
+        }
+
+        $db = self::open_sqlite_db($url_hash, false);
+        if ($db === false) {
+            fclose($file);
+            hd_debug_print("reindex_xmltv_channels: Can't open db: $url_hash");
+            return;
+        }
+
         /// Reindex channels and picons
         if ($indexing_flag & INDEXING_CHANNELS) {
             hd_debug_print('Start index channels and picons...');
             self::lock_index($url_hash, INDEXING_CHANNELS);
 
             libxml_use_internal_errors(true);
-            $success = false;
-            $file = false;
-            try {
-                if (!file_exists($cached_file)) {
-                    throw new Exception("reindex_xmltv_channels: Cache file $cached_file not exist");
+            $perf->setLabel('start_channels');
+
+            $ch_table_name = self::TABLE_CHANNELS;
+            $picons_table_name = self::TABLE_PICONS;
+
+            $query = sprintf('DROP TABLE IF EXISTS %s;', $ch_table_name);
+            $query .= sprintf('DROP TABLE IF EXISTS %s;', $picons_table_name);
+            $query .= self::CREATE_CHANNELS_TABLE;
+            $query .= self::CREATE_PICONS_TABLE;
+            $res = $db->exec_transaction($query);
+            if (!$res) {
+                fclose($file);
+                $msg = "Error transaction: $query";
+                hd_debug_print($msg);
+                Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $msg);
+                self::unlock_index($url_hash, INDEXING_CHANNELS);
+                return;
+            }
+
+            $query = '';
+            $last_buffer = '';
+            while (!feof($file)) {
+                // search for open tag <channel>
+                $chunk = fread($file, 8192);
+                $buffer = $last_buffer . $chunk;
+                $pos = strpos($buffer, '<channel id');
+                if ($pos === false) {
+                    $last_buffer = $chunk;
+                    continue;
                 }
 
-                $file = fopen($cached_file, 'rb');
-                if (!$file) {
-                    throw new Exception("reindex_xmltv_channels: Can't open file: $cached_file");
-                }
-
-                $db = self::open_sqlite_db($url_hash, self::TABLE_CHANNELS, false, true);
-                if ($db === false) {
-                    throw new Exception("reindex_xmltv_channels: Can't open db: $url_hash");
-                }
-
-                $perf->setLabel('start_channels');
-
-                $ch_table_name = self::TABLE_CHANNELS;
-                $picons_table_name = self::TABLE_PICONS;
-
-                $query = sprintf('DROP TABLE IF EXISTS %s;', $ch_table_name);
-                $query .= sprintf('DROP TABLE IF EXISTS %s;', $picons_table_name);
-                $query .= self::CREATE_CHANNELS_TABLE;
-                $query .= self::CREATE_PICONS_TABLE;
-                $res = $db->exec_transaction($query);
-                if (!$res) {
-                    throw new Exception("Error transaction: $query");
-                }
-
-                $query = '';
+                // calculate start position in file and seek to + length of searched tag
                 $last_buffer = '';
+                $start_pos = ftell($file) - strlen($buffer) + $pos;
+                fseek($file, $start_pos + 11);
+
+                // read content until closed tag found
+                $line = '';
                 while (!feof($file)) {
-                    // search for open tag <channel>
+                    // search for closing tag </channel>
                     $chunk = fread($file, 8192);
                     $buffer = $last_buffer . $chunk;
-                    $pos = strpos($buffer, '<channel id');
+                    $pos = strpos($buffer, '</channel>');
                     if ($pos === false) {
                         $last_buffer = $chunk;
                         continue;
                     }
 
-                    // calculate start position in file and seek to + length of searched tag
                     $last_buffer = '';
-                    $start_pos = ftell($file) - strlen($buffer) + $pos;
-                    fseek($file, $start_pos + 11);
+                    // calculate end position in file
+                    $end_pos = ftell($file) - strlen($buffer) + $pos + 10;
+                    // seek to start position and read found text
+                    fseek($file, $start_pos);
+                    $line = fread($file, $end_pos - $start_pos);
+                    break;
+                }
+                if (feof($file) || empty($line)) continue;
 
-                    // read content until closed tag found
-                    $line = '';
-                    while (!feof($file)) {
-                        // search for closing tag </channel>
-                        $chunk = fread($file, 8192);
-                        $buffer = $last_buffer . $chunk;
-                        $pos = strpos($buffer, '</channel>');
-                        if ($pos === false) {
-                            $last_buffer = $chunk;
-                            continue;
+                $xml_node = new DOMDocument();
+                if (!$xml_node->loadXML($line, LIBXML_NOWARNING | LIBXML_NOERROR)) {
+                    hd_debug_print("Error parsing xml file:\n$line");
+                    foreach (libxml_get_errors() as $error) {
+                        $xml_error = "Error [$error->code] at line $error->line, column $error->column: " . trim($error->message) . "\n";
+                        hd_debug_print($xml_error);
+                    }
+                    libxml_clear_errors();
+                    continue;
+                }
+                foreach ($xml_node->getElementsByTagName('channel') as $tag) {
+                    $channel_id = $tag->getAttribute('id');
+                }
+
+                if (empty($channel_id)) continue;
+
+                $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
+                $picon_hash = '';
+                foreach ($xml_node->getElementsByTagName('icon') as $tag) {
+                    if (is_proto_http($tag->getAttribute('src'))) {
+                        $picon_url = $tag->getAttribute('src');
+                        if (!empty($picon_url)) {
+                            $picon_hash = md5($picon_url);
+                            $query .= sprintf('INSERT OR REPLACE INTO %s (%s,%s) VALUES(%s, %s);', $picons_table_name,
+                                COLUMN_PICON_HASH, COLUMN_PICON_URL, Sql_Wrapper::sql_quote($picon_hash), Sql_Wrapper::sql_quote($picon_url));
+                            break;
                         }
-
-                        $last_buffer = '';
-                        // calculate end position in file
-                        $end_pos = ftell($file) - strlen($buffer) + $pos + 10;
-                        // seek to start position and read found text
-                        fseek($file, $start_pos);
-                        $line = fread($file, $end_pos - $start_pos);
-                        break;
-                    }
-                    if (feof($file) || empty($line)) continue;
-
-                    $xml_node = new DOMDocument();
-                    if (!$xml_node->loadXML($line, LIBXML_NOWARNING | LIBXML_NOERROR)) {
-                        hd_debug_print("Error parsing xml file:\n$line");
-                        foreach (libxml_get_errors() as $error) {
-                            $xml_error = "Error [$error->code] at line $error->line, column $error->column: " . trim($error->message) . "\n";
-                            hd_debug_print($xml_error);
-                        }
-                        libxml_clear_errors();
-                        continue;
-                    }
-                    foreach ($xml_node->getElementsByTagName('channel') as $tag) {
-                        $channel_id = $tag->getAttribute('id');
-                    }
-
-                    if (empty($channel_id)) continue;
-
-                    $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
-                    $picon_hash = '';
-                    foreach ($xml_node->getElementsByTagName('icon') as $tag) {
-                        if (is_proto_http($tag->getAttribute('src'))) {
-                            $picon_url = $tag->getAttribute('src');
-                            if (!empty($picon_url)) {
-                                $picon_hash = md5($picon_url);
-                                $query .= sprintf('INSERT OR REPLACE INTO %s (%s,%s) VALUES(%s, %s);', $picons_table_name,
-                                    COLUMN_PICON_HASH, COLUMN_PICON_URL, Sql_Wrapper::sql_quote($picon_hash), Sql_Wrapper::sql_quote($picon_url));
-                                break;
-                            }
-                        }
-                    }
-
-                    $q_picon_hash = Sql_Wrapper::sql_quote($picon_hash);
-                    $q_alias = Sql_Wrapper::sql_quote(mb_convert_case($channel_id, MB_CASE_LOWER, "UTF-8"));
-                    $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES(%s,%s,%s);',
-                        $ch_table_name, COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_PICON_HASH, $q_alias, $q_channel_id, $q_picon_hash);
-
-                    foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
-                        $q_alias = Sql_Wrapper::sql_quote(mb_convert_case($tag->nodeValue, MB_CASE_LOWER, "UTF-8"));
-                        $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES(%s,%s,%s);',
-                            $ch_table_name, COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_PICON_HASH, $q_alias, $q_channel_id, $q_picon_hash);
                     }
                 }
-                $db->exec_transaction($query);
 
-                $channels = (int)$db->query_value(sprintf('SELECT count(DISTINCT %s) FROM %s;', COLUMN_CHANNEL_ID, $ch_table_name));
-                $picons = (int)$db->query_value(sprintf("SELECT COUNT(*) FROM %s;", $picons_table_name));
+                $q_picon_hash = Sql_Wrapper::sql_quote($picon_hash);
+                $q_alias = Sql_Wrapper::sql_quote(mb_convert_case($channel_id, MB_CASE_LOWER, "UTF-8"));
+                $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES(%s,%s,%s);',
+                    $ch_table_name, COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_PICON_HASH, $q_alias, $q_channel_id, $q_picon_hash);
 
-                $perf->setLabel('end_channels');
-                $report = $perf->getFullReport('start_channels', 'end_channels');
-
-                hd_debug_print("Total channels id's: $channels");
-                hd_debug_print("Total known picons:  $picons");
-                hd_debug_print("Reindexing channels: {$report[Perf_Collector::TIME]} secs");
-                hd_debug_print("Memory usage:        {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-                hd_debug_print('Storage space:       ' . HD::get_storage_size(self::$cache_dir));
-                hd_print_separator();
-
-                self::update_stat($cached_file, 'channels', $report[Perf_Collector::TIME]);
-                $success = true;
-            } catch (Exception $ex) {
-                hd_debug_print($ex->getMessage());
-                Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $ex->getMessage());
+                foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
+                    $q_alias = Sql_Wrapper::sql_quote(mb_convert_case($tag->nodeValue, MB_CASE_LOWER, "UTF-8"));
+                    $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES(%s,%s,%s);',
+                        $ch_table_name, COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_PICON_HASH, $q_alias, $q_channel_id, $q_picon_hash);
+                }
             }
+            $db->exec_transaction($query);
 
-            if ($file) {
-                fclose($file);
-            }
+            $channels = (int)$db->query_value(sprintf('SELECT count(DISTINCT %s) FROM %s;', COLUMN_CHANNEL_ID, $ch_table_name));
+            $picons = (int)$db->query_value(sprintf("SELECT COUNT(*) FROM %s;", $picons_table_name));
 
+            $perf->setLabel('end_channels');
+            $report = $perf->getFullReport('start_channels', 'end_channels');
+
+            hd_debug_print("Total channels id's: $channels");
+            hd_debug_print("Total known picons:  $picons");
+            hd_debug_print("Reindexing channels: {$report[Perf_Collector::TIME]} secs");
+            hd_debug_print("Memory usage:        {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+            hd_debug_print('Storage space:       ' . HD::get_storage_size(self::$cache_dir));
+            hd_print_separator();
+
+            self::update_stat($cached_file, 'channels', $report[Perf_Collector::TIME]);
             self::unlock_index($url_hash, INDEXING_CHANNELS);
-            if (!$success) {
-                return;
-            }
+            libxml_use_internal_errors(false);
         }
-        libxml_use_internal_errors(false);
 
         /// Reindex positions
         if ($indexing_flag & INDEXING_ENTRIES) {
             hd_debug_print('Start indexing entries...');
             self::lock_index($url_hash, INDEXING_ENTRIES);
 
-            $file = false;
-            try {
-                if (!file_exists($cached_file)) {
-                    throw new Exception("reindex_xmltv_entries: Cache file $cached_file not exist");
-                }
+            hd_debug_print("Indexing positions for: '$cached_file' by '$url'", true);
+            $perf->setLabel('start_reindex_entries');
 
-                $file = fopen($cached_file, 'rb');
-                if (!$file) {
-                    throw new Exception("reindex_xmltv_entries: Can't open file: $cached_file");
-                }
-
-                $db = self::open_sqlite_db($url_hash, self::TABLE_ENTRIES, false, true);
-                if ($db === false) {
-                    throw new Exception("reindex_xmltv_entries: Can't open db: $url_hash");
-                }
-
-                hd_debug_print("Indexing positions for: '$cached_file' by '$url'", true);
-                $perf->setLabel('start_reindex_entries');
-
-                $query = sprintf("DROP TABLE IF EXISTS %s;", self::TABLE_ENTRIES);
-                $query .= self::CREATE_ENTRIES_TABLE;
-                $res = $db->exec_transaction($query);
-                if (!$res) {
-                    throw new Exception("Error transaction: $query");
-                }
-
-                hd_debug_print('Begin transactions...', true);
-                $db->exec('BEGIN;');
-
-                $query = sprintf('INSERT INTO %s (%s, %s, %s) VALUES(:%s, :%s, :%s);',
-                    self::TABLE_ENTRIES, COLUMN_CHANNEL_ID, COLUMN_START, COLUMN_END, COLUMN_CHANNEL_ID, COLUMN_START, COLUMN_END);
-                $stm = $db->prepare($query);
-                /** @var string $prev_channel */
-                /** @var int $start_program_block */
-                /** @var int $tag_end_pos */
-                $stm->bindParam(':channel_id', $prev_channel);
-                $stm->bindParam(':start', $start_program_block);
-                $stm->bindParam(':end', $tag_end_pos);
-
-                $start_program_block = 0;
-                $prev_channel = null;
-                fseek($file, 0);
-                while (!feof($file)) {
-                    $tag_start_pos = ftell($file);
-                    $line = stream_get_line($file, 0, "</programme>");
-                    if ($line === false) break;
-
-                    $offset = strpos($line, '<programme');
-                    if ($offset === false) {
-                        // check if end
-                        $end_tv = strpos($line, "</tv>");
-                        if ($end_tv !== false) {
-                            $tag_end_pos = $end_tv + $tag_start_pos;
-                            $stm->execute();
-                            break;
-                        }
-
-                        // if open tag not found - skip chunk
-                        continue;
-                    }
-
-                    // end position include closing tag!
-                    // $tag_end_pos = ftell($file);
-                    // append position of open tag to file position of chunk
-                    $tag_start_pos += $offset;
-                    // calculate channel id
-                    $ch_start = strpos($line, 'channel="', $offset);
-                    if ($ch_start === false) {
-                        continue;
-                    }
-
-                    $ch_start += 9;
-                    $ch_end = strpos($line, '"', $ch_start);
-                    if ($ch_end === false) {
-                        continue;
-                    }
-
-                    $channel_id = substr($line, $ch_start, $ch_end - $ch_start);
-                    if (empty($channel_id)) continue;
-
-                    if ($prev_channel === null) {
-                        $prev_channel = $channel_id;
-                        $start_program_block = $tag_start_pos;
-                    } else if ($prev_channel !== $channel_id) {
-                        $tag_end_pos = $tag_start_pos;
-                        $res = $stm->execute();
-                        if ($res === false) {
-                            hd_debug_print("Error inserting position start: $start_program_block end: $tag_end_pos for channel: $prev_channel");
-                        }
-                        $prev_channel = $channel_id;
-                        $start_program_block = $tag_start_pos;
-                    }
-                }
-
-                hd_debug_print('End transactions...', true);
-                $db->exec('COMMIT;');
-
-                $total_epg = (int)$db->query_value(sprintf('SELECT count(DISTINCT %s) FROM %s;', COLUMN_CHANNEL_ID, self::TABLE_ENTRIES));
-                $total_blocks = (int)$db->query_value(sprintf('SELECT COUNT(*) FROM %s;', self::TABLE_ENTRIES));
-
-                $perf->setLabel('end_reindex_entries');
-                $report = $perf->getFullReport('start_reindex_entries', 'end_reindex_entries');
-
-                hd_debug_print("Total unique epg id's indexed: $total_epg, total blocks: $total_blocks");
-                hd_debug_print("Reindexing entries: {$report[Perf_Collector::TIME]} secs");
-                hd_debug_print("Memory usage:       {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-                hd_debug_print('Storage space:      ' . HD::get_storage_size(self::$cache_dir));
-                hd_print_separator();
-
-                self::update_stat($cached_file, 'entries', $report[Perf_Collector::TIME]);
-            } catch (Exception $ex) {
-                hd_debug_print($ex->getMessage());
-                Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $ex->getMessage());
-            }
-
-            if ($file) {
+            $query = sprintf("DROP TABLE IF EXISTS %s;", self::TABLE_ENTRIES);
+            $query .= self::CREATE_ENTRIES_TABLE;
+            $res = $db->exec_transaction($query);
+            if (!$res) {
                 fclose($file);
+                $msg = "Error transaction: $query";
+                hd_debug_print($msg);
+                Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $msg);
+                self::unlock_index($url_hash, INDEXING_ENTRIES);
+                return;
             }
 
+            hd_debug_print('Begin transactions...', true);
+            $db->exec('BEGIN;');
+
+            $query = sprintf('INSERT INTO %s (%s, %s, %s) VALUES(:%s, :%s, :%s);',
+                self::TABLE_ENTRIES, COLUMN_CHANNEL_ID, COLUMN_START, COLUMN_END, COLUMN_CHANNEL_ID, COLUMN_START, COLUMN_END);
+            $stm = $db->prepare($query);
+            /** @var string $prev_channel */
+            /** @var int $start_program_block */
+            /** @var int $tag_end_pos */
+            $stm->bindParam(':channel_id', $prev_channel);
+            $stm->bindParam(':start', $start_program_block);
+            $stm->bindParam(':end', $tag_end_pos);
+
+            $start_program_block = 0;
+            $prev_channel = null;
+            fseek($file, 0);
+            while (!feof($file)) {
+                $tag_start_pos = ftell($file);
+                $line = stream_get_line($file, 0, "</programme>");
+                if ($line === false) break;
+
+                $offset = strpos($line, '<programme');
+                if ($offset === false) {
+                    // check if end
+                    $end_tv = strpos($line, "</tv>");
+                    if ($end_tv !== false) {
+                        $tag_end_pos = $end_tv + $tag_start_pos;
+                        $stm->execute();
+                        break;
+                    }
+
+                    // if open tag not found - skip chunk
+                    continue;
+                }
+
+                // end position include closing tag!
+                // $tag_end_pos = ftell($file);
+                // append position of open tag to file position of chunk
+                $tag_start_pos += $offset;
+                // calculate channel id
+                $ch_start = strpos($line, 'channel="', $offset);
+                if ($ch_start === false) {
+                    continue;
+                }
+
+                $ch_start += 9;
+                $ch_end = strpos($line, '"', $ch_start);
+                if ($ch_end === false) {
+                    continue;
+                }
+
+                $channel_id = substr($line, $ch_start, $ch_end - $ch_start);
+                if (empty($channel_id)) continue;
+
+                if ($prev_channel === null) {
+                    $prev_channel = $channel_id;
+                    $start_program_block = $tag_start_pos;
+                } else if ($prev_channel !== $channel_id) {
+                    $tag_end_pos = $tag_start_pos;
+                    $res = $stm->execute();
+                    if ($res === false) {
+                        hd_debug_print("Error inserting position start: $start_program_block end: $tag_end_pos for channel: $prev_channel");
+                    }
+                    $prev_channel = $channel_id;
+                    $start_program_block = $tag_start_pos;
+                }
+            }
+
+            hd_debug_print('End transactions...', true);
+            $db->exec('COMMIT;');
+
+            fclose($file);
             self::unlock_index($url_hash, INDEXING_ENTRIES);
+
+            $total_epg = (int)$db->query_value(sprintf('SELECT count(DISTINCT %s) FROM %s;', COLUMN_CHANNEL_ID, self::TABLE_ENTRIES));
+            $total_blocks = (int)$db->query_value(sprintf('SELECT COUNT(*) FROM %s;', self::TABLE_ENTRIES));
+
+            $perf->setLabel('end_reindex_entries');
+            $report = $perf->getFullReport('start_reindex_entries', 'end_reindex_entries');
+
+            hd_debug_print("Total unique epg id's indexed: $total_epg, total blocks: $total_blocks");
+            hd_debug_print("Reindexing entries: {$report[Perf_Collector::TIME]} secs");
+            hd_debug_print("Memory usage:       {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+            hd_debug_print('Storage space:      ' . HD::get_storage_size(self::$cache_dir));
+            hd_print_separator();
+
+            self::update_stat($cached_file, 'entries', $report[Perf_Collector::TIME]);
         }
 
         if ($perf->getLabelsCount() > 1) {
@@ -1201,15 +1186,18 @@ class Epg_Manager_Xmltv
 
         hd_debug_print("Search for aliases: $aliases", true);
 
-        $db_channels = self::open_sqlite_db($params[PARAM_HASH], self::TABLE_CHANNELS, true);
-        if ($db_channels === false) {
-            hd_debug_print('Problem with open SQLite channels db! Possible database not exist');
+        $db = self::open_sqlite_db($params[PARAM_HASH], true);
+        if ($db === false) {
+            hd_debug_print("Problem with open SQLite db: '{$params[PARAM_HASH]}.db'! Possible database not exist");
             return $channel_positions;
         }
 
-        $query = sprintf('SELECT DISTINCT %s FROM %s WHERE %s IN (%s);',
-            COLUMN_CHANNEL_ID, self::TABLE_CHANNELS, COLUMN_ALIAS, $aliases);
-        $channel_ids = $db_channels->fetch_array($query, COLUMN_CHANNEL_ID);
+        if ($db->is_table_exists(self::TABLE_CHANNELS)) {
+            $query = sprintf('SELECT DISTINCT %s FROM %s WHERE %s IN (%s);',
+                COLUMN_CHANNEL_ID, self::TABLE_CHANNELS, COLUMN_ALIAS, $aliases);
+            $channel_ids = $db->fetch_array($query, COLUMN_CHANNEL_ID);
+        }
+
         if (empty($channel_ids)) {
             hd_debug_print("No channel_id found for aliases: $aliases");
             return $channel_positions;
@@ -1217,21 +1205,16 @@ class Epg_Manager_Xmltv
 
         hd_debug_print("Found EPG id's: " . json_format_unescaped($channel_ids), true);
         hd_debug_print("Load position indexes for: $channel_id ($channel_title)", true);
-        $db_entries = self::open_sqlite_db($params[PARAM_HASH], self::TABLE_ENTRIES, true);
-        if ($db_entries === false) {
-            hd_debug_print('Problem with open SQLite channels db! Possible database not exist');
-            return $channel_positions;
+
+        if ($db->is_table_exists(self::TABLE_ENTRIES)) {
+            $query = sprintf('SELECT %s, %s FROM %s WHERE %s;',
+                COLUMN_START, COLUMN_END, self::TABLE_ENTRIES, Sql_Wrapper::sql_make_where_clause($channel_ids, COLUMN_CHANNEL_ID));
+            $channel_positions = $db->fetch_array($query);
         }
 
-        $table_pos = self::TABLE_ENTRIES;
-        $query = sprintf('SELECT %s, %s FROM %s WHERE %s;',
-            COLUMN_START, COLUMN_END, $table_pos, Sql_Wrapper::sql_make_where_clause($channel_ids, COLUMN_CHANNEL_ID));
-        $channel_positions = $db_entries->fetch_array($query);
         if (empty($channel_positions)) {
             $ids = Sql_Wrapper::sql_make_list_from_values($channel_ids);
             hd_debug_print("No positions found for channel $channel_id ($channel_title) and channel id's: $ids");
-        } else {
-            hd_debug_print('Channel positions: ' . json_format_unescaped($channel_positions), true);
         }
 
         return $channel_positions;
@@ -1246,12 +1229,12 @@ class Epg_Manager_Xmltv
      */
     protected static function is_all_indexes_valid($hash, $names)
     {
-        foreach ($names as $name) {
-            $db = self::open_sqlite_db($hash, $name, true);
-            if ($db === false) {
-                return false;
-            }
+        $db = self::open_sqlite_db($hash, true);
+        if ($db === false) {
+            return false;
+        }
 
+        foreach ($names as $name) {
             if (!$db->is_table_exists($name)) {
                 return false;
             }
@@ -1316,23 +1299,6 @@ class Epg_Manager_Xmltv
         safe_unlink(get_temp_path("{$hash}_indexing.log"));
     }
 
-    protected static function check_epg_range($all_epg, $day_start_ts)
-    {
-        $first_tm = key($all_epg);
-        $first = format_datetime('Y-m-d H:i', $first_tm);
-        $last_tm = $all_epg[key(array_slice($all_epg, -1, 1, true))][PluginTvEpgProgram::end_tm_sec];
-        $last = format_datetime('Y-m-d H:i', $last_tm);
-        hd_debug_print("Entries time range: $first ($first_tm) - $last ($last_tm)");
-        $day_end_ts = $day_start_ts + 86400;
-
-        if ($day_start_ts > $last_tm || $day_end_ts < $first_tm) {
-            hd_debug_print("Selected time is out of range. Available EPG time range: $first - $last");
-            return false;
-        }
-
-        return true;
-    }
-
     /**
      * @param array $channel_row
      * @param int $day_start_ts
@@ -1356,17 +1322,11 @@ class Epg_Manager_Xmltv
     /**
      * open sqlite database
      * @param string $db_name
-     * @param string $table_name
      * @param bool $readonly
-     * @param bool $clear_cache
      * @return Sql_Wrapper|bool
      */
-    protected static function open_sqlite_db($db_name, $table_name, $readonly, $clear_cache = false)
+    protected static function open_sqlite_db($db_name, $readonly)
     {
-        if ($table_name === self::TABLE_ENTRIES) {
-            $db_name .= "_entries";
-        }
-
         $db_file = self::$cache_dir . $db_name . ".db";
         // in read-only database can't be created
         if ($readonly && !file_exists($db_file)) {
@@ -1374,7 +1334,7 @@ class Epg_Manager_Xmltv
         }
 
         // if database not exist or requested mode is read-write create new database
-        if ($clear_cache || !isset(self::$epg_db[$db_name]) || (!$readonly && self::$epg_db[$db_name]->is_readonly())) {
+        if (!isset(self::$epg_db[$db_name]) || (!$readonly && self::$epg_db[$db_name]->is_readonly())) {
             hd_debug_print("Create new db: '$db_file'", true);
             if (isset(self::$epg_db[$db_name])) {
                 self::$epg_db[$db_name]->get_db()->close();
@@ -1425,11 +1385,13 @@ class Epg_Manager_Xmltv
                 $msg = "HTTP request failed ($http_code)";
             }
 
+            safe_unlink($tmp_filename);
             throw new Exception("Can't download file\n$msg");
         }
 
         $http_code = Curl_Wrapper::get_http_code();
         if ($http_code !== 200) {
+            safe_unlink($tmp_filename);
             throw new Exception("Download error ($http_code) $url\n\n" . Curl_Wrapper::get_raw_response_headers());
         }
 

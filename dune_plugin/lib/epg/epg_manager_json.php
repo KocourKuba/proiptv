@@ -122,7 +122,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
      */
     public function get_day_epg_items($channel_row, $day_start_ts)
     {
-        $day_end_ts = $day_start_ts + 86400;
         $day_epg = array();
         $day_items = array();
         try {
@@ -227,7 +226,17 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
                 hd_debug_print("Total $counts EPG entries loaded");
 
-                if (!self::check_epg_range($all_epg, $day_start_ts)) continue;
+                $first_tm = key($all_epg);
+                $first = format_datetime('Y-m-d H:i', $first_tm);
+                $last_tm = $all_epg[key(array_slice($all_epg, -1, 1, true))][PluginTvEpgProgram::end_tm_sec];
+                $last = format_datetime('Y-m-d H:i', $last_tm);
+                hd_debug_print("Entries time range: $first ($first_tm) - $last ($last_tm)");
+                $day_end_ts = $day_start_ts + 86400;
+
+                if ($day_start_ts > $last_tm || $day_end_ts < $first_tm) {
+                    hd_debug_print("Selected time is out of range. Available EPG time range: $first - $last");
+                    continue;
+                }
 
                 if (LogSeverity::$is_debug) {
                     $date_start_l = format_datetime('Y-m-d H:i', $day_start_ts);
