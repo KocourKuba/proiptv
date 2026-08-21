@@ -4334,14 +4334,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     protected static function check_epg_intervals($items)
     {
-        $prev_start = 0;
         $prev_end = 0;
         $fixed = array();
         foreach ($items as $start => $value) {
             $end = $value[PluginTvEpgProgram::end_tm_sec];
             // first entry
             if ($prev_end === 0) {
-                $prev_start = $start;
                 $prev_end = $end;
                 $fixed[$start] = $value;
                 continue;
@@ -4359,7 +4357,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $fixed[$prev_end] = $value;
             } else if ($start < $prev_end) {
                 // found overlap. new program start before previous ending
-                if ($end > $prev_end) {
+                if ($end - $prev_end > 60) {
                     hd_debug_print("Overlapped interval: $name, $start ($start_fmt) - $end ($end_fmt)", true);
                     hd_debug_print("Previous end at $prev_end ($end_prev_fmt)", true);
                     // end of program is later than previous program ending
