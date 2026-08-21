@@ -60,6 +60,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
         hd_debug_print($media_url, true);
         hd_debug_print("movie id: $media_url->movie_id", true);
 
+        $background = $this->plugin->get_background_image();
         $movie = $this->plugin->vod->get_loaded_movie($media_url->movie_id);
         if (is_null($movie)) {
             $movie = new Movie($media_url->movie_id, $this->plugin);
@@ -80,7 +81,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
                     PluginMovieFolderView::params => array(
                         PluginFolderViewParams::paint_path_box => false,
                         PluginFolderViewParams::paint_content_box_background => true,
-                        PluginFolderViewParams::background_url => $this->plugin->plugin_info['app_background']
+                        PluginFolderViewParams::background_url => $background
                     )
                 ),
             );
@@ -108,7 +109,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
             PluginMovieFolderView::params => array(
                 PluginFolderViewParams::paint_path_box => false,
                 PluginFolderViewParams::paint_content_box_background => true,
-                PluginFolderViewParams::background_url => $this->plugin->plugin_info['app_background']
+                PluginFolderViewParams::background_url => $background
             )
         );
 

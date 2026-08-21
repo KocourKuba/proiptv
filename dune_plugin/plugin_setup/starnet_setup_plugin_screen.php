@@ -64,7 +64,7 @@ class Starnet_Setup_Plugin_Screen extends Abstract_Controls_Screen
         $params = array(PARAM_RETURN_INDEX => 0);
         //////////////////////////////////////
         // Plugin name
-        $caption = " v.{$this->plugin->plugin_info['app_version']} [{$this->plugin->plugin_info['app_release_date']}]";
+        $caption = ' v.' . Default_Dune_Plugin::$plugin_info['app_version'] . ' [' . Default_Dune_Plugin::$plugin_info['app_release_date'] . ']';
         Control_Factory::add_vgap($defs, -10);
         Control_Factory::add_image_button($defs, $this, ACTION_PLUGIN_INFO, Dune_Default_UI_Parameters::AUTHOR_LOGO, $caption,
             get_image_path('info.png'), Control_Factory::SCR_CONTROLS_WIDTH, $params);

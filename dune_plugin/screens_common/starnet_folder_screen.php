@@ -468,7 +468,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
 
             if ($dir === $this->imagelib_cache_path) {
                 $s = array();
-                foreach ($this->plugin->get_image_libs()->get_values() as $item) {
+                foreach (Default_Dune_Plugin::$image_libs->get_values() as $item) {
                     $img_path = "$this->imagelib_cache_path{$item[PARAM_NAME]}";
                     create_path($img_path);
                     $s[self::SELECTED_TYPE_IMAGE_LIB][$img_path][smb_tree::PARAM_FOLDERNAME] = $item[PARAM_NAME];
@@ -494,7 +494,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
             }
 
             if (basename(dirname($dir)) === self::SELECTED_TYPE_IMAGE_LIB) {
-                foreach ($this->plugin->get_image_libs()->get_values() as $lib) {
+                foreach (Default_Dune_Plugin::$image_libs->get_values() as $lib) {
                     if (basename($dir) !== $lib[PARAM_NAME]) continue;
 
                     $need_download = false;

@@ -85,7 +85,7 @@ class Starnet_Epfs_Handler
         $newui_support = HD::rows_api_support();
         $newui_enabled = get_cookie_bool_param($plugin_cookies, PARAM_COOKIE_ENABLE_NEWUI);
         self::$enabled = $newui_support && $newui_enabled;
-        self::$epf_id = $plugin->plugin_info['app_name'];
+        self::$epf_id = Default_Dune_Plugin::$plugin_info['app_name'];
         self::$no_internet_epfs = self::$epf_id . '.no_internet';
         self::$dir_path = getenv('FS_PREFIX') . self::EPFS_PATH . self::$epf_id;
 

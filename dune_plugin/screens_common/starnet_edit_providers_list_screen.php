@@ -96,7 +96,7 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
 
             case self::ACTION_SHOW_QR:
                 /** @var api_default $provider */
-                $provider = $this->plugin->get_providers()->get($selected_id);
+                $provider = Default_Dune_Plugin::$providers->get($selected_id);
                 if (is_null($provider)) break;
 
                 $qr_code = get_temp_path($provider->getId()) . ".jpg";
@@ -126,7 +126,7 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
 
         $items = array();
         /** @var api_default $provider */
-        foreach ($this->plugin->get_providers() as $provider) {
+        foreach (Default_Dune_Plugin::$providers as $provider) {
             $vod_type = Default_Dune_Plugin::is_provider_m3u_vod($provider)
                 ? TR::load('plugin_vod_type_m3u')
                 : TR::load('plugin_vod_type_json');

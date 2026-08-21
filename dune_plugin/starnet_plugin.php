@@ -123,15 +123,15 @@ class Starnet_Plugin extends Default_Dune_Plugin
         Starnet_Epfs_Handler::init($this, $plugin_cookies);
 
         $this->init_providers_config();
-        $this->init_screen_view_parameters($this->plugin_info['app_background']);
-        if ($this->plugin_info['debug']) {
+        $this->init_screen_view_parameters();
+        if (self::$plugin_info['debug']) {
             $plugin_cookies->{PARAM_COOKIE_ENABLE_DEBUG} = SwitchOnOff::on;
         }
 
         hd_print_separator();
-        hd_print('Plugin name:             ' . $this->plugin_info['app_caption']);
-        hd_print('Plugin version:          ' . $this->plugin_info['app_version']);
-        hd_print('Plugin date:             ' . $this->plugin_info['app_release_date']);
+        hd_print('Plugin name:             ' . self::$plugin_info['app_caption']);
+        hd_print('Plugin version:          ' . self::$plugin_info['app_version']);
+        hd_print('Plugin date:             ' . self::$plugin_info['app_release_date']);
         hd_print('LocalTime:               ' . format_datetime('Y-m-d H:i', time()));
         hd_print('TimeZone:                ' . getTimeZone());
         hd_print('NewUI support:           ' . SwitchOnOff::to_def(HD::rows_api_support()));
@@ -146,7 +146,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
     public function init_providers_config()
     {
-        if ($this->providers->size() !== 0) {
+        if (!is_null(self::$providers) && self::$providers->size() !== 0) {
             return;
         }
 
@@ -155,7 +155,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         // 3. Check previously downloaded web release version
         // 4. Check preinstalled version
         // 5. Houston we have a problem
-        if ($this->plugin_info['debug']) {
+        if (self::$plugin_info['debug']) {
             $tmp_file = get_install_path('providers_debug.json');
             if (file_exists($tmp_file)) {
                 hd_debug_print("Load debug providers configuration: $tmp_file");
@@ -164,14 +164,14 @@ class Starnet_Plugin extends Default_Dune_Plugin
         }
 
         if (empty($jsonArray)) {
-            $name = "providers_{$this->plugin_info['app_base_version']}.json";
+            $name = 'providers_' . self::$plugin_info['app_base_version'] . '.json';
             $tmp_file = get_data_path($name);
             $serial = get_serial_number();
             if (empty($serial)) {
                 hd_debug_print('Unable to get DUNE serial.');
                 $serial = 'XXXX';
             }
-            $ver = $this->plugin_info['app_version'];
+            $ver = self::$plugin_info['app_version'];
             $model = get_product_id();
             $firmware = get_raw_firmware_version();
             $config_url = sprintf('%s?ver=%s&model=%s&firmware=%s&serial=%s', self::CONFIG_URL, $ver, $model, $firmware, $serial);
@@ -189,23 +189,27 @@ class Starnet_Plugin extends Default_Dune_Plugin
             }
         }
 
+        self::$image_libs = new Hashed_Array();
         foreach ($jsonArray['plugin_config']['image_libs'] as $key => $value) {
             hd_debug_print("available image lib: $key");
-            $this->image_libs->set($key, $value);
+            self::$image_libs->set($key, $value);
         }
 
+        self::$epg_presets = new Hashed_Array();
         foreach ($jsonArray['epg_presets'] as $key => $value) {
             hd_debug_print("available epg preset: $key");
-            $this->epg_presets->set($key, $value);
+            self::$epg_presets->set($key, $value);
         }
 
+        self::$epg_xmltv_presets = new Hashed_Array();
         foreach ($jsonArray['xmltv_sources'] as $key => $value) {
             hd_debug_print("available xmltv preset: $key");
-            $this->epg_xmltv_presets->set($key, $value);
+            self::$epg_xmltv_presets->set($key, $value);
         }
 
+        self::$desc_parsers = array();
         if (isset($jsonArray['desc_parsers'])) {
-            $this->desc_parsers = $jsonArray['desc_parsers'];
+            self::$desc_parsers = $jsonArray['desc_parsers'];
         }
 
         if ($jsonArray === false || !isset($jsonArray['providers'])) {
@@ -213,6 +217,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
             return;
         }
 
+        self::$providers = new Hashed_Array();
         foreach ($jsonArray['providers'] as $item) {
             if (!isset($item['id'], $item['enable']) || $item['enable'] === false) continue;
 
@@ -260,7 +265,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
                     hd_debug_print("failed to download provider logo: $logo");
                 }
             }
-            $this->providers->set($provider->getId(), $provider);
+            self::$providers->set($provider->getId(), $provider);
         }
     }
 }

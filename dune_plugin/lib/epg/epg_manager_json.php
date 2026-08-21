@@ -250,8 +250,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 hd_debug_print('No EPG entries for selected time in available range');
                 throw new Exception(TR::load('err_no_epg_in_all_range'));
             }
-
-            $day_items = self::check_epg_intervals($day_items);
         } catch (Exception $ex) {
             $day_epg['error'] = $ex->getMessage();
             $day_items = static::getFakeEpg($channel_row, $day_start_ts, $day_items);
@@ -391,7 +389,9 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
         $update_value = function (&$values, $v_name, &$entry, $e_name, $unescape = false, $default = '') {
             if (!isset($entry[$e_name])) {
-                $values[$v_name] = $default;
+                if (!is_null($default)) {
+                    $values[$v_name] = $default;
+                }
             } else {
                 $values[$v_name] = $unescape ? unescape_entity_string($entry[$e_name]) : $entry[$e_name];
                 unset($entry[$e_name]);
@@ -445,23 +445,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
             $update_value($values, PluginTvEpgProgram::name, $entry, $param_epg_name, true, 'no name');
             $update_value($values, PluginTvEpgProgram::description, $entry, $param_epg_desc, true, 'no name');
-            $update_value($values, PluginTvEpgProgram::icon_url, $entry, $param_epg_icon);
-            if (self::$ext_epg_enabled) {
-                $reformatted = self::reformat_description($values[PluginTvEpgProgram::description], $values[PluginTvEpgProgram::icon_url]);
-                foreach ($reformatted as $key => $value) {
-                    $values[$key] = $value;
-                }
-            }
-
-            if (!empty($entry)) {
-                foreach ($entry as $key => $value) {
-                    if (isset($values[$key])) {
-                        $values[$key] .= ',' . $value;
-                    } else {
-                        $values[$key] = $value;
-                    }
-                }
-            }
+            $update_value($values, PluginTvEpgProgram::icon_url, $entry, $param_epg_icon, false, null);
             $channel_epg[$program_start] = $values;
         }
 

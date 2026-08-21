@@ -76,18 +76,12 @@ class Epg_Manager_Xmltv
     protected static $delayed_epg = array();
 
     /**
-     * @var array
-     */
-    protected static $parsers = array();
-
-    /**
      * @param Default_Dune_Plugin $plugin
      */
     public function __construct($plugin)
     {
         self::$ext_epg_enabled = is_ext_epg_supported() && $plugin->get_bool_setting(PARAM_SHOW_EXT_EPG);
         self::$flags = $plugin->get_bool_setting(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
-        self::set_desc_parsers($plugin->get_epg_desc_parsers());
         self::update_active_sources($plugin->get_active_sources());
     }
 
@@ -121,11 +115,6 @@ class Epg_Manager_Xmltv
     public static function set_ext_epg_enabled($enabled)
     {
         self::$ext_epg_enabled = $enabled;
-    }
-
-   public static function set_desc_parsers($parsers)
-    {
-        self::$parsers = $parsers;
     }
 
     /**
@@ -221,35 +210,34 @@ class Epg_Manager_Xmltv
 
                             $desc = unescape_entity_string(self::get_node_value($tag, 'desc'));
                             $icon = self::get_node_attribute($tag, 'icon', 'src');
-                            $day_items[$program_start][PluginTvEpgProgram::end_tm_sec] = $program_end;
-                            $day_items[$program_start][PluginTvEpgProgram::name] = self::get_node_value($tag, 'title');
-
-                            if (self::$ext_epg_enabled) {
-                                $reformatted = self::reformat_description($desc, $icon);
-                                foreach ($reformatted as $key => $value) {
-                                    $day_items[$program_start][$key] = $value;
-                                }
-                            } else {
-                                $day_items[$program_start][PluginTvEpgProgram::description] = $desc;
-                                $day_items[$program_start][PluginTvEpgProgram::icon_url] = $icon;
+                            $epg_items = array();
+                            $epg_items[PluginTvEpgProgram::end_tm_sec] = $program_end;
+                            $epg_items[PluginTvEpgProgram::name] = self::get_node_value($tag, 'title');
+                            $epg_items[PluginTvEpgProgram::description] = $desc;
+                            if (!empty($icon)) {
+                                $epg_items[PluginTvEpgProgram::icon_url] = $icon;
                             }
 
-                            if (!self::$ext_epg_enabled) continue;
+                            if (self::$ext_epg_enabled) {
+                                $update_ext_epg(PluginTvExtEpgProgram::sub_title, 'sub-title', $tag, $epg_items);
+                                $update_ext_epg(PluginTvExtEpgProgram::main_category, 'category', $tag, $epg_items);
+                                $update_ext_epg(PluginTvExtEpgProgram::year, 'date', $tag, $epg_items);
+                                $update_ext_epg(PluginTvExtEpgProgram::country, 'country', $tag, $epg_items);
 
-                            $update_ext_epg(PluginTvExtEpgProgram::sub_title, 'sub-title', $tag, $day_items[$program_start]);
-                            $update_ext_epg(PluginTvExtEpgProgram::main_category, 'category', $tag, $day_items[$program_start]);
-                            $update_ext_epg(PluginTvExtEpgProgram::year, 'date', $tag, $day_items[$program_start]);
-                            $update_ext_epg(PluginTvExtEpgProgram::country, 'country', $tag, $day_items[$program_start]);
+                                $collect_ext_epg(PluginTvExtEpgProgram::icons, 'image', $tag, $epg_items);
+                                foreach ($tag->getElementsByTagName('credits') as $sub_tag) {
+                                    $collect_ext_epg(PluginTvExtEpgProgram::director, 'director', $sub_tag, $epg_items);
+                                    $collect_ext_epg(PluginTvExtEpgProgram::producer, 'producer', $sub_tag, $epg_items);
+                                    $collect_ext_epg(PluginTvExtEpgProgram::actor, 'actor', $sub_tag, $epg_items);
+                                    $collect_ext_epg(PluginTvExtEpgProgram::presenter, 'presenter', $sub_tag, $epg_items);
+                                    $collect_ext_epg(PluginTvExtEpgProgram::writer, 'writer', $sub_tag, $epg_items);
+                                    $collect_ext_epg(PluginTvExtEpgProgram::editor, 'editor', $sub_tag, $epg_items);
+                                    $collect_ext_epg(PluginTvExtEpgProgram::composer, 'composer', $sub_tag, $epg_items);
+                                }
+                            }
 
-                            $collect_ext_epg(PluginTvExtEpgProgram::icons, 'image', $tag, $day_items[$program_start]);
-                            foreach ($tag->getElementsByTagName('credits') as $sub_tag) {
-                                $collect_ext_epg(PluginTvExtEpgProgram::director, 'director', $sub_tag, $day_items[$program_start]);
-                                $collect_ext_epg(PluginTvExtEpgProgram::producer, 'producer', $sub_tag, $day_items[$program_start]);
-                                $collect_ext_epg(PluginTvExtEpgProgram::actor, 'actor', $sub_tag, $day_items[$program_start]);
-                                $collect_ext_epg(PluginTvExtEpgProgram::presenter, 'presenter', $sub_tag, $day_items[$program_start]);
-                                $collect_ext_epg(PluginTvExtEpgProgram::writer, 'writer', $sub_tag, $day_items[$program_start]);
-                                $collect_ext_epg(PluginTvExtEpgProgram::editor, 'editor', $sub_tag, $day_items[$program_start]);
-                                $collect_ext_epg(PluginTvExtEpgProgram::composer, 'composer', $sub_tag, $day_items[$program_start]);
+                            if (!empty($epg_items)) {
+                                $day_items[$program_start] = $epg_items;
                             }
                         }
 
@@ -279,7 +267,6 @@ class Epg_Manager_Xmltv
 
         if (!empty($day_items)) {
             ksort($day_items);
-            $day_items = self::check_epg_intervals($day_items);
         } else if (self::$xmltv_sources->size() === 0) {
             $day_items = self::getFakeEpg($channel_row, $day_start_ts, $day_items);
         } else if (!empty(self::$delayed_epg) && $has_locks) {
@@ -1346,54 +1333,6 @@ class Epg_Manager_Xmltv
         return true;
     }
 
-    protected static function check_epg_intervals($items)
-    {
-        $prev_end = 0;
-        $fixed = array();
-        foreach ($items as $start => $value) {
-            $end = $value[PluginTvEpgProgram::end_tm_sec];
-            // first entry
-            if ($prev_end === 0) {
-                $prev_end = $end;
-                $fixed[$start] = $value;
-                continue;
-            }
-
-            // found gap between programs.
-            // fix start next program to previous end
-            if ($start - $prev_end > 0) {
-                $name = $value[PluginTvEpgProgram::name];
-                $start_fmt = format_datetime('Y-m-d H:i', $start);
-                $end_fmt = format_datetime('Y-m-d H:i', $prev_end);
-                hd_debug_print("Gap interval: $name start at $start ($start_fmt), previous end at $prev_end ($end_fmt)", true);
-                $fixed[$prev_end] = $value;
-            } else if ($start < $prev_end) {
-                // found overlap. new program start before previous ending
-                $name = $value[PluginTvEpgProgram::name];
-                $start_fmt = format_datetime('Y-m-d H:i', $start);
-                if ($end > $prev_end) {
-                    $end_fmt = format_datetime('Y-m-d H:i', $prev_end);
-                    hd_debug_print("Overlapped interval: $name start at $start ($start_fmt), previous end at $prev_end ($end_fmt)", true);
-                    // end of program is later than previous program ending
-                    // normalize start. shift start to previous ending
-                    $fixed[$prev_end] = $value;
-                } else {
-                    $start_fmt = format_datetime('Y-m-d H:i', $start);
-                    $end_fmt = format_datetime('Y-m-d H:i', $end);
-                    hd_debug_print("Inner interval: $name start at $start ($start_fmt), end at $end ($end_fmt)", true);
-                    // This program fully inside previous. Just drop this program
-                    continue;
-                }
-            } else {
-                // all fine. Just store it
-                $fixed[$prev_end] = $value;
-            }
-            $prev_end = $end;
-        }
-
-        return $fixed;
-    }
-
     /**
      * @param array $channel_row
      * @param int $day_start_ts
@@ -1648,99 +1587,5 @@ class Epg_Manager_Xmltv
         $is_play = (isset($status->playback_state) && $status->playback_state === "playing");
 
         return $is_play || $is_our_screen || $is_newui_top;
-    }
-
-    /**
-     * @param string $raw_descr
-     * @param string $icon
-     * @return array
-     */
-    public static function reformat_description($raw_descr, $icon)
-    {
-        $total = array();
-        if (empty($raw_descr)) {
-            return $total;
-        }
-
-        $find_chunks = function ($chunks, $raw_descr) use (&$total) {
-            foreach ($chunks as $key => $pattern) {
-                if (is_string($pattern)) {
-                    $items[] = $pattern;
-                } else {
-                    $items = $pattern;
-                }
-                foreach ($items as $item) {
-                    $m = preg_split($item, $raw_descr, 0, PREG_SPLIT_DELIM_CAPTURE);
-                    if (!isset($m[1])) continue;
-
-                    $total[$key] = trim($m[1]);
-                    $raw_descr = preg_replace($item, '', $raw_descr);
-                    break;
-                }
-            }
-
-            return trim($raw_descr, ", \n\r\t\v\0");
-        };
-
-        if (strpos($icon, "media.24h.tv") !== false) {
-            $matcher = '24h.tv';
-            $icon = $icon . "?cover=true&w=320&h=180&crop=true";
-        } else if (strpos($icon, "resizer.mail.ru") !== false || strpos($icon, "kinopoisk-ru") !== false) {
-            $matcher = 'mail.ru';
-        } else {
-            $matcher = 'default';
-        }
-
-        if (isset(self::$parsers['matchers'][$matcher]['chunks'])) {
-            $raw_descr = $find_chunks(self::$parsers['matchers'][$matcher]['chunks'], $raw_descr);
-        }
-
-        if (isset(self::$parsers['cleanup'])) {
-            foreach (self::$parsers['cleanup'] as $item) {
-                $raw_descr = preg_replace($item, '', $raw_descr);
-            }
-        }
-
-        $raw_descr = str_replace(array('“', '”'), '', $raw_descr);
-        $raw_descr = str_replace(array("\n\n", '<br>', "<'>br>"), "\n", $raw_descr);
-        $raw_descr = trim($raw_descr, " .,\n\r\t\v\0");
-
-        $result = array();
-        if (isset($total['genre']))
-            $result[PluginTvExtEpgProgram::main_category] = $total['genre'];
-        if (isset($total['year']))
-            $result[PluginTvExtEpgProgram::year] = $total['year'];
-        if (isset($total['country']))
-            $result[PluginTvExtEpgProgram::country] = $total['country'];
-        if (isset($total['director']))
-            $result[PluginTvExtEpgProgram::director] = $total['director'];
-        if (isset($total['actor']))
-            $result[PluginTvExtEpgProgram::actor] = $total['actor'];
-        if (isset($total['imdb_rating']))
-            $result[PluginTvExtEpgProgram::imdb_rating] = $total['imdb_rating'];
-        if (isset($total['kp_rating']))
-            $result[PluginTvExtEpgProgram::kp_rating] = $total['kp_rating'];
-        if (isset($total['kinomail_rating']))
-            $result[PluginTvExtEpgProgram::km_rating] = $total['kinomail_rating'];
-        if (isset($total['rating'])) {
-            if (isset($total['kp_rating']))
-                $result[PluginTvExtEpgProgram::imdb_rating] = $total['kp_rating'];
-            else if (isset($total['km_rating']))
-                $result[PluginTvExtEpgProgram::imdb_rating] = $total['km_rating'];
-        }
-        if (isset($total["writer"]))
-            $result[PluginTvExtEpgProgram::writer] = $total['writer'];
-        if (isset($total["editor"]))
-            $result[PluginTvExtEpgProgram::editor] = $total['editor'];
-        if (isset($total["composer"]))
-            $result[PluginTvExtEpgProgram::composer] = $total['composer'];
-        if (isset($total["presenter"]))
-            $result[PluginTvExtEpgProgram::presenter] = $total['presenter']; //Ведущий
-
-        $result[PluginTvExtEpgProgram::main_icon] = $icon;
-        $result[PluginTvEpgProgram::description] = $raw_descr;
-        $result[PluginTvEpgProgram::icon_url] = $icon;
-
-        return $result;
     }
 }

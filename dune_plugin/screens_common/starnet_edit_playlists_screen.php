@@ -823,7 +823,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 case PARAM_PROVIDER:
                     $provider_id = safe_get_value($params, PARAM_PROVIDER);
                     /** @var api_default $provider */
-                    $provider = $this->plugin->get_providers()->get($provider_id);
+                    $provider = Default_Dune_Plugin::$providers->get($provider_id);
                     if (!empty($provider)) {
                         $str_value = "$provider_id@";
                         switch ($provider->getType()) {

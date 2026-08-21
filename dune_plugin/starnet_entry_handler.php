@@ -179,7 +179,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case Starnet_Setup_Backup_Screen::ACTION_BACKUP_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
-                if (Default_Dune_Plugin::do_backup_settings($this->plugin, $data->{PARAM_FILEPATH}) === false) {
+                if (Default_Dune_Plugin::do_backup_settings($data->{PARAM_FILEPATH}) === false) {
                     return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_backup'));
                 }
 

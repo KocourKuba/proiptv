@@ -24,6 +24,11 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+// all items supported by ext_epg:
+// "actor", "categories", "circledesc", "composer", "country", "desc", "desc-sub-title", "desc2",
+// "director", "editor", "genre", "imdb_rating", "presenter", "production", "rating_ru", "seriesdesc",
+// "sub-title", "title", "transmission", "writer", "year"
+
 class PluginTvExtEpgProgram
 {
     const    /* (char *) */ start_tm      = 'start_tm';      // начало программы

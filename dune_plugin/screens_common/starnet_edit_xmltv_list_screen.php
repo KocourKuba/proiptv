@@ -233,7 +233,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return $this->apply_edit_url_dlg($user_input, $plugin_cookies);
 
             case ACTION_ADD_PRESET:
-                $presets = $this->plugin->get_xmltv_presets();
+                $presets = Default_Dune_Plugin::$epg_xmltv_presets;
                 $menu_items = array();
                 foreach ($presets as $key => $preset) {
                     $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ADD_SELECTED_PRESET, $key, null, $preset);

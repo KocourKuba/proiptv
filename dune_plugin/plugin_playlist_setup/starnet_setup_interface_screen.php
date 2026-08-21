@@ -175,7 +175,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
 
                 hd_debug_print("Set image $cached_image as background");
                 $this->plugin->set_background_image($cached_image);
-                $this->plugin->init_screen_view_parameters($cached_image);
+                $this->plugin->init_screen_view_parameters();
 
                 $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                 $actions[] = User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
@@ -184,7 +184,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
             case self::ACTION_BG_RESET_DEFAULT:
                 hd_debug_print('Background set to default');
                 $this->plugin->set_background_image(null);
-                $this->plugin->init_screen_view_parameters($this->plugin->plugin_info['app_background']);
+                $this->plugin->init_screen_view_parameters();
 
                 $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                 $actions[] = User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);

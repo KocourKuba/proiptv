@@ -55,6 +55,36 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public $vod;
 
     /**
+     * @var Hashed_Array<string, api_default>
+     */
+    public static $providers;
+
+    /**
+     * @var Hashed_Array
+     */
+    public static $epg_presets;
+
+    /**
+     * @var array
+     */
+    public static $desc_parsers;
+
+    /**
+     * @var Hashed_Array
+     */
+    public static $epg_xmltv_presets;
+
+    /**
+     * @var Hashed_Array
+     */
+    public static $image_libs;
+
+    /**
+     * @var M3uParser
+     */
+    public static $iptv_m3u_parser;
+
+    /**
      * @var bool
      */
     protected $vod_enabled = false;
@@ -100,60 +130,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     protected $epg_manager;
 
     /**
-     * @var Hashed_Array<string, api_default>
-     */
-    protected $providers;
-
-    /**
-     * @var Hashed_Array
-     */
-    protected $epg_presets;
-
-    /**
-     * @var array
-     */
-    protected $desc_parsers = array();
-
-    /**
      * @var Hashed_Array
      */
     protected $desc_cleanup;
-
-    /**
-     * @var Hashed_Array
-     */
-    protected $epg_xmltv_presets;
-
-    /**
-     * @var Hashed_Array
-     */
-    protected $image_libs;
 
     /**
      * @var api_default
      */
     protected $active_provider;
 
-    /**
-     * @var M3uParser
-     */
-    protected $iptv_m3u_parser;
-
     private $internet_status = -2;
     private $opexec_id = -1;
-
-    ///////////////////////////////////////////////////////////////////////
-
-    public function __construct()
-    {
-        parent::__construct();
-
-        $this->providers = new Hashed_Array();
-        $this->epg_presets = new Hashed_Array();
-        $this->epg_xmltv_presets = new Hashed_Array();
-        $this->image_libs = new Hashed_Array();
-        $this->iptv_m3u_parser = new M3uParser();
-    }
 
     ///////////////////////////////////////////////////////////////////////////
     // DunePlugin implementations
@@ -349,6 +336,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     . get_local_time_zone_offset() / 3600);
             }
 
+            $channel_picon = $this->get_channel_picon($channel_row, true);
+
             $show_ext_epg = $this->is_ext_epg_enabled();
 
             $day_epg_items = $this->epg_manager->get_day_epg_items($channel_row, $utc_day_start_tm_sec);
@@ -362,65 +351,48 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 return $day_epg;
             }
 
-            foreach ($day_epg_items['items'] as $start => $value) {
-                if (!isset($value[PluginTvEpgProgram::end_tm_sec], $value[PluginTvEpgProgram::name], $value[PluginTvEpgProgram::description])) {
-                    hd_debug_print('malformed epg data: ' . json_format_unescaped($value));
+            foreach (self::check_epg_intervals($day_epg_items['items']) as $start => $item) {
+                if (!isset($item[PluginTvEpgProgram::end_tm_sec], $item[PluginTvEpgProgram::name], $item[PluginTvEpgProgram::description])) {
+                    hd_debug_print('malformed epg data: ' . json_format_unescaped($item));
                     continue;
                 }
 
-                $update_ext_epg = function ($pSet, $pGet = null) use (&$params, $value) {
-                    if (is_null($pGet)) {
-                        $pGet = $pSet;
-                    }
-                    if (!empty($value[$pGet])) {
-                        $params[$pSet] = $value[$pGet];
-                    }
-                };
-
                 // calculate program start and end based on total time shift
                 $tm_start = (int)$start - $time_shift;
-                $tm_end = (int)$value[PluginTvEpgProgram::end_tm_sec] - $time_shift;
-                $day_epg[] = array(
+                $tm_end = (int)$item[PluginTvEpgProgram::end_tm_sec] - $time_shift;
+                $name = $item[PluginTvEpgProgram::name];
+                $desc = $item[PluginTvEpgProgram::description];
+                $icon = empty($item[PluginTvEpgProgram::icon_url]) ? $channel_picon : $item[PluginTvEpgProgram::icon_url];
+
+                $ext_params = array_map(function ($v) {
+                    return $v;
+                }, self::reformat_description($name, $desc, $icon));
+
+                $day_epg_item = array(
                     PluginTvEpgProgram::start_tm_sec => $tm_start,
                     PluginTvEpgProgram::end_tm_sec => $tm_end,
-                    PluginTvEpgProgram::name => $value[PluginTvEpgProgram::name],
-                    PluginTvEpgProgram::description => $value[PluginTvEpgProgram::description],
+                    PluginTvEpgProgram::name => $name,
+                    PluginTvEpgProgram::description => $ext_params[PluginTvExtEpgProgram::desc]
                 );
 
+                if (LogSeverity::$is_debug && !$show_ext_epg) {
+                    $str_start = format_datetime('m-d H:i', $tm_start);
+                    $str_end = format_datetime('m-d H:i', $tm_end);
+                    hd_debug_print("$str_start ($tm_start) - $str_end ($tm_end) $name", true);
+                }
+
+                $day_epg[] = $day_epg_item;
+
+                if ($show_ext_epg && !in_array($channel_id, Epg_Manager_Xmltv::get_delayed_epg())) {
+                    $ext_epg[$tm_start] = $ext_params;
+                }
+
                 if (LogSeverity::$is_debug) {
-                    $str = format_datetime('m-d H:i', $tm_start)
-                        . " ($tm_start) - " . format_datetime('m-d H:i', $tm_end)
-                        . " ($tm_end) {$value[PluginTvEpgProgram::name]}";
-                    hd_debug_print($str, true);
+                    $str_start = format_datetime('m-d H:i', $tm_start);
+                    $str_end = format_datetime('m-d H:i', $tm_end);
+                    $to_debug = $show_ext_epg ? json_format_unescaped($ext_params) : $name;
+                    hd_debug_print("$str_start ($tm_start) - $str_end ($tm_end) : $to_debug");
                 }
-
-                if (!$show_ext_epg || in_array($channel_id, Epg_Manager_Xmltv::get_delayed_epg())) continue;
-
-                $channel_picon = $this->get_channel_picon($channel_row, true);
-
-                $params = array();
-                $update_ext_epg(PluginTvExtEpgProgram::title, PluginTvEpgProgram::name);
-                $update_ext_epg(PluginTvExtEpgProgram::desc, PluginTvEpgProgram::description);
-
-                if (empty($value[PluginTvEpgProgram::icon_url])) {
-                    $params[PluginTvExtEpgProgram::main_icon] = $channel_picon;
-                } else {
-                    $update_ext_epg(PluginTvExtEpgProgram::main_icon, PluginTvEpgProgram::icon_url);
-                }
-
-                $update_ext_epg(PluginTvExtEpgProgram::main_category);
-                $update_ext_epg(PluginTvExtEpgProgram::icons);
-                $update_ext_epg(PluginTvExtEpgProgram::year);
-                $update_ext_epg(PluginTvExtEpgProgram::country);
-                $update_ext_epg(PluginTvExtEpgProgram::director);
-                $update_ext_epg(PluginTvExtEpgProgram::composer);
-                $update_ext_epg(PluginTvExtEpgProgram::editor);
-                $update_ext_epg(PluginTvExtEpgProgram::writer);
-                $update_ext_epg(PluginTvExtEpgProgram::actor);
-                $update_ext_epg(PluginTvExtEpgProgram::presenter);
-                $update_ext_epg(PluginTvExtEpgProgram::imdb_rating);
-
-                $ext_epg[$start] = $params;
             }
 
             if (!empty($day_epg) && !empty($ext_epg)) {
@@ -568,6 +540,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         LogSeverity::$is_debug = true;
         $this->active_provider = null;
+        self::$iptv_m3u_parser = new M3uParser();
         $this->reset_playlist_db();
         $this->init_parameters();
         $this->init_epg_cache_dir();
@@ -698,7 +671,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     // special case for iEdem
                     $icon_replace_pattern = $provider->getConfigValue(CONFIG_ICON_REPLACE);
                 }
-                $this->iptv_m3u_parser->setupParserParameters($id_parser, $icon_replace_pattern);
+                self::$iptv_m3u_parser->setupParserParameters($id_parser, $icon_replace_pattern);
                 hd_debug_print('Init playlist parser done!');
             }
 
@@ -809,8 +782,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $date_fmt = format_datetime('Y-m-d H:i', $mtime);
             hd_debug_print("Parse playlist $m3u_file (timestamp: $mtime, $date_fmt)");
 
-            $this->iptv_m3u_parser->setPlaylistFile($m3u_file);
-            $this->iptv_m3u_parser->parseHeader();
+            self::$iptv_m3u_parser->setPlaylistFile($m3u_file);
+            self::$iptv_m3u_parser->parseHeader();
 
             // update playlists xmltv sources
             $saved_source = $this->get_xmltv_sources(XMLTV_SOURCE_PLAYLIST, $playlist_id);
@@ -824,7 +797,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
             hd_debug_print('saved playlist sources: ' . json_format_unescaped($hashes), true);
 
-            $sources = $this->iptv_m3u_parser->getXmltvSources();
+            $sources = self::$iptv_m3u_parser->getXmltvSources();
             foreach ($sources as $url) {
                 $item = array();
                 $hash = Hashed_Array::hash($url);
@@ -859,7 +832,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             hd_debug_print("Database attached: $database_attached");
-            $count = $this->iptv_m3u_parser->parseIptvPlaylist($this->sql_playlist);
+            $count = self::$iptv_m3u_parser->parseIptvPlaylist($this->sql_playlist);
             if (!$count) {
                 $exception_msg = TR::load('err_load_playlist') . " Empty playlist!\n\n$contents";
                 throw new Exception($exception_msg);
@@ -1164,7 +1137,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         /// Upgrade settings 5.x to database
         $this->upgrade_settings($playlist_id);
 
-        $this->init_screen_view_parameters($this->get_background_image());
+        $this->init_screen_view_parameters();
         $this->init_user_agent();
 
         hd_debug_print('Database initialized.');
@@ -1720,30 +1693,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @return Hashed_Array<string, array>
-     */
-    public function get_epg_presets()
-    {
-        return $this->epg_presets;
-    }
-
-    /**
-     * @return Hashed_Array<string, array>
-     */
-    public function get_epg_xmltv_presets()
-    {
-        return $this->epg_xmltv_presets;
-    }
-
-    /**
-     * @return array
-     */
-    public function get_epg_desc_parsers()
-    {
-        return $this->desc_parsers;
-    }
-
-    /**
      * @param string $preset_id
      * @return array|false
      */
@@ -1761,12 +1710,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $provider_preset = $presets_ids[$preset_id];
-        if (!$this->epg_presets->size()) {
+        if (!self::$epg_presets->size()) {
             hd_debug_print('No configured EPG presets for plugin', true);
             return false;
         }
 
-        $config_preset = $this->epg_presets->get($provider_preset[EPG_JSON_PRESET_NAME]);
+        $config_preset = self::$epg_presets->get($provider_preset[EPG_JSON_PRESET_NAME]);
         if (empty($config_preset)) {
             hd_debug_print("{$provider_preset[EPG_JSON_PRESET_NAME]} not exist in plugin configuration");
             return false;
@@ -1802,22 +1751,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $mapped_presets[$key] = $preset;
         }
         return $mapped_presets;
-    }
-
-    /**
-     * @return Hashed_Array<string, array>
-     */
-    public function get_xmltv_presets()
-    {
-        return $this->epg_xmltv_presets;
-    }
-
-    /**
-     * @return Hashed_Array<string, api_default>
-     */
-    public function get_providers()
-    {
-        return $this->providers;
     }
 
     /**
@@ -1861,7 +1794,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         /** @var api_default $api_class */
-        $api_class = $this->providers->get($name);
+        $api_class = self::$providers->get($name);
         return is_null($api_class) ? null : clone $api_class;
     }
 
@@ -2067,9 +2000,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         if ((int)$archive_ts !== -1) {
-            $m3u_info = $this->iptv_m3u_parser->getM3uInfo();
+            $m3u_info = self::$iptv_m3u_parser->getM3uInfo();
             if (!empty($m3u_info)) {
-                $catchup = $this->iptv_m3u_parser->getM3uInfo()->getCatchupType();
+                $catchup = self::$iptv_m3u_parser->getM3uInfo()->getCatchupType();
             }
 
             if (empty($catchup) && !is_null($provider)) {
@@ -2467,9 +2400,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return;
         }
 
-        if ($this->iptv_m3u_parser) {
-            $this->iptv_m3u_parser->clear_data();
-        }
+        self::$iptv_m3u_parser->clear_data();
 
         foreach (glob_dir(self::get_playlist_cache_path(), "/^$playlist_id.*$/i") as $file) {
             hd_debug_print("clear_playlist_cache: $file", true);
@@ -2485,23 +2416,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->picons_source = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
         $this->default_channel_icon_classic = '';
         $this->default_channel_icon_newui = '';
-    }
-
-    /**
-     * @return Hashed_Array<string, array>
-     */
-    public function get_image_libs()
-    {
-        return $this->image_libs;
-    }
-
-    /**
-     * @param string $preset_name
-     * @return array|null
-     */
-    public function get_image_lib($preset_name)
-    {
-        return $this->image_libs->get($preset_name);
     }
 
     public function get_icon($id)
@@ -2744,7 +2658,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        $app_title = $this->plugin_info['app_caption'];
+        $app_title = self::$plugin_info['app_caption'];
         if (!empty($title)) {
             $app_title .= " • $title";
         }
@@ -3618,7 +3532,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $paths[] = "$apk_subst/tmp/run/$plugin_name.*";
         }
 
-        $plugin_backup = self::do_backup_settings($plugin, get_temp_path(), false);
+        $plugin_backup = self::do_backup_settings(get_temp_path(), false);
         if ($plugin_backup === false) {
             $paths[] = get_data_path('*.settings');
         } else {
@@ -3690,20 +3604,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @param Default_Dune_Plugin $plugin
      * @param string $folder_path
      * @return bool|string
      */
-    public static function do_backup_settings($plugin, $folder_path, $complete = true)
+    public static function do_backup_settings($folder_path, $complete = true)
     {
         $folder_path = get_paved_path($folder_path);
 
         hd_debug_print("Backup path: $folder_path");
         if ($complete) {
             $timestamp = format_datetime('Y-m-d_H-i', time());
-            $zip_file_name = "proiptv_backup_{$plugin->plugin_info['app_version']}_$timestamp.zip";
+            $zip_file_name = 'proiptv_backup_' . self::$plugin_info['app_version'] . "_$timestamp.zip";
         } else {
-            $zip_file_name = "proiptv_backup.zip";
+            $zip_file_name = 'proiptv_backup.zip';
         }
         $zip_file = get_temp_path($zip_file_name);
 
@@ -4322,5 +4235,148 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         return $out;
+    }
+
+    /**
+     * Parse epg description for extended epg tags
+     * If ext_epg not enabled or channel in delayed queue no parsing performed
+     *
+     * @param string $title
+     * @param string $raw_descr
+     * @param string $icon
+     * @return array
+     */
+    public static function reformat_description($title, $raw_descr, $icon)
+    {
+        $result = array();
+        $result[PluginTvExtEpgProgram::title] = $title;
+        $result[PluginTvExtEpgProgram::desc] = $raw_descr;
+        $result[PluginTvExtEpgProgram::main_icon] = $icon;
+
+        if (empty($raw_descr)) {
+            return $result;
+        }
+
+        $find_chunks = function (&$total, $chunks, $raw_descr) {
+            foreach ($chunks as $key => $pattern) {
+                if (is_string($pattern)) {
+                    $items[] = $pattern;
+                } else {
+                    $items = $pattern;
+                }
+                foreach ($items as $item) {
+                    $m = preg_split($item, $raw_descr, 0, PREG_SPLIT_DELIM_CAPTURE);
+                    if (!isset($m[1])) continue;
+
+                    $total[$key] = trim($m[1]);
+                    $raw_descr = preg_replace($item, '', $raw_descr);
+                    break;
+                }
+            }
+
+            return trim($raw_descr, ", \n\r\t\v\0");
+        };
+
+        if (strpos($icon, "media.24h.tv") !== false) {
+            $matcher = '24h.tv';
+            $icon = $icon . "?cover=true&w=320&h=180&crop=true";
+        } else if (strpos($icon, "resizer.mail.ru") !== false || strpos($icon, "kinopoisk-ru") !== false) {
+            $matcher = 'mail.ru';
+        } else {
+            $matcher = 'default';
+        }
+
+        $parsed = array();
+        if (isset(self::$desc_parsers['matchers'][$matcher]['chunks'])) {
+            $raw_descr = $find_chunks($parsed, self::$desc_parsers['matchers'][$matcher]['chunks'], $raw_descr);
+        }
+
+        if (isset(self::$desc_parsers['cleanup'])) {
+            foreach (self::$desc_parsers['cleanup'] as $item) {
+                $raw_descr = preg_replace($item, '', $raw_descr);
+            }
+        }
+
+        $raw_descr = str_replace(array('“', '”'), '', $raw_descr);
+        $raw_descr = str_replace(array("\n\n", '<br>', "<'>br>"), "\n", $raw_descr);
+        $raw_descr = trim($raw_descr, " .,;\n\r\t\v\0");
+
+        $result[PluginTvExtEpgProgram::desc] = $raw_descr;
+        $result[PluginTvExtEpgProgram::main_icon] = $icon;
+
+        if (isset($parsed['genre']))
+            $result[PluginTvExtEpgProgram::main_category] = $parsed['genre'];
+        if (isset($parsed['year']))
+            $result[PluginTvExtEpgProgram::year] = $parsed['year'];
+        if (isset($parsed['country']))
+            $result[PluginTvExtEpgProgram::country] = $parsed['country'];
+        if (isset($parsed['director']))
+            $result[PluginTvExtEpgProgram::director] = $parsed['director'];
+        if (isset($parsed['actor']))
+            $result[PluginTvExtEpgProgram::actor] = $parsed['actor'];
+        if (isset($parsed['imdb_rating']))
+            $result[PluginTvExtEpgProgram::imdb_rating] = $parsed['imdb_rating'];
+        if (isset($parsed['kp_rating']))
+            $result[PluginTvExtEpgProgram::kp_rating] = $parsed['kp_rating'];
+        if (isset($parsed['km_rating']))
+            $result[PluginTvExtEpgProgram::km_rating] = $parsed['km_rating'];
+        if (isset($parsed["writer"]))
+            $result[PluginTvExtEpgProgram::writer] = $parsed['writer'];
+        if (isset($parsed["editor"]))
+            $result[PluginTvExtEpgProgram::editor] = $parsed['editor'];
+        if (isset($parsed["composer"]))
+            $result[PluginTvExtEpgProgram::composer] = $parsed['composer'];
+        if (isset($parsed["presenter"]))
+            $result[PluginTvExtEpgProgram::presenter] = $parsed['presenter']; //Ведущий
+
+        return $result;
+    }
+
+    protected static function check_epg_intervals($items)
+    {
+        $prev_start = 0;
+        $prev_end = 0;
+        $fixed = array();
+        foreach ($items as $start => $value) {
+            $end = $value[PluginTvEpgProgram::end_tm_sec];
+            // first entry
+            if ($prev_end === 0) {
+                $prev_start = $start;
+                $prev_end = $end;
+                $fixed[$start] = $value;
+                continue;
+            }
+
+            // found gap between programs.
+            // fix start next program to previous end
+            $start_fmt = format_datetime('Y-m-d H:i', $start);
+            $end_prev_fmt = format_datetime('Y-m-d H:i', $prev_end);
+            $end_fmt = format_datetime('Y-m-d H:i', $end);
+            $name = $value[PluginTvEpgProgram::name];
+            if ($start > $prev_end) {
+                hd_debug_print("Gap interval: $name, $start ($start_fmt) - $end ($end_fmt)", true);
+                hd_debug_print("Previous end at $prev_end ($end_prev_fmt)", true);
+                $fixed[$prev_end] = $value;
+            } else if ($start < $prev_end) {
+                // found overlap. new program start before previous ending
+                if ($end > $prev_end) {
+                    hd_debug_print("Overlapped interval: $name, $start ($start_fmt) - $end ($end_fmt)", true);
+                    hd_debug_print("Previous end at $prev_end ($end_prev_fmt)", true);
+                    // end of program is later than previous program ending
+                    // shift start to previous end
+                    $fixed[$prev_end] = $value;
+                } else {
+                    hd_debug_print("Inner interval: $name, $start ($start_fmt) - $end ($end_fmt)", true);
+                    // This program fully inside previous. Just drop this program
+                    continue;
+                }
+            } else {
+                // all fine. Just store it
+                $fixed[$prev_end] = $value;
+            }
+            $prev_end = $end;
+        }
+
+        return $fixed;
     }
 }
