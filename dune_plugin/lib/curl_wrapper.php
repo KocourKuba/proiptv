@@ -308,14 +308,14 @@ class Curl_Wrapper
     {
         if ($all) {
             $path = get_slash_trailed_path(get_data_path(CURL_CACHE_SUBDIR));
+            delete_directory($path);
+            create_path($path);
         } else {
             $path = $this->file_cache_path;
+            delete_directory($path);
         }
 
         hd_debug_print("Clear query cache: $path");
-        if (file_exists($path)) {
-            clear_directory($path);
-        }
     }
 
     /////////////////////////////////////////////////////////////
@@ -482,6 +482,7 @@ class Curl_Wrapper
             $hash = hash('md5', $url);
         }
 
+        create_path($this->file_cache_path);
         $cached_path = $this->file_cache_path . $hash;
         if ($cache_opts & self::CACHE_RESPONSE) {
             hd_debug_print("cache opts: Use cache response. Cache time: {$this->file_cache_time}h", true);
