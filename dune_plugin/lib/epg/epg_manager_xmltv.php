@@ -578,6 +578,11 @@ class Epg_Manager_Xmltv
             return;
         }
 
+        $new_flag = Epg_Manager_Xmltv::check_xmltv_source($params, $indexing_flag);
+        if ($new_flag === 0) {
+            return;
+        }
+
         $perf = new Perf_Collector();
         $perf->reset('start');
 
@@ -1036,15 +1041,6 @@ class Epg_Manager_Xmltv
             return;
         }
 
-        if (empty($hash)) {
-            self::$epg_db = array();
-        } else if (isset(self::$epg_db[$hash])) {
-            unset(self::$epg_db[$hash]);
-            unset(self::$epg_db["{$hash}_entries"]);
-        }
-
-        Curl_Wrapper::clear_cached_etag($hash, true);
-
         $dirs = glob(self::get_lock_name($hash, 0, '*'), GLOB_ONLYDIR);
         $locks = array();
         foreach ($dirs as $dir) {
@@ -1052,23 +1048,32 @@ class Epg_Manager_Xmltv
             $locks[] = $dir;
         }
 
-        if (!empty($locks)) {
-            foreach ($locks as $lock) {
-                $ar = explode('_', basename($lock));
-                $pid = (int)end($ar);
+        foreach ($locks as $lock) {
+            $ar = explode('_', basename($lock));
+            $pid = (int)end($ar);
 
-                if ($pid !== 0 && send_process_signal($pid, 0)) {
-                    hd_debug_print("Kill process $pid");
-                    send_process_signal($pid, -9);
-                }
-                hd_debug_print("Remove lock: $lock");
-                delete_directory($lock);
+            if ($pid !== 0 && send_process_signal($pid, 0)) {
+                hd_debug_print("Kill process $pid");
+                shell_exec("kill $pid");
             }
+            hd_debug_print("Remove lock: $lock");
+            delete_directory($lock);
         }
+
+        self::clear_log($hash);
+
+        if (empty($hash)) {
+            self::$epg_db = array();
+        } else if (isset(self::$epg_db[$hash])) {
+            unset(self::$epg_db[$hash]);
+        }
+
+        Curl_Wrapper::clear_cached_etag($hash, true);
 
         $files = self::$cache_dir . $hash . "*";
         hd_debug_print("clear epg files: $files");
         array_map('unlink', glob($files));
+
         clearstatcache();
         hd_debug_print('Storage space:  ' . HD::get_storage_size(self::$cache_dir));
     }
@@ -1306,7 +1311,7 @@ class Epg_Manager_Xmltv
 
     protected static function clear_log($hash)
     {
-        safe_unlink(get_temp_path("{$hash}_indexing.log"));
+        array_map('unlink', glob(get_temp_path("{$hash}_*.log")));
     }
 
     /**

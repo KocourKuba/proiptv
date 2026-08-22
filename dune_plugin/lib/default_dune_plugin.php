@@ -1571,11 +1571,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
 
         $indexing_flag = 0;
-        if (!$this->delay_load_picons && !$this->use_xmltv) {
-            // no need to perform xmltv source checking
-            return;
-        }
-
         if ($this->delay_load_picons) {
             $indexing_flag |= INDEXING_CHANNELS;
         }
@@ -1584,17 +1579,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $indexing_flag |= INDEXING_ENTRIES;
         }
 
-        $to_index = array();
-        foreach ($sources as $source_id => $params) {
-            $new_flag = Epg_Manager_Xmltv::check_xmltv_source($params, $indexing_flag);
-            if ($new_flag > 0) {
-                $to_index[$source_id] = array('flag' => $new_flag, 'params' => $params);
-            }
-        }
-
         $indexing_run = false;
-        foreach ($to_index as $source_id => $value) {
-            $indexing_run |= $this->run_bg_epg_indexing($source_id, $value['flag']);
+        foreach ($sources as $source_id => $params) {
+            $indexing_run |= $this->run_bg_epg_indexing($source_id, $indexing_flag);
         }
 
         if ($indexing_run) {

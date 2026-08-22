@@ -517,7 +517,7 @@ class Curl_Wrapper
         }
 
         if ($mode === self::SAVE_FILE) {
-            $tmp_file = tempnam(pathinfo($save_file, PATHINFO_DIRNAME), 'curl_');
+            $tmp_file = tempnam(pathinfo($save_file, PATHINFO_DIRNAME), hash('crc32', $url) . "_curl_");
             $fp = fopen($tmp_file, "w+");
             if (is_null($fp)) {
                 hd_debug_print("Unable to open temp file: $tmp_file!");

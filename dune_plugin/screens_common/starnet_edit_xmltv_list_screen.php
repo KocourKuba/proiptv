@@ -66,6 +66,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_TOP_MENU] = $action_return;
         $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER, TR::t('select'));
         $actions[GUI_EVENT_KEY_PLAY] = User_Input_Handler_Registry::create_action($this, ACTION_INDEX_EPG);
+        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_CLEAR_CACHE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
@@ -162,6 +163,12 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                     return $this->do_edit_url_dlg($source, $selected_id);
                 }
                 return null;
+
+            case GUI_EVENT_KEY_STOP:
+                if (Epg_Manager_Xmltv::is_index_locked($selected_id, INDEXING_ALL)) {
+                    Epg_Manager_Xmltv::clear_epg_files($selected_id);
+                }
+                return Action_Factory::change_behaviour($this->do_get_action_map());
 
             case ACTION_INDEX_EPG:
                 Epg_Manager_Xmltv::clear_epg_files($selected_id);
@@ -603,7 +610,6 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $title = TR::t('edit_list_title_info__2', $title, $dl_date);
 
                 $etag = Curl_Wrapper::get_cached_etag($item[PARAM_URI]);
-                hd_debug_print("Download xmltv source: {$item[PARAM_URI]} etag: '$etag' hash: " . Curl_Wrapper::get_url_hash($item[PARAM_URI]));
                 if (empty($etag) && $item[PARAM_CACHE] === XMLTV_CACHE_AUTO) {
                     $info = TR::load('edit_list_wrong_cache_type');
                 } else {
