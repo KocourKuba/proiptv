@@ -482,8 +482,8 @@ class Curl_Wrapper
             $hash = hash('md5', $url);
         }
 
-        create_path($this->file_cache_path);
         $cached_path = $this->file_cache_path . $hash;
+        create_path($cached_path);
         if ($cache_opts & self::CACHE_RESPONSE) {
             hd_debug_print("cache opts: Use cache response. Cache time: {$this->file_cache_time}h", true);
             if (file_exists($cached_path)) {
@@ -517,7 +517,7 @@ class Curl_Wrapper
         }
 
         if ($mode === self::SAVE_FILE) {
-            $tmp_file = tempnam(pathinfo($save_file, PATHINFO_DIRNAME), 'curl');
+            $tmp_file = tempnam(pathinfo($save_file, PATHINFO_DIRNAME), 'curl_');
             $fp = fopen($tmp_file, "w+");
             if (is_null($fp)) {
                 hd_debug_print("Unable to open temp file: $tmp_file!");

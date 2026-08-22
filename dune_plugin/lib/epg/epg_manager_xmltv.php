@@ -38,9 +38,11 @@ class Epg_Manager_Xmltv
     const TABLE_PICONS = 'epg_picons';
     const TABLE_CHANNELS = 'epg_channels';
     const TABLE_ENTRIES = 'epg_entries';
+    const TABLE_STAT = 'epg_stat';
     const CREATE_CHANNELS_TABLE = 'CREATE TABLE epg_channels (alias TEXT PRIMARY KEY not null, channel_id TEXT not null, picon_hash TEXT);';
     const CREATE_PICONS_TABLE = 'CREATE TABLE epg_picons (picon_hash TEXT PRIMARY KEY not null, picon_url TEXT);';
     const CREATE_ENTRIES_TABLE = 'CREATE TABLE epg_entries (channel_id STRING not null, start INTEGER, end INTEGER, UNIQUE (channel_id, start) ON CONFLICT REPLACE);';
+    const CREATE_STAT_TABLE = 'CREATE TABLE IF NOT EXISTS epg_stat (name TEXT PRIMARY KEY, value REAL);';
 
     protected static $index_flags = array(INDEXING_DOWNLOAD, INDEXING_CHANNELS, INDEXING_ENTRIES);
 
@@ -760,7 +762,7 @@ class Epg_Manager_Xmltv
             hd_debug_print('Storage space:       ' . HD::get_storage_size(self::$cache_dir));
             hd_print_separator();
 
-            self::update_stat($cached_file, 'channels', $report[Perf_Collector::TIME]);
+            self::update_stat($params, 'channels', $report[Perf_Collector::TIME]);
             self::unlock_index($url_hash, INDEXING_CHANNELS);
             libxml_use_internal_errors(false);
         }
@@ -871,7 +873,7 @@ class Epg_Manager_Xmltv
             hd_debug_print('Storage space:      ' . HD::get_storage_size(self::$cache_dir));
             hd_print_separator();
 
-            self::update_stat($cached_file, 'entries', $report[Perf_Collector::TIME]);
+            self::update_stat($params, 'entries', $report[Perf_Collector::TIME]);
         }
 
         if ($perf->getLabelsCount() > 1) {
@@ -950,13 +952,36 @@ class Epg_Manager_Xmltv
         return empty($last_error) ? 0 : -2;
     }
 
-    public static function get_stat($cached_file)
+    public static function update_stat($params, $tag, $time)
     {
-        $stat = array();
-        $stat_file = $cached_file . '.stat';
-        if (file_exists($stat_file)) {
-            $stat = json_decode(file_get_contents($stat_file), true);
+        $db = self::open_sqlite_db($params[PARAM_HASH], false);
+        if (empty($db)) {
+            return;
         }
+
+        $query = self::CREATE_STAT_TABLE;
+        $db->exec($query);
+
+        $query = sprintf('INSERT OR REPLACE INTO %s (%s,%s) VALUES (%s, %f);',
+            self::TABLE_STAT, COLUMN_NAME, COLUMN_VALUE, Sql_Wrapper::sql_quote($tag), $time);
+        $db->exec($query);
+    }
+
+    public static function get_stat($params)
+    {
+        $db = self::open_sqlite_db($params[PARAM_HASH], true);
+        if (empty($db)) {
+            return array();
+        }
+
+        $query = sprintf('SELECT %s, %s FROM %s;', COLUMN_NAME, COLUMN_VALUE, self::TABLE_STAT);
+        $values = $db->fetch_array($query);
+
+        $stat = array();
+        foreach ($values as $v) {
+            $stat[$v[COLUMN_NAME]] = floatval($v[COLUMN_VALUE]);
+        }
+
         return $stat;
     }
 
@@ -1300,7 +1325,7 @@ class Epg_Manager_Xmltv
 
         // if database not exist or requested mode is read-write create new database
         if (!isset(self::$epg_db[$db_name]) || (!$readonly && self::$epg_db[$db_name]->is_readonly())) {
-            hd_debug_print("Create new db: '$db_file'", true);
+            hd_debug_print("Open new wrapper for: '$db_file'", true);
             if (isset(self::$epg_db[$db_name])) {
                 self::$epg_db[$db_name]->get_db()->close();
                 unset(self::$epg_db[$db_name]);
@@ -1377,7 +1402,8 @@ class Epg_Manager_Xmltv
         hd_debug_print("Download speed: $speed");
         hd_debug_print('Storage space:  ' . HD::get_storage_size(self::$cache_dir));
         hd_print_separator();
-        self::update_stat($cached_file, 'download', $dl_time);
+        self::update_stat($params, 'download', $dl_time);
+        self::update_stat($params, 'download_size', $file_size);
     }
 
     /**
@@ -1471,17 +1497,8 @@ class Epg_Manager_Xmltv
         hd_debug_print('Storage space: ' . HD::get_storage_size(self::$cache_dir));
         hd_print_separator();
 
-        self::update_stat($cached_file, 'unpack', $unpack_time);
-    }
-
-    protected static function update_stat($cached_file, $tag, $time)
-    {
-        $stat_file = $cached_file . '.stat';
-        if (file_exists($stat_file)) {
-            $stat = json_decode(file_get_contents($stat_file), true);
-        }
-        $stat[$tag] = $time;
-        file_put_contents($stat_file, json_encode($stat));
+        self::update_stat($params, 'unpack', $unpack_time);
+        self::update_stat($params, 'unpack_size', $size);
     }
 
     protected static function check_active_plugin_folder()

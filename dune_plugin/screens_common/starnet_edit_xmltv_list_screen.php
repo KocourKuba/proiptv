@@ -754,13 +754,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 DEF_LABEL_TEXT_COLOR_WHITE, $cache),
             -30
         );
-        Control_Factory::add_smart_label($defs, 
-            sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>",
-                DEF_LABEL_TEXT_COLOR_GOLD, TR::t('size'),
-                DEF_LABEL_TEXT_COLOR_WHITE, HD::get_file_size($cached_xmltv_file)),
-            -30
-        );
-        Control_Factory::add_smart_label($defs, 
+        Control_Factory::add_smart_label($defs,
             sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>",
                 DEF_LABEL_TEXT_COLOR_GOLD, TR::t('download_date'),
                 DEF_LABEL_TEXT_COLOR_WHITE, date('Y-m-d H:i', filemtime($cached_xmltv_file))),
@@ -769,50 +763,49 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         Control_Factory::add_vgap($defs, 30);
 
-        $stat = Epg_Manager_Xmltv::get_stat($cached_xmltv_file);
+        $stat = Epg_Manager_Xmltv::get_stat($params);
         if (!empty($stat)) {
             $sec = TR::load('sec');
-            Control_Factory::add_smart_label($defs, 
-                sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s $sec</text>",
-                    DEF_LABEL_TEXT_COLOR_GOLD, TR::t('download_time'),
-                    DEF_LABEL_TEXT_COLOR_WHITE, $stat['download']),
+            $fmt = '<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s (%s %s)</text>';
+
+            $str = sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, TR::load('download_time'),
+                DEF_LABEL_TEXT_COLOR_WHITE, format_size($stat['download_size']), $stat['download'], $sec);
+            Control_Factory::add_smart_label($defs, $str, -30);
+
+            $fmt = '<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s -> %s (%s %s)</text>';
+            $str = sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, TR::load('unpack_time'),
+                DEF_LABEL_TEXT_COLOR_WHITE, format_size($stat['download_size']), format_size($stat['unpack_size']), $stat['unpack'], $sec);
+            Control_Factory::add_smart_label($defs, $str, -30);
+
+            $fmt = '<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s %s</text>';
+            Control_Factory::add_smart_label($defs,
+                sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, TR::t('index_channels_time'),
+                    DEF_LABEL_TEXT_COLOR_WHITE, $stat['channels'], $sec),
                 -30
             );
-            Control_Factory::add_smart_label($defs, 
-                sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s $sec</text>",
-                    DEF_LABEL_TEXT_COLOR_GOLD, TR::t('unpack_time'),
-                    DEF_LABEL_TEXT_COLOR_WHITE, $stat['unpack']),
+            Control_Factory::add_smart_label($defs,
+                sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, TR::t('index_entries_time'),
+                    DEF_LABEL_TEXT_COLOR_WHITE, $stat['entries'], $sec),
                 -30
             );
+
+            $total = 0;
+            foreach (array('download', 'unpack', 'channels', 'entries') as $name) {
+                $total += $stat[$name];
+            }
             Control_Factory::add_smart_label($defs, 
-                sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s $sec</text>",
-                    DEF_LABEL_TEXT_COLOR_GOLD, TR::t('index_channels_time'),
-                    DEF_LABEL_TEXT_COLOR_WHITE, $stat['channels']),
-                -30
-            );
-            Control_Factory::add_smart_label($defs, 
-                sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s $sec</text>",
-                    DEF_LABEL_TEXT_COLOR_GOLD, TR::t('index_entries_time'),
-                    DEF_LABEL_TEXT_COLOR_WHITE, $stat['entries']),
-                -30
-            );
-            Control_Factory::add_smart_label($defs, 
-                sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s $sec</text>",
-                    DEF_LABEL_TEXT_COLOR_GOLD, TR::t('total_time'),
-                    DEF_LABEL_TEXT_COLOR_WHITE, array_sum($stat)),
+                sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, TR::t('total_time'), DEF_LABEL_TEXT_COLOR_WHITE, $total, $sec),
                 -30
             );
             Control_Factory::add_vgap($defs, 30);
         }
 
         $indexes = Epg_Manager_Xmltv::get_indexes_info($params);
+        $fmt = '<gap width=0/><text color=%s size=small>%s:</text><gap width=20/><text color=%s size=small>%s</text>';
         foreach ($indexes as $index => $cnt) {
-            $cnt = ($cnt !== -1) ? $cnt : TR::t('err_error_no_data');
-            Control_Factory::add_smart_label($defs, 
-                sprintf("<gap width=0/><text color=%s size=small>$index:</text><gap width=20/><text color=%s size=small>$cnt</text>",
-                    DEF_LABEL_TEXT_COLOR_GOLD, DEF_LABEL_TEXT_COLOR_WHITE),
-                -30
-            );
+            $cnt = ($cnt !== -1) ? $cnt : TR::load('err_error_no_data');
+            $name = TR::load($index);
+            Control_Factory::add_smart_label($defs, sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, $name, DEF_LABEL_TEXT_COLOR_WHITE, $cnt), -30);
         }
 
         Control_Factory::add_vgap($defs, 30);

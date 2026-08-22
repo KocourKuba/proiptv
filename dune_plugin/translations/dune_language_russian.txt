@@ -173,6 +173,10 @@ sleep_after = Отключение:
 system_default = Системная настройка
 standby = Отключение видеовыхода
 select_edit_playlists = Выбрать/Добавить плейлист (SELECT)
+epg_channels = Каналов
+epg_picons = Иконок каналов
+epg_entries = Блоков ТВ программ
+epg_ids = EPG ID каналов
 
 plugin_all_channels = Все каналы
 plugin_all_channels__1 = Все каналы (%s)

@@ -1090,6 +1090,14 @@ function format_duration_minutes($secs, $show_sign = true)
     return sprintf(($show_sign ? "%+d:%02d" : "%d:%02d"), $hours, $minutes);
 }
 
+function format_size($bytes)
+{
+    $si_prefix = array('B', 'KB', 'MB', 'GB', 'TB');
+    $base = 1024;
+    $class = min((int)log($bytes, $base), count($si_prefix) - 1);
+    return sprintf('%1.2f', $bytes / pow($base, $class)) . ' ' . $si_prefix[$class];
+}
+
 /**
  * @param string $cmd
  * @return string

@@ -40,6 +40,10 @@ information = 信息
 warning = 警告
 error = 错误
 toggle_move = 模式
+epg_channels = 渠道
+epg_picons = 频道图标
+epg_entries = EPG节目块
+epg_ids =  频道 EPG ID
 
 add_to_favorite = 加入收藏
 delete_from_favorite = 取消收藏

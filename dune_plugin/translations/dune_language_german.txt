@@ -40,6 +40,10 @@ information = Informationen
 warning = Warnung
 error = Fehler
 toggle_move = Form
+epg_channels = Kanäle
+epg_picons = Kanalsymbole
+epg_entries = EPG-Programmblöcke
+epg_ids =  EPG-IDs der Kanäle
 
 add_to_favorite = Zu den Favoriten
 delete_from_favorite = From Favorites

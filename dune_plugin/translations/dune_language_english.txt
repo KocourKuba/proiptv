@@ -40,6 +40,10 @@ information = Information
 warning = Warning
 error = Error
 toggle_move = Mode
+epg_channels = Channels
+epg_picons = Channels icons
+epg_entries = EPG program blocks
+epg_ids =  Channels EPG ID's
 
 add_to_favorite = To Favorites
 delete_from_favorite = From Favorites
