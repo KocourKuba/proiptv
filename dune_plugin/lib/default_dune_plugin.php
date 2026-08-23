@@ -351,7 +351,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             if (empty($day_epg_items['items'])) {
-                return $this->getFakeEpg($channel_row, $utc_day_start_tm_sec);
+                $day_epg =  $this->getFakeEpg($channel_row, $utc_day_start_tm_sec);
+                if (empty($day_epg)) {
+                    $day_epg[] = array(
+                        PluginTvEpgProgram::start_tm_sec => $utc_day_start_tm_sec,
+                        PluginTvEpgProgram::end_tm_sec => $utc_day_start_tm_sec + 86400,
+                        PluginTvEpgProgram::name => TR::load('epg_no_sources'),
+                        PluginTvEpgProgram::description => TR::load('epg_no_sources_desc')
+                    );
+                }
+
+                return $day_epg;
             }
 
             $show_ext_epg = $this->is_ext_epg_enabled();
@@ -3489,14 +3499,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Save history for channel_id $id at time mark: $archive_ts", true);
     }
 
-    public static function send_log_to_developer($plugin, &$error = null)
+    public static function send_log_to_developer(&$error = null)
     {
         $serial = get_serial_number();
         if (empty($serial)) {
             hd_debug_print('Unable to get DUNE serial.');
             $serial = 'XX-XX-XX-XX-XX';
         }
-        $ver = $plugin->plugin_info['app_version'];
+        $ver = self::$plugin_info['app_version'];
         $ver = str_replace('.', '_', $ver);
         $timestamp = format_datetime('Ymd_His', time());
         $model = get_product_id();

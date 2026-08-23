@@ -154,8 +154,8 @@ class Epg_Manager_Xmltv
             }
 
             try {
-                $first_in_range = PHP_INT_MAX;
-                $last_in_range = -1;
+                $first_in_range = PHP_INT_MAX - 1;
+                $last_in_range = 0;
 
                 $positions = self::load_program_index($params, $channel_row);
                 if (!empty($positions)) {
@@ -252,7 +252,7 @@ class Epg_Manager_Xmltv
                     }
                 }
 
-                if ($day_start_ts > $last_in_range || $day_end_ts < $first_in_range) {
+                if (!empty($day_items) && ($day_start_ts > $last_in_range || $day_end_ts < $first_in_range)) {
                     $first = format_datetime('Y-m-d H:i', $first_in_range);
                     $last = format_datetime('Y-m-d H:i', $last_in_range);
                     $error_message = "Selected time is out of range. Available EPG time range: $first ($first_in_range) - $last ($last_in_range)";
