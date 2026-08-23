@@ -356,8 +356,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $day_epg[] = array(
                         PluginTvEpgProgram::start_tm_sec => $utc_day_start_tm_sec,
                         PluginTvEpgProgram::end_tm_sec => $utc_day_start_tm_sec + 86400,
-                        PluginTvEpgProgram::name => TR::load('epg_no_sources'),
-                        PluginTvEpgProgram::description => TR::load('epg_no_sources_desc')
+                        PluginTvEpgProgram::name => TR::load('epg_not_exist'),
+                        PluginTvEpgProgram::description => TR::load('epg_not_exist')
                     );
                 }
 
@@ -630,7 +630,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             if ($not_found) {
                 hd_debug_print('No entries in range for selected time in ' . count($day_epg) . ' entries');
-                return array();
             }
         }
 
