@@ -348,12 +348,8 @@ class vod_iptvonline extends vod_standard
             $curl_opt[CURLOPT_POSTFIELDS] = $payload;
         }
 
-        $decode = Curl_Wrapper::RET_ARRAY;
-        if ($cache_response) {
-            $decode |= Curl_Wrapper::CACHE_RESPONSE;
-        }
-
-        $data = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, $decode);
+        $cache = $cache_response ? Curl_Wrapper::CACHE_RESPONSE : 0;
+        $data = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, Curl_Wrapper::RET_ARRAY, $cache);
         if (!isset($data['success'], $data['status']) || !$data['success'] || $data['status'] !== 200) {
             hd_debug_print('Wrong response: ' . json_format_unescaped($data));
             return false;

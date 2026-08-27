@@ -310,11 +310,9 @@ class vod_korona extends vod_standard
         }
 
         $curl_opt[API_COMMAND_ADD_PARAMS] = $url;
-        $decode = Curl_Wrapper::RET_ARRAY;
-        if ($cache_response) {
-            $decode |= Curl_Wrapper::CACHE_RESPONSE;
-        }
-        $jsonItems = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, $decode);
+
+        $cache = $cache_response ? Curl_Wrapper::CACHE_RESPONSE : 0;
+        $jsonItems = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, Curl_Wrapper::RET_ARRAY, $cache);
         if ($jsonItems === false) {
             $exception_msg = TR::load('err_load_vod') . "\n\n" . Curl_Wrapper::get_raw_response_headers();
             hd_debug_print($exception_msg);

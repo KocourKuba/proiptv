@@ -316,12 +316,8 @@ class vod_cbilling extends vod_standard
             $curl_opt[API_COMMAND_ADD_PARAMS] = $url;
         }
 
-        $decode = Curl_Wrapper::RET_ARRAY;
-        if ($cache_response) {
-            $decode |= Curl_Wrapper::CACHE_RESPONSE;
-        }
-
-        return $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, $decode);
+        $cache = $cache_response ? Curl_Wrapper::CACHE_RESPONSE : 0;
+        return $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, Curl_Wrapper::RET_ARRAY, $cache);
     }
 
     /**
