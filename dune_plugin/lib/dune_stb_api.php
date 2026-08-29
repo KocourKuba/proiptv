@@ -1090,12 +1090,21 @@ function format_duration_minutes($secs, $show_sign = true)
     return sprintf(($show_sign ? "%+d:%02d" : "%d:%02d"), $hours, $minutes);
 }
 
+/**
+ * @param int $bytes
+ * @return string
+ */
 function format_size($bytes)
 {
+    if ($bytes == 0) {
+        return '0 B';
+    }
+
     $si_prefix = array('B', 'KB', 'MB', 'GB', 'TB');
     $base = 1024;
     $class = min((int)log($bytes, $base), count($si_prefix) - 1);
-    return sprintf('%1.2f', $bytes / pow($base, $class)) . ' ' . $si_prefix[$class];
+    $divider = pow($base, $class);
+    return sprintf('%1.2f', $bytes / $divider) . ' ' . $si_prefix[$class];
 }
 
 /**
@@ -2502,6 +2511,15 @@ function extract_column($rows, $column)
 }
 
 /**
+ * @param string $item
+ * @return string|null
+ */
+function to_lower($item)
+{
+    return is_null($item) ? null : mb_convert_case($item, MB_CASE_LOWER, "UTF-8");
+}
+
+/**
  * @param object $plugin_cookies
  * @param string $param
  * @param bool $default
@@ -3497,4 +3515,33 @@ function readlines($path)
         return array();
     }
     return file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+}
+
+/**
+ * @param LibXMLError $error
+ * @param string $xml_str
+ */
+function display_xml_error(LibXMLError $error, $xml_str)
+{
+    $xml = explode("\n", $xml_str);
+    hd_print($xml[$error->line - 1]);
+    hd_print(str_repeat('-', $error->column) . "^");
+
+    $ret = '';
+    switch ($error->level) {
+        case LIBXML_ERR_WARNING:
+            $ret .= "Warning $error->code: ";
+            break;
+        case LIBXML_ERR_ERROR:
+            $ret .= "Error $error->code: ";
+            break;
+        case LIBXML_ERR_FATAL:
+            $ret .= "Fatal Error $error->code: ";
+            break;
+    }
+
+    hd_print($ret . trim($error->message));
+    hd_print("  Line:   $error->line");
+    hd_print("  Column: $error->column");
+    hd_print('--------------------------------------------');
 }

@@ -25,6 +25,7 @@ class Dune_Default_Sqlite_Engine
     const SELECTED_XMLTV_TABLE = 'selected_xmltv';
     const VOD_LIST_TABLE = 'vod_list_orders';
     const SELECTED_JSON_TABLE = 'selected_json_sources';
+    const JSON_TABLE = 'json_sources';
 
     const SETTINGS_TABLE = 'settings';
     const COOKIES_TABLE = 'cookies';
@@ -57,15 +58,18 @@ class Dune_Default_Sqlite_Engine
                                          external_player INTEGER DEFAULT 0);";
 
     const CREATE_PLAYLIST_SETTINGS_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', type TEXT DEFAULT '');";
+
     const CREATE_COMMON_XMLTV_TABLE = "CREATE TABLE IF NOT EXISTS %s
                                     (hash TEXT PRIMARY KEY NOT NULL, type TEXT, name TEXT NOT NULL, uri TEXT NOT NULL, cache TEXT DEFAULT 'auto');";
     const CREATE_PLAYLIST_XMLTV_TABLE = "CREATE TABLE IF NOT EXISTS %s
                                     (playlist_id TEXT NOT NULL, hash TEXT NOT NULL, type TEXT, name TEXT NOT NULL,
                                      uri TEXT NOT NULL, cache TEXT DEFAULT 'auto', UNIQUE(playlist_id, hash));";
     const CREATE_SELECTED_XMTLV_TABLE = "CREATE TABLE IF NOT EXISTS %s (playlist_id TEXT NOT NULL, hash TEXT NOT NULL, UNIQUE(playlist_id, hash));";
-    const CREATE_SELECTED_JSON_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT NOT NULL, enabled INTEGER DEFAULT 1, UNIQUE(name));";
-    const CREATE_COOKIES_TABLE = "CREATE TABLE IF NOT EXISTS %s
-                                    (param TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', time_stamp INTEGER DEFAULT 0);";
+
+    const CREATE_JSON_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY NOT NULL, domain TEXT, cache INTEGER DEFAULT 3);";
+    const CREATE_SELECTED_JSON_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT NOT NULL);";
+
+    const CREATE_COOKIES_TABLE = "CREATE TABLE IF NOT EXISTS %s (param TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', time_stamp INTEGER DEFAULT 0);";
 
     const CREATE_TV_HISTORY_TABLE = "CREATE TABLE IF NOT EXISTS %s
                                         (channel_id TEXT PRIMARY KEY NOT NULL, time_stamp INTEGER DEFAULT 0,
@@ -171,7 +175,7 @@ class Dune_Default_Sqlite_Engine
         $query .= sprintf(self::CREATE_PLAYLIST_PARAMETERS_TABLE, self::PLAYLIST_PARAMETERS_TABLE);
         $query .= sprintf(self::CREATE_COMMON_XMLTV_TABLE, self::XMLTV_TABLE);
         $query .= sprintf(self::CREATE_PLAYLIST_XMLTV_TABLE, self::PLAYLIST_XMLTV_TABLE);
-        $query .= sprintf(self::CREATE_SELECTED_XMTLV_TABLE, self::SELECTED_XMLTV_TABLE);
+        $query .= sprintf(self::CREATE_JSON_TABLE, self::JSON_TABLE);
         $this->sql_plugin->exec_transaction($query);
 
         if (!$this->sql_plugin->is_column_exists(self::PLAYLISTS_TABLE, COLUMN_LAST_UPDATE)) {
@@ -499,10 +503,6 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_selected_xmltv_ids($playlist_id)
     {
-        if (!$this->is_attached_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
-            return array();
-        }
-
         $query = sprintf("SELECT %s FROM %s WHERE %s=%s ORDER BY ROWID;",
         COLUMN_HASH, self::SELECTED_XMLTV_TABLE, COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id));
         return $this->safe_sql_plugin('fetch_array', $query, PARAM_HASH);
@@ -515,10 +515,6 @@ class Dune_Default_Sqlite_Engine
      */
     public function is_selected_xmltv_id($playlist_id, $hash)
     {
-        if (!$this->is_attached_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
-            return false;
-        }
-
         $query = sprintf("SELECT count(*) FROM %s WHERE %s=%s AND %s=%s;", self::SELECTED_XMLTV_TABLE,
             COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id), COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
         return (bool)$this->safe_sql_plugin('query_value', $query);
@@ -703,28 +699,164 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
-     * get selected json sources
+     * Add preset to selected
      *
-     * @param bool $only_enabled
-     * @return array
+     * @param string $name
      */
-    public function get_selected_json_sources($only_enabled)
+    public function add_selected_json_source($name)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("Add to selected: $name", true);
+
+        $query = sprintf("INSERT OR IGNORE INTO %s (%s) VALUES (%s);",
+            self::SELECTED_JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($name));
+        $this->safe_sql_playlist_settings('exec', $query);
+    }
+
+    /**
+     * Remove preset from selected
+     *
+     * @param string $name
+     */
+    public function remove_selected_json_source($name)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("Removed from selected: $name", true);
+
+        $query = sprintf("DELETE FROM %s WHERE %s=%s;", self::SELECTED_JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($name));
+        $this->safe_sql_playlist_settings('exec', $query);
+    }
+
+    /**
+     * update selected json table for new or removed config presets
+     *
+     * @param array $all_presets
+     * @param array $provider_epg_presets
+     * @return void
+     */
+    public function update_selected_json_source($all_presets, $provider_epg_presets)
     {
         hd_debug_print(null, true);
 
-        if ($only_enabled) {
-            $query = sprintf('SELECT * FROM %s WHERE %s=%d ORDER by ROWID;', self::SELECTED_JSON_TABLE, COLUMN_ENABLED, TRUE);
-            return $this->safe_sql_playlist_settings('fetch_array', $query, COLUMN_NAME);
+        $query = '';
+        if (!$this->safe_sql_playlist_settings('is_table_exists', self::SELECTED_JSON_TABLE)
+            || $this->safe_sql_playlist_settings('is_column_exists', self::SELECTED_JSON_TABLE, COLUMN_ENABLED)) {
+            hd_debug_print("Recreate new selected json table", true);
+            $query .= sprintf('DROP TABLE IF EXISTS %s;', self::SELECTED_JSON_TABLE);
+            $query .= sprintf(self::CREATE_SELECTED_JSON_TABLE, self::SELECTED_JSON_TABLE);
+            foreach ($provider_epg_presets as $name) {
+                $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);',
+                    self::SELECTED_JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($name));
+            }
         }
 
-        $query = sprintf('SELECT * FROM %s ORDER by ROWID;', self::SELECTED_JSON_TABLE);
-        $result = $this->safe_sql_playlist_settings('fetch_array', $query);
+        // update selected json table removed config presets
+        $query .= sprintf('DELETE FROM %s WHERE %s NOT IN (%s);',
+            self::SELECTED_JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_make_list_from_values($all_presets));
 
-        $json_sources = array();
-        foreach ($result as $item) {
-            $json_sources[$item[COLUMN_NAME]] = $item[COLUMN_ENABLED];
+        $this->safe_sql_playlist_settings('exec', $query);
+    }
+
+    /**
+     * get all selected presets
+     *
+     * @return array
+     */
+    public function get_selected_json_sources()
+    {
+        hd_debug_print(null, true);
+
+        $query = sprintf('SELECT %s FROM %s ORDER by ROWID;', COLUMN_NAME, self::SELECTED_JSON_TABLE);
+        return $this->safe_sql_playlist_settings('fetch_array', $query, COLUMN_NAME);
+    }
+
+    /**
+     * Check is preset in selected table
+     *
+     * @param string $name
+     * @return bool
+     */
+    public function is_selected_json_source($name)
+    {
+        $query = sprintf("SELECT count(*) FROM %s WHERE %s=%s;", self::SELECTED_JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($name));
+        return (bool)$this->safe_sql_playlist_settings('query_value', $query);
+    }
+
+    /**
+     * Get domain for preset.
+     *
+     * @param string $name
+     * @return string
+     */
+    public function get_json_source_domain($name)
+    {
+        $query = sprintf('SELECT %s FROM %s WHERE %s=%s;',
+            COLUMN_DOMAIN, self::JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($name));
+        return $this->safe_sql_plugin('query_value', $query);
+    }
+
+    /**
+     * Set domain for preset.
+     *
+     * @param string $name
+     * @param string $value
+     * @return void
+     */
+    public function set_json_source_domain($name, $value)
+    {
+        $query = sprintf('UPDATE %s SET %s=%s WHERE %s=%s;', self::JSON_TABLE,
+            COLUMN_DOMAIN, Sql_Wrapper::sql_quote($value), COLUMN_NAME, Sql_Wrapper::sql_quote($name));
+        $this->safe_sql_plugin('exec', $query);
+    }
+
+    /**
+     * Get cache value for preset.
+     *
+     * @param string $name
+     * @return int
+     */
+    public function get_json_source_cache($name)
+    {
+        $query = sprintf('SELECT %s FROM %s WHERE %s=%s;',
+            COLUMN_CACHE, self::JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($name));
+        return $this->safe_sql_plugin('query_value', $query);
+    }
+
+    /**
+     * Set domain for preset.
+     *
+     * @param string $name
+     * @param int $value
+     * @return void
+     */
+    public function set_json_source_cache($name, $value)
+    {
+        $query = sprintf('UPDATE %s SET %s=%d WHERE %s=%s;', self::JSON_TABLE,
+            COLUMN_CACHE, $value, COLUMN_NAME, Sql_Wrapper::sql_quote($name));
+        $this->safe_sql_plugin('exec', $query);
+    }
+
+    /**
+     * @param Hashed_Array $presets
+     * @return void
+     */
+    public function update_all_json_source($presets)
+    {
+        if ($presets->is_empty()) {
+            return;
         }
-        return $json_sources;
+
+        $query = '';
+        foreach ($presets as $name => $preset) {
+            $domain = isset($preset[EPG_JSON_PRESET_DOMAINS]) ? key($preset[EPG_JSON_PRESET_DOMAINS]) : '';
+            $query .= sprintf('INSERT OR IGNORE INTO %s (%s, %s, %s) VALUES (%s, %s, %d);', self::JSON_TABLE,
+                COLUMN_NAME, COLUMN_DOMAIN, COLUMN_CACHE, Sql_Wrapper::sql_quote($name), Sql_Wrapper::sql_quote($domain), 3);
+        }
+
+        $query .= sprintf('DELETE FROM %s WHERE %s NOT IN (%s)',
+            self::JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_make_list_from_values($presets->get_keys()));
+
+        $this->safe_sql_plugin('exec', $query);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -988,7 +1120,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function arrange_settings_values($table, $item, $direction)
     {
-        return $this->arrange_rows($table, 'item', $item, $direction);
+        return $this->arrange_rows($table, COLUMN_ITEM, $item, $direction);
     }
 
     /////////////////////////////////////////////////////////////////
@@ -1692,6 +1824,19 @@ class Dune_Default_Sqlite_Engine
 
         $query = sprintf('SELECT %s FROM %s WHERE %s;', COLUMN_CHANNEL_ID, self::get_table_name(CHANNELS_INFO), $where);
         return $this->safe_sql_playlist('fetch_array', $query, COLUMN_CHANNEL_ID);
+    }
+
+    public function get_playlist_epg_info()
+    {
+        if (!$this->is_attached_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
+            return array();
+        }
+
+        $query = sprintf('SELECT DISTINCT ch.%s, pl.%s, pl.%s, pl.%s FROM %s AS pl JOIN %s AS ch ON pl.%s=ch.%s WHERE ch.%s=%d ORDER BY pl.%s;',
+            COLUMN_CHANNEL_ID, COLUMN_EPG_ID, COLUMN_TITLE, COLUMN_TVG_NAME, M3uParser::CHANNELS_TABLE, self::get_table_name(CHANNELS_INFO),
+            $this->get_id_column(), COLUMN_CHANNEL_ID, COLUMN_DISABLED, FALSE, COLUMN_TITLE);
+
+        return $this->safe_sql_playlist('fetch_array', $query);
     }
 
     /**

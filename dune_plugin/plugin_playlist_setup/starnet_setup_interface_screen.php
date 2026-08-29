@@ -35,8 +35,6 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
 
     const CONTROL_EDIT_CATEGORY_SCREEN = 'edit_category_screen';
     const CONTROL_EDIT_NEWUI_SETTINGS = 'edit_newui_settings';
-    const ACTION_BG_FILE_SELECTED = 'bg_file_selected';
-    const ACTION_BG_RESET_DEFAULT = 'bg_reset_default';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -146,8 +144,8 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
                     array(
                         PARAM_EXTENSION => BG_IMAGE_PATTERN,
                         PARAM_RECENT_FOLDER => $this->plugin->get_setting(PARAM_RECENT_IMAGE_FOLDER, ''),
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_BG_FILE_SELECTED,
-                        Starnet_Folder_Screen::PARAM_RESET_ACTION => self::ACTION_BG_RESET_DEFAULT,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
+                        Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_DEFAULT,
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                         Starnet_Folder_Screen::PARAM_ALLOW_IMAGE_LIB => true,
                         Starnet_Folder_Screen::PARAM_READ_ONLY => true,
@@ -155,7 +153,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
                 );
                 return Action_Factory::open_folder($media_url, TR::t('select_file'));
 
-            case self::ACTION_BG_FILE_SELECTED:
+            case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 $filepath = $data->{PARAM_FILEPATH};
                 $this->plugin->set_setting(PARAM_RECENT_IMAGE_FOLDER, get_noslash_trailed_path(dirname($filepath)));
@@ -181,7 +179,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
                 $actions[] = User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
                 return Action_Factory::composite($actions);
 
-            case self::ACTION_BG_RESET_DEFAULT:
+            case ACTION_RESET_DEFAULT:
                 hd_debug_print('Background set to default');
                 $this->plugin->set_background_image(null);
                 $this->plugin->init_screen_view_parameters();

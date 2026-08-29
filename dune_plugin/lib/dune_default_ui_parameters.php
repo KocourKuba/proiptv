@@ -49,6 +49,11 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
      */
     private $screens_views;
 
+    /**
+     * @var string
+     */
+    protected $last_epg_source = '';
+
     public function __construct()
     {
         HD::load_firmware_features();
@@ -114,6 +119,11 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     public function get_screen_view($name)
     {
         return safe_get_value($this->screens_views, $name, array());
+    }
+
+    public function get_last_epg_source()
+    {
+        return $this->last_epg_source;
     }
 
     /**
@@ -369,6 +379,18 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 $pos_percent);
             Control_Factory::add_vgap($defs, -74);
             Control_Factory::add_smart_label($defs, $percent_text);
+
+            $last_epg_src = $this->get_last_epg_source();
+            if (!empty($last_epg_src)) {
+                Control_Factory::add_vgap($defs, -15);
+                $source_text = sprintf("<text color=%s size=small>%s</text><gap width=15/><text color=%s size=small>%s</text>",
+                    DEF_LABEL_TEXT_COLOR_TURQUOISE,
+                    TR::load('epg_source'),
+                    DEF_LABEL_TEXT_COLOR_GOLD,
+                    $last_epg_src
+                );
+                Control_Factory::add_smart_label($defs, $source_text);
+            }
 
             // EPG description
             Control_Factory::add_multiline_label($defs, null, $prog_info[PluginTvEpgProgram::description], 12);

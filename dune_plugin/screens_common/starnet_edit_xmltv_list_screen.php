@@ -36,10 +36,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
     const ACTION_CHOOSE_FOLDER = 'choose_folder';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
-    const ACTION_EXPORT_FOLDER_SELECTED = 'export_folder_selected';
-    const ACTION_FILE_SELECTED = 'file_selected';
 
-    const CONTROL_ACTION_SOURCE = 'source';
     const CONTROL_CACHE_TIME = 'cache_time';
 
     const REFRESH_TIMER = 1000;
@@ -215,7 +212,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return $this->create_popup_menu($selected_id);
 
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
-                if ($this->plugin->get_epg_manager() === null) break;
+                if ($this->plugin->get_xmltv_epg_manager() === null) break;
 
                 foreach ($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_EXTERNAL, null) as $hash) {
                     Epg_Manager_Xmltv::clear_epg_files($hash);
@@ -240,7 +237,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return $this->apply_edit_url_dlg($user_input, $plugin_cookies);
 
             case ACTION_ADD_PRESET:
-                $presets = Default_Dune_Plugin::$epg_xmltv_presets;
+                $presets = $this->plugin->get_epg_xmltv_presets();
                 $menu_items = array();
                 foreach ($presets as $key => $preset) {
                     $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ADD_SELECTED_PRESET, $key, null, $preset);
@@ -253,19 +250,25 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_EXPORT_APPLY_DLG:
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                     array(
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => self::ACTION_EXPORT_FOLDER_SELECTED,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => ACTION_EXPORT_FOLDER_SELECTED,
                         Starnet_Folder_Screen::PARAM_ADD_PARAMS => $user_input->{CONTROL_EDIT_NAME},
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
                 return Action_Factory::open_folder($media_url, TR::t('select_folder'));
 
-            case self::ACTION_EXPORT_FOLDER_SELECTED:
+            case ACTION_EXPORT_FOLDER_SELECTED:
                 return $this->do_export_xmltv_sources($user_input);
 
-            case self::ACTION_FILE_SELECTED:
+            case ACTION_FILE_SELECTED:
                 hd_debug_print(null, true);
                 return $this->selected_text_file($user_input);
+
+            case ACTION_CHECK_EPG:
+                return $this->do_check_epg_ids($selected_id);
+
+            case ACTION_CHECK_SELECTED_EPG:
+                return $this->do_check_epg_ids(null);
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_idx);
@@ -291,6 +294,18 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_CLEAR_CACHE, TR::t('entry_epg_cache_clear_menu'), 'brush.png');
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_CALL_CLEAR_ALL_EPG, TR::t('entry_epg_cache_clear_all'), 'brush.png');
 
+        if ($this->plugin->is_channels_loaded()) {
+            $menu_items[] = Control_Factory::menu_separator();
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                ACTION_CHECK_EPG, TR::t('entry_epg_check_ids'), 'search.png');
+
+            $selected_sources = $this->plugin->get_selected_xmltv_ids($this->plugin->get_active_playlist_id());
+            if (!empty($selected_sources)) {
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                    ACTION_CHECK_SELECTED_EPG, TR::t('entry_epg_selected_check_ids'), 'search.png');
+            }
+        }
+
         $menu_items[] = Control_Factory::menu_separator();
 
         // Add Preset
@@ -305,7 +320,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
             array(
                 PARAM_EXTENSION => TEXT_FILE_PATTERN,
-                Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_FILE_SELECTED,
+                Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
                 Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                 Starnet_Folder_Screen::PARAM_READ_ONLY => true,
             )
@@ -348,7 +363,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         Control_Factory::add_vgap($defs, 20);
 
-        $param[self::CONTROL_ACTION_SOURCE] = $source;
+        $param[CONTROL_ACTION_SOURCE] = $source;
         if (empty($id)) {
             $window_title = TR::t('edit_list_add_url');
             $item = array();
@@ -399,7 +414,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
     {
         hd_debug_print(null, true);
 
-        $source = $user_input->{self::CONTROL_ACTION_SOURCE};
+        $source = $user_input->{CONTROL_ACTION_SOURCE};
         $playlist_id = ($source & XMLTV_SOURCE_PLAYLIST) ? $this->plugin->get_active_playlist_id() : null;
         if (isset($user_input->{CONTROL_ACTION_EDIT})) {
             // edit existing url
@@ -575,7 +590,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
 
         $items = array();
-        $epg_manager = $this->plugin->get_epg_manager();
+        $epg_manager = $this->plugin->get_xmltv_epg_manager();
         if ($epg_manager === null) {
             return $items;
         }
@@ -726,7 +741,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
      * @param string $id
      * @return array|null
      */
-    public function do_show_xmltv_info($id)
+    protected function do_show_xmltv_info($id)
     {
         $cached_xmltv_file = Epg_Manager_Xmltv::get_cache_dir() . "$id.xmltv";
         $locked = Epg_Manager_Xmltv::is_index_locked($id, INDEXING_ALL);
@@ -811,7 +826,9 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         foreach ($indexes as $index => $cnt) {
             $cnt = ($cnt !== -1) ? $cnt : TR::load('err_error_no_data');
             $name = TR::load($index);
-            Control_Factory::add_smart_label($defs, sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, $name, DEF_LABEL_TEXT_COLOR_WHITE, $cnt), -30);
+            Control_Factory::add_smart_label($defs,
+                sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, $name, DEF_LABEL_TEXT_COLOR_WHITE, $cnt),
+                -30);
         }
 
         Control_Factory::add_vgap($defs, 30);
@@ -819,5 +836,108 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         Control_Factory::add_vgap($defs, 10);
 
         return Action_Factory::show_dialog($defs, TR::t('xmltv_info_dlg'));
+    }
+
+    /**
+     * @param string $xmltv_id
+     * @return array|null
+     */
+    protected function do_check_epg_ids($xmltv_id)
+    {
+        if (!$this->plugin->is_channels_loaded()) {
+            return null;
+        }
+
+        if (empty($xmltv_id)) {
+            $selected_sources = $this->plugin->get_selected_xmltv_ids($this->plugin->get_active_playlist_id());
+        } else {
+            $selected_sources[] = $xmltv_id;
+        }
+
+        $pl_epg_info = $this->plugin->get_playlist_epg_info();
+
+        $source_names = array();
+        $search_epg_id = array();
+        $search_aliases = array();
+        $found = array();
+        foreach ($selected_sources as $source) {
+            $params = $this->plugin->find_xmltv_source($source);
+            $source_names[] = $params[COLUMN_NAME];
+
+            $source_ids = Epg_Manager_Xmltv::get_all_xmltv_ids($this->plugin->find_xmltv_source($source));
+            $search_epg_id = array_merge($search_epg_id, $source_ids[COLUMN_EPG_ID]);
+            foreach ($pl_epg_info as $info) {
+                if (in_array($info[COLUMN_EPG_ID], $source_ids[COLUMN_EPG_ID])) {
+                    $found[] = $info[COLUMN_CHANNEL_ID];
+                }
+            }
+
+            $aliases = $source_ids[COLUMN_EPG_ALIASES];
+            $search_aliases = array_merge($search_aliases, $aliases);
+            foreach ($pl_epg_info as $info) {
+                if (in_array(to_lower($info[COLUMN_TITLE]), $aliases) !== false) {
+                    $found[] = $info[COLUMN_CHANNEL_ID];
+                }
+                if (in_array(to_lower($info[COLUMN_TVG_NAME]), $aliases) !== false) {
+                    $found[] = $info[COLUMN_CHANNEL_ID];
+                }
+            }
+        }
+
+        $total_channels = count($pl_epg_info);
+        $found_channels = count(array_unique($found));
+        $pl_epg_ids_cnt = count(array_unique(array_filter(extract_column($pl_epg_info, COLUMN_EPG_ID))));
+        $pl_epg_aliases_cnt = count(array_merge(
+            array_filter(extract_column($pl_epg_info, COLUMN_TITLE)),
+            array_filter(extract_column($pl_epg_info, COLUMN_TVG_NAME))
+        ));
+
+        $search_epg_id_cnt = count(array_unique($search_epg_id));
+        $search_aliases_cnt = count(array_unique($search_aliases));
+
+        $defs = array();
+        $fmt = '<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>';
+
+        Control_Factory::add_smart_label($defs,
+            sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, TR::load('channels_total'),
+                DEF_LABEL_TEXT_COLOR_WHITE, $total_channels),
+            -30
+        );
+        Control_Factory::add_smart_label($defs,
+            sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, TR::load('playlist_epg_id'),
+                DEF_LABEL_TEXT_COLOR_WHITE, $pl_epg_ids_cnt),
+            -30
+        );
+        Control_Factory::add_smart_label($defs,
+            sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, TR::load('playlist_channel_names'),
+                DEF_LABEL_TEXT_COLOR_WHITE, $pl_epg_aliases_cnt),
+            -30
+        );
+        Control_Factory::add_smart_label($defs,
+            sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, TR::load('known_search_id'),
+                DEF_LABEL_TEXT_COLOR_WHITE, $search_epg_id_cnt),
+            -30
+        );
+        Control_Factory::add_smart_label($defs,
+            sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, TR::load('known_aliases'),
+                DEF_LABEL_TEXT_COLOR_WHITE, $search_aliases_cnt),
+            -30
+        );
+        Control_Factory::add_smart_label($defs,
+            sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, TR::load('found_epg'),
+                DEF_LABEL_TEXT_COLOR_WHITE, $found_channels),
+            -30
+        );
+        Control_Factory::add_smart_label($defs,
+            sprintf($fmt, DEF_LABEL_TEXT_COLOR_GOLD, TR::load('search_in'),
+                DEF_LABEL_TEXT_COLOR_WHITE, implode(', ', $source_names)),
+            -30
+        );
+
+        Control_Factory::add_vgap($defs, 30);
+        Control_Factory::add_ok_button($defs, true);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog($defs, TR::t('epg_check_dlg'));
     }
 }

@@ -137,7 +137,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case GUI_EVENT_KEY_SUBTITLE:
                 $attrs['initial_sel_ndx'] = 2;
-                return $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id, -1), $attrs);
+                return $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id), $attrs);
 
             case ACTION_MEDIA_INFO:
                 return $this->plugin->do_show_media_info($channel_id);
@@ -152,7 +152,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $attrs['initial_sel_ndx'] = $user_input->control_id === PARAM_EPG_SHIFT_HOURS ? 0 : 1;
                 $actions[] = Action_Factory::close_dialog();
                 $actions[] = Action_Factory::invalidate_folders(array($user_input->parent_media_url));
-                $actions[] = $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id, -1), $attrs);
+                $actions[] = $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id), $attrs);
                 return Action_Factory::composite($actions);
 
             case ACTION_PLAY_ITEM:

@@ -33,9 +33,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
 {
     const ID = 'epg_setup';
 
-    const CONTROL_ITEMS_REFRESH_EPG_CACHE = 'refresh_epg_cache';
-    const CONTROL_ARRANGE_EPG_SOURCE = 'arrange_epg_source';
-    const CONTROL_APPLY_ARRANGE_EPG_SOURCE = 'apply_arrange_epg_source';
+    const CONTROL_ITEMS_CLEAR_EPG_CACHE = 'clear_epg_cache';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -64,41 +62,15 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
         $params = array();
         //////////////////////////////////////
         // EPG cache engine
-        $has_presets = count($this->plugin->get_provider_epg_presets());
 
         $engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
+        $engine_variants[ENGINE_JSON] = TR::t('setup_epg_cache_json');
         $engine_variants[ENGINE_XMLTV] = TR::t('setup_epg_cache_xmltv');
-        if ($has_presets) {
-            $engine_variants[ENGINE_JSON] = TR::t('setup_epg_cache_json');
-        }
+        $engine_variants[ENGINE_COMBINED] = TR::t('setup_epg_cache_combined');
 
-        $is_json = $engine === ENGINE_JSON;
-
-        if (count($engine_variants) > 1) {
-            Control_Factory::add_combobox($defs, $this, PARAM_EPG_CACHE_ENGINE,
-                TR::t('setup_epg_cache_engine'), $engine,
-                $engine_variants, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-        } else if (count($engine_variants) === 1) {
-            Control_Factory::add_button($defs, $this, "dummy", TR::t('setup_epg_cache_engine'), reset($engine_variants));
-        }
-
-        if ($is_json && $has_presets) {
-            if ($has_presets > 1) {
-                Control_Factory::add_image_button($defs, $this, self::CONTROL_ARRANGE_EPG_SOURCE,
-                    TR::t('entry_epg_edit_json_source'),
-                    TR::t('edit'),
-                    'move.png'
-                );
-            }
-
-            foreach (array(1, 2, 3, 6, 12, 24, 48, 72, 96, 120, 144, 168) as $hour) {
-                $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
-            }
-            $cache_time = $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1);
-            Control_Factory::add_combobox($defs, $this, PARAM_EPG_CACHE_TIME,
-                TR::t('setup_cache_time_epg'), $cache_time,
-                $caching_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-        }
+        Control_Factory::add_combobox($defs, $this, PARAM_EPG_CACHE_ENGINE,
+            TR::t('setup_epg_cache_engine'), $engine,
+            $engine_variants, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
 
         //////////////////////////////////////
         // ext epg
@@ -110,10 +82,8 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // clear epg cache
-        Control_Factory::add_image_button($defs, $this, self::CONTROL_ITEMS_REFRESH_EPG_CACHE,
-            $is_json ? TR::t('entry_epg_cache_clear') : TR::t('entry_epg_cache_refresh'),
-            $is_json ? TR::t('clear') : TR::t('refresh'),
-            get_image_path($is_json ? 'remove.png' : 'refresh.png')
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_ITEMS_CLEAR_EPG_CACHE,
+            TR::t('entry_epg_cache_clear'), TR::t('clear'), get_image_path('remove.png')
         );
 
         //////////////////////////////////////
@@ -145,52 +115,38 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 $post_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
                 $val = $user_input->{$control_id};
                 $active_sources = $this->plugin->get_selected_xmltv_ids($this->plugin->get_active_playlist_id());
-                if (empty($active_sources) && $val === ENGINE_XMLTV) {
+                if (empty($active_sources) && ($val === ENGINE_XMLTV || $val === ENGINE_COMBINED)) {
                     $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_xmltv_sources'), $post_action);
                 }
                 $this->plugin->set_setting($control_id, $val);
                 $this->plugin->init_epg_manager();
                 return $post_action;
 
-            case self::CONTROL_ARRANGE_EPG_SOURCE:
-                $config_id = $this->plugin->get_active_epg_config();
-                $all_ids = array();
-                $checked_ids = array();
-                foreach ($this->plugin->get_provider_epg_presets() as $id => $epg_preset) {
-                    Action_Factory::add_gui_item($all_ids, $checked_ids, $id, $id);
-                }
-
-                List_Utils::write_config_file($config_id, $this->plugin->get_selected_json_sources(false));
-
-                return Action_Factory::edit_list_config($config_id, TR::t('entry_epg_edit_json_source'),
-                    $all_ids, $checked_ids,
-                    null, null, null, null,
-                    User_Input_Handler_Registry::create_action($this, self::CONTROL_APPLY_ARRANGE_EPG_SOURCE));
-
-            case self::CONTROL_APPLY_ARRANGE_EPG_SOURCE:
-                $playlist_id = $this->plugin->get_active_playlist_id();
-                $this->plugin->update_selected_json_source($this->plugin->get_active_provider());
-                if ($user_input->list_config_changed) {
-                    Epg_Manager_Json::clear_epg_files($playlist_id);
-                }
-                break;
-
             case PARAM_EPG_CACHE_TIME:
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
                 break;
 
-            case self::CONTROL_ITEMS_REFRESH_EPG_CACHE:
+            case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
                 $engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
 
                 $playlist_id = $this->plugin->get_active_playlist_id();
                 if ($engine === ENGINE_JSON) {
-                    Epg_Manager_Json::clear_epg_files($playlist_id);
-                } else {
+                    foreach ($this->plugin->get_selected_json_sources() as $id) {
+                        Epg_Manager_Json::clear_epg_files(Hashed_Array::hash($id));
+                    }
+                } else if ($engine === ENGINE_XMLTV) {
                     foreach ($this->plugin->get_selected_xmltv_ids($playlist_id) as $id) {
                         Epg_Manager_Xmltv::clear_epg_files($id);
                     }
-                    $this->plugin->reset_channels();
+                } else if ($engine === ENGINE_COMBINED) {
+                    foreach ($this->plugin->get_selected_json_sources() as $id) {
+                        Epg_Manager_Json::clear_epg_files(Hashed_Array::hash($id));
+                    }
+                    foreach ($this->plugin->get_selected_xmltv_ids($playlist_id) as $id) {
+                        Epg_Manager_Xmltv::clear_epg_files($id);
+                    }
                 }
+                $this->plugin->reset_channels();
                 $actions[] = Action_Factory::show_title_dialog(TR::t('information'), TR::t('entry_epg_cache_cleared'));
                 $actions[] = Action_Factory::reset_controls($this->do_get_control_defs());
                 $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);

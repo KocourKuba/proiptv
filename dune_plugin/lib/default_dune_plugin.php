@@ -35,11 +35,13 @@ require_once 'm3u/M3uParser.php';
 require_once 'm3u/M3uTags.php';
 require_once 'lib/dune_default_ui_parameters.php';
 require_once 'lib/epg/epg_manager_json.php';
+require_once 'lib/epg/epg_manager_xmltv.php';
 require_once 'lib/perf_collector.php';
 require_once 'lib/smb_tree.php';
 
 class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlugin
 {
+    const CONFIG_URL = 'http://iptv.esalecrm.net/config/providers';
     const ARCHIVE_URL_PREFIX = 'http://iptv.esalecrm.net/res';
     const ARCHIVE_ID = 'common';
     const PARSE_CONFIG = "%s_parse_config.json";
@@ -60,19 +62,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public static $providers;
 
     /**
-     * @var Hashed_Array
-     */
-    public static $epg_presets;
-
-    /**
      * @var array
      */
-    public static $desc_parsers;
+    public $desc_parsers;
 
     /**
      * @var Hashed_Array
      */
-    public static $epg_xmltv_presets;
+    public $epg_json_presets;
+
+    /**
+     * @var Hashed_Array
+     */
+    public $epg_xmltv_presets;
 
     /**
      * @var Hashed_Array
@@ -117,22 +119,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @var bool
      */
-    private $use_xmltv = false;
-
-    /**
-     * @var bool
-     */
     private $delay_load_picons = false;
 
     /**
-     * @var Epg_Manager_Xmltv|Epg_Manager_Json
+     * @var Epg_Manager_Xmltv
      */
-    protected $epg_manager;
+    protected $xmltv_epg_manager;
 
     /**
-     * @var Hashed_Array
+     * @var Epg_Manager_Json
      */
-    protected $desc_cleanup;
+    protected $json_epg_manager;
 
     /**
      * @var api_default
@@ -304,6 +301,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
         $day_epg = array();
+        $this->last_epg_source = '';
         try {
             if (is_null($this->iptv)) {
                 hd_debug_print('TV is not supported');
@@ -338,7 +336,24 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $channel_picon = $this->get_channel_picon($channel_row, true);
 
-            $day_epg_items = $this->epg_manager->get_day_epg_items($channel_row, $utc_day_start_tm_sec);
+            $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
+            if ($engine === ENGINE_JSON) {
+                $day_epg_items = $this->json_epg_manager->get_day_epg_items($channel_row, $utc_day_start_tm_sec, $this->last_epg_source);
+            } else if ($engine === ENGINE_XMLTV) {
+                $day_epg_items = $this->xmltv_epg_manager->get_day_epg_items($channel_row, $utc_day_start_tm_sec, $this->last_epg_source);
+            } else if ($engine === ENGINE_COMBINED) {
+                $day_epg_items = $this->json_epg_manager->get_day_epg_items($channel_row, $utc_day_start_tm_sec, $this->last_epg_source);
+                if (empty($day_epg_items[PARAM_ITEMS])) {
+                    $day_epg_items = $this->xmltv_epg_manager->get_day_epg_items($channel_row, $utc_day_start_tm_sec, $this->last_epg_source);
+                }
+            } else {
+                return array(
+                    PluginTvEpgProgram::start_tm_sec => $utc_day_start_tm_sec,
+                    PluginTvEpgProgram::end_tm_sec => $utc_day_start_tm_sec + 86400,
+                    PluginTvEpgProgram::name => TR::load('epg_not_exist'),
+                    PluginTvEpgProgram::description => "Unknown EPG engine"
+                );
+            }
 
             if (isset($day_epg_items['error'])) {
                 $day_epg[] = array(
@@ -350,7 +365,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 return $day_epg;
             }
 
-            if (empty($day_epg_items['items'])) {
+            if (empty($day_epg_items[PARAM_ITEMS])) {
                 $day_epg =  $this->getFakeEpg($channel_row, $utc_day_start_tm_sec);
                 if (empty($day_epg)) {
                     $day_epg[] = array(
@@ -366,7 +381,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $show_ext_epg = $this->is_ext_epg_enabled();
 
-            foreach (self::check_epg_intervals($day_epg_items['items']) as $start => $item) {
+            foreach (self::check_epg_intervals($day_epg_items[PARAM_ITEMS]) as $start => $item) {
                 if (!isset($item[PluginTvEpgProgram::end_tm_sec], $item[PluginTvEpgProgram::name], $item[PluginTvEpgProgram::description])) {
                     hd_debug_print('malformed epg data: ' . json_format_unescaped($item));
                     continue;
@@ -381,7 +396,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                 $ext_params = array_map(function ($v) {
                     return $v;
-                }, self::reformat_description($name, $desc, $icon));
+                }, self::reformat_description($this->desc_parsers, $name, $desc, $icon));
 
                 $day_epg_item = array(
                     PluginTvEpgProgram::start_tm_sec => $tm_start,
@@ -559,6 +574,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->reset_playlist_db();
         $this->init_parameters();
         $this->init_epg_cache_dir();
+        $this->update_all_json_source($this->epg_json_presets);
+
         $this->inited = true;
 
         hd_print_separator();
@@ -584,22 +601,25 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
 
-        $this->epg_manager = null;
+        $this->xmltv_epg_manager = new Epg_Manager_Xmltv($this);
+        $this->json_epg_manager = new Epg_Manager_Json($this);
+
         $this->delay_load_picons = is_delay_load_supported()
             && $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)
             && $this->get_bool_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) != PLAYLIST_PICONS;
 
-        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
-        if ($engine === ENGINE_JSON && count($this->get_provider_epg_presets())) {
-            hd_debug_print("Using 'Epg_Manager_Json' cache engine");
-            $this->epg_manager = new Epg_Manager_Json($this);
-            $this->use_xmltv = false;
-        }
-
-        if (is_null($this->epg_manager)) {
-            hd_debug_print("Using 'Epg_Manager_Xmltv' cache engine");
-            $this->epg_manager = new Epg_Manager_Xmltv($this);
-            $this->use_xmltv = true;
+        switch ($this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV)) {
+            case ENGINE_JSON:
+                hd_debug_print("Using 'Epg_Manager_Json' cache engine");
+                break;
+            case ENGINE_XMLTV:
+                hd_debug_print("Using 'Epg_Manager_Xmltv' cache engine");
+                break;
+            case ENGINE_COMBINED:
+                hd_debug_print("Using 'Combined' cache engine");
+                break;
+            default:
+                hd_debug_print("Unknown default EPG engine");
         }
     }
 
@@ -608,7 +628,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param int $program_ts
      * @return mixed|null
      */
-    public function get_epg_info($channel_id, $program_ts)
+    public function get_epg_info($channel_id, $program_ts = -1)
     {
         hd_debug_print(null, true);
 
@@ -617,6 +637,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("channel ID: $channel_id at time $program_ts_str ($program_ts)", true);
         $day_start_ts = strtotime(format_datetime('Y-m-d', $program_ts) . ' UTC');
         $day_epg = $this->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
+        $info = array();
         if (empty($day_epg)) {
             hd_debug_print("No entries found for channel $channel_id");
         } else {
@@ -624,6 +645,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             foreach ($day_epg as $item) {
                 if ($program_ts >= $item[PluginTvEpgProgram::start_tm_sec] && $program_ts < $item[PluginTvEpgProgram::end_tm_sec]) {
                     $not_found = false;
+                    $info = $item;
                     break;
                 }
             }
@@ -633,8 +655,150 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        $item[PluginTvEpgProgram::ext_id] = $channel_id;
-        return $item;
+        $info[PluginTvEpgProgram::ext_id] = $channel_id;
+        return $info;
+    }
+
+    public function init_providers_config()
+    {
+        if (!is_null(self::$providers) && !self::$providers->is_empty()) {
+            return;
+        }
+
+        // 1. Check local debug version
+        // 2. Try to download from web release version
+        // 3. Check previously downloaded web release version
+        // 4. Check preinstalled version
+        // 5. Houston we have a problem
+        if (self::$plugin_info['debug']) {
+            $tmp_file = get_install_path('providers_debug.json');
+            if (file_exists($tmp_file)) {
+                hd_debug_print("Load debug providers configuration: $tmp_file");
+                $jsonArray = parse_json_file($tmp_file);
+            }
+        }
+
+        if (empty($jsonArray)) {
+            $name = 'providers_' . self::$plugin_info['app_base_version'] . '.json';
+            $tmp_file = get_data_path($name);
+            $serial = get_serial_number();
+            if (empty($serial)) {
+                hd_debug_print('Unable to get DUNE serial.');
+                $serial = 'XXXX';
+            }
+            $ver = self::$plugin_info['app_version'];
+            $model = get_product_id();
+            $firmware = get_raw_firmware_version();
+            $config_url = sprintf('%s?ver=%s&model=%s&firmware=%s&serial=%s', self::CONFIG_URL, $ver, $model, $firmware, $serial);
+            $jsonArray = Curl_Wrapper::getInstance()->download_content($config_url, Curl_Wrapper::RET_ARRAY);
+            if (empty($jsonArray) || !isset($jsonArray['providers'])) {
+                if (file_exists($tmp_file)) {
+                    hd_debug_print('Load actual providers configuration');
+                    $jsonArray = parse_json_file($tmp_file);
+                } else if (file_exists($tmp_file = get_install_path($name))) {
+                    hd_debug_print('Load installed providers configuration');
+                    $jsonArray = parse_json_file($tmp_file);
+                }
+            } else {
+                store_to_json_file($tmp_file, $jsonArray);
+            }
+        }
+
+        self::$image_libs = new Hashed_Array();
+        foreach ($jsonArray['plugin_config']['image_libs'] as $key => $value) {
+            hd_debug_print("available image lib: $key");
+            self::$image_libs->set($key, $value);
+        }
+
+        $this->epg_json_presets = new Hashed_Array();
+        foreach ($jsonArray['epg_presets'] as $key => $value) {
+            if (isset($value[EPG_JSON_DISABLED])) continue;
+
+            hd_debug_print("available epg preset: $key");
+
+            $value[EPG_JSON_PRESET_NAME] = $key;
+            if (isset($value[EPG_JSON_PRESET_ALIASES])) {
+                $aliases = $value[EPG_JSON_PRESET_ALIASES];
+                unset($value[EPG_JSON_PRESET_ALIASES]);
+                foreach ($aliases as $alias) {
+                    $new_key = "$key ($alias)";
+                    $value[EPG_JSON_PRESET_ID] = $alias;
+                    hd_debug_print("make preset alias '$new_key': " . json_format_unescaped($value), true);
+                    $this->epg_json_presets->set($new_key, $value);
+                }
+            } else {
+                hd_debug_print("make preset '$key': " . json_format_unescaped($value), true);
+                $value[EPG_JSON_PRESET_ID] = $key;
+                $this->epg_json_presets->set($key, $value);
+            }
+        }
+
+        $this->epg_xmltv_presets = new Hashed_Array();
+        foreach ($jsonArray['xmltv_sources'] as $key => $value) {
+            hd_debug_print("available xmltv preset: $key");
+            $this->epg_xmltv_presets->set($key, $value);
+        }
+
+        $this->desc_parsers = array();
+        if (isset($jsonArray['desc_parsers'])) {
+            $this->desc_parsers = $jsonArray['desc_parsers'];
+        }
+
+        if ($jsonArray === false || !isset($jsonArray['providers'])) {
+            hd_debug_print('Problem to get providers configuration');
+            return;
+        }
+
+        self::$providers = new Hashed_Array();
+        foreach ($jsonArray['providers'] as $item) {
+            if (!isset($item['id'], $item['enable']) || $item['enable'] === false) continue;
+
+            $api_class = 'api_default';
+            if (isset($item['class']) && class_exists('api_' . $item['class'])) {
+                $api_class = 'api_' . $item['class'];
+            }
+
+            /** @var api_default $provider */
+            $provider = new $api_class($this);
+            foreach ($item as $key => $value) {
+                $words = explode('_', $key);
+                $setter = 'set';
+                foreach ($words as $word) {
+                    $setter .= ucwords($word);
+                }
+                if (method_exists($provider, $setter)) {
+                    $provider->{$setter}($value);
+                } else {
+                    hd_debug_print("Unknown method $setter", true);
+                }
+            }
+
+            // add hidden api commands
+            $commands = $provider->getApiCommands();
+            $commands[API_COMMAND_GET_PLAYLIST] = MACRO_PLAYLIST_IPTV;
+            $vod_playlists = $provider->GetPlaylistsVod();
+            if (!empty($vod_playlists)) {
+                $commands[API_COMMAND_GET_VOD] = MACRO_PLAYLIST_VOD;
+            }
+            $provider->setApiCommands($commands);
+
+            // cache provider logo
+            $logo = $provider->getLogo();
+            $filename = basename($logo);
+            $local_file = get_install_path("logo/$filename");
+            if (file_exists($local_file)) {
+                $provider->setLogo("plugin_file://logo/$filename");
+            } else {
+                $cached_file = get_cached_image_path($filename);
+                $res = Curl_Wrapper::getInstance()->download_file($logo, $cached_file);
+                if ($res) {
+                    $provider->setLogo($cached_file);
+                } else {
+                    hd_debug_print("failed to download provider logo: $logo");
+                }
+            }
+            self::$providers->set($provider->getId(), $provider);
+        }
     }
 
     /**
@@ -1083,10 +1247,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->safe_sql_playlist_settings('exec', $query);
 
         $provider_class = safe_get_value($params, PARAM_PROVIDER);
+        $provider_epg_presets = array();
         if (!empty($provider_class)) {
             $q_playlist_id = Sql_Wrapper::sql_quote($playlist_id);
             $provider = $this->get_provider($playlist_id);
             if ($provider !== null) {
+                // get provider config epg presets
+                $provider_epg_presets = $provider->get_provider_epg_preset_names();
                 // update xmltv playlist sources from config
                 $config_xmltv = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
                 if (!empty($config_xmltv)) {
@@ -1118,19 +1285,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $provider->check_config_values();
                 $provider_playlist_id = $provider->GetPlaylistIptvId();
                 hd_debug_print("Provider IPTV playlist: $provider_playlist_id", true);
-
-                $query = sprintf(self::CREATE_SELECTED_JSON_TABLE, self::SELECTED_JSON_TABLE);
-                $this->safe_sql_playlist_settings('exec', $query);
-                $this->update_selected_json_source($provider);
             }
         }
+
+        $this->update_selected_json_source($this->epg_json_presets->get_keys(), $provider_epg_presets);
 
         // create tables for vod search, vod filters, vod favorites
         if ($this->is_vod_playlist() || (!empty($provider) && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
             hd_debug_print('Preparing tables for VOD', true);
             $tables = array(
-                VOD_FILTER_LIST => 'item',
-                VOD_SEARCH_LIST => 'item',
+                VOD_FILTER_LIST => COLUMN_ITEM,
+                VOD_SEARCH_LIST => COLUMN_ITEM,
                 VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID,
             );
 
@@ -1236,13 +1401,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $perf = new Perf_Collector();
         $perf->reset('start');
 
-        if ($this->use_xmltv || $this->picons_source !== PLAYLIST_PICONS) {
+        if ($this->picons_source !== PLAYLIST_PICONS) {
             Epg_Manager_Xmltv::set_xmltv_sources($this->get_active_sources());
         }
 
         if ($this->picons_source !== PLAYLIST_PICONS) {
             $all_sources = $this->get_active_sources();
-            if ($all_sources->size() === 0) {
+            if ($all_sources->is_empty()) {
                 hd_debug_print('No active XMLTV sources found to collect playlist icons...');
             } else if (!$this->delay_load_picons) {
                 // if delay load is not enabled need to download and index xmltv source for channels at this time
@@ -1584,7 +1749,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $indexing_flag |= INDEXING_CHANNELS;
         }
 
-        if ($this->use_xmltv) {
+        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
+        if ($engine === ENGINE_XMLTV || $engine === ENGINE_COMBINED) {
             $indexing_flag |= INDEXING_ENTRIES;
         }
 
@@ -1611,7 +1777,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
 
         $allow_index |= (is_delay_load_supported() && $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false));
-        $allow_index |= $this->use_xmltv;
+        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
+        $allow_index |= ($engine === ENGINE_XMLTV || $engine === ENGINE_COMBINED);
         if (!$allow_index) {
             return false;
         }
@@ -1641,7 +1808,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             PARAM_COOKIE_ENABLE_DEBUG => LogSeverity::$is_debug,
             PARAM_CACHE_DIR => Epg_Manager_Xmltv::get_cache_dir(),
             PARAM_INDEXING_FLAG => $indexing_flag,
-            PARAMS_XMLTV => $item,
+            PARAM_XMLTV => $item,
         );
 
         $config_file = get_temp_path(sprintf(self::PARSE_CONFIG, $source_id));
@@ -1697,7 +1864,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param string $preset_id
      * @return array|false
      */
-    public function get_configured_preset($preset_id)
+    public function get_config_preset($preset_id)
     {
         hd_debug_print(null, true);
         hd_debug_print("Preset id: '$preset_id'");
@@ -1705,53 +1872,33 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-        $presets_ids = $this->get_provider_epg_presets();
-        if (!isset($presets_ids[$preset_id])) {
-            return false;
-        }
-
-        $provider_preset = $presets_ids[$preset_id];
-        if (!self::$epg_presets->size()) {
+        if ($this->epg_json_presets->is_empty()) {
             hd_debug_print('No configured EPG presets for plugin', true);
             return false;
         }
 
-        $config_preset = self::$epg_presets->get($provider_preset[EPG_JSON_PRESET_NAME]);
-        if (empty($config_preset)) {
-            hd_debug_print("{$provider_preset[EPG_JSON_PRESET_NAME]} not exist in plugin configuration");
+        if (!$this->epg_json_presets->has($preset_id)) {
+            hd_debug_print("$preset_id not exist in plugin configuration");
             return false;
         }
 
-        if (isset($provider_preset[EPG_JSON_PRESET_NAME])) {
-            $config_preset[EPG_JSON_PRESET_NAME] = $provider_preset[EPG_JSON_PRESET_NAME];
-        }
-
-        if (isset($provider_preset[EPG_JSON_PRESET_ALIAS])) {
-            $config_preset[EPG_JSON_PRESET_ALIAS] = $provider_preset[EPG_JSON_PRESET_ALIAS];
-        }
-
-        return $config_preset;
+        return $this->epg_json_presets->get($preset_id);
     }
 
     /**
-     * @return array
+     * @return Hashed_Array
      */
-    public function get_provider_epg_presets($provider = null)
+    public function get_config_presets()
     {
-        $provider = is_null($provider) ? $this->get_active_provider() : $provider;
-        if (is_null($provider)) {
-            return array();
-        }
+        return $this->epg_json_presets;
+    }
 
-        $mapped_presets = array();
-        foreach ($provider->getConfigValue(EPG_JSON_PRESETS, array()) as $preset) {
-            $key = empty($preset[EPG_JSON_PRESET_ALIAS])
-                ? $preset[EPG_JSON_PRESET_NAME]
-                : "{$preset[EPG_JSON_PRESET_NAME]} ({$preset[EPG_JSON_PRESET_ALIAS]})";
-
-            $mapped_presets[$key] = $preset;
-        }
-        return $mapped_presets;
+    /**
+     * @return Hashed_Array
+     */
+    public function get_epg_xmltv_presets()
+    {
+        return $this->epg_xmltv_presets;
     }
 
     /**
@@ -1903,11 +2050,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     // EPG Manager
 
     /**
-     * @return Epg_Manager_Xmltv|Epg_Manager_Json
+     * @return Epg_Manager_Xmltv
      */
-    public function &get_epg_manager()
+    public function &get_xmltv_epg_manager()
     {
-        return $this->epg_manager;
+        return $this->xmltv_epg_manager;
+    }
+
+    /**
+     * @return Epg_Manager_Json
+     */
+    public function &get_json_epg_manager()
+    {
+        return $this->json_epg_manager;
     }
 
     /**
@@ -2321,23 +2476,25 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function init_epg_cache_dir($new_cache_dir = null)
     {
         $new_cache_dir = get_slash_trailed_path(str_replace('//', '/', $new_cache_dir));
-        $cur_cache_dir = $this->get_parameter(PARAM_XMLTV_CACHE_PATH);
+        $cur_cache_dir = $this->get_parameter(PARAM_EPG_CACHE_PATH);
         if (empty($new_cache_dir)) {
             // just init current settings
             if (empty($cur_cache_dir)) {
                 // set to default
                 $new_cache_dir = get_slash_trailed_path(get_data_path(EPG_CACHE_SUBDIR));
-                $this->set_parameter(PARAM_XMLTV_CACHE_PATH, $new_cache_dir);
+                $this->set_parameter(PARAM_EPG_CACHE_PATH, $new_cache_dir);
             } else {
                 $new_cache_dir = $cur_cache_dir;
             }
         } else if ($new_cache_dir !== $cur_cache_dir) {
             // set to new value
             Epg_Manager_Xmltv::clear_epg_files(null);
-            $this->set_parameter(PARAM_XMLTV_CACHE_PATH, $new_cache_dir);
+            Epg_Manager_Json::clear_epg_files(null);
+            $this->set_parameter(PARAM_EPG_CACHE_PATH, $new_cache_dir);
         }
 
         Epg_Manager_Xmltv::set_cache_dir($new_cache_dir);
+        Epg_Manager_Json::set_cache_dir($new_cache_dir);
         return $new_cache_dir;
     }
 
@@ -2442,16 +2599,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 return empty($pl_icon_url) ? $this->get_default_channel_icon($is_classic) : $pl_icon_url;
             }
 
-            if (empty($this->epg_manager) || ($this->picons_source === COMBINED_PICONS && !empty($pl_icon_url))) {
+            if (empty($this->xmltv_epg_manager) || ($this->picons_source === COMBINED_PICONS && !empty($pl_icon_url))) {
                 return $pl_icon_url;
             }
 
             if (!empty($channel_row[COLUMN_TITLE])) {
-                $picon_ids[] = mb_convert_case($channel_row[COLUMN_TITLE], MB_CASE_LOWER, "UTF-8");
+                $picon_ids[] = to_lower($channel_row[COLUMN_TITLE]);
             }
 
             if (!empty($aliases[ATTR_TVG_NAME])) {
-                $picon_ids[] = mb_convert_case($aliases[ATTR_TVG_NAME], MB_CASE_LOWER, "UTF-8");
+                $picon_ids[] = to_lower($aliases[ATTR_TVG_NAME]);
             }
 
             if (!empty($channel_row[COLUMN_EPG_ID])) {
@@ -2560,17 +2717,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function epg_engine_menu_items($handler, &$menu_items)
     {
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-            ENGINE_XMLTV, TR::t('setup_epg_cache_xmltv'),
-            $this->use_xmltv ? "check.png" : null
-        );
+        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
+        hd_debug_print("Selected engine: $engine", true);
 
-        if (count($this->get_provider_epg_presets())) {
-            $engine = TR::t('setup_epg_cache_json');
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-                ENGINE_JSON, $engine,
-                $this->use_xmltv ? null : 'check.png');
-        }
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+            ENGINE_JSON, TR::t('setup_epg_cache_json'), $engine === ENGINE_JSON ? "check.png" : null);
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+            ENGINE_XMLTV, TR::t('setup_epg_cache_xmltv'), $engine === ENGINE_XMLTV ? "check.png" : null);
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+            ENGINE_COMBINED, TR::t('setup_epg_cache_combined'), $engine === ENGINE_COMBINED ? "check.png" : null);
     }
 
     /**
@@ -2578,19 +2733,44 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param array $menu_items
      * @return void
      */
-    public function epg_select_menu_items($handler, &$menu_items)
+    public function epg_select_menu_engine($handler, &$menu_items)
     {
-        if (count($this->get_provider_epg_presets())) {
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-                ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1',
-                    TR::t($this->use_xmltv ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json')),
-                'engine.png');
-        }
+        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
+        hd_debug_print("Selected engine: $engine", true);
 
-        $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-            ACTION_ITEMS_EDIT, TR::t('setup_edit_xmltv_list'),
-            'epg.png',
-            array(CONTROL_ACTION_EDIT => Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST));
+        switch($engine)
+        {
+            case ENGINE_XMLTV:
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+                    ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', TR::t('setup_epg_cache_xmltv')), 'engine.png');
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+                    ACTION_ITEMS_EDIT, TR::t('setup_edit_xmltv_list'),
+                    'epg.png',
+                    array(CONTROL_ACTION_EDIT => Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST));
+                break;
+            case ENGINE_JSON:
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+                    ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', TR::t('setup_epg_cache_json')), 'engine.png');
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+                    ACTION_ITEMS_EDIT, TR::t('setup_edit_json_list'),
+                    'epg.png',
+                    array(CONTROL_ACTION_EDIT => Starnet_Edit_Json_List_Screen::SCREEN_EDIT_JSON_LIST));
+                break;
+            case ENGINE_COMBINED:
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+                    ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', TR::t('setup_epg_cache_combined')), 'engine.png');
+
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+                    ACTION_ITEMS_EDIT, TR::t('setup_edit_json_list'),
+                    'epg.png',
+                    array(CONTROL_ACTION_EDIT => Starnet_Edit_Json_List_Screen::SCREEN_EDIT_JSON_LIST));
+
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+                    ACTION_ITEMS_EDIT, TR::t('setup_edit_xmltv_list'),
+                    'epg.png',
+                    array(CONTROL_ACTION_EDIT => Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST));
+                break;
+        }
 
         $menu_items[] = Control_Factory::menu_separator();
     }
@@ -2723,6 +2903,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $title = TR::t('setup_edit_xmltv_list');
                 break;
 
+            case Starnet_Edit_Json_List_Screen::SCREEN_EDIT_JSON_LIST:
+                $ret_action[PARAM_END_ACTION] = ACTION_RELOAD;
+                $ret_action[PARAM_CANCEL_ACTION] = RESET_CONTROLS_ACTION_ID;
+                $new_media_url_str = Starnet_Edit_Json_List_Screen::make_callback_media_url_str($source_screen_id, $ret_action);
+                $title = TR::t('setup_edit_json_list');
+                break;
+
             default:
                 return null;
         }
@@ -2745,20 +2932,50 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $epg_urls = array();
-        $epg_ids = Epg_Manager_Json::get_epg_ids($channel_row);
-        if ($this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_JSON) {
+        $epg_ids = self::make_epg_ids($channel_row);
+        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
+        if ($engine === ENGINE_JSON || $engine === ENGINE_COMBINED) {
             if (!empty($epg_ids)) {
                 $day_start_ts = from_local_time_zone_offset(strtotime(date('Y-m-d')));
                 $provider = $this->get_active_provider();
-                foreach ($this->get_selected_json_sources(true) as $preset) {
-                    $config_preset = $this->get_configured_preset($preset);
+                foreach ($this->get_selected_json_sources() as $id) {
+                    $config_preset = $this->get_config_preset($id);
                     if (empty($config_preset)) {
                         continue;
                     }
-                    $epg_urls[] = Epg_Manager_Json::get_epg_url($provider, $config_preset, $day_start_ts, $epg_ids[0]);
+                    if (!empty($config_preset[EPG_JSON_PRESET_DOMAINS])) {
+                        $domain = $this->get_json_source_domain($id);
+                        $domain = empty($domain) ? reset($config_preset[EPG_JSON_PRESET_DOMAINS]) : $domain;
+                        $config_preset[EPG_JSON_PRESET_DOMAIN] = $domain;
+                    }
+
+                    $epg_id = $this->json_epg_manager->check_and_update_epg_id($epg_ids, $config_preset);
+                    $epg_url = Epg_Manager_Json::get_epg_url($config_preset, $day_start_ts, $epg_id);
+                    if (empty($epg_url)) continue;
+
+                    if (!empty($provider)) {
+                        $epg_url = str_replace(MACRO_API, $provider->getApiUrl(), $epg_url);
+                        $epg_url = $provider->replace_macros($epg_url);
+                    }
+                    $epg_urls[] = urldecode($epg_url);
                 }
             }
         }
+
+        if ($engine === ENGINE_XMLTV || $engine === ENGINE_COMBINED) {
+            $playlist_id = $this->get_active_playlist_id();
+            $all_sources = $this->get_all_xmltv_sources($playlist_id);
+            $selected_sources = $this->get_selected_xmltv_ids($playlist_id);
+            foreach ($selected_sources as $key) {
+                $item = $all_sources->get($key);
+                if (!empty($item)) {
+                    $epg_urls[] = (empty($item[PARAM_NAME]) || $item[PARAM_NAME] == $item[PARAM_URI])
+                        ? $item[PARAM_URI]
+                        : "{$item[PARAM_NAME]} ({$item[PARAM_URI]})";
+                }
+            }
+        }
+
         $epg_ids_str = implode(', ', $epg_ids);
         $defs = array();
 
@@ -3331,13 +3548,22 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $detect_info;
     }
 
+    /**
+     * Generate EPG ID from epg_id and lower case of channel title
+     *
+     * @param array $channel_row
+     * @return array
+     */
     public static function make_epg_ids($channel_row)
     {
-        return array('epg_id' => $channel_row[COLUMN_EPG_ID],
-            'id' => $channel_row[COLUMN_CHANNEL_ID],
-            'name' => $channel_row[COLUMN_TITLE],
-            ATTR_TVG_NAME => $channel_row[COLUMN_TITLE],
-            ATTR_TVG_ID => $channel_row[COLUMN_CHANNEL_ID]
+        return array_filter(
+            array_unique(
+                array(
+                    COLUMN_EPG_ID => $channel_row[COLUMN_EPG_ID],
+                    COLUMN_TVG_NAME => $channel_row[COLUMN_TVG_NAME],
+                    COLUMN_NAME => to_lower($channel_row[COLUMN_TITLE])
+                )
+            )
         );
     }
 
@@ -4076,62 +4302,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->safe_sql_playlist('exec_transaction', $query);
     }
 
-    /**
-     * @param api_default|null $provider
-     * @return void
-     */
-    public function update_selected_json_source($provider)
-    {
-        hd_debug_print(null, true);
-
-        if (is_null($provider)) {
-            return;
-        }
-
-        $playlist_id = $provider->get_provider_playlist_id();
-        $config_name = $this->get_active_epg_config($playlist_id);
-        $all_presets = $this->get_provider_epg_presets($provider);
-
-        $all_sources = $this->get_selected_json_sources(false);
-        // update selected json table for new or removed config presets
-        $query = '';
-        foreach ($all_presets as $id => $preset) {
-            $query .= sprintf('INSERT OR IGNORE INTO %s (name, enabled) VALUES (%s, %d);',
-                self::SELECTED_JSON_TABLE, Sql_Wrapper::sql_quote($id), 1);
-        }
-        foreach ($all_sources as $id => $enabled) {
-            if (isset($all_presets[$id])) continue;
-
-            $query .= sprintf('DELETE FROM %s WHERE %s=%s;',
-                self::SELECTED_JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($id));
-        }
-        $this->safe_sql_playlist_settings('exec', $query);
-
-        // read existing order
-        $order = List_Utils::read_config_file($config_name);
-        if (empty($order)) {
-            // do not update order if it not saved
-            return;
-        }
-        hd_debug_print('new order: ' . json_format_unescaped($order), true);
-        $selected_json_table = self::SELECTED_JSON_TABLE;
-        $query = "DELETE FROM $selected_json_table;";
-        $this->safe_sql_playlist_settings('exec', $query);
-        foreach ($all_presets as $id => $preset) {
-            if (!isset($order[$id])) {
-                $order[$id] = 1;
-            }
-        }
-
-        $query = '';
-        foreach ($order as $id => $enabled) {
-            $query .= "INSERT INTO $selected_json_table (name, enabled) VALUES ('$id', $enabled);";
-        }
-
-        $this->safe_sql_playlist_settings('exec', $query);
-        safe_unlink(List_Utils::config_file_path($config_name));
-    }
-
     protected function init_tv_history_db()
     {
         hd_debug_print(null, true);
@@ -4242,12 +4412,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * Parse epg description for extended epg tags
      * If ext_epg not enabled or channel in delayed queue no parsing performed
      *
+     * @param array $desc_parsers
      * @param string $title
      * @param string $raw_descr
      * @param string $icon
      * @return array
      */
-    public static function reformat_description($title, $raw_descr, $icon)
+    public static function reformat_description($desc_parsers, $title, $raw_descr, $icon)
     {
         $result = array();
         $result[PluginTvExtEpgProgram::title] = $title;
@@ -4288,12 +4459,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $parsed = array();
-        if (isset(self::$desc_parsers['matchers'][$matcher]['chunks'])) {
-            $raw_descr = $find_chunks($parsed, self::$desc_parsers['matchers'][$matcher]['chunks'], $raw_descr);
+        if (isset($desc_parsers['matchers'][$matcher]['chunks'])) {
+            $raw_descr = $find_chunks($parsed, $desc_parsers['matchers'][$matcher]['chunks'], $raw_descr);
         }
 
-        if (isset(self::$desc_parsers['cleanup'])) {
-            foreach (self::$desc_parsers['cleanup'] as $item) {
+        if (isset($desc_parsers['cleanup'])) {
+            foreach ($desc_parsers['cleanup'] as $item) {
                 $raw_descr = preg_replace($item, '', $raw_descr);
             }
         }

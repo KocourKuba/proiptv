@@ -32,6 +32,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
     const SCREEN_EDIT_PLAYLIST = 'playlist';
 
+    const ACTION_FILE_PLAYLIST = 'play_list_file';
     const ACTION_FILE_TEXT_LIST = 'text_list_file';
 
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
@@ -39,8 +40,6 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
     const ACTION_ASSIGN_SHORTCUT_POPUP = 'assign_shortcut';
     const ACTION_SHORTCUT_SELECTED = 'shortcut_selected';
-    const ACTION_EXPORT_FOLDER_SELECTED = 'export_folder_selected';
-    const ACTION_IMPORT_FOLDER_SELECTED = 'import_folder_selected';
 
     const PARAM_ALLOW_ORDER = 'allow_order';
 
@@ -249,14 +248,14 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_EXPORT_APPLY_DLG:
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                     array(
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => self::ACTION_EXPORT_FOLDER_SELECTED,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => ACTION_EXPORT_FOLDER_SELECTED,
                         Starnet_Folder_Screen::PARAM_ADD_PARAMS => $user_input->{CONTROL_EDIT_NAME},
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
                 return Action_Factory::open_folder($media_url, TR::t('select_folder'));
 
-            case self::ACTION_EXPORT_FOLDER_SELECTED:
+            case ACTION_EXPORT_FOLDER_SELECTED:
                 return $this->do_export_playlist($user_input);
 
             case ACTION_URL_DLG_APPLY:
@@ -268,7 +267,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             case self::ACTION_FILE_TEXT_LIST:
                 return $this->selected_text_file($user_input);
 
-            case ACTION_FILE_PLAYLIST:
+            case self::ACTION_FILE_PLAYLIST:
                 return $this->selected_m3u_file($user_input);
 
             case ACTION_EDIT_PROVIDER_DLG:
@@ -277,7 +276,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
                 return $this->apply_edit_provider_dlg($user_input, $parent_media_url, $plugin_cookies);
 
-            case self::ACTION_IMPORT_FOLDER_SELECTED:
+            case ACTION_IMPORT_FOLDER_SELECTED:
                 return $this->do_select_folder($user_input);
 
             case self::ACTION_ASSIGN_SHORTCUT_POPUP:
@@ -453,7 +452,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
             array(
                 PARAM_EXTENSION => PLAYLIST_PATTERN,
-                Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_PLAYLIST,
+                Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_FILE_PLAYLIST,
                 Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                 Starnet_Folder_Screen::PARAM_READ_ONLY => true,
             )
@@ -468,7 +467,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
             array(
                 PARAM_EXTENSION => PLAYLIST_PATTERN,
-                Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => self::ACTION_IMPORT_FOLDER_SELECTED,
+                Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => ACTION_IMPORT_FOLDER_SELECTED,
                 Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                 Starnet_Folder_Screen::PARAM_READ_ONLY => true,
             )
@@ -957,7 +956,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $params[PARAM_NAME] = $name;
 
         $this->plugin->set_playlist_parameters($playlist_id, $params);
-        if ($saved_source->size() !== 0) {
+        if (!$saved_source->is_empty()) {
             $this->plugin->set_playlist_xmltv_sources($playlist_id, $saved_source);
             $this->plugin->set_selected_xmltv_ids($playlist_id, $saved_source->key());
         }

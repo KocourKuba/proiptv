@@ -194,22 +194,22 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ENGINE_XMLTV:
             case ENGINE_JSON:
-                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) !== $user_input->control_id) {
-                    hd_debug_print("Selected engine: $user_input->control_id", true);
-                    $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
-                    $this->plugin->init_epg_manager();
+            case ENGINE_COMBINED:
+                hd_debug_print("Selected engine: $user_input->control_id", true);
+                $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
+                $post_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                if ($user_input->control_id === ENGINE_XMLTV || $user_input->control_id === ENGINE_COMBINED) {
                     $active_sources = $this->plugin->get_selected_xmltv_ids($this->plugin->get_active_playlist_id());
-                    $post_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
-                    if ($user_input->control_id === ENGINE_XMLTV) {
-                        if (empty($active_sources)) {
-                            $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_xmltv_sources'), $post_action);
-                        } else {
-                            $this->plugin->reset_channels_loaded();
-                        }
+                    if (empty($active_sources)) {
+                        $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_xmltv_sources'), $post_action);
+                    } else {
+                        $this->plugin->reset_channels_loaded();
                     }
-                    return $post_action;
+                } else {
+                    $this->plugin->reset_channels_loaded();
                 }
-                break;
+
+                return $post_action;
 
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 $group_id = safe_get_value($selected_media_url, COLUMN_GROUP_ID);
@@ -229,7 +229,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 }
                 break;
 
-            case ACTION_ICON_SELECTED:
+            case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 $group = $this->plugin->get_group($selected_media_url->{PARAM_GROUP_ID}, PARAM_ALL);
                 if (is_null($group)) break;
@@ -246,7 +246,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                 $this->plugin->set_group_icon($selected_media_url->{PARAM_GROUP_ID}, $cached_image_name);
                 return Action_Factory::refresh_entry_points($this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
 
-            case ACTION_RESET_ICON_DEFAULT:
+            case ACTION_RESET_DEFAULT:
                 hd_debug_print("Reset icon for group: " . $selected_media_url->{PARAM_GROUP_ID} . " to default");
                 switch ($selected_media_url->{PARAM_GROUP_ID}) {
                     case TV_ALL_CHANNELS_GROUP_ID:
@@ -512,8 +512,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     array(
                         PARAM_EXTENSION => IMAGE_PREVIEW_PATTERN,
                         PARAM_RECENT_FOLDER => $this->plugin->get_setting(PARAM_RECENT_IMAGE_FOLDER, ''),
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_ICON_SELECTED,
-                        Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_ICON_DEFAULT,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
+                        Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_DEFAULT,
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                         Starnet_Folder_Screen::PARAM_ALLOW_IMAGE_LIB => true,
                         Starnet_Folder_Screen::PARAM_READ_ONLY => true,
@@ -542,7 +542,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
 
             $menu_items[] = Control_Factory::menu_separator();
 
-            $this->plugin->epg_select_menu_items($this, $menu_items);
+            $this->plugin->epg_select_menu_engine($this, $menu_items);
 
             if ($this->plugin->has_active_provider()) {
                 $menu_items[] = Control_Factory::menu_separator();

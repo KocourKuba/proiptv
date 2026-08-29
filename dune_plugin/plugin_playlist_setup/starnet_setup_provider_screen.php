@@ -377,7 +377,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                     array(
                         PARAM_EXTENSION => PLAYLIST_PATTERN,
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_PLAYLIST,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                         Starnet_Folder_Screen::PARAM_READ_ONLY => true,
                     )
@@ -385,7 +385,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 
                 return Action_Factory::open_folder($media_url, TR::t('select_file'));
 
-            case ACTION_FILE_PLAYLIST:
+            case ACTION_FILE_SELECTED:
                 $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 $provider->SetProviderParameter(PARAM_CUSTOM_FILE_PLAYLIST_IPTV, $selected_media_url->{PARAM_FILEPATH});
                 $this->force_parent_reload = true;

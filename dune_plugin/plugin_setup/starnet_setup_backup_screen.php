@@ -100,7 +100,7 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                     array(
                         PARAM_EXTENSION => 'zip',
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_RESTORE_FILE_SELECTED,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                         Starnet_Folder_Screen::PARAM_READ_ONLY => true,
                     )
@@ -113,7 +113,7 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
                 $post_action = Action_Factory::show_title_dialog(TR::t('information'), $msg);
                 break;
 
-            case self::ACTION_RESTORE_FILE_SELECTED:
+            case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 return $this->do_restore_settings($data->{PARAM_CAPTION}, $data->{PARAM_FILEPATH});
         }

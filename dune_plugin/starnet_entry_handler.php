@@ -43,7 +43,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_CALL_PLAYLIST_SETTINGS = 'call_playlist_settings'; // this action coded in manifest
     const ACTION_CALL_PLAYLIST_SCREEN = 'call_playlists_setup'; // this action coded in manifest
     const ACTION_CALL_BACKUP_SETTINGS = 'call_backup'; // this action coded in manifest
-    const ACTION_CALL_XMLTV_SOURCES_SCREEN = 'call_xmltv_setup'; // this action coded in manifest
     const ACTION_CALL_REBOOT = 'call_reboot'; // this action coded in manifest
     const ACTION_CALL_SEND_LOG = 'call_send_log'; // this action coded in manifest
     const ACTION_CONFIRM_BACKUP_DLG = 'create_backup';
@@ -101,7 +100,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
             case self::ACTION_CALL_PLUGIN_SETTINGS:
             case self::ACTION_CALL_PLAYLIST_SETTINGS:
             case self::ACTION_CALL_PLAYLIST_SCREEN:
-            case self::ACTION_CALL_XMLTV_SOURCES_SCREEN:
                 $this->plugin->init_plugin();
                 return $this->plugin->show_protect_settings_dialog($this,
                     User_Input_Handler_Registry::create_action($this,
@@ -554,27 +552,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_PLAYLIST_SCREEN:
                 return $this->open_playlist_screen();
-
-            case self::ACTION_CALL_XMLTV_SOURCES_SCREEN:
-                $this->plugin->init_user_agent();
-                if (!$this->plugin->init_playlist_settings_db()) {
-                    $pl_error = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
-                    if (!empty($pl_error)) {
-                        return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
-                    }
-                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_init_database'));
-                }
-
-                $this->plugin->init_epg_manager();
-
-                $callback = Starnet_Edit_Xmltv_List_Screen::make_callback_media_url_str(
-                    Starnet_Entry_Handler::ID,
-                    array(
-                        PARAM_END_ACTION => ACTION_RELOAD,
-                        PARAM_CANCEL_ACTION => RESET_CONTROLS_ACTION_ID,
-                    )
-                );
-                return Action_Factory::open_folder($callback, TR::t('setup_edit_xmltv_list'));
         }
 
         return null;

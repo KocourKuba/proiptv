@@ -62,12 +62,11 @@ require_once 'screens_tv/starnet_edit_channel_list_screen.php';
 require_once 'screens_common/starnet_folder_screen.php';
 require_once 'screens_common/starnet_edit_playlists_screen.php';
 require_once 'screens_common/starnet_edit_xmltv_list_screen.php';
+require_once 'screens_common/starnet_edit_json_list_screen.php';
 require_once 'screens_common/starnet_edit_providers_list_screen.php';
 
 class Starnet_Plugin extends Default_Dune_Plugin
 {
-    const CONFIG_URL = 'http://iptv.esalecrm.net/config/providers';
-
     /**
      * @throws Exception
      */
@@ -115,6 +114,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Folder_Screen($this));
         $this->create_screen(new Starnet_Edit_Playlists_Screen($this));
         $this->create_screen(new Starnet_Edit_Xmltv_List_Screen($this));
+        $this->create_screen(new Starnet_Edit_Json_List_Screen($this));
         $this->create_screen(new Starnet_Edit_Providers_List_Screen($this));
         $this->create_screen(new Starnet_Edit_Hidden_List_Screen($this));
         $this->create_screen(new Starnet_Edit_Group_List_Screen($this));
@@ -142,130 +142,5 @@ class Starnet_Plugin extends Default_Dune_Plugin
         print_sysinfo();
 
         hd_print('Plugin loading complete.');
-    }
-
-    public function init_providers_config()
-    {
-        if (!is_null(self::$providers) && self::$providers->size() !== 0) {
-            return;
-        }
-
-        // 1. Check local debug version
-        // 2. Try to download from web release version
-        // 3. Check previously downloaded web release version
-        // 4. Check preinstalled version
-        // 5. Houston we have a problem
-        if (self::$plugin_info['debug']) {
-            $tmp_file = get_install_path('providers_debug.json');
-            if (file_exists($tmp_file)) {
-                hd_debug_print("Load debug providers configuration: $tmp_file");
-                $jsonArray = parse_json_file($tmp_file);
-            }
-        }
-
-        if (empty($jsonArray)) {
-            $name = 'providers_' . self::$plugin_info['app_base_version'] . '.json';
-            $tmp_file = get_data_path($name);
-            $serial = get_serial_number();
-            if (empty($serial)) {
-                hd_debug_print('Unable to get DUNE serial.');
-                $serial = 'XXXX';
-            }
-            $ver = self::$plugin_info['app_version'];
-            $model = get_product_id();
-            $firmware = get_raw_firmware_version();
-            $config_url = sprintf('%s?ver=%s&model=%s&firmware=%s&serial=%s', self::CONFIG_URL, $ver, $model, $firmware, $serial);
-            $jsonArray = Curl_Wrapper::getInstance()->download_content($config_url, Curl_Wrapper::RET_ARRAY);
-            if (empty($jsonArray) || !isset($jsonArray['providers'])) {
-                if (file_exists($tmp_file)) {
-                    hd_debug_print('Load actual providers configuration');
-                    $jsonArray = parse_json_file($tmp_file);
-                } else if (file_exists($tmp_file = get_install_path($name))) {
-                    hd_debug_print('Load installed providers configuration');
-                    $jsonArray = parse_json_file($tmp_file);
-                }
-            } else {
-                store_to_json_file($tmp_file, $jsonArray);
-            }
-        }
-
-        self::$image_libs = new Hashed_Array();
-        foreach ($jsonArray['plugin_config']['image_libs'] as $key => $value) {
-            hd_debug_print("available image lib: $key");
-            self::$image_libs->set($key, $value);
-        }
-
-        self::$epg_presets = new Hashed_Array();
-        foreach ($jsonArray['epg_presets'] as $key => $value) {
-            hd_debug_print("available epg preset: $key");
-            self::$epg_presets->set($key, $value);
-        }
-
-        self::$epg_xmltv_presets = new Hashed_Array();
-        foreach ($jsonArray['xmltv_sources'] as $key => $value) {
-            hd_debug_print("available xmltv preset: $key");
-            self::$epg_xmltv_presets->set($key, $value);
-        }
-
-        self::$desc_parsers = array();
-        if (isset($jsonArray['desc_parsers'])) {
-            self::$desc_parsers = $jsonArray['desc_parsers'];
-        }
-
-        if ($jsonArray === false || !isset($jsonArray['providers'])) {
-            hd_debug_print('Problem to get providers configuration');
-            return;
-        }
-
-        self::$providers = new Hashed_Array();
-        foreach ($jsonArray['providers'] as $item) {
-            if (!isset($item['id'], $item['enable']) || $item['enable'] === false) continue;
-
-            $api_class = 'api_default';
-            if (isset($item['class']) && class_exists('api_' . $item['class'])) {
-                $api_class = 'api_' . $item['class'];
-            }
-
-            /** @var api_default $provider */
-            $provider = new $api_class($this);
-            foreach ($item as $key => $value) {
-                $words = explode('_', $key);
-                $setter = 'set';
-                foreach ($words as $word) {
-                    $setter .= ucwords($word);
-                }
-                if (method_exists($provider, $setter)) {
-                    $provider->{$setter}($value);
-                } else {
-                    hd_debug_print("Unknown method $setter", true);
-                }
-            }
-
-            // add hidden api commands
-            $commands = $provider->getApiCommands();
-            $commands[API_COMMAND_GET_PLAYLIST] = MACRO_PLAYLIST_IPTV;
-            $vod_playlists = $provider->GetPlaylistsVod();
-            if (!empty($vod_playlists)) {
-                $commands[API_COMMAND_GET_VOD] = MACRO_PLAYLIST_VOD;
-            }
-            $provider->setApiCommands($commands);
-
-            // cache provider logo
-            $logo = $provider->getLogo();
-            $filename = basename($logo);
-            $local_file = get_install_path("logo/$filename");
-            if (file_exists($local_file)) {
-                $provider->setLogo("plugin_file://logo/$filename");
-            } else {
-                $cached_file = get_cached_image_path($filename);
-                $res = Curl_Wrapper::getInstance()->download_file($logo, $cached_file);
-                if ($res) {
-                    $provider->setLogo($cached_file);
-                } else {
-                    hd_debug_print("failed to download provider logo: $logo");
-                }
-            }
-            self::$providers->set($provider->getId(), $provider);
-        }
     }
 }

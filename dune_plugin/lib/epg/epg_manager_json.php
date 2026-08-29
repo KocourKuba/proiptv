@@ -23,7 +23,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'epg_manager_xmltv.php';
 require_once 'lib/list_utils.php';
 
 class ChannelInfo
@@ -35,13 +34,19 @@ class ChannelInfo
     public $info = array();
 
     /**
-     * contains known channels epg_id and aliases
+     * contains timestamp of the last update
      * @var int
      */
     public $expired = 0;
+
+    /**
+     * info is valid
+     * @var bool
+     */
+    public $valid = false;
 }
 
-class Epg_Manager_Json extends Epg_Manager_Xmltv
+class Epg_Manager_Json
 {
     const EPG_ROOT = 'epg_root';
     const EPG_START = 'epg_start';
@@ -70,30 +75,41 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
      */
     protected static $all_channels_info = array();
 
+    /**
+     * path where cache is stored
+     * @var string
+     */
+    protected static $cache_dir;
+
     public function __construct($plugin)
     {
-        parent::__construct($plugin);
         $this->plugin = $plugin;
     }
 
     /**
-     * @param api_default $provider
      * @param array $preset
      * @param int $day_start_ts
      * @param string $epg_id
      * @return string|null
      */
-    public static function get_epg_url($provider, $preset, $day_start_ts, $epg_id)
+    public static function get_epg_url($preset, $day_start_ts, $epg_id)
     {
-        if (empty($preset[EPG_JSON_PRESET_ALIAS])) {
-            $provider_id = $provider->getId();
-            hd_debug_print("Using id '$provider_id' for preset '{$preset[EPG_JSON_PRESET_NAME]}'");
-        } else {
-            $provider_id = $preset[EPG_JSON_PRESET_ALIAS];
-            hd_debug_print("Using alias '$provider_id' for preset '{$preset[EPG_JSON_PRESET_NAME]}'");
+        if (empty($epg_id)) {
+            return '';
         }
-        $epg_url = str_replace(array(MACRO_API, MACRO_PROVIDER), array($provider->getApiUrl(), $provider_id), $preset[EPG_JSON_SOURCE]);
-        $epg_url = $provider->replace_macros($epg_url);
+
+        $epg_url = $preset[EPG_JSON_SOURCE];
+        hd_debug_print("EPG url '$epg_url'");
+
+        hd_debug_print("Using id '{$preset[EPG_JSON_PRESET_ID]}' for preset '{$preset[EPG_JSON_PRESET_NAME]}'", true);
+        $epg_url = str_replace(MACRO_PROVIDER, $preset[EPG_JSON_PRESET_ID], $epg_url);
+
+        if (isset($preset[EPG_JSON_PRESET_DOMAINS], $preset[EPG_JSON_PRESET_DOMAIN])) {
+            $domains = safe_get_value($preset, EPG_JSON_PRESET_DOMAINS);
+            $domain = safe_get_value($preset, EPG_JSON_PRESET_DOMAIN);
+            hd_debug_print("Using domain '$domain'", true);
+            $epg_url = str_replace(MACRO_API_DOMAIN_ID, $domains[$domain], $epg_url);
+        }
 
         $epg_url = str_replace(MACRO_TIMESTAMP, $day_start_ts, $epg_url);
 
@@ -117,62 +133,80 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     }
 
     /**
-     * @inheritDoc
-     * @override
+     * Load epg for specified day
+     *
+     * @param array $channel_row
+     * @param int $day_start_ts timestamp for day start in local time
+     * @param string $found_in source where epg is found
+     * @return array of entries started from day start for entire day
      */
-    public function get_day_epg_items($channel_row, $day_start_ts)
+    public function get_day_epg_items($channel_row, $day_start_ts, &$found_in)
     {
         $day_end_ts = $day_start_ts + 86400;
         $day_epg = array();
         $day_items = array();
 
         try {
-            $provider = $this->plugin->get_active_provider();
-            if (empty($provider)) {
-                throw new Exception('Unknown active provider');
-            }
-
-            $presets_ids = $this->plugin->get_provider_epg_presets();
-            if (empty($presets_ids)) {
-                throw new Exception("No defined EPG preset for provider: {$provider->getId()}");
-            }
-
-            $epg_ids = self::get_epg_ids($channel_row);
+            $epg_ids = Default_Dune_Plugin::make_epg_ids($channel_row);
             if (empty($epg_ids)) {
-                throw new Exception("No EPG ID's defined for channel: {$channel_row[COLUMN_TITLE]}");
+                throw new Exception("No suitable EPG info defined for channel: {$channel_row[COLUMN_TITLE]}");
             }
 
-            // try to find in memory cache
-            // in JSON engine only one EPG ID is available
-            // epg id or mapped id always first
-            $epg_id = $epg_ids[0];
-            $preset_order = $this->plugin->get_selected_json_sources(true);
-            hd_debug_print('EPG servers order: ' . json_format_unescaped($preset_order), true);
-            foreach ($preset_order as $preset_id) {
-                $config_preset = $this->plugin->get_configured_preset($preset_id);
+            $provider = $this->plugin->get_active_provider();
+            $selected_presets = $this->plugin->get_selected_json_sources();
+            if (empty($selected_presets)) {
+                throw new Exception("No EPG source selected");
+            }
+
+            hd_debug_print('EPG servers order: ' . implode(',', $selected_presets), true);
+            foreach ($selected_presets as $id) {
+                $config_preset = $this->plugin->get_config_preset($id);
                 if (empty($config_preset)) {
-                    hd_debug_print("EPG preset '$preset_id' is not configured");
+                    hd_debug_print("EPG preset '$id' is not configured");
                     continue;
                 }
 
-                $epg_id = $this->check_and_update_epg_id($provider->getId(), $epg_id, $epg_ids, $config_preset);
-                if (empty($epg_id)) continue;
+                if (!empty($config_preset[CONFIG_EPG_ID_MAP])) {
+                    if ($config_preset[CONFIG_EPG_ID_MAP] === 'id') {
+                        $epg_ids[COLUMN_EPG_ID] = $channel_row[COLUMN_CHANNEL_ID];
+                    } else if (isset($channel_row[$config_preset[CONFIG_EPG_ID_MAP]])) {
+                        $epg_ids[COLUMN_EPG_ID] = $channel_row[$config_preset[CONFIG_EPG_ID_MAP]];
+                    }
+                }
 
-                $epg_url = self::get_epg_url($provider, $config_preset, $day_start_ts, $epg_id);
+                $cache_time = $this->plugin->get_json_source_cache($id);
+                $config_preset[EPG_JSON_PRESET_CACHE] = empty($preset_params) ? 3 : $cache_time;
+
+                if (isset($config_preset[EPG_JSON_PRESET_DOMAINS])) {
+                    $domain = $this->plugin->get_json_source_domain($id);
+                    $config_preset[EPG_JSON_PRESET_DOMAIN] = empty($domain) ? reset($config_preset[EPG_JSON_PRESET_DOMAINS]) : $domain;
+                }
+
+                $epg_id = $this->check_and_update_epg_id($epg_ids, $config_preset);
+                if (empty($epg_id)) {
+                    continue;
+                }
+
+                $epg_url = self::get_epg_url($config_preset, $day_start_ts, $epg_id);
                 if (empty($epg_url)) {
                     hd_debug_print("EPG url for preset '{$config_preset['name']}' is not generated");
                     continue;
                 }
 
+                if (!empty($provider)) {
+                    $epg_url = str_replace(MACRO_API, $provider->getApiUrl(), $epg_url);
+                    $epg_url = $provider->replace_macros($epg_url);
+                }
+
                 hd_debug_print("EPG url: $epg_url");
                 hd_debug_print("Try to load EPG ID: '$epg_id' for channel '{$channel_row[COLUMN_CHANNEL_ID]}' ({$channel_row[COLUMN_TITLE]})");
 
-                $epg_cache_file = self::$cache_dir . $provider->get_provider_playlist_id() . "_" . Hashed_Array::hash($epg_url) . ".cache";
+                $epg_cache_file = self::$cache_dir . Hashed_Array::hash($id) . '_' . Hashed_Array::hash($epg_url) . '.json';
                 hd_debug_print("Check cache file: $epg_cache_file");
                 $now = time();
                 if (file_exists($epg_cache_file)) {
                     $mtime = filemtime($epg_cache_file);
-                    $cache_expired_at = $mtime + $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1) * 3600;
+                    $cache_expired_at = $mtime + $cache_time * 3600;
                 } else {
                     hd_debug_print("Cache file '$epg_cache_file' not found");
                     $cache_expired_at = 0;
@@ -197,7 +231,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                     }
 
                     $curl_wrapper = $this->plugin->setup_curl();
-                    if (isset($config_preset[EPG_JSON_AUTH])) {
+                    if (!empty($provider) && isset($config_preset[EPG_JSON_AUTH])) {
                         $opts[CURLOPT_HTTPHEADER] = array($provider->replace_macros($config_preset[EPG_JSON_AUTH]));
                         $curl_wrapper->set_options($opts);
                     }
@@ -249,7 +283,10 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                     $day_items[$program_start] = $entry;
                 }
 
-                if (!empty($day_items)) break;
+                if (!empty($day_items)) {
+                    $found_in = '[' . TR::load('setup_epg_cache_json') . "] - '$id'";
+                    break;
+                }
             }
 
             if (empty($day_items)) {
@@ -261,100 +298,134 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             $day_items = array();
         }
 
-        $day_epg['items'] = $day_items;
+        $day_epg[PARAM_ITEMS] = $day_items;
         return $day_epg;
     }
 
-    /**
-     * @param array $channel_row
-     * @return array
-     */
-    public static function get_epg_ids($channel_row)
+    public static function is_proiptv_epg_preset($config_preset)
     {
-        $epg_ids = Default_Dune_Plugin::make_epg_ids($channel_row);
-
-        $ids = array();
-        if (isset($selected_preset[EPG_JSON_EPG_MAP])) {
-            $ids[] = $epg_ids[$selected_preset[EPG_JSON_EPG_MAP]];
-            hd_debug_print("EPG ID map: {$epg_ids[$selected_preset[EPG_JSON_EPG_MAP]]}", true);
-        }
-
-        foreach (array('epg_id', ATTR_TVG_ID, ATTR_TVG_NAME, 'name', 'id') as $key) {
-            if (!empty($epg_ids[$key])) {
-                $ids[] = $epg_ids[$key];
-            }
-        }
-
-        return array_unique($ids);
+        return isset($config_preset[EPG_JSON_PRESET_NAME]) && $config_preset[EPG_JSON_PRESET_NAME] === 'proiptv';
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
+    public static function is_proiptv_epg_preset_name($name)
+    {
+        return strpos($name, 'proiptv') === 0;
+    }
 
     /**
-     * @param string $provider_id
-     * @param string $epg_id
-     * @param array $epg_ids
      * @param array $config_preset
-     * @return array|false
+     * @return bool
      */
-    protected function check_and_update_epg_id($provider_id, $epg_id, $epg_ids, $config_preset)
+    public static function load_channels_info($config_preset)
     {
-        if ($config_preset[EPG_JSON_PRESET_NAME] !== 'proiptv') {
-            return $epg_id;
+        if (!self::is_proiptv_epg_preset($config_preset)) {
+            return false;
         }
 
-        if (!empty($config_preset[EPG_JSON_PRESET_ALIAS])) {
-            $provider_id = $config_preset[EPG_JSON_PRESET_ALIAS];
-        }
-
-        if (!isset(self::$all_channels_info[$provider_id])
-            || self::$all_channels_info[$provider_id]->expired < time()
-            || empty(self::$all_channels_info[$provider_id])) {
-            $curl_wrapper = $this->plugin->setup_curl();
-            $channel_info_url = str_replace(MACRO_PROVIDER, $provider_id, $config_preset[EPG_JSON_SOURCE]);
+        $epg_source_id = $config_preset[EPG_JSON_PRESET_ID];
+        if (!isset(self::$all_channels_info[$epg_source_id])
+            || (self::$all_channels_info[$epg_source_id]->valid && self::$all_channels_info[$epg_source_id]->expired < time())) {
+            $curl_wrapper = Curl_Wrapper::getInstance();
+            $channel_info_url = str_replace(MACRO_PROVIDER, $epg_source_id, $config_preset[EPG_JSON_SOURCE]);
             $channels_info_url = substr($channel_info_url, 0, strlen($channel_info_url) - strlen(basename($channel_info_url))) . 'channels_info.json';
             hd_debug_print("Fetching channels info from server: $channels_info_url");
             $ch_data = $curl_wrapper->download_content($channels_info_url,
                 Curl_Wrapper::RET_ARRAY, Curl_Wrapper::USE_ETAG | Curl_Wrapper::CACHE_RESPONSE
             );
 
-            self::$all_channels_info[$provider_id] = new ChannelInfo();
+            self::$all_channels_info[$epg_source_id] = new ChannelInfo();
 
-            if (empty($ch_data)) {
-                self::$all_channels_info[$provider_id]->expired = PHP_INT_MAX;
-                return $epg_id;
-            }
-
-            self::$all_channels_info[$provider_id]->info = $ch_data;
-            self::$all_channels_info[$provider_id]->expired = time() + 4 * 3600;
-        }
-
-        $channels_info = self::$all_channels_info[$provider_id]->info;
-        if (!empty($channels_info) && !in_array($epg_id, $channels_info['epg_id'])) {
-            // this epg id is not known, try to find it in aliases (lower case)
-            // channel info array contains alias as key and mapped epg id as value
-            hd_debug_print("EPG ID '$epg_id' not found in known list", true);
-            foreach ($epg_ids as $epg_id) {
-                $alias = mb_convert_case($epg_id, MB_CASE_LOWER, "UTF-8");
-                if (array_key_exists($alias, $channels_info['epg_aliases'])) {
-                    // EPG not found by EPG ID and channel name
-                    $epg_id_subst = $channels_info['epg_aliases'][$alias];
-                    hd_debug_print("EPG ID for '$alias' found in known list: $epg_id_subst", true);
-                    break;
-                }
-            }
-
-            if (empty($epg_id_subst)) {
-                hd_debug_print("No EPG id found in known aliases list", true);
-                $epg_id = '';
-            } else {
-                $epg_id = $epg_id_subst;
+            if (!empty($ch_data)) {
+                self::$all_channels_info[$epg_source_id]->valid = true;
+                self::$all_channels_info[$epg_source_id]->info = $ch_data;
+                self::$all_channels_info[$epg_source_id]->expired = time() + 4 * 3600;
             }
         }
 
-        return $epg_id;
+        return self::$all_channels_info[$epg_source_id]->valid;
     }
+
+    /**
+     * @param array $config_preset
+     * @return array
+     */
+    public static function get_all_json_ids($config_preset)
+    {
+        $ids = array();
+        $epg_source_id = $config_preset[EPG_JSON_PRESET_ID];
+        if (self::$all_channels_info[$epg_source_id]->valid) {
+            if (isset(self::$all_channels_info[$epg_source_id]->info[COLUMN_EPG_ID])) {
+                $ids = self::$all_channels_info[$epg_source_id]->info[COLUMN_EPG_ID];
+            }
+            if (isset(self::$all_channels_info[$epg_source_id]->info[COLUMN_EPG_ALIASES])) {
+                $ids = array_merge($ids, array_keys(self::$all_channels_info[$epg_source_id]->info[COLUMN_EPG_ALIASES]));
+            }
+        }
+
+        return $ids;
+    }
+
+    public static function get_channels_info($config_preset)
+    {
+        $epg_source_id = $config_preset[EPG_JSON_PRESET_ID];
+        if (self::$all_channels_info[$epg_source_id]->valid) {
+            return self::$all_channels_info[$epg_source_id]->info;
+        }
+
+        return array();
+    }
+
+    /**
+     * @param array $epg_ids
+     * @param array $config_preset
+     * @return string
+     */
+    public function check_and_update_epg_id($epg_ids, $config_preset)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("EPG ID's: " . json_format_unescaped($epg_ids), true);
+
+        if (empty($epg_ids[COLUMN_EPG_ID])) {
+            return reset($epg_ids);
+        }
+
+        $epg_id = $epg_ids[COLUMN_EPG_ID];
+        $epg_source_id = $config_preset[EPG_JSON_PRESET_ID];
+
+        if (!self::load_channels_info($config_preset) || empty(self::$all_channels_info[$epg_source_id])) {
+            return $epg_id;
+        }
+
+        $channels_info = self::$all_channels_info[$epg_source_id]->info;
+        if (!empty($channels_info[COLUMN_EPG_ID]) && in_array($epg_id, $channels_info[COLUMN_EPG_ID])) {
+            return $epg_id;
+        }
+
+        if (empty($channels_info[COLUMN_EPG_ALIASES])) {
+            return '';
+        }
+
+        // this epg id is not known, try to find it in aliases (lower case)
+        // channel info array contains alias as key and mapped epg id as value
+        hd_debug_print("EPG ID '$epg_id' not found in known list", true);
+        foreach (array(COLUMN_TVG_NAME, COLUMN_NAME) as $col) {
+            if (empty($epg_ids[$col])) continue;
+
+            $alias = $epg_ids[$col];
+            hd_debug_print("Searching alias: '$alias'", true);
+            if (array_key_exists($alias, $channels_info[COLUMN_EPG_ALIASES])) {
+                $epg_id_subst = $channels_info[COLUMN_EPG_ALIASES][$alias];
+                hd_debug_print("Mapped EPG ID: '$epg_id_subst'", true);
+                return $epg_id_subst;
+            }
+        }
+
+        hd_debug_print("No EPG id found in known aliases list", true);
+        return '';
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
 
     /**
      * parse json epg response
@@ -464,17 +535,42 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     }
 
     /**
-     * @inheritDoc
-     * @override
+     * clear cache for selected filename (hash) mask
+     *
+     * @param string|null $hash
+     * @return void
      */
     public static function clear_epg_files($hash = '')
     {
         hd_debug_print(null, true);
 
         self::$all_channels_info = array();
-        $files = self::$cache_dir . (empty($hash) ? '*.cache' : "$hash*.cache");
+        $files = self::$cache_dir . (empty($hash) ? '*.json' : "$hash*.json");
         hd_debug_print("clear cache files: $files");
         array_map('unlink', glob($files));
         clearstatcache();
+    }
+
+    /**
+     * Set and create cache dir
+     *
+     * @param string $cache_dir
+     */
+    public static function set_cache_dir($cache_dir)
+    {
+        self::$cache_dir = get_slash_trailed_path($cache_dir);
+        create_path(self::$cache_dir);
+
+        hd_print_separator();
+        hd_print('Cache folder:            ' . self::$cache_dir);
+        hd_print('Storage space:           ' . HD::get_storage_size(self::$cache_dir));
+    }
+
+    /**
+     * @return string
+     */
+    public static function get_cache_dir()
+    {
+        return self::$cache_dir;
     }
 }

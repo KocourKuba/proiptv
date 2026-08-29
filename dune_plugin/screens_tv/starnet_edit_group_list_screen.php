@@ -230,7 +230,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $this->plugin->sort_groups_order(true);
                 break;
 
-            case ACTION_ICON_SELECTED:
+            case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 $group = $this->plugin->get_group($selected_media_url->{PARAM_GROUP_ID}, PARAM_ALL);
                 if (is_null($group)) break;
@@ -248,7 +248,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $this->plugin->set_group_icon($selected_media_url->{PARAM_GROUP_ID}, $cached_image_name);
                 return Action_Factory::refresh_entry_points($this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
 
-            case ACTION_RESET_ICON_DEFAULT:
+            case ACTION_RESET_DEFAULT:
                 hd_debug_print("Reset icon for group: " . $selected_media_url->{PARAM_GROUP_ID} . " to default");
                 $this->force_parent_reload = true;
                 $icon = $selected_media_url->{PARAM_GROUP_ID} === TV_ALL_CHANNELS_GROUP_ICON ? TV_ALL_CHANNELS_GROUP_ICON : '';
@@ -344,8 +344,8 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
             array(
                 PARAM_EXTENSION => IMAGE_PREVIEW_PATTERN,
                 PARAM_RECENT_FOLDER => $this->plugin->get_setting(PARAM_RECENT_IMAGE_FOLDER, ''),
-                Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_ICON_SELECTED,
-                Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_ICON_DEFAULT,
+                Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
+                Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_DEFAULT,
                 Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                 Starnet_Folder_Screen::PARAM_ALLOW_IMAGE_LIB => true,
                 Starnet_Folder_Screen::PARAM_READ_ONLY => true,
@@ -355,7 +355,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
             Action_Factory::open_folder($media_url, TR::t('select_file')),
             TR::t('change_group_icon'), 'image.png');
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-            ACTION_RESET_ICON_DEFAULT, TR::t('reset_default'), 'image.png');
+            ACTION_RESET_DEFAULT, TR::t('reset_default'), 'image.png');
 
         $menu_items[] = Control_Factory::menu_separator();
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,

@@ -483,7 +483,6 @@ class Curl_Wrapper
         }
 
         $cached_path = $this->file_cache_path . $hash;
-        create_path($cached_path);
         if ($cache_opts & self::CACHE_RESPONSE) {
             hd_debug_print("cache opts: Use cache response. Cache time: {$this->file_cache_time}h", true);
             if (file_exists($cached_path)) {

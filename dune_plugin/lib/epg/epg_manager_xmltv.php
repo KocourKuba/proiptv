@@ -82,7 +82,6 @@ class Epg_Manager_Xmltv
      */
     public function __construct($plugin)
     {
-        self::$ext_epg_enabled = is_ext_epg_supported() && $plugin->get_bool_setting(PARAM_SHOW_EXT_EPG);
         self::update_active_sources($plugin->get_active_sources());
     }
 
@@ -114,13 +113,14 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * Try to load epg from cached file
+     * Load epg for specified day
      *
      * @param array $channel_row
      * @param int $day_start_ts timestamp for day start in local time
+     * @param string $found_in source where epg is found
      * @return array of entries started from day start for entire day
      */
-    public function get_day_epg_items($channel_row, $day_start_ts)
+    public function get_day_epg_items($channel_row, $day_start_ts, &$found_in)
     {
         $day_epg = array();
         $channel_id = safe_get_value($channel_row, COLUMN_CHANNEL_ID);
@@ -131,7 +131,7 @@ class Epg_Manager_Xmltv
         $day_end_ts = $day_start_ts + 86400;
 
         $error_message = '';
-        if (self::$xmltv_sources->size() === 0) {
+        if (self::$xmltv_sources->is_empty()) {
             $error_message = "No selected XMLTV sources!";
         }
 
@@ -199,9 +199,12 @@ class Epg_Manager_Xmltv
                         $xml_str = "<tv>" . fread($handle, $pos['end'] - $pos['start']) . "</tv>";
 
                         $xml_node = new DOMDocument();
-                        $res = $xml_node->loadXML($xml_str);
-                        if ($res === false) {
-                            throw new Exception("Exception in line:\n$xml_str");
+                        if ($xml_node->loadXML($xml_str, LIBXML_NOWARNING | LIBXML_NOERROR) === false) {
+                            foreach (libxml_get_errors() as $error) {
+                                display_xml_error($error, $xml_str);
+                            }
+                            libxml_clear_errors();
+                            continue;
                         }
 
                         foreach ($xml_node->getElementsByTagName('programme') as $tag) {
@@ -223,22 +226,20 @@ class Epg_Manager_Xmltv
                                 $epg_items[PluginTvEpgProgram::icon_url] = $icon;
                             }
 
-                            if (self::$ext_epg_enabled) {
-                                $update_ext_epg(PluginTvExtEpgProgram::sub_title, 'sub-title', $tag, $epg_items);
-                                $update_ext_epg(PluginTvExtEpgProgram::main_category, 'category', $tag, $epg_items);
-                                $update_ext_epg(PluginTvExtEpgProgram::year, 'date', $tag, $epg_items);
-                                $update_ext_epg(PluginTvExtEpgProgram::country, 'country', $tag, $epg_items);
+                            $update_ext_epg(PluginTvExtEpgProgram::sub_title, 'sub-title', $tag, $epg_items);
+                            $update_ext_epg(PluginTvExtEpgProgram::main_category, 'category', $tag, $epg_items);
+                            $update_ext_epg(PluginTvExtEpgProgram::year, 'date', $tag, $epg_items);
+                            $update_ext_epg(PluginTvExtEpgProgram::country, 'country', $tag, $epg_items);
 
-                                $collect_ext_epg(PluginTvExtEpgProgram::icons, 'image', $tag, $epg_items);
-                                foreach ($tag->getElementsByTagName('credits') as $sub_tag) {
-                                    $collect_ext_epg(PluginTvExtEpgProgram::director, 'director', $sub_tag, $epg_items);
-                                    $collect_ext_epg(PluginTvExtEpgProgram::producer, 'producer', $sub_tag, $epg_items);
-                                    $collect_ext_epg(PluginTvExtEpgProgram::actor, 'actor', $sub_tag, $epg_items);
-                                    $collect_ext_epg(PluginTvExtEpgProgram::presenter, 'presenter', $sub_tag, $epg_items);
-                                    $collect_ext_epg(PluginTvExtEpgProgram::writer, 'writer', $sub_tag, $epg_items);
-                                    $collect_ext_epg(PluginTvExtEpgProgram::editor, 'editor', $sub_tag, $epg_items);
-                                    $collect_ext_epg(PluginTvExtEpgProgram::composer, 'composer', $sub_tag, $epg_items);
-                                }
+                            $collect_ext_epg(PluginTvExtEpgProgram::icons, 'image', $tag, $epg_items);
+                            foreach ($tag->getElementsByTagName('credits') as $sub_tag) {
+                                $collect_ext_epg(PluginTvExtEpgProgram::director, 'director', $sub_tag, $epg_items);
+                                $collect_ext_epg(PluginTvExtEpgProgram::producer, 'producer', $sub_tag, $epg_items);
+                                $collect_ext_epg(PluginTvExtEpgProgram::actor, 'actor', $sub_tag, $epg_items);
+                                $collect_ext_epg(PluginTvExtEpgProgram::presenter, 'presenter', $sub_tag, $epg_items);
+                                $collect_ext_epg(PluginTvExtEpgProgram::writer, 'writer', $sub_tag, $epg_items);
+                                $collect_ext_epg(PluginTvExtEpgProgram::editor, 'editor', $sub_tag, $epg_items);
+                                $collect_ext_epg(PluginTvExtEpgProgram::composer, 'composer', $sub_tag, $epg_items);
                             }
 
                             if (!empty($epg_items)) {
@@ -260,7 +261,10 @@ class Epg_Manager_Xmltv
                     $day_items = array();
                     continue;
                 }
-                if (!empty($day_items)) break;
+                if (!empty($day_items)) {
+                    $found_in = "[XMLTV] - '{$params[PARAM_NAME]}'";
+                    break;
+                }
             } catch (Exception $ex) {
                 $error_message = $ex->getMessage();
                 print_backtrace_exception($ex);
@@ -285,7 +289,7 @@ class Epg_Manager_Xmltv
             }
         }
 
-        $day_epg['items'] = $day_items;
+        $day_epg[PARAM_ITEMS] = $day_items;
 
         return $day_epg;
     }
@@ -309,7 +313,7 @@ class Epg_Manager_Xmltv
      */
     public static function set_xmltv_sources($sources)
     {
-        if ($sources->size() === 0) {
+        if ($sources->is_empty()) {
             hd_debug_print('No XMLTV source selected');
         } else {
             hd_debug_print("XMLTV sources selected: $sources");
@@ -376,11 +380,11 @@ class Epg_Manager_Xmltv
                 throw new Exception('Invalid config file for indexing');
             }
 
-            if (empty($config[PARAMS_XMLTV])) {
+            if (empty($config[PARAM_XMLTV])) {
                 throw new Exception('Empty XMLTV config for indexing');
             }
 
-            $LOG_FILE = get_temp_path("{$config[PARAMS_XMLTV][PARAM_HASH]}_indexing.log");
+            $LOG_FILE = get_temp_path("{$config[PARAM_XMLTV][PARAM_HASH]}_indexing.log");
             if (!LogSeverity::$is_debug) {
                 safe_unlink($LOG_FILE);
             }
@@ -395,10 +399,10 @@ class Epg_Manager_Xmltv
             hd_print('Log:         ' . $LOG_FILE);
             hd_print('Cache dir:   ' . self::$cache_dir);
             hd_print('Index flag:  ' . $config[PARAM_INDEXING_FLAG]);
-            hd_print('XMLTV param: ' . json_format_unescaped($config[PARAMS_XMLTV]));
+            hd_print('XMLTV param: ' . json_format_unescaped($config[PARAM_XMLTV]));
             hd_print('PHP_PATH:    ' . get_include_path());
 
-            self::reindex_xmltv($config[PARAMS_XMLTV], $config[PARAM_INDEXING_FLAG]);
+            self::reindex_xmltv($config[PARAM_XMLTV], $config[PARAM_INDEXING_FLAG]);
         } catch (Exception $ex) {
             hd_debug_print($ex);
             Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $ex->getMessage());
@@ -587,7 +591,7 @@ class Epg_Manager_Xmltv
         $perf->reset('start');
 
         $cached_file = self::$cache_dir . $url_hash . ".xmltv";
-        $params[PARAM_XMLTV_CACHE_PATH] = $cached_file;
+        $params[PARAM_EPG_CACHE_PATH] = $cached_file;
 
         /// download source
         if ($indexing_flag & INDEXING_DOWNLOAD) {
@@ -712,11 +716,9 @@ class Epg_Manager_Xmltv
                 if (feof($file) || empty($line)) continue;
 
                 $xml_node = new DOMDocument();
-                if (!$xml_node->loadXML($line, LIBXML_NOWARNING | LIBXML_NOERROR)) {
-                    hd_debug_print("Error parsing xml file:\n$line");
+                if ($xml_node->loadXML($line, LIBXML_NOWARNING | LIBXML_NOERROR) === false) {
                     foreach (libxml_get_errors() as $error) {
-                        $xml_error = "Error [$error->code] at line $error->line, column $error->column: " . trim($error->message) . "\n";
-                        hd_debug_print($xml_error);
+                        display_xml_error($error, $line);
                     }
                     libxml_clear_errors();
                     continue;
@@ -742,12 +744,12 @@ class Epg_Manager_Xmltv
                 }
 
                 $q_picon_hash = Sql_Wrapper::sql_quote($picon_hash);
-                $q_alias = Sql_Wrapper::sql_quote(mb_convert_case($channel_id, MB_CASE_LOWER, "UTF-8"));
+                $q_alias = Sql_Wrapper::sql_quote(to_lower($channel_id));
                 $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES(%s,%s,%s);',
                     $ch_table_name, COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_PICON_HASH, $q_alias, $q_channel_id, $q_picon_hash);
 
                 foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
-                    $q_alias = Sql_Wrapper::sql_quote(mb_convert_case($tag->nodeValue, MB_CASE_LOWER, "UTF-8"));
+                    $q_alias = Sql_Wrapper::sql_quote(to_lower($tag->nodeValue));
                     $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES(%s,%s,%s);',
                         $ch_table_name, COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_PICON_HASH, $q_alias, $q_channel_id, $q_picon_hash);
                 }
@@ -1078,6 +1080,69 @@ class Epg_Manager_Xmltv
         hd_debug_print('Storage space:  ' . HD::get_storage_size(self::$cache_dir));
     }
 
+    public static function get_all_xmltv_channels($params)
+    {
+        $db = self::open_sqlite_db($params[PARAM_HASH], true);
+        if ($db === false) {
+            hd_debug_print("Problem with open SQLite db: '{$params[PARAM_HASH]}.db'! Possible database not exist");
+            return array();
+        }
+
+        if (!self::is_all_indexes_valid($params[PARAM_HASH], array(self::TABLE_CHANNELS, self::TABLE_ENTRIES))) {
+            hd_debug_print("EPG for {$params[PARAM_URI]} not indexed!");
+            return array();
+        }
+
+        $query = sprintf('SELECT DISTINCT ch.%s FROM %s AS ch JOIN %s AS ent WHERE ch.%s=ent.%s ORDER BY ch.%s;',
+            COLUMN_CHANNEL_ID, self::TABLE_CHANNELS, self::TABLE_ENTRIES, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID);
+
+        return $db->fetch_array($query, COLUMN_CHANNEL_ID);
+    }
+
+    public static function get_all_xmltv_aliases($params)
+    {
+        $db = self::open_sqlite_db($params[PARAM_HASH], true);
+        if ($db === false) {
+            hd_debug_print("Problem with open SQLite db: '{$params[PARAM_HASH]}.db'! Possible database not exist");
+            return array();
+        }
+
+        if (!self::is_all_indexes_valid($params[PARAM_HASH], array(self::TABLE_CHANNELS, self::TABLE_ENTRIES))) {
+            hd_debug_print("EPG for {$params[PARAM_URI]} not indexed!");
+            return array();
+        }
+
+        $query = sprintf('SELECT DISTINCT ch.%s, ch.%s FROM %s AS ch JOIN %s AS ent WHERE ch.%s != ch.%s AND ch.%s=ent.%s ORDER BY ch.%s;',
+            COLUMN_ALIAS, COLUMN_CHANNEL_ID, self::TABLE_CHANNELS, self::TABLE_ENTRIES,
+            COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_ALIAS);
+
+        return $db->fetch_array($query);
+    }
+
+    public static function get_all_xmltv_ids($params)
+    {
+        $db = self::open_sqlite_db($params[PARAM_HASH], true);
+        if ($db === false) {
+            hd_debug_print("Problem with open SQLite db: '{$params[PARAM_HASH]}.db'! Possible database not exist");
+            return array();
+        }
+
+        if (!self::is_all_indexes_valid($params[PARAM_HASH], array(self::TABLE_CHANNELS, self::TABLE_ENTRIES))) {
+            hd_debug_print("EPG for {$params[PARAM_URI]} not indexed!");
+            return array();
+        }
+
+        $query = sprintf('SELECT DISTINCT ch.%s, ch.%s FROM %s AS ch JOIN %s AS ent WHERE ch.%s != ch.%s AND ch.%s=ent.%s ORDER BY ch.%s;',
+            COLUMN_CHANNEL_ID, COLUMN_ALIAS, self::TABLE_CHANNELS, self::TABLE_ENTRIES,
+            COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_ALIAS);
+
+        $rows = $db->fetch_array($query);
+        $channels[COLUMN_EPG_ID] = array_unique(extract_column($rows, COLUMN_CHANNEL_ID));
+        $channels[COLUMN_EPG_ALIASES] = extract_column($rows, COLUMN_ALIAS);
+
+        return $channels;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     /// protected static methods
 
@@ -1092,7 +1157,7 @@ class Epg_Manager_Xmltv
         create_path(self::$cache_dir);
 
         hd_print_separator();
-        hd_print('XMLTV cache folder:      ' . self::$cache_dir);
+        hd_print('Cache folder:            ' . self::$cache_dir);
         hd_print('Storage space:           ' . HD::get_storage_size(self::$cache_dir));
     }
 
@@ -1186,18 +1251,9 @@ class Epg_Manager_Xmltv
             return $channel_positions;
         }
 
-        $channel_id = $channel_row[COLUMN_CHANNEL_ID];
-        $channel_title = $channel_row[COLUMN_TITLE];
-        $epg_ids = array_unique(array_filter(array(
-                $channel_row[COLUMN_EPG_ID],
-                $channel_id,
-                $channel_row[COLUMN_TVG_NAME],
-                $channel_title))
+        $aliases = Sql_Wrapper::sql_make_list_from_values(
+            array_unique(Default_Dune_Plugin::make_epg_ids($channel_row))
         );
-
-        $aliases = Sql_Wrapper::sql_make_list_from_values(array_map(function ($value) {
-            return mb_convert_case($value, MB_CASE_LOWER, "UTF-8");
-        }, $epg_ids));
 
         hd_debug_print("Search for aliases: $aliases", true);
 
@@ -1218,6 +1274,8 @@ class Epg_Manager_Xmltv
             return $channel_positions;
         }
 
+        $channel_id = $channel_row[COLUMN_CHANNEL_ID];
+        $channel_title = $channel_row[COLUMN_TITLE];
         hd_debug_print("Found EPG id's: " . json_format_unescaped($channel_ids), true);
         hd_debug_print("Load position indexes for: $channel_id ($channel_title)", true);
 
@@ -1353,7 +1411,7 @@ class Epg_Manager_Xmltv
     protected static function download_xmltv($params)
     {
         $url = $params[PARAM_URI];
-        $cached_file = $params[PARAM_XMLTV_CACHE_PATH];
+        $cached_file = $params[PARAM_EPG_CACHE_PATH];
 
         hd_debug_print("Download xmltv source: $url");
         hd_debug_print('Storage space:  ' . HD::get_storage_size(self::$cache_dir));
@@ -1417,7 +1475,7 @@ class Epg_Manager_Xmltv
      */
     protected static function unpack_xmltv($params)
     {
-        $cached_file = $params[PARAM_XMLTV_CACHE_PATH];
+        $cached_file = $params[PARAM_EPG_CACHE_PATH];
         hd_debug_print("Remove cached file: $cached_file");
         safe_unlink($cached_file);
 

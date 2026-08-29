@@ -384,6 +384,19 @@ class api_default
         $this->curl_wrapper = $this->plugin->setup_curl($playlist_id);
     }
 
+    public function get_provider_epg_preset_names()
+    {
+        $presets = array();
+        foreach ($this->getConfigValue(EPG_JSON_PRESETS, array()) as $preset) {
+            $name = empty($preset[EPG_JSON_PRESET_ALIAS])
+                ? $preset[EPG_JSON_PRESET_NAME]
+                : "{$preset[EPG_JSON_PRESET_NAME]} ({$preset[EPG_JSON_PRESET_ALIAS]})";
+
+            $presets[] = $name;
+        }
+        return $presets;
+    }
+
     /**
      * Set default values if it present in provider config but not set in user credentials
      *
@@ -398,7 +411,7 @@ class api_default
             $settings[PARAM_USE_PICONS] = COMBINED_PICONS;
         }
 
-        if (count($this->plugin->get_provider_epg_presets())) {
+        if (count($this->get_provider_epg_preset_names())) {
             $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;
         }
 

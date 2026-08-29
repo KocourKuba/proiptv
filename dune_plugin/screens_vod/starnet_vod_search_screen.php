@@ -196,8 +196,8 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => Starnet_Vod_Movie_List_Screen::make_vod_media_url_str(
-                    Vod_Category::FLAG_SEARCH, $item_row['item']),
-                PluginRegularFolderItem::caption => TR::t('search__1', $item_row['item']),
+                    Vod_Category::FLAG_SEARCH, $item_row[COLUMN_ITEM]),
+                PluginRegularFolderItem::caption => TR::t('search__1', $item_row[COLUMN_ITEM]),
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => self::SEARCH_ICON_PATH,
                     ViewItemParams::item_detailed_icon_path => self::SEARCH_ICON_PATH,

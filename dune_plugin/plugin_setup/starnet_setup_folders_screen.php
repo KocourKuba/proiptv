@@ -200,7 +200,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 hd_debug_print(self::ACTION_EPG_FOLDER_SELECTED . ": " . $data->{PARAM_FILEPATH}, true);
                 $new_path = get_slash_trailed_path($data->{PARAM_FILEPATH});
-                if ($this->plugin->get_parameter(PARAM_XMLTV_CACHE_PATH) === $new_path) break;
+                if ($this->plugin->get_parameter(PARAM_EPG_CACHE_PATH) === $new_path) break;
 
                 $new_path = $this->plugin->init_epg_cache_dir($new_path);
                 $this->force_parent_reload = true;

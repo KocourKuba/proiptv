@@ -147,8 +147,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         }
 
         $fav_id = $this->plugin->get_fav_id();
-        $reload_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
-
         $control_id = $user_input->control_id;
 
         switch ($control_id) {
@@ -277,17 +275,25 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 return Action_Factory::invalidate_epfs_folders($plugin_cookies);
 
             case ACTION_EPG_CACHE_ENGINE:
-                hd_debug_print('Start event popup menu for epg source', true);
-                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_EPG_CACHE_ENGINE => true));
+                $menu_items = array();
+                $this->plugin->epg_engine_menu_items($this, $menu_items);
+                return Action_Factory::show_popup_menu($menu_items);
 
             case ENGINE_XMLTV:
             case ENGINE_JSON:
-                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === $user_input->control_id) {
-                    return null;
-                }
+            case ENGINE_COMBINED:
                 hd_debug_print("Selected engine: $user_input->control_id", true);
                 $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
-                return $reload_action;
+                $post_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                if ($user_input->control_id === ENGINE_XMLTV || $user_input->control_id === ENGINE_COMBINED) {
+                    $active_sources = $this->plugin->get_selected_xmltv_ids($this->plugin->get_active_playlist_id());
+                    if (empty($active_sources)) {
+                        $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_xmltv_sources'), $post_action);
+                    } else {
+                        $this->plugin->reset_channels_loaded();
+                    }
+                }
+                return $post_action;
 
             case ACTION_ITEMS_EDIT:
                 return $this->plugin->do_edit_list_screen(static::ID, $user_input->{CONTROL_ACTION_EDIT}, $media_url,
@@ -1419,7 +1425,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 $menu_items[] = Control_Factory::menu_separator();
             }
 
-            $this->plugin->epg_select_menu_items($this, $menu_items);
+            $this->plugin->epg_select_menu_engine($this, $menu_items);
 
             $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                 ACTION_EDIT_PLAYLIST_SETTINGS, TR::t('setup_playlist'), 'playlist_settings.png');

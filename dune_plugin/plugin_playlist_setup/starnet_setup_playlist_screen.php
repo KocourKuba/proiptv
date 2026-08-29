@@ -198,7 +198,9 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_RESET_PLAYLIST_DLG_APPLY);
 
             case self::ACTION_RESET_PLAYLIST_DLG_APPLY:
-                Epg_Manager_Json::clear_epg_files($playlist_id);
+                foreach ($this->plugin->get_selected_json_sources() as $name) {
+                    Epg_Manager_Json::clear_epg_files(Hashed_Array::hash($name));
+                }
                 foreach ($this->plugin->get_selected_xmltv_ids($playlist_id) as $id) {
                     Epg_Manager_Xmltv::clear_epg_files($id);
                 }

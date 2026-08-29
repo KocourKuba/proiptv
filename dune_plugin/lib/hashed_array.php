@@ -89,6 +89,14 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * @return bool
+     */
+    public function is_empty()
+    {
+        return $this->size() === 0;
+    }
+
+    /**
      * Get value by index
      *
      * @param int $ndx
@@ -103,7 +111,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      * return value associated with key
      *
      * @param Tkey $key
-     * @return TValue|null
+     * @return TValue|array|null
      */
     public function get($key)
     {
