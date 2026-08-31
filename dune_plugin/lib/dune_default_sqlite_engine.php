@@ -66,7 +66,7 @@ class Dune_Default_Sqlite_Engine
                                      uri TEXT NOT NULL, cache TEXT DEFAULT 'auto', UNIQUE(playlist_id, hash));";
     const CREATE_SELECTED_XMTLV_TABLE = "CREATE TABLE IF NOT EXISTS %s (playlist_id TEXT NOT NULL, hash TEXT NOT NULL, UNIQUE(playlist_id, hash));";
 
-    const CREATE_JSON_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY NOT NULL, domain TEXT, cache INTEGER DEFAULT 3);";
+    const CREATE_JSON_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY NOT NULL, domain TEXT, cache INTEGER DEFAULT 8);";
     const CREATE_SELECTED_JSON_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT NOT NULL);";
 
     const CREATE_COOKIES_TABLE = "CREATE TABLE IF NOT EXISTS %s (param TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', time_stamp INTEGER DEFAULT 0);";

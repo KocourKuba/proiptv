@@ -318,7 +318,6 @@ const PARAM_DISABLED_GROUPS = 'disabled_groups';
 const PARAM_DUNE_FORCE_TS = 'dune_force_ts';
 const PARAM_DUNE_PARAMS = 'dune_params';
 const PARAM_EPG_CACHE_ENGINE = 'epg_cache_engine';
-const PARAM_EPG_CACHE_TIME = 'epg_cache_time';
 const PARAM_EPG_PLAYLIST = 'epg_playlist';
 const PARAM_EPG_SHIFT_HOURS = 'epg_shift_hours';
 const PARAM_EPG_SHIFT_MINS = 'epg_shift_mins';

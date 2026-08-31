@@ -2488,8 +2488,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         } else if ($new_cache_dir !== $cur_cache_dir) {
             // set to new value
-            Epg_Manager_Xmltv::clear_epg_files(null);
-            Epg_Manager_Json::clear_epg_files(null);
+            Epg_Manager_Xmltv::clear_epg_files();
+            Epg_Manager_Json::clear_epg_files();
             $this->set_parameter(PARAM_EPG_CACHE_PATH, $new_cache_dir);
         }
 

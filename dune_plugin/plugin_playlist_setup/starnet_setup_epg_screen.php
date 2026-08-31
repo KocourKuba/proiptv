@@ -83,8 +83,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // clear epg cache
         Control_Factory::add_image_button($defs, $this, self::CONTROL_ITEMS_CLEAR_EPG_CACHE,
-            TR::t('entry_epg_cache_clear'), TR::t('clear'), get_image_path('remove.png')
-        );
+            TR::t('entry_epg_cache_clear'), TR::t('clear'), get_image_path('remove.png'));
 
         //////////////////////////////////////
         // Fake EPG
@@ -121,10 +120,6 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 $this->plugin->set_setting($control_id, $val);
                 $this->plugin->init_epg_manager();
                 return $post_action;
-
-            case PARAM_EPG_CACHE_TIME:
-                $this->plugin->set_setting($control_id, $user_input->{$control_id});
-                break;
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
                 $engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);

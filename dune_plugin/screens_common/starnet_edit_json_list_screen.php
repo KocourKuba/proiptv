@@ -122,8 +122,11 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case ACTION_CLEAR_CACHE:
+                Epg_Manager_Json::clear_epg_files(Hashed_Array::hash($selected_id));
+                break;
+
             case ACTION_CALL_CLEAR_ALL_EPG:
-                Epg_Manager_Json::clear_epg_files($user_input->control_id === ACTION_CLEAR_CACHE ? Hashed_Array::hash($selected_id) : null);
+                Epg_Manager_Json::clear_epg_files();
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -306,7 +309,7 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        foreach (array(1, 2, 3, 6, 12, 24, 48, 72, 96, 120, 144, 168) as $hour) {
+        foreach (array(1, 2, 3, 6, 8, 12, 24, 48, 72, 96, 120, 144, 168) as $hour) {
             $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
         }
         Control_Factory::add_label($defs, '', TR::t('setup_cache_time_epg'), -10);
