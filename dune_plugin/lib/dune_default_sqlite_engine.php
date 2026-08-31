@@ -1058,12 +1058,13 @@ class Dune_Default_Sqlite_Engine
     /**
      * Get ROWID for value
      *
-     * @param string $table
+     * @param string $name
      * @param string $value
      * @return array
      */
-    public function get_settings_value_id($table, $value)
+    public function get_settings_value_id($name, $value)
     {
+        $table = self::get_table_name($name);
         $query = sprintf('SELECT ROWID FROM %s WHERE %s=%s;', $table, COLUMN_ITEM, Sql_Wrapper::sql_quote($value));
         return $this->safe_sql_playlist_settings('query_value', $query);
     }
@@ -1071,12 +1072,13 @@ class Dune_Default_Sqlite_Engine
     /**
      * Get value by ROWID
      *
-     * @param string $table
+     * @param string $name
      * @param int $id
      * @return array
      */
-    public function get_settings_value($table, $id)
+    public function get_settings_value($name, $id)
     {
+        $table = self::get_table_name($name);
         $query = sprintf('SELECT %s FROM %s WHERE ROWID = %s;', COLUMN_ITEM, $table, Sql_Wrapper::sql_quote($id));
         return $this->safe_sql_playlist_settings('query_value', $query);
     }
@@ -1084,12 +1086,13 @@ class Dune_Default_Sqlite_Engine
     /**
      * Update or add value
      *
-     * @param string $table
+     * @param string $name
      * @param string $value
      * @param int $id
      */
-    public function set_settings_value($table, $value, $id = -1)
+    public function set_settings_value($name, $value, $id = -1)
     {
+        $table = self::get_table_name($name);
         if ($id === -1) {
             $query = sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);', $table, COLUMN_ITEM, Sql_Wrapper::sql_quote($value));
         } else {
@@ -1101,11 +1104,12 @@ class Dune_Default_Sqlite_Engine
     /**
      * Remove value
      *
-     * @param string $table
+     * @param string $name
      * @param string $value
      */
-    public function remove_settings_value($table, $value)
+    public function remove_settings_value($name, $value)
     {
+        $table = self::get_table_name($name);
         $query = sprintf('DELETE FROM %s WHERE %s=%s;', $table, COLUMN_ITEM, Sql_Wrapper::sql_quote($value));
         $this->safe_sql_playlist_settings('exec', $query);
     }
@@ -1113,14 +1117,14 @@ class Dune_Default_Sqlite_Engine
     /**
      * Arrange values (VOD_SEARCH, VOD_FILTER)
      *
-     * @param string $table
+     * @param string $name
      * @param string $item
      * @param int $direction
      * @return bool
      */
-    public function arrange_settings_values($table, $item, $direction)
+    public function arrange_settings_values($name, $item, $direction)
     {
-        return $this->arrange_rows($table, COLUMN_ITEM, $item, $direction);
+        return $this->arrange_rows($name, COLUMN_ITEM, $item, $direction);
     }
 
     /////////////////////////////////////////////////////////////////
@@ -2588,6 +2592,10 @@ class Dune_Default_Sqlite_Engine
             $script = self::CREATE_PLAYLISTS_TABLE;
             $sql_wrapper = $this->sql_plugin;
             $table_name = self::PLAYLISTS_TABLE;
+        } else if (self::is_playlist_settings_group($group)) {
+            $script = self::CREATE_ORDERED_TABLE;
+            $sql_wrapper = $this->sql_playlist_settings;
+            $table_name = self::get_table_full_name($group);
         } else {
             $script = self::CREATE_ORDERED_TABLE;
             $sql_wrapper = $this->sql_playlist;
@@ -2964,6 +2972,10 @@ class Dune_Default_Sqlite_Engine
      */
     protected static function is_playlist_settings_group($group_id)
     {
-        return $group_id === TV_FAV_COMMON_GROUP_ID || $group_id === VOD_FAV_GROUP_ID || $group_id === VOD_LIST_GROUP_ID;
+        return $group_id === TV_FAV_COMMON_GROUP_ID
+            || $group_id === VOD_FAV_GROUP_ID
+            || $group_id === VOD_LIST_GROUP_ID
+            || $group_id === VOD_SEARCH_LIST
+            || $group_id === VOD_FILTER_LIST;
     }
 }
