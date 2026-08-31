@@ -399,12 +399,6 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
         $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
 
         $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = null;
-        if (!$this->plugin->get_xmltv_sources_count(null)) {
-            $msg = is_limited_apk()
-                ? TR::t('edit_list_add_prompt_apk__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW)
-                : TR::t('edit_list_add_prompt__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW);
-            $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = $msg;
-        }
 
         return $folder_view;
     }
