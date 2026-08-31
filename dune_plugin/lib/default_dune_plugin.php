@@ -571,9 +571,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         LogSeverity::$is_debug = true;
         $this->active_provider = null;
         self::$iptv_m3u_parser = new M3uParser();
-        $this->reset_playlist_db();
         $this->init_parameters();
+
+        $this->xmltv_epg_manager = new Epg_Manager_Xmltv();
+        $this->json_epg_manager = new Epg_Manager_Json($this);
+
+        $this->reset_playlist_db();
         $this->init_epg_cache_dir();
+
         $this->update_all_json_source($this->epg_json_presets);
 
         $this->inited = true;
@@ -592,35 +597,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function is_plugin_inited()
     {
         return $this->inited;
-    }
-
-    /**
-     * @return void
-     */
-    public function init_epg_manager()
-    {
-        hd_debug_print(null, true);
-
-        $this->xmltv_epg_manager = new Epg_Manager_Xmltv($this);
-        $this->json_epg_manager = new Epg_Manager_Json($this);
-
-        $this->delay_load_picons = is_delay_load_supported()
-            && $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)
-            && $this->get_bool_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) != PLAYLIST_PICONS;
-
-        switch ($this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV)) {
-            case ENGINE_JSON:
-                hd_debug_print("Using 'Epg_Manager_Json' cache engine");
-                break;
-            case ENGINE_XMLTV:
-                hd_debug_print("Using 'Epg_Manager_Xmltv' cache engine");
-                break;
-            case ENGINE_COMBINED:
-                hd_debug_print("Using 'Combined' cache engine");
-                break;
-            default:
-                hd_debug_print("Unknown default EPG engine");
-        }
     }
 
     /**
@@ -964,7 +940,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             self::$iptv_m3u_parser->parseHeader();
 
             // update playlists xmltv sources
-            $saved_source = $this->get_xmltv_sources(XMLTV_SOURCE_PLAYLIST, $playlist_id);
+            $saved_source = $this->get_xmltv_sources(XMLTV_SOURCE_PLAYLIST);
             $hashes = array();
             foreach ($saved_source as $source) {
                 $hashes[$source[PARAM_HASH]] = array(
@@ -991,15 +967,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $item[PARAM_CACHE] = XMLTV_CACHE_AUTO;
                 }
 
-                $this->set_xmltv_source($playlist_id, $item);
-                $saved_source->erase($hash);
                 hd_debug_print("playlist source: ($hash) $url", true);
+                hd_debug_print(json_format_unescaped($item), true);
+                $this->set_xmltv_source_parameters($item, true);
+                $saved_source->erase($hash);
+                $sources = $this->get_xmltv_sources(XMLTV_SOURCE_PLAYLIST);
+                hd_debug_print($sources, true);
             }
 
             if (!empty($saved_source)) {
                 foreach ($saved_source as $key => $source) {
                     hd_debug_print("Found removed playlist xmltv source: {$source[PARAM_URI]}" , true);
-                    $this->remove_xmltv_source($key, $playlist_id);
+                    $this->remove_xmltv_source($key, true);
                 }
             }
 
@@ -1181,7 +1160,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         foreach ($special_group as $group) {
             $group['disabled'] = 0;
             $group['special'] = 1;
-            $query .= sprintf('INSERT OR IGNORE INTO %s %s;', $groups_info_table, Sql_Wrapper::sql_make_insert_list($group));
+            $col = Sql_Wrapper::sql_make_list_from_keys($group);
+            $val = Sql_Wrapper::sql_make_list_from_values($group);
+            $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);', $groups_info_table, $col, $val);
         }
         $this->safe_sql_playlist('exec_transaction', $query);
 
@@ -1249,45 +1230,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $provider_class = safe_get_value($params, PARAM_PROVIDER);
         $provider_epg_presets = array();
         if (!empty($provider_class)) {
-            $q_playlist_id = Sql_Wrapper::sql_quote($playlist_id);
             $provider = $this->get_provider($playlist_id);
             if ($provider !== null) {
                 // get provider config epg presets
                 $provider_epg_presets = $provider->get_provider_epg_preset_names();
-                // update xmltv playlist sources from config
-                $config_xmltv = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
-                if (!empty($config_xmltv)) {
-                    $query = '';
-                    $q_type = Sql_Wrapper::sql_quote(PARAM_CONF);
-                    $q_cache = Sql_Wrapper::sql_quote(XMLTV_CACHE_AUTO);
-                    $known_sources = array();
-                    foreach ($config_xmltv as $source) {
-                        $hash = Hashed_Array::hash($source);
-                        $q_hash = Sql_Wrapper::sql_quote($hash);
-                        $q_source = Sql_Wrapper::sql_quote($source);
-                        $q_name = Sql_Wrapper::sql_quote(basename($source));
-                        $known_sources[] = $hash;
-
-                        $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s,%s,%s,%s) VALUES (%s,%s,%s,%s,%s,%s);',
-                            self::PLAYLIST_XMLTV_TABLE,
-                            COLUMN_PLAYLIST_ID, COLUMN_HASH, COLUMN_TYPE, COLUMN_NAME, COLUMN_URI, COLUMN_CACHE,
-                            $q_playlist_id, $q_hash, $q_type, $q_name, $q_source, $q_cache);
-                    }
-
-                    if (!empty($known_sources)) {
-                        $query .= sprintf('DELETE FROM %s WHERE %s AND %s=%s;',
-                            self::PLAYLIST_XMLTV_TABLE, Sql_Wrapper::sql_make_where_clause($known_sources, COLUMN_HASH, true),
-                            COLUMN_TYPE, $q_type);
-                    }
-                    $this->safe_sql_plugin('exec_transaction', $query);
-                }
-
                 $provider->check_config_values();
-                $provider_playlist_id = $provider->GetPlaylistIptvId();
-                hd_debug_print("Provider IPTV playlist: $provider_playlist_id", true);
             }
         }
 
+        $this->move_playlist_xmltv_source($playlist_id);
+        $this->move_selected_xmltv_source($playlist_id);
         $this->update_selected_json_source($this->epg_json_presets->get_keys(), $provider_epg_presets);
 
         // create tables for vod search, vod filters, vod favorites
@@ -1310,7 +1262,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        $this->update_old_settings($playlist_id);
 
         //////////////////////////////////////////////////////
         /// Upgrade settings 5.x to database
@@ -1388,6 +1339,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $this->update_ui_settings();
+        $this->delay_load_picons = is_delay_load_supported()
+            && $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)
+            && $this->get_bool_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) != PLAYLIST_PICONS;
+
 
         Default_Dune_Plugin::cleanup_stalled_locks();
 
@@ -1395,7 +1350,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $ext_epg_channels = get_temp_path('channel_ids.txt');
         safe_unlink($ext_epg_channels);
 
-        $this->init_epg_manager();
+        Epg_Manager_Xmltv::update_active_sources($this->get_active_sources());
         $this->cleanup_active_xmltv_source();
 
         $perf = new Perf_Collector();
@@ -1783,32 +1738,32 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-        $item = $this->get_xmltv_sources(XMLTV_SOURCE_ALL, $this->get_active_playlist_id())->get($source_id);
-        if ($item === null) {
+        $params = $this->get_xmltv_sources(XMLTV_SOURCE_ALL)->get($source_id);
+        if ($params === null) {
             hd_debug_print("XMLTV source '$source_id' not found");
             return false;
         }
 
-        if (!isset($item[PARAM_HASH])) {
-            $item[PARAM_HASH] = Hashed_Array::hash($item[PARAM_URI]);
+        if (!isset($params[PARAM_HASH])) {
+            $params[PARAM_HASH] = Hashed_Array::hash($params[PARAM_URI]);
         }
 
         // If index is locked do not run indexing!
-        if (Epg_Manager_Xmltv::is_index_locked($item[PARAM_HASH], INDEXING_ALL)) {
-            hd_debug_print("Source: '$source_id': {$item[PARAM_URI]} is indexing now");
+        if (Epg_Manager_Xmltv::is_index_locked($params[PARAM_HASH], INDEXING_ALL)) {
+            hd_debug_print("Source: '$source_id': {$params[PARAM_URI]} is indexing now");
             return false;
         }
 
         // background indexing performed only for one url!
-        hd_debug_print("Run background indexing for: '$source_id' with flag $indexing_flag: {$item[PARAM_URI]}");
-        $item[PARAM_CURL_CONNECT_TIMEOUT] = $this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30);
-        $item[PARAM_CURL_DOWNLOAD_TIMEOUT] = $this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
+        hd_debug_print("Run background indexing for: '$source_id' with flag $indexing_flag: {$params[PARAM_URI]}");
+        $params[PARAM_CURL_CONNECT_TIMEOUT] = $this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30);
+        $params[PARAM_CURL_DOWNLOAD_TIMEOUT] = $this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
 
         $config = array(
             PARAM_COOKIE_ENABLE_DEBUG => LogSeverity::$is_debug,
             PARAM_CACHE_DIR => Epg_Manager_Xmltv::get_cache_dir(),
             PARAM_INDEXING_FLAG => $indexing_flag,
-            PARAM_XMLTV => $item,
+            PARAM_XMLTV => $params,
         );
 
         $config_file = get_temp_path(sprintf(self::PARSE_CONFIG, $source_id));
@@ -1824,20 +1779,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("exec: $cmd", true);
         shell_exec($cmd);
         return true;
-    }
-
-    /**
-     * @param string $playlist_id
-     * @return Hashed_Array<string, array>
-     */
-    public function get_all_xmltv_sources($playlist_id)
-    {
-        $all_sources = new Hashed_Array();
-        $pl_sources = $this->get_xmltv_sources(XMLTV_SOURCE_PLAYLIST, $playlist_id);
-        $all_sources->add_items($pl_sources);
-        $ext_sources = $this->get_xmltv_sources(XMLTV_SOURCE_EXTERNAL, null);
-        $all_sources->add_items($ext_sources);
-        return $all_sources;
     }
 
     public function get_internet_status()
@@ -2963,9 +2904,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         if ($engine === ENGINE_XMLTV || $engine === ENGINE_COMBINED) {
-            $playlist_id = $this->get_active_playlist_id();
-            $all_sources = $this->get_all_xmltv_sources($playlist_id);
-            $selected_sources = $this->get_selected_xmltv_ids($playlist_id);
+            $all_sources = $this->get_xmltv_sources(XMLTV_SOURCE_ALL);
+            $selected_sources = $this->get_selected_xmltv_ids();
             foreach ($selected_sources as $key) {
                 $item = $all_sources->get($key);
                 if (!empty($item)) {
@@ -3199,8 +3139,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
 
-        $all_sources = $this->get_xmltv_sources(XMLTV_SOURCE_ALL, $this->get_active_playlist_id());
-        $selected_sources = $this->get_selected_xmltv_ids($this->get_active_playlist_id());
+        $all_sources = $this->get_xmltv_sources(XMLTV_SOURCE_ALL);
+        $selected_sources = $this->get_selected_xmltv_ids();
         $active_sources = new Hashed_Array();
         foreach ($selected_sources as $key) {
             $item = $all_sources->get($key);
@@ -3238,21 +3178,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     public function cleanup_active_xmltv_source()
     {
-        $playlist_id = $this->get_active_playlist_id();
-        $playlist_sources = $this->get_xmltv_sources_hash(XMLTV_SOURCE_PLAYLIST, $playlist_id);
-        $ext_sources = $this->get_xmltv_sources_hash(XMLTV_SOURCE_EXTERNAL, null);
-        $all_sources = array_unique(array_merge($playlist_sources, $ext_sources));
-        hd_debug_print('Load All XMLTV sources keys: ' . json_format_unescaped($all_sources), true);
+        $all_sources = $this->get_xmltv_sources_hashes(XMLTV_SOURCE_ALL);
+        hd_debug_print('Load All XMLTV sources keys: ' . implode(',', $all_sources), true);
 
-        $cur_sources = $this->get_selected_xmltv_ids($playlist_id);
-        hd_debug_print('Load selected XMLTV sources keys: ' . json_format_unescaped($cur_sources), true);
+        $cur_sources = $this->get_selected_xmltv_ids();
+        hd_debug_print('Load selected XMLTV sources keys: ' . implode(',', $cur_sources), true);
 
         // remove non-existing values from selected sources
         $removed_source = array_diff($cur_sources, $all_sources);
         if (!empty($removed_source)) {
-            hd_debug_print('Removed source: ' . json_format_unescaped($removed_source));
+            hd_debug_print('Removed source: ' . implode(',', $removed_source));
             foreach ($removed_source as $source) {
-                $this->remove_selected_xmltv_id($this->get_active_playlist_id(), $source);
+                $this->remove_selected_xmltv_id($source);
             }
         }
     }
@@ -3587,7 +3524,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         clearstatcache();
 
         if ($xmltv_ids === null) {
-            $xmltv_ids = $this->get_selected_xmltv_ids($this->get_active_playlist_id());
+            $xmltv_ids = $this->get_selected_xmltv_ids();
         }
 
         $res = Epg_Manager_Xmltv::import_indexing_log($xmltv_ids);
@@ -3711,8 +3648,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        $query = sprintf('INSERT OR IGNORE INTO %s %s;',
-            self::TV_HISTORY_TABLE, Sql_Wrapper::sql_make_insert_list($list));
+        $col = Sql_Wrapper::sql_make_list_from_keys($list);
+        $val = Sql_Wrapper::sql_make_list_from_values($list);
+        $query = sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);', self::TV_HISTORY_TABLE, $col, $val);
+
         $query .= sprintf('UPDATE %s SET %s WHERE %s=%s;',
             self::TV_HISTORY_TABLE, Sql_Wrapper::sql_make_set_list($list), COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($id));
         $query .= sprintf('DELETE FROM %s WHERE ROWID NOT IN (SELECT ROWID FROM %s ORDER BY %s DESC LIMIT 7);',
@@ -3943,43 +3882,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     //////////////////////////////////////////////////////////////////
     /// protected methods
-    protected function update_old_settings($playlist_id)
-    {
-        // move playlist xmltv sources to new database table
-        if ($this->is_playlist_settings_table_exists(self::XMLTV_TABLE)) {
-            $old_table = self::XMLTV_TABLE;
-            $rows = $this->safe_sql_playlist_settings('fetch_array', "SELECT * FROM $old_table;");
 
-            $query = '';
-            foreach ($rows as $row) {
-                $row[COLUMN_PLAYLIST_ID] = $playlist_id;
-                $query .= sprintf('INSERT OR IGNORE INTO %s $%s;',
-                    self::PLAYLIST_XMLTV_TABLE, Sql_Wrapper::sql_make_insert_list($row));
-            }
-            $this->safe_sql_plugin('exec_transaction', $query);
-            $this->safe_sql_playlist_settings('exec', "DROP TABLE $old_table;");
-        }
-
-        // move selected xmltv sources to new database table
-        if ($this->is_playlist_settings_table_exists(self::SELECTED_XMLTV_TABLE)) {
-            $table_name = self::SELECTED_XMLTV_TABLE;
-            $query = sprintf('SELECT %s FROM %s;', COLUMN_HASH, $table_name);
-            $rows = $this->safe_sql_playlist_settings('fetch_array', $query, COLUMN_HASH);
-            $q_playlist_id = Sql_Wrapper::sql_quote($playlist_id);
-            $query = '';
-            foreach ($rows as $hash) {
-                $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s) VALUES (%s,%s);',
-                    self::SELECTED_XMLTV_TABLE, COLUMN_PLAYLIST_ID, COLUMN_HASH, $q_playlist_id, Sql_Wrapper::sql_quote($hash));
-            }
-            $this->safe_sql_plugin('exec_transaction', $query);
-            $this->safe_sql_playlist_settings('exec', "DROP TABLE $table_name;");
-        }
-
-        // remove unused settings from db
-        $query = sprintf('DELETE FROM %s WHERE %s;',
-            self::SETTINGS_TABLE, Sql_Wrapper::sql_make_where_clause(array('cur_xmltv_source', 'cur_xmltv_key'), COLUMN_NAME));
-        $this->safe_sql_playlist_settings('exec', $query);
-    }
     /**
      * @param $playlist_id
      * @return void
@@ -4046,36 +3949,31 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
         $this->safe_sql_playlist_settings('exec_transaction', $query);
 
-        // Move epg_playlist, selected_xmltv_sorces, channel_zoom, channel_player to tables
+        // Move epg_playlist, selected_xmltv_sources, channel_zoom, channel_player to tables
         foreach ($plugin_settings as $key => $value) {
             $type = gettype($value);
             if ($type !== 'object' && $type !== 'array') continue;
 
             if ($key === PARAM_EPG_PLAYLIST) {
                 hd_debug_print("Convert 'epg_playlist' to 'playlist_xmltv' table");
-                $query = '';
                 /** @var Named_Storage $v */
                 foreach ($value as $k => $v) {
                     $list = array(
-                        COLUMN_PLAYLIST_ID => $playlist_id,
                         COLUMN_HASH => $k,
                         COLUMN_TYPE => (empty($v->type) ? PARAM_LINK : $v->type),
                         COLUMN_NAME => $v->name,
                         COLUMN_URI => $v->params[PARAM_URI],
                         COLUMN_CACHE => (isset($v->params[PARAM_CACHE]) ? $v->params[PARAM_CACHE] : XMLTV_CACHE_AUTO),
                     );
-                    $query .= sprintf('INSERT OR IGNORE INTO %s %s;', self::PLAYLIST_XMLTV_TABLE, Sql_Wrapper::sql_make_insert_list($list));
+
+                    $this->set_xmltv_source_parameters($list, true);
                 }
-                $this->safe_sql_plugin('exec_transaction', $query);
                 unset($plugin_settings[PARAM_EPG_PLAYLIST]);
             } else if ($key === PARAM_SELECTED_XMLTV_SOURCES) {
                 hd_debug_print("Convert 'selected_xmltv_sources' to 'selected_xmltv' table");
-                $query = '';
                 foreach ($value as $hash) {
-                    $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s) VALUES (%s,%s);', self::SELECTED_XMLTV_TABLE,
-                        COLUMN_PLAYLIST_ID, COLUMN_HASH, Sql_Wrapper::sql_quote($playlist_id), Sql_Wrapper::sql_quote($hash));
+                    $this->add_selected_xmltv_id($hash);
                 }
-                $this->safe_sql_plugin('exec_transaction', $query);
                 unset($plugin_settings[PARAM_SELECTED_XMLTV_SOURCES]);
             } else if ($key === 'channels_zoom' || $key === 'channel_player') {
                 // obsolete

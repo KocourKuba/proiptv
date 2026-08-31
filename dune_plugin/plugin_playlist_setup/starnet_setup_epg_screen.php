@@ -113,31 +113,29 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
             case PARAM_EPG_CACHE_ENGINE:
                 $post_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
                 $val = $user_input->{$control_id};
-                $active_sources = $this->plugin->get_selected_xmltv_ids($this->plugin->get_active_playlist_id());
+                $active_sources = $this->plugin->get_selected_xmltv_ids();
                 if (empty($active_sources) && ($val === ENGINE_XMLTV || $val === ENGINE_COMBINED)) {
                     $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_xmltv_sources'), $post_action);
                 }
                 $this->plugin->set_setting($control_id, $val);
-                $this->plugin->init_epg_manager();
                 return $post_action;
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
                 $engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
 
-                $playlist_id = $this->plugin->get_active_playlist_id();
                 if ($engine === ENGINE_JSON) {
                     foreach ($this->plugin->get_selected_json_sources() as $id) {
                         Epg_Manager_Json::clear_epg_files(Hashed_Array::hash($id));
                     }
                 } else if ($engine === ENGINE_XMLTV) {
-                    foreach ($this->plugin->get_selected_xmltv_ids($playlist_id) as $id) {
+                    foreach ($this->plugin->get_selected_xmltv_ids() as $id) {
                         Epg_Manager_Xmltv::clear_epg_files($id);
                     }
                 } else if ($engine === ENGINE_COMBINED) {
                     foreach ($this->plugin->get_selected_json_sources() as $id) {
                         Epg_Manager_Json::clear_epg_files(Hashed_Array::hash($id));
                     }
-                    foreach ($this->plugin->get_selected_xmltv_ids($playlist_id) as $id) {
+                    foreach ($this->plugin->get_selected_xmltv_ids() as $id) {
                         Epg_Manager_Xmltv::clear_epg_files($id);
                     }
                 }
@@ -149,7 +147,6 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
 
             case PARAM_FAKE_EPG:
                 $this->plugin->toggle_setting($control_id, false);
-                $this->plugin->init_epg_manager();
                 break;
 
             case ACTION_RELOAD:

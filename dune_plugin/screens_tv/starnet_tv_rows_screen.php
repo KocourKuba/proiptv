@@ -286,7 +286,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
                 $post_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
                 if ($user_input->control_id === ENGINE_XMLTV || $user_input->control_id === ENGINE_COMBINED) {
-                    $active_sources = $this->plugin->get_selected_xmltv_ids($this->plugin->get_active_playlist_id());
+                    $active_sources = $this->plugin->get_selected_xmltv_ids();
                     if (empty($active_sources)) {
                         $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_xmltv_sources'), $post_action);
                     } else {

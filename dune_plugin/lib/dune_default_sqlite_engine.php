@@ -62,9 +62,8 @@ class Dune_Default_Sqlite_Engine
     const CREATE_COMMON_XMLTV_TABLE = "CREATE TABLE IF NOT EXISTS %s
                                     (hash TEXT PRIMARY KEY NOT NULL, type TEXT, name TEXT NOT NULL, uri TEXT NOT NULL, cache TEXT DEFAULT 'auto');";
     const CREATE_PLAYLIST_XMLTV_TABLE = "CREATE TABLE IF NOT EXISTS %s
-                                    (playlist_id TEXT NOT NULL, hash TEXT NOT NULL, type TEXT, name TEXT NOT NULL,
-                                     uri TEXT NOT NULL, cache TEXT DEFAULT 'auto', UNIQUE(playlist_id, hash));";
-    const CREATE_SELECTED_XMTLV_TABLE = "CREATE TABLE IF NOT EXISTS %s (playlist_id TEXT NOT NULL, hash TEXT NOT NULL, UNIQUE(playlist_id, hash));";
+                                    (hash TEXT PRIMARY KEY NOT NULL, type TEXT, name TEXT NOT NULL, uri TEXT NOT NULL, cache TEXT DEFAULT 'auto');";
+    const CREATE_SELECTED_XMTLV_TABLE = "CREATE TABLE IF NOT EXISTS %s (hash TEXT PRIMARY KEY NOT NULL);";
 
     const CREATE_JSON_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY NOT NULL, domain TEXT, cache INTEGER DEFAULT 8);";
     const CREATE_SELECTED_JSON_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT NOT NULL);";
@@ -77,6 +76,11 @@ class Dune_Default_Sqlite_Engine
     const CREATE_VOD_HISTORY_TABLE = "CREATE TABLE IF NOT EXISTS %s
                                         (movie_id TEXT, series_id TEXT, watched INTEGER DEFAULT 0, position INTEGER DEFAULT 0,
                                         duration INTEGER DEFAULT 0, time_stamp INTEGER DEFAULT 0, UNIQUE(movie_id, series_id));";
+
+    /** xmltv parameters
+     * @var array
+     */
+    protected static $columns = array(COLUMN_HASH, COLUMN_TYPE, COLUMN_NAME, COLUMN_URI, COLUMN_CACHE);
 
     /**
      * @var Sql_Wrapper
@@ -174,7 +178,6 @@ class Dune_Default_Sqlite_Engine
         $query .= sprintf(self::CREATE_PLAYLISTS_TABLE, self::PLAYLISTS_TABLE);
         $query .= sprintf(self::CREATE_PLAYLIST_PARAMETERS_TABLE, self::PLAYLIST_PARAMETERS_TABLE);
         $query .= sprintf(self::CREATE_COMMON_XMLTV_TABLE, self::XMLTV_TABLE);
-        $query .= sprintf(self::CREATE_PLAYLIST_XMLTV_TABLE, self::PLAYLIST_XMLTV_TABLE);
         $query .= sprintf(self::CREATE_JSON_TABLE, self::JSON_TABLE);
         $this->sql_plugin->exec_transaction($query);
 
@@ -305,6 +308,8 @@ class Dune_Default_Sqlite_Engine
         $tables = array(self::PLAYLISTS_TABLE, self::PLAYLIST_PARAMETERS_TABLE, self::PLAYLIST_XMLTV_TABLE, self::SELECTED_XMLTV_TABLE);
         $query = '';
         foreach ($tables as $table) {
+            if (!$this->is_common_table_exists($table)) continue;
+
             $query .= sprintf('DELETE FROM %s WHERE %s=%s;', $table, COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id));
         }
         $this->safe_sql_plugin('exec', $query);
@@ -422,26 +427,28 @@ class Dune_Default_Sqlite_Engine
     //
 
     /**
-     * get xmltv sources
+     * get xmltv sources as hashed array where key is a hash of the source.
+     * If type == XMLTV_SOURCE_PLAYLIST and sources present in playlist,
+     * and external sources then external sources will be used.
      *
      * @param string $type
-     * @param string|null $playlist_id
      * @return Hashed_Array<string, array>
      */
-    public function get_xmltv_sources($type, $playlist_id)
+    public function get_xmltv_sources($type)
     {
         $sources = new Hashed_Array();
-        if (($type & XMLTV_SOURCE_PLAYLIST) && $playlist_id !== null) {
-            $query = sprintf('SELECT * FROM %s WHERE %s=%s;',
-                self::PLAYLIST_XMLTV_TABLE, COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id));
-            $rows = $this->safe_sql_plugin('fetch_array', $query);
+        if ($type & XMLTV_SOURCE_PLAYLIST) {
+            $query = sprintf('SELECT %s FROM %s;',
+                Sql_Wrapper::sql_make_list_from_values(self::$columns, false), self::PLAYLIST_XMLTV_TABLE);
+            $rows = $this->safe_sql_playlist_settings('fetch_array', $query);
             foreach ($rows as $row) {
                 $sources->set($row[PARAM_HASH], $row);
             }
         }
 
         if ($type & XMLTV_SOURCE_EXTERNAL) {
-            $query = sprintf('SELECT * FROM %s;', self::XMLTV_TABLE);
+            $query = sprintf('SELECT %s FROM %s;',
+                Sql_Wrapper::sql_make_list_from_values(self::$columns, false), self::XMLTV_TABLE);
             $rows = $this->safe_sql_plugin('fetch_array', $query);
             foreach ($rows as $row) {
                 $sources->set($row[PARAM_HASH], $row);
@@ -452,171 +459,93 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
-     * get xmltv sources
+     * remove xmltv sources
      *
-     * @return Hashed_Array<string, array>
-     */
-    public function get_external_xmltv_sources()
-    {
-        $sources = new Hashed_Array();
-        $query = sprintf('SELECT * FROM %s;', self::XMLTV_TABLE);
-        $rows = $this->safe_sql_plugin('fetch_array', $query);
-        foreach ($rows as $row) {
-            $sources->set($row[PARAM_HASH], $row);
-        }
-
-        return $sources;
-    }
-
-    /**
-     * @param string $playlist_id
      * @param string $hash
+     * @param bool $is_playlist
+     * @return void
      */
-    public function add_selected_xmltv_id($playlist_id, $hash)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("Add to selected: $hash", true);
-
-        $query = sprintf("INSERT OR IGNORE INTO %s (%s, %s) VALUES (%s, %s);", self::SELECTED_XMLTV_TABLE,
-            COLUMN_PLAYLIST_ID, COLUMN_HASH, Sql_Wrapper::sql_quote($playlist_id), Sql_Wrapper::sql_quote($hash));
-        $this->safe_sql_plugin('exec', $query);
-    }
-
-    /**
-     * @param string $playlist_id
-     * @param string $hash
-     */
-    public function remove_selected_xmltv_id($playlist_id, $hash)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("Removed from selected: $hash", true);
-
-        $query = sprintf("DELETE FROM %s WHERE %s=%s AND %s=%s;",
-            self::SELECTED_XMLTV_TABLE, COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id),
-            COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
-        $this->safe_sql_plugin('exec', $query);
-    }
-
-    /**
-     * @param string $playlist_id
-     * @return array
-     */
-    public function get_selected_xmltv_ids($playlist_id)
-    {
-        $query = sprintf("SELECT %s FROM %s WHERE %s=%s ORDER BY ROWID;",
-        COLUMN_HASH, self::SELECTED_XMLTV_TABLE, COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id));
-        return $this->safe_sql_plugin('fetch_array', $query, PARAM_HASH);
-    }
-
-    /**
-     * @param string $playlist_id
-     * @param string $hash
-     * @return bool
-     */
-    public function is_selected_xmltv_id($playlist_id, $hash)
-    {
-        $query = sprintf("SELECT count(*) FROM %s WHERE %s=%s AND %s=%s;", self::SELECTED_XMLTV_TABLE,
-            COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id), COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
-        return (bool)$this->safe_sql_plugin('query_value', $query);
-    }
-
-    /**
-     * @param string $playlist_id
-     * @param array|string $values
-     */
-    public function set_selected_xmltv_ids($playlist_id, $values)
+    public function remove_xmltv_source($hash, $is_playlist)
     {
         hd_debug_print(null, true);
 
-        if (!is_array($values)) {
-            $values = array($values);
-        }
-        hd_debug_print('Set selected: ' . json_format_unescaped($values), true);
+        $table = $is_playlist ? self::PLAYLIST_XMLTV_TABLE : self::XMLTV_TABLE;
+        $query = sprintf('DELETE FROM %s WHERE %s;', $table,
+            Sql_Wrapper::sql_make_where_clause($hash, COLUMN_HASH));
 
-        $query = '';
-        foreach ($values as $hash) {
-            $query .= sprintf("INSERT INTO %s (%s,%s) VALUES (%s,%s);", self::SELECTED_XMLTV_TABLE,
-                COLUMN_PLAYLIST_ID, COLUMN_HASH, Sql_Wrapper::sql_quote($playlist_id), Sql_Wrapper::sql_quote($hash));
+        if ($is_playlist) {
+            $this->safe_sql_playlist_settings('exec', $query);
+        } else {
+            $this->safe_sql_plugin('exec', $query);
+        }
+    }
+
+    /**
+     * get external xmltv sources count
+     *
+     * @param string $type
+     * @return int
+     */
+    public function get_xmltv_sources_count($type)
+    {
+        hd_debug_print(null, true);
+
+        $hashes = array();
+        if ($type & XMLTV_SOURCE_PLAYLIST) {
+            $query = sprintf('SELECT %s FROM %s;', COLUMN_HASH, self::PLAYLIST_XMLTV_TABLE);
+            $hashes = array_merge($hashes, $this->safe_sql_playlist_settings('fetch_array', $query, COLUMN_HASH));
         }
 
-        $this->safe_sql_plugin('exec_transaction', $query);
+        if ($type & XMLTV_SOURCE_EXTERNAL) {
+            $query = sprintf('SELECT %s FROM %s;', COLUMN_HASH, self::XMLTV_TABLE);
+            $hashes = array_merge($hashes, $this->safe_sql_plugin('fetch_array', $query, COLUMN_HASH));
+        }
+
+        return count(array_unique($hashes));
     }
 
     /**
      * get xmltv sources hashes
      *
      * @param string $type
-     * @param string|null $playlist_id
      * @return array
      */
-    public function get_xmltv_sources_hash($type, $playlist_id)
-    {
-        $query = '';
-        if (($type & XMLTV_SOURCE_PLAYLIST) && $playlist_id !== null) {
-            $query .= sprintf('SELECT %s FROM %s WHERE %s=%s',
-                COLUMN_HASH, self::PLAYLIST_XMLTV_TABLE, COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id));
-        }
-
-        if ($type & XMLTV_SOURCE_EXTERNAL) {
-            if (!empty($query)) {
-                $query .= ' UNION ';
-            }
-            $query .= sprintf('SELECT %s FROM %s;', COLUMN_HASH, self::XMLTV_TABLE);
-        }
-        return $this->safe_sql_plugin('fetch_array', $query, COLUMN_HASH);
-    }
-
-    /**
-     * get external xmltv sources count
-     *
-     * @param string|null $playlist_id
-     * @return int
-     */
-    public function get_xmltv_sources_count($playlist_id)
+    public function get_xmltv_sources_hashes($type)
     {
         hd_debug_print(null, true);
 
-        if ($playlist_id === null) {
-            $query = sprintf('SELECT COUNT(*) FROM %s;', self::XMLTV_TABLE);
-        } else {
-            $query = sprintf('SELECT COUNT(*) FROM %s WHERE %s=%s;',
-                self::PLAYLIST_XMLTV_TABLE, COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id));
+        $hashes = array();
+        if ($type & XMLTV_SOURCE_PLAYLIST) {
+            $query = sprintf('SELECT %s FROM %s;', COLUMN_HASH, self::PLAYLIST_XMLTV_TABLE);
+            $hashes = array_merge($hashes, $this->safe_sql_playlist_settings('fetch_array', $query, COLUMN_HASH));
         }
 
-        return (int)$this->safe_sql_plugin('query_value', $query);
+        if ($type & XMLTV_SOURCE_EXTERNAL) {
+            $query = sprintf('SELECT %s FROM %s;', COLUMN_HASH, self::XMLTV_TABLE);
+            $hashes = array_merge($hashes, $this->safe_sql_plugin('fetch_array', $query, COLUMN_HASH));
+        }
+
+        return array_unique($hashes);
     }
 
     /**
      * get xmltv source
      *
-     * @param string|null $playlist_id
      * @param string $hash
+     * @param bool $is_playlist
      * @return array|null
      */
-    public function get_xmltv_source($playlist_id, $hash)
-    {
-        if ($playlist_id === null) {
-            $query = sprintf("SELECT * FROM %s WHERE %s=%s AND %s<>'';",
-                self::XMLTV_TABLE, COLUMN_HASH, Sql_Wrapper::sql_quote($hash), COLUMN_TYPE);
-        } else {
-            $query = sprintf("SELECT * FROM %s WHERE %s=%s AND %s=%s AND NOT %s='';", self::PLAYLIST_XMLTV_TABLE,
-                COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id), COLUMN_HASH, Sql_Wrapper::sql_quote($hash), COLUMN_TYPE);
-        }
-
-        return $this->safe_sql_plugin('query_value', $query, true);
-    }
-
-    /**
-     * @param string $hash
-     * @return array|null
-     */
-    public function find_xmltv_source($hash)
+    public function get_xmltv_source_parameters($hash, $is_playlist)
     {
         hd_debug_print(null, true);
 
-        $q_columns = Sql_Wrapper::sql_make_list_from_values(array('hash', 'type', 'name', 'uri', 'cache'), false);
-        $query = sprintf('SELECT * FROM (SELECT %s FROM %s UNION SELECT %s FROM %s) WHERE %s=%s;',
-            $q_columns, self::XMLTV_TABLE, $q_columns, self::PLAYLIST_XMLTV_TABLE, COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
+        $table = $is_playlist ? self::PLAYLIST_XMLTV_TABLE : self::XMLTV_TABLE;
+        $query = sprintf("SELECT %s FROM %s WHERE %s=%s;",
+            Sql_Wrapper::sql_make_list_from_values(self::$columns, false), $table, COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
+
+        if ($is_playlist) {
+            return $this->safe_sql_playlist_settings('query_value', $query, true);
+        }
 
         return $this->safe_sql_plugin('query_value', $query, true);
     }
@@ -624,79 +553,175 @@ class Dune_Default_Sqlite_Engine
     /**
      * update xmltv source
      *
-     * @param string $playlist_id
-     * @param array $value
+     * @param array $params
+     * @param bool $is_playlist
      * @return void
      * @noinspection Annotator
      */
-    public function set_xmltv_source($playlist_id, $value)
+    public function set_xmltv_source_parameters($params, $is_playlist)
     {
         hd_debug_print(null, true);
 
-        if ($playlist_id === null) {
-            $query = sprintf('INSERT OR IGNORE INTO %s %s;', self::XMLTV_TABLE, Sql_Wrapper::sql_make_insert_list($value));
-        } else {
-            $value[COLUMN_PLAYLIST_ID] = $playlist_id;
-            $query = sprintf('INSERT OR IGNORE INTO %s %s;', self::PLAYLIST_XMLTV_TABLE, Sql_Wrapper::sql_make_insert_list($value));
-        }
+        $table = $is_playlist ? self::PLAYLIST_XMLTV_TABLE : self::XMLTV_TABLE;
+        $col = Sql_Wrapper::sql_make_list_from_keys($params);
+        $val = Sql_Wrapper::sql_make_list_from_values($params);
+        $query = sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);', $table, $col, $val);
 
-        $this->safe_sql_plugin('exec', $query);
+        if ($is_playlist) {
+            hd_debug_print($query, true);
+            $this->safe_sql_playlist_settings('exec', $query);
+        } else {
+            $this->safe_sql_plugin('exec', $query);
+        }
     }
 
     /**
      * update xmltv source
      *
-     * @param string $playlist_id
      * @param array $value
+     * @param bool $is_playlist
      * @return void
      * @noinspection Annotator
      */
-    public function update_xmltv_source($playlist_id, $value)
+    public function update_xmltv_source_parameters($value, $is_playlist)
     {
         hd_debug_print(null, true);
 
-        $query = sprintf('UPDATE %s SET %s WHERE %s=%s;', ($playlist_id === null ? self::XMLTV_TABLE : self::PLAYLIST_XMLTV_TABLE),
+        $table = $is_playlist ? self::PLAYLIST_XMLTV_TABLE : self::XMLTV_TABLE;
+        $query = sprintf('UPDATE %s SET %s WHERE %s=%s;', $table,
             Sql_Wrapper::sql_make_set_list($value), COLUMN_HASH, Sql_Wrapper::sql_quote($value[COLUMN_HASH]));
-        $this->safe_sql_plugin('exec', $query);
+
+        if ($is_playlist) {
+            $this->safe_sql_playlist_settings('exec', $query);
+        } else {
+            $this->safe_sql_plugin('exec', $query);
+        }
     }
 
     /**
-     * Bulk set xmltv sources
-     * @param string $playlist_id
-     * @param Hashed_Array<string, array> $values
-     * @noinspection Annotator
+     * @param string $hash
      */
-    public function set_playlist_xmltv_sources($playlist_id, $values)
+    public function add_selected_xmltv_id($hash)
+    {
+        hd_debug_print("Add to selected: $hash", true);
+
+        $query = sprintf("INSERT OR IGNORE INTO %s (%s) VALUES (%s);",
+            self::SELECTED_XMLTV_TABLE, COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
+        $this->safe_sql_playlist_settings('exec', $query);
+    }
+
+    /**
+     * @param string $hash
+     */
+    public function remove_selected_xmltv_id($hash)
+    {
+        hd_debug_print("Removed from selected: $hash", true);
+
+        $query = sprintf("DELETE FROM %s WHERE %s=%s;", self::SELECTED_XMLTV_TABLE, COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
+        $this->safe_sql_playlist_settings('exec', $query);
+    }
+
+    /**
+     * @return array
+     */
+    public function get_selected_xmltv_ids()
+    {
+        $query = sprintf("SELECT %s FROM %s ORDER BY ROWID;", COLUMN_HASH, self::SELECTED_XMLTV_TABLE);
+        return $this->safe_sql_playlist_settings('fetch_array', $query, PARAM_HASH);
+    }
+
+    /**
+     * @param string $hash
+     * @return bool
+     */
+    public function is_selected_xmltv_id($hash)
+    {
+        $query = sprintf("SELECT count(*) FROM %s WHERE %s=%s;",
+            self::SELECTED_XMLTV_TABLE, COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
+        return (bool)$this->safe_sql_playlist_settings('query_value', $query);
+    }
+
+    /**
+     * move selected xmltv source to playlist settings db
+     *
+     * @param string $playlist_id
+     * @return void
+     */
+    public function move_selected_xmltv_source($playlist_id)
     {
         hd_debug_print(null, true);
+
+        if (!self::is_common_table_exists(self::SELECTED_XMLTV_TABLE)) {
+            return;
+        }
+
+        $query = sprintf('SELECT %s FROM %s WHERE %s=%s ORDER BY ROWID;', COLUMN_HASH, self::SELECTED_XMLTV_TABLE,
+            COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id));
+        $hashes = $this->safe_sql_plugin('fetch_array', $query, COLUMN_HASH);
+
+        $query = sprintf(self::CREATE_SELECTED_XMTLV_TABLE, self::SELECTED_XMLTV_TABLE);
+        $this->safe_sql_playlist_settings('exec', $query);
 
         $query = '';
-        foreach ($values as $params) {
-            $type = safe_get_value($params, PARAM_TYPE);
-            $uri = safe_get_value($params, PARAM_URI);
-            if (empty($type) || empty($uri)) continue;
-
-            $params[COLUMN_PLAYLIST_ID] = $playlist_id;
-            $query .= sprintf('INSERT OR REPLACE INTO %s %s;', self::PLAYLIST_XMLTV_TABLE, Sql_Wrapper::sql_make_insert_list($params));
+        foreach ($hashes as $hash) {
+            $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);',
+                self::SELECTED_XMLTV_TABLE, COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
         }
+        $this->safe_sql_playlist_settings('exec_transaction', $query);
+
+        $query = sprintf('DELETE FROM %s WHERE %s=%s;',
+            self::SELECTED_XMLTV_TABLE, COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id));
         $this->safe_sql_plugin('exec_transaction', $query);
+
+        $query = sprintf('SELECT count(*) FROM %s;', self::SELECTED_XMLTV_TABLE);
+        $cnt = (int)$this->safe_sql_plugin('query_value', $query);
+        if ($cnt === 0) {
+            $this->safe_sql_plugin('exec_transaction', 'DROP TABLE IF EXISTS %s;', self::SELECTED_XMLTV_TABLE);
+        }
     }
 
-    /**
-     * remove xmltv sources
-     *
-     * @param string|array $hash
-     * @param string|null $playlist_id
-     * @return void
-     */
-    public function remove_xmltv_source($hash, $playlist_id = null)
+    public function move_playlist_xmltv_source($playlist_id)
     {
-        hd_debug_print(null, true);
+        if ($this->safe_sql_playlist_settings("is_column_exists", COLUMN_PLAYLIST_ID)) {
+            // old table need to recreate!
+            $query = sprintf("DROP TABLE %s", self::PLAYLIST_XMLTV_TABLE);
+            $this->safe_sql_playlist_settings('exec', $query);
+        }
 
-        $query = sprintf('DELETE FROM %s WHERE %s;', ($playlist_id === null ? self::XMLTV_TABLE : self::PLAYLIST_XMLTV_TABLE),
-            Sql_Wrapper::sql_make_where_clause($hash, COLUMN_HASH));
-        $this->safe_sql_plugin('exec', $query);
+        $query = sprintf(self::CREATE_PLAYLIST_XMLTV_TABLE, self::PLAYLIST_XMLTV_TABLE);
+        $this->safe_sql_playlist_settings('exec', $query);
+
+        if (!self::is_common_table_exists(self::PLAYLIST_XMLTV_TABLE)) {
+            return;
+        }
+
+        $query = sprintf('SELECT %s FROM %s WHERE %s=%s ORDER BY ROWID;',
+            Sql_Wrapper::sql_make_list_from_values(self::$columns, false),
+            self::PLAYLIST_XMLTV_TABLE, COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id));
+        $rows = $this->safe_sql_plugin('fetch_array', $query);
+
+        // hash TEXT PRIMARY KEY NOT NULL, type TEXT, name TEXT NOT NULL, uri TEXT NOT NULL, cache TEXT DEFAULT 'auto'
+        $query = '';
+        foreach ($rows as $row) {
+            $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);', self::PLAYLIST_XMLTV_TABLE,
+                Sql_Wrapper::sql_make_list_from_keys($row), Sql_Wrapper::sql_make_list_from_values($row));
+        }
+        $this->safe_sql_playlist_settings('exec_transaction', $query);
+
+        $query = sprintf('DELETE FROM %s WHERE %s=%s;',
+            self::PLAYLIST_XMLTV_TABLE, COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id));
+        $this->safe_sql_plugin('exec_transaction', $query);
+
+        $query = sprintf('SELECT count(*) FROM %s;', self::PLAYLIST_XMLTV_TABLE);
+        $cnt = (int)$this->safe_sql_plugin('query_value', $query);
+        if ($cnt === 0) {
+            $this->safe_sql_plugin('exec_transaction', 'DROP TABLE IF EXISTS %s;', self::PLAYLIST_XMLTV_TABLE);
+        }
     }
+
+    ///////////////////////////////////////////////////////////////////////
+    // JSON table
+    //
 
     /**
      * Add preset to selected
@@ -2671,6 +2696,17 @@ class Dune_Default_Sqlite_Engine
      * @param string $table_name
      * @return bool
      */
+    protected function is_common_table_exists($table_name, $db_name = null)
+    {
+        $db_name = empty($db_name) ? 'sqlite_master' : "$db_name.sqlite_master";
+        $query = "SELECT COUNT(name) FROM $db_name WHERE type='table' AND name='$table_name';";
+        return (int)$this->safe_sql_plugin('query_value', $query) !== 0;
+    }
+
+    /**
+     * @param string $table_name
+     * @return bool
+     */
     protected function is_playlist_table_exists($table_name, $db_name = null)
     {
         $db_name = empty($db_name) ? 'sqlite_master' : "$db_name.sqlite_master";
@@ -2910,7 +2946,7 @@ class Dune_Default_Sqlite_Engine
                             PARAM_URI => $stg->params[PARAM_URI],
                             PARAM_CACHE => safe_get_value($stg->params, PARAM_CACHE, XMLTV_CACHE_AUTO)
                         );
-                        $this->set_xmltv_source(null, $item);
+                        $this->set_xmltv_source_parameters($item, false);
                     }
                     unset($parameters[$key]);
                 } else {

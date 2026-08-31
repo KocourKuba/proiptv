@@ -83,6 +83,7 @@ edit_list_title_info__2 = %s|Скачан: %s
 edit_list_title_info_download__1 = %s|Cкачивание...
 edit_list_wrong_cache_type = Предупреждение:|Сервер не поддерживает автоматическое кэширование! Пожалуйста, установите время кэширования вручную!
 edit_list_xmltv_not_ready = Источник не обработан!
+edit_list_xmltv_not_ready = Источник не обработан!
 edit_provider_settings = Настройки провайдера
 end_date = Время окончания:
 end_date__1 = Время окончания: %s

@@ -956,9 +956,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $params[PARAM_NAME] = $name;
 
         $this->plugin->set_playlist_parameters($playlist_id, $params);
-        if (!$saved_source->is_empty()) {
-            $this->plugin->set_playlist_xmltv_sources($playlist_id, $saved_source);
-            $this->plugin->set_selected_xmltv_ids($playlist_id, $saved_source->key());
+        foreach ($saved_source as $key => $value) {
+            $this->plugin->set_xmltv_source_parameters($value, true);
+            $this->plugin->add_selected_xmltv_id($key);
         }
 
         return $post_action;

@@ -170,7 +170,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
 
             case PARAM_USE_PICONS:
                 $this->force_parent_reload = true;
-                $active_sources = $this->plugin->get_selected_xmltv_ids($this->plugin->get_active_playlist_id());
+                $active_sources = $this->plugin->get_selected_xmltv_ids();
                 $val = $user_input->{$control_id};
                 if (empty($active_sources) && $val !== PLAYLIST_PICONS) {
                     $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_xmltv_sources'));

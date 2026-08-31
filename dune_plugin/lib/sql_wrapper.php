@@ -224,34 +224,6 @@ class Sql_Wrapper
     }
 
     /**
-     * Make INSERT list from array values (array[key1], array[key2], array[key3])
-     * (key1,key2,key3) VALUES ('array[key1]','array[key2]','array[key3]')
-     *
-     * @param array $arr
-     * @return string
-     */
-    public static function sql_make_insert_list($arr, $quoted = true, $bind = false)
-    {
-        $columns = self::sql_make_list_from_keys($arr);
-        $values = self::sql_make_list_from_values($arr, $quoted, $bind ? ':' : '');
-        return "($columns) VALUES ($values)";
-    }
-
-    /**
-     * Make INSERT list from array values (array[key1], array[key2], array[key3])
-     * (array[key1],array[key2],array[key3]) VALUES ('array[key1]','array[key2]','array[key3]')
-     *
-     * @param array $arr
-     * @return string
-     */
-    public static function sql_make_insert_list_from_values($arr, $quoted = true, $bind = false)
-    {
-        $columns = self::sql_make_list_from_values($arr, false);
-        $values = self::sql_make_list_from_values($arr, $quoted, $bind ? ':' : '');
-        return "($columns) VALUES ($values)";
-    }
-
-    /**
      * Make SET list "SET key1 = 'array[key1]', key2 = 'array[key2]', key4 = 'array[key3]'"
      * from array values (array[key1], array[key2], array[key3])
      *
@@ -260,11 +232,11 @@ class Sql_Wrapper
      */
     public static function sql_make_set_list($arr)
     {
-        $str = "";
+        $str = array();
         foreach ($arr as $col => $type) {
-            $str .= "$col=" . self::sql_quote($type) . ",";
+            $str[] = $col . '=' . self::sql_quote($type);
         }
-        return rtrim($str, ",");
+        return implode(',', $str);
     }
 
     /**
@@ -366,8 +338,9 @@ class Sql_Wrapper
      */
     public function prepare_bind($action, $table, $columns)
     {
-        $insert = self::sql_make_insert_list_from_values($columns, false, true);
-        $query = "$action INTO $table $insert;";
+        $col = self::sql_make_list_from_values($columns, false);
+        $val = self::sql_make_list_from_values($columns, false, ':');
+        $query = "$action INTO $table ($col) VALUES ($val);";
         $result = $this->db->prepare($query);
         if ($result === false) {
             hd_debug_print();

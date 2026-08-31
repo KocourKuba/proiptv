@@ -78,14 +78,6 @@ class Epg_Manager_Xmltv
     protected static $delayed_epg = array();
 
     /**
-     * @param Default_Dune_Plugin $plugin
-     */
-    public function __construct($plugin)
-    {
-        self::update_active_sources($plugin->get_active_sources());
-    }
-
-    /**
      * @param Hashed_Array<string, array> $sources
      * @return void
      */
