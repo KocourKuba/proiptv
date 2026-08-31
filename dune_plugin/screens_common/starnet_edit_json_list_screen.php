@@ -33,6 +33,7 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
     const SCREEN_EDIT_JSON_LIST = 'json_list';
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
+    const ACTION_SORT = 'sort';
 
     const CONTROL_CACHE_TIME = 'cache_time';
     const CONTROL_DOMAIN = 'domain';
@@ -53,6 +54,10 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $action_return = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
+        $selected_first = $this->plugin->get_bool_parameter(PARAM_SELECTED_FIRST, false);
+        $name = $selected_first ? TR::t('epg_selected_in_place') : TR::t('epg_selected_first');
+
+        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, self::ACTION_SORT, $name);
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_EDIT_JSON_SETTINGS_DLG, TR::t('edit'));
         $actions[GUI_EVENT_KEY_RETURN] = $action_return;
         $actions[GUI_EVENT_KEY_TOP_MENU] = $action_return;
@@ -128,6 +133,12 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_CALL_CLEAR_ALL_EPG:
                 Epg_Manager_Json::clear_epg_files();
                 break;
+
+            case self::ACTION_SORT:
+                $this->plugin->toggle_parameter(PARAM_SELECTED_FIRST, false);
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map());
+                $actions[] = $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_idx);
+                return Action_Factory::composite($actions);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 return $this->create_popup_menu($selected_id);
@@ -352,43 +363,21 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print('Selected sources: ' . implode(', ', $selected_sources), true);
 
         $sticker = Control_Factory::create_sticker(get_image_path('star_small.png'), -55, -2);
-        foreach ($this->plugin->get_config_presets() as $key => $item) {
-            $order_key = array_search($key, $selected_sources);
-            if (in_array($key, $provider_presets) !== false) {
-                $icon = get_image_path('engine2.png');
-            } else if (isset($item[EPG_JSON_PRESET_PRIVATE])) {
-                $icon = get_image_path('key.png');
-            } else {
-                $icon = get_image_path('link.png');
+        if ($this->plugin->get_bool_parameter(PARAM_SELECTED_FIRST, false)) {
+            $order_key = 0;
+            foreach ($selected_sources as $id) {
+                $item = $this->plugin->get_config_presets()->get($id);
+                $items[] = $this->fill_item($id, $order_key++, $sticker, self::get_icon($id, $item, $provider_presets));
             }
-
-            $files = glob(Epg_Manager_Json::get_cache_dir() . Hashed_Array::hash($key) . '_*.json');
-            $total_size = 0;
-            foreach ($files as $file) {
-                $total_size += filesize($file);
+            foreach ($this->plugin->get_config_presets() as $id => $item) {
+                if (in_array($id, $selected_sources)) continue;
+                $items[] = $this->fill_item($id, array_search($id, $selected_sources), $sticker, self::get_icon($id, $item, $provider_presets));
             }
-
-            $domain = $this->plugin->get_json_source_domain($key);
-            $cache_time = $this->plugin->get_json_source_cache($key);
-            if (empty($domain)) {
-                $detailed_info = TR::load('epg_screen_info__3', $cache_time, count($files), format_size($total_size));
-            } else {
-                $detailed_info = TR::load('epg_screen_info__4', $domain, $cache_time, count($files), format_size($total_size));
+        } else {
+            foreach ($this->plugin->get_config_presets() as $id => $item) {
+                $items[] = $this->fill_item($id, array_search($id, $selected_sources), $sticker, self::get_icon($id, $item, $provider_presets));
             }
-
-            $title = $order_key !== false ? "(" . ($order_key + 1) . ") - $key" : $key;
-            $items[] = array(
-                PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'id' => $key)),
-                PluginRegularFolderItem::caption => $title,
-                PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::item_sticker => ($order_key === false ? null : $sticker),
-                    ViewItemParams::icon_path => $icon,
-                    ViewItemParams::item_detailed_info => $detailed_info,
-                    ViewItemParams::item_detailed_icon_path => $icon,
-                ),
-            );
         }
-
         return $items;
     }
 
@@ -417,6 +406,48 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
             $this->plugin->get_screen_view('list_1x11_info'),
             $this->plugin->get_screen_view('list_2x11_small_info'),
             $this->plugin->get_screen_view('list_3x11_no_info'),
+        );
+    }
+
+    protected static function get_icon($id, $item, $provider_presets)
+    {
+        if (in_array($id, $provider_presets) !== false) {
+            $icon = get_image_path('engine2.png');
+        } else if (isset($item[EPG_JSON_PRESET_PRIVATE])) {
+            $icon = get_image_path('key.png');
+        } else {
+            $icon = get_image_path('link.png');
+        }
+
+        return $icon;
+    }
+
+    protected function fill_item($id, $order_key, $sticker, $icon)
+    {
+        $files = glob(Epg_Manager_Json::get_cache_dir() . Hashed_Array::hash($id) . '_*.json');
+        $total_size = 0;
+        foreach ($files as $file) {
+            $total_size += filesize($file);
+        }
+
+        $domain = $this->plugin->get_json_source_domain($id);
+        $cache_time = $this->plugin->get_json_source_cache($id);
+        if (empty($domain)) {
+            $detailed_info = TR::load('epg_screen_info__3', $cache_time, count($files), format_size($total_size));
+        } else {
+            $detailed_info = TR::load('epg_screen_info__4', $domain, $cache_time, count($files), format_size($total_size));
+        }
+
+        $title = $order_key !== false ? "(" . ($order_key + 1) . ") - $id" : $id;
+        return array(
+            PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'id' => $id)),
+            PluginRegularFolderItem::caption => $title,
+            PluginRegularFolderItem::view_item_params => array(
+                ViewItemParams::item_sticker => ($order_key === false ? null : $sticker),
+                ViewItemParams::icon_path => $icon,
+                ViewItemParams::item_detailed_info => $detailed_info,
+                ViewItemParams::item_detailed_icon_path => $icon,
+            ),
         );
     }
 }
