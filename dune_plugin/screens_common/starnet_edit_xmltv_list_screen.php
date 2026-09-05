@@ -634,10 +634,11 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                     $expired = format_datetime('Y-m-d H:i', $max_cache_time);
                 }
 
-                $detailed_info = TR::load('edit_list_detail_info__4',
+                $detailed_info = TR::load('edit_list_detail_info__5',
                     $item[PARAM_URI],
                     $dl_date,
                     $expired,
+                    format_size(filesize($cached_xmltv_file)),
                     $info
                 );
             }

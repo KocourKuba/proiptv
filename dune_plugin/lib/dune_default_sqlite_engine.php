@@ -537,8 +537,6 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_xmltv_source_parameters($hash, $is_playlist)
     {
-        hd_debug_print(null, true);
-
         $table = $is_playlist ? self::PLAYLIST_XMLTV_TABLE : self::XMLTV_TABLE;
         $query = sprintf("SELECT %s FROM %s WHERE %s=%s;",
             Sql_Wrapper::sql_make_list_from_values(self::$columns, false), $table, COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
@@ -682,7 +680,7 @@ class Dune_Default_Sqlite_Engine
 
     public function move_playlist_xmltv_source($playlist_id)
     {
-        if ($this->safe_sql_playlist_settings("is_column_exists", COLUMN_PLAYLIST_ID)) {
+        if ($this->safe_sql_playlist_settings('is_column_exists', self::PLAYLIST_XMLTV_TABLE, COLUMN_PLAYLIST_ID)) {
             // old table need to recreate!
             $query = sprintf("DROP TABLE %s", self::PLAYLIST_XMLTV_TABLE);
             $this->safe_sql_playlist_settings('exec', $query);
