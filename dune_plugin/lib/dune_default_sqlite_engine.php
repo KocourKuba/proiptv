@@ -674,7 +674,7 @@ class Dune_Default_Sqlite_Engine
         $query = sprintf('SELECT count(*) FROM %s;', self::SELECTED_XMLTV_TABLE);
         $cnt = (int)$this->safe_sql_plugin('query_value', $query);
         if ($cnt === 0) {
-            $this->safe_sql_plugin('exec_transaction', 'DROP TABLE IF EXISTS %s;', self::SELECTED_XMLTV_TABLE);
+            $this->safe_sql_plugin('exec_transaction', sprintf('DROP TABLE IF EXISTS %s;', self::SELECTED_XMLTV_TABLE));
         }
     }
 
@@ -713,7 +713,7 @@ class Dune_Default_Sqlite_Engine
         $query = sprintf('SELECT count(*) FROM %s;', self::PLAYLIST_XMLTV_TABLE);
         $cnt = (int)$this->safe_sql_plugin('query_value', $query);
         if ($cnt === 0) {
-            $this->safe_sql_plugin('exec_transaction', 'DROP TABLE IF EXISTS %s;', self::PLAYLIST_XMLTV_TABLE);
+            $this->safe_sql_plugin('exec_transaction', sprintf('DROP TABLE IF EXISTS %s;', self::PLAYLIST_XMLTV_TABLE));
         }
     }
 
