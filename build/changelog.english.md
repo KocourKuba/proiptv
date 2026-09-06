@@ -1,4 +1,14 @@
-﻿### Version 8.1.1752
+﻿### Version 8.2.1790
+- Redesigned work with internet EPG sources.
+- Added the ability to use internet EPG sources not only with templates, but also with regular playlists. However, this will depend on the playlist being compiled correctly.
+- The EPG settings for internet sources have been redesigned. It now resembles the XMLTV settings screen. You can select the sources to use and their priority.
+- Added the ability to check playlist and XMLTV matches for EPG content for playlist channels.
+- The same option is available for internet sources on my EPG server (proiptv).
+- Added a combined EPG mode: internet sources + XMLTV. The EPG search is performed first in the internet source, then in XMLTV. On my EPG server, the source data is the original XMLTV, so adding it "just in case" makes no sense.
+- When viewing the EPG from the channel list (NOT IN THE BROWSER!), it shows where the EPG was found. - Added parsing of TV program descriptions in the EPG for display in ExtEPG.
+- As always, don't forget about backups!
+
+### Version 8.1.1752
 - The use of drm-play sources has been completely removed from the plugin
 - Added Internet sources for providers that were not in drm-play. Now all templates have their own Internet EPG source
 - The plugin uses the new features of my xmltv -> json converter on the EPG server.
