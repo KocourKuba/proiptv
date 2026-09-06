@@ -1028,6 +1028,11 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 $icon_file = get_image_path($type === PARAM_LINK ? "link.png" : "m3u_file.png");
             }
 
+            $m3u_file = Default_Dune_Plugin::get_playlist_cache_path() . $this->plugin->make_base_name(IPTV_PLAYLIST, $playlist_id) . '.m3u8';
+            if (file_exists($m3u_file)) {
+                $detailed_info .= '||' . TR::load('size__1', format_size(filesize($m3u_file)));
+            }
+
             $shortcut = $this->plugin->get_playlist_shortcut($playlist_id);
             if (!empty($shortcut)) {
                 $title = "$title - ($shortcut)";

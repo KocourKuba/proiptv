@@ -673,18 +673,18 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                     $expired = format_datetime('Y-m-d H:i', $max_cache_time);
                 }
 
-                $detailed_info = TR::load('edit_list_detail_info__5',
-                    $item[PARAM_URI],
-                    $dl_date,
-                    $expired,
-                    format_size(filesize($cached_xmltv_file)),
-                    $info
-                );
+                $detailed_info = sprintf('%s||%s||%s||%s',
+                    TR::load('url__1', $item[PARAM_URI]),
+                    TR::load('edit_list_detail_info__2', $dl_date, $expired),
+                    TR::load('size__1', format_size(filesize($cached_xmltv_file))),
+                    $info);
             }
 
             if (empty($detailed_info)) {
                 if (isset($item[PARAM_URI])) {
-                    $detailed_info = TR::t('edit_list_detail_info__2', $item[PARAM_URI], $item[PARAM_CACHE]);
+                    $detailed_info = sprintf('%s||%s',
+                        TR::load('url__1', $item[PARAM_URI]),
+                        TR::load('edit_list_cache_time__1', $item[PARAM_CACHE]));
                 } else {
                     $detailed_info = $item[PARAM_NAME];
                 }
