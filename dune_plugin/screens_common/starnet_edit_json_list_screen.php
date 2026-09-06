@@ -33,7 +33,6 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
     const SCREEN_EDIT_JSON_LIST = 'json_list';
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
-    const ACTION_SORT = 'sort';
 
     const CONTROL_CACHE_TIME = 'cache_time';
     const CONTROL_DOMAIN = 'domain';
@@ -57,7 +56,7 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
         $selected_first = $this->plugin->get_bool_parameter(PARAM_SELECTED_FIRST, false);
         $name = $selected_first ? TR::t('epg_selected_in_place') : TR::t('epg_selected_first');
 
-        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, self::ACTION_SORT, $name);
+        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_SORT, $name);
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_EDIT_JSON_SETTINGS_DLG, TR::t('edit'));
         $actions[GUI_EVENT_KEY_RETURN] = $action_return;
         $actions[GUI_EVENT_KEY_TOP_MENU] = $action_return;
@@ -134,7 +133,7 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
                 Epg_Manager_Json::clear_epg_files();
                 break;
 
-            case self::ACTION_SORT:
+            case ACTION_SORT:
                 $this->plugin->toggle_parameter(PARAM_SELECTED_FIRST, false);
                 $actions[] = Action_Factory::change_behaviour($this->do_get_action_map());
                 $actions[] = $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_idx);

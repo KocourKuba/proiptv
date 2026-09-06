@@ -57,6 +57,9 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $action_return = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
+        $selected_first = $this->plugin->get_bool_parameter(PARAM_SELECTED_XMLTV_FIRST, false);
+        $name = $selected_first ? TR::t('epg_selected_in_place') : TR::t('epg_selected_first');
+        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_SORT, $name);
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_EDIT_XMLTV_SETTINGS, TR::t('edit'));
 
         $actions[GUI_EVENT_KEY_RETURN] = $action_return;
@@ -268,6 +271,12 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_CHECK_SELECTED_EPG:
                 return $this->do_check_epg_ids(null);
+
+            case ACTION_SORT:
+                $this->plugin->toggle_parameter(PARAM_SELECTED_XMLTV_FIRST, false);
+                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map());
+                $actions[] = $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_idx);
+                return Action_Factory::composite($actions);
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_idx);
@@ -610,8 +619,26 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $selected_sources = $this->plugin->get_selected_xmltv_ids();
         hd_debug_print('Selected sources: ' . implode(',', $selected_sources), true);
+        $order_items = array();
+        if ($this->plugin->get_bool_parameter(PARAM_SELECTED_XMLTV_FIRST, false)) {
+            foreach ($selected_sources as $id) {
+                $order_items[] = $id;
+            }
+            foreach ($all_sources as $id => $item) {
+                if (in_array($id, $order_items)) continue;
+                $order_items[] = $id;
+            }
+        } else {
+            foreach ($all_sources as $id => $item) {
+                $order_items[] = $id;
+            }
+        }
+
         $has_locks = false;
-        foreach ($all_sources as $key => $item) {
+        foreach ($order_items as $key) {
+            $item = $all_sources->get($key);
+            if (empty($item)) continue;
+
             $detailed_info = '';
             $order_key = false;
             $title = empty($item[PARAM_NAME]) ? $item[PARAM_URI] : $item[PARAM_NAME];
