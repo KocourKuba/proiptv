@@ -657,9 +657,6 @@ class Dune_Default_Sqlite_Engine
             COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id));
         $hashes = $this->safe_sql_plugin('fetch_array', $query, COLUMN_HASH);
 
-        $query = sprintf(self::CREATE_SELECTED_XMTLV_TABLE, self::SELECTED_XMLTV_TABLE);
-        $this->safe_sql_playlist_settings('exec', $query);
-
         $query = '';
         foreach ($hashes as $hash) {
             $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);',

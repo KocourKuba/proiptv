@@ -1227,6 +1227,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(TV_FAV_COMMON_GROUP_ID), COLUMN_CHANNEL_ID);
         $this->safe_sql_playlist_settings('exec', $query);
 
+        // create selected XMLTV table
+        $query = sprintf(self::CREATE_SELECTED_XMTLV_TABLE, self::SELECTED_XMLTV_TABLE);
+        $this->safe_sql_playlist_settings('exec', $query);
+
         $provider_class = safe_get_value($params, PARAM_PROVIDER);
         $provider_epg_presets = array();
         if (!empty($provider_class)) {

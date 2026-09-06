@@ -295,11 +295,23 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         if ($this->plugin->is_channels_loaded()) {
             $menu_items[] = Control_Factory::menu_separator();
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                ACTION_CHECK_EPG, TR::t('entry_epg_check_ids'), 'search.png');
+            $cached_xmltv_file = Epg_Manager_Xmltv::get_cache_dir() . "$selected_id.xmltv";
+            $locked = Epg_Manager_Xmltv::is_index_locked($selected_id, INDEXING_ALL);
+            if (!$locked && file_exists($cached_xmltv_file)) {
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                    ACTION_CHECK_EPG, TR::t('entry_epg_check_ids'), 'search.png');
+            }
 
             $selected_sources = $this->plugin->get_selected_xmltv_ids();
-            if (!empty($selected_sources)) {
+            $available = array();
+            foreach ($selected_sources as $selected_source) {
+                $cached_xmltv_file = Epg_Manager_Xmltv::get_cache_dir() . "$selected_source.xmltv";
+                $locked = Epg_Manager_Xmltv::is_index_locked($selected_source, INDEXING_ALL);
+                if (!$locked && file_exists($cached_xmltv_file)) {
+                    $available[] = $selected_source;
+                }
+            }
+            if (!empty($available)) {
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                     ACTION_CHECK_SELECTED_EPG, TR::t('entry_epg_selected_check_ids'), 'search.png');
             }
@@ -863,6 +875,12 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $search_aliases = array();
         $found = array();
         foreach ($selected_sources as $hash) {
+            $cached_xmltv_file = Epg_Manager_Xmltv::get_cache_dir() . "$hash.xmltv";
+            $locked = Epg_Manager_Xmltv::is_index_locked($hash, INDEXING_ALL);
+            if ($locked || !file_exists($cached_xmltv_file)) {
+                continue;
+            }
+
             $params = $this->plugin->get_xmltv_source_parameters($hash, true);
             if (empty($params)) {
                 $params = $this->plugin->get_xmltv_source_parameters($hash, false);
