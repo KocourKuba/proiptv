@@ -386,10 +386,11 @@ class Epg_Manager_Json
         hd_debug_print("EPG ID's: " . json_format_unescaped($epg_ids), true);
 
         if (empty($epg_ids[COLUMN_EPG_ID])) {
-            return reset($epg_ids);
+            $epg_id = reset($epg_ids);
+        } else {
+            $epg_id = $epg_ids[COLUMN_EPG_ID];
         }
 
-        $epg_id = $epg_ids[COLUMN_EPG_ID];
         $epg_source_id = $config_preset[EPG_JSON_PRESET_ID];
 
         if (!self::load_channels_info($config_preset) || empty(self::$all_channels_info[$epg_source_id])) {
