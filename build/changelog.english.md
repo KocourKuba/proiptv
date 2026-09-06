@@ -1,4 +1,4 @@
-﻿### Version 8.2.1790
+﻿### Version 8.2.1792
 - Redesigned work with internet EPG sources.
 - Added the ability to use internet EPG sources not only with templates, but also with regular playlists. However, this will depend on the playlist being compiled correctly.
 - The EPG settings for internet sources have been redesigned. It now resembles the XMLTV settings screen. You can select the sources to use and their priority.
