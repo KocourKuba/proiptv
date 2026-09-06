@@ -2682,6 +2682,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
         hd_debug_print("Selected engine: $engine", true);
+        if (!in_array($engine, array(ENGINE_XMLTV, ENGINE_JSON, ENGINE_COMBINED))) {
+            $engine = ENGINE_XMLTV;
+            $this->set_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
+        }
 
         switch($engine)
         {
