@@ -355,6 +355,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 );
             }
 
+            hd_debug_print(json_format_unescaped($day_epg_items));
             if (isset($day_epg_items['error'])) {
                 $day_epg[] = array(
                     PluginTvEpgProgram::start_tm_sec => $utc_day_start_tm_sec,

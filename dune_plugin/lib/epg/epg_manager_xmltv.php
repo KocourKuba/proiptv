@@ -124,7 +124,7 @@ class Epg_Manager_Xmltv
 
         $error_message = '';
         if (self::$xmltv_sources->is_empty()) {
-            $error_message = "No selected XMLTV sources!";
+            $error_message = TR::load('epg_no_sources_desc');
         }
 
         $day_items = array();
@@ -277,7 +277,9 @@ class Epg_Manager_Xmltv
                     PluginTvEpgProgram::description => TR::load('epg_not_ready_desc'))
                 );
             } else if (empty($error_message)) {
-                $day_epg['error'] = TR::load('epg_no_sources_desc');
+                $day_epg['error'] = TR::load('epg_not_exist');
+            } else {
+                $day_epg['error'] = $error_message;
             }
         }
 
