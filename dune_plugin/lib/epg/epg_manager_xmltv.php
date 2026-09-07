@@ -383,8 +383,6 @@ class Epg_Manager_Xmltv
                 safe_unlink($LOG_FILE);
             }
 
-            date_default_timezone_set('UTC');
-
             set_debug_log($config[PARAM_COOKIE_ENABLE_DEBUG]);
 
             self::set_cache_dir($config[PARAM_CACHE_DIR]);
@@ -487,11 +485,11 @@ class Epg_Manager_Xmltv
             }
         }
 
-        $new_index_flag = 0;
+        $new_index_flag = $index_flag;
         if ($expired) {
             self::clear_epg_files($hash);
             $new_index_flag |= INDEXING_DOWNLOAD;
-            hd_debug_print("Xmltv cache '$hash' expired. Indexing flags: " . $index_flag, true);
+            hd_debug_print("Xmltv cache '$hash' expired. Indexing flags: $new_index_flag", true);
             $channels_valid = false;
             $entries_valid = false;
         } else {
@@ -503,23 +501,22 @@ class Epg_Manager_Xmltv
         }
 
         if (!$entries_valid && ($index_flag & INDEXING_ENTRIES) !== 0) {
-            hd_debug_print("Xmltv entries '$hash' not valid");
             $new_index_flag |= INDEXING_ENTRIES;
+            hd_debug_print("Xmltv entries '$hash' not valid. Indexing flags: $new_index_flag");
         }
 
         if (!$channels_valid) {
-            hd_debug_print("Xmltv channels '$hash' not valid");
             $new_index_flag |= INDEXING_CHANNELS;
+            hd_debug_print("Xmltv channels '$hash' not valid. Indexing flags: $new_index_flag");
         }
 
         if ($new_index_flag === 0) {
             hd_debug_print("Xmltv channels and entries index '$hash' are valid");
-            self::clear_log($hash);
             return 0;
         }
 
         // downloaded xmltv file exists, not expired but indexes for channels, picons and positions not exists
-        hd_debug_print("Result index flag: $index_flag for '$hash'");
+        hd_debug_print("Result index flag: $new_index_flag for '$hash'");
         hd_debug_print_separator();
         return $new_index_flag;
     }
@@ -588,7 +585,7 @@ class Epg_Manager_Xmltv
         $params[PARAM_EPG_CACHE_PATH] = $cached_file;
 
         /// download source
-        if ($indexing_flag & INDEXING_DOWNLOAD) {
+        if ($new_flag & INDEXING_DOWNLOAD) {
             hd_debug_print('Download xmltv');
             // download xmtv is denied if download or any indexing in process
             if (self::is_index_locked($url_hash, INDEXING_ALL)) {
@@ -646,7 +643,7 @@ class Epg_Manager_Xmltv
         }
 
         /// Reindex channels and picons
-        if ($indexing_flag & INDEXING_CHANNELS) {
+        if ($new_flag & INDEXING_CHANNELS) {
             hd_debug_print('Start index channels and picons...');
             self::lock_index($url_hash, INDEXING_CHANNELS);
 
@@ -769,7 +766,7 @@ class Epg_Manager_Xmltv
         }
 
         /// Reindex positions
-        if ($indexing_flag & INDEXING_ENTRIES) {
+        if ($new_flag & INDEXING_ENTRIES) {
             hd_debug_print('Start indexing entries...');
             self::lock_index($url_hash, INDEXING_ENTRIES);
 
@@ -1055,8 +1052,6 @@ class Epg_Manager_Xmltv
             hd_debug_print("Remove lock: $lock");
             delete_directory($lock);
         }
-
-        self::clear_log($hash);
 
         if (empty($hash)) {
             self::$epg_db = array();

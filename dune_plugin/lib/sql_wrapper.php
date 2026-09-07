@@ -18,11 +18,11 @@ class Sql_Wrapper
     protected $open_mode;
 
     // Default flags SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
-    public function __construct($db_path, $flags = 6)
+    public function __construct($db_path, $flags = 6, $journal = 'MEMORY')
     {
         try {
             $this->db = new SQLite3($db_path, $flags, '');
-            $this->db->exec('PRAGMA journal_mode=MEMORY;');
+            $this->db->exec("PRAGMA journal_mode=$journal;");
             $this->open_mode = $flags;
             $this->db_path = $db_path;
         } catch (Exception $ex) {

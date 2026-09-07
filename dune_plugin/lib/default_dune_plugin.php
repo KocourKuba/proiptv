@@ -1203,34 +1203,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $name = safe_get_value($params, PARAM_NAME);
         hd_debug_print("Process playlist: $name ($playlist_id)");
 
-        $db_file = get_data_path("$playlist_id.db");
-        if ($this->sql_playlist_settings && $db_file === $this->sql_playlist_settings->get_db_path()) {
+        if ($this->sql_playlist_settings && get_data_path("$playlist_id.db") === $this->sql_playlist_settings->get_db_path()) {
             hd_debug_print("Playlist settings db already inited!", true);
+        } else {
+            $this->sql_playlist_settings = $this->create_playlist_settings_db($playlist_id);
+            if (is_null($this->sql_playlist_settings) || !$this->sql_playlist_settings->is_valid()) {
+                $err = "Database for playlist $playlist_id is not valid!";
+                hd_debug_print($err);
+                return false;
+            }
         }
-
-        hd_debug_print("Init playlist settings db: $playlist_id.db");
-        $this->sql_playlist_settings = new Sql_Wrapper($db_file);
-        if (!$this->sql_playlist_settings->is_valid()) {
-            $err = "Database $db_file is not valid!";
-            hd_debug_print($err);
-            return false;
-        }
-
-        // create settings table
-        $query = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, self::SETTINGS_TABLE);
-        $this->safe_sql_playlist_settings('exec', $query);
-
-        // create cookies table
-        $query = sprintf(self::CREATE_COOKIES_TABLE, self::COOKIES_TABLE);
-        $this->safe_sql_playlist_settings('exec', $query);
-
-        // create common TV Favorites table
-        $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(TV_FAV_COMMON_GROUP_ID), COLUMN_CHANNEL_ID);
-        $this->safe_sql_playlist_settings('exec', $query);
-
-        // create selected XMLTV table
-        $query = sprintf(self::CREATE_SELECTED_XMTLV_TABLE, self::SELECTED_XMLTV_TABLE);
-        $this->safe_sql_playlist_settings('exec', $query);
 
         $provider_class = safe_get_value($params, PARAM_PROVIDER);
         $provider_epg_presets = array();
@@ -1247,27 +1229,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->move_selected_xmltv_source($playlist_id);
         $this->update_selected_json_source($this->epg_json_presets->get_keys(), $provider_epg_presets);
 
-        // create tables for vod search, vod filters, vod favorites
-        if ($this->is_vod_playlist() || (!empty($provider) && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
-            hd_debug_print('Preparing tables for VOD', true);
-            $tables = array(
-                VOD_FILTER_LIST => COLUMN_ITEM,
-                VOD_SEARCH_LIST => COLUMN_ITEM,
-                VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID,
-            );
-
-            if (!empty($provider) && self::is_provider_m3u_vod($provider)) {
-                $tables[VOD_LIST_GROUP_ID] = COLUMN_CHANNEL_ID;
-            }
-
-            foreach ($tables as $list => $column) {
-                $table_name = self::get_table_name($list);
-                $query = sprintf(self::CREATE_ORDERED_TABLE, $table_name, $column);
-                $this->safe_sql_playlist_settings('exec', $query);
-            }
-        }
-
-
         //////////////////////////////////////////////////////
         /// Upgrade settings 5.x to database
         $this->upgrade_settings($playlist_id);
@@ -1279,6 +1240,59 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_print_separator();
 
         return true;
+    }
+
+    /**
+     * @param string $playlist_id
+     * @return Sql_Wrapper
+     */
+    public function create_playlist_settings_db($playlist_id)
+    {
+        $db_file = get_data_path("$playlist_id.db");
+        hd_debug_print("Init playlist settings db: $playlist_id.db");
+        $sql_playlist_settings = new Sql_Wrapper($db_file);
+        if (!$sql_playlist_settings->is_valid()) {
+            $err = "Database $db_file is not valid!";
+            hd_debug_print($err);
+            return $sql_playlist_settings;
+        }
+
+        // create settings table
+        $query = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, self::SETTINGS_TABLE);
+        $sql_playlist_settings->exec($query);
+
+        // create cookies table
+        $query = sprintf(self::CREATE_COOKIES_TABLE, self::COOKIES_TABLE);
+        $sql_playlist_settings->exec($query);
+
+        // create common TV Favorites table
+        $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(TV_FAV_COMMON_GROUP_ID), COLUMN_CHANNEL_ID);
+        $sql_playlist_settings->exec($query);
+
+        // create playlist XMLTV table
+        $query = sprintf(self::CREATE_PLAYLIST_XMLTV_TABLE, self::PLAYLIST_XMLTV_TABLE);
+        $sql_playlist_settings->exec($query);
+
+        // create selected XMLTV table
+        $query = sprintf(self::CREATE_SELECTED_XMTLV_TABLE, self::SELECTED_XMLTV_TABLE);
+        $sql_playlist_settings->exec($query);
+
+        // create tables for vod search, vod filters, vod favorites
+        hd_debug_print('Preparing tables for VOD', true);
+        $tables = array(
+            VOD_FILTER_LIST => COLUMN_ITEM,
+            VOD_SEARCH_LIST => COLUMN_ITEM,
+            VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID,
+            VOD_LIST_GROUP_ID => COLUMN_CHANNEL_ID,
+        );
+
+        foreach ($tables as $list => $column) {
+            $table_name = self::get_table_name($list);
+            $query = sprintf(self::CREATE_ORDERED_TABLE, $table_name, $column);
+            $sql_playlist_settings->exec($query);
+        }
+
+        return $sql_playlist_settings;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -1779,8 +1793,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $ext_php = get_platform_php();
         $script_path = get_install_path('bin/index_epg.php');
-        $log_path = get_temp_path("{$source_id}_bg_error.log");
-        $cmd = "$ext_php -f \"$script_path\" \"$config_file\" >$log_path 2>&1 &";
+        $err_log_path = get_temp_path("{$source_id}_bg_error.log");
+        $cmd = "$ext_php -f \"$script_path\" \"$config_file\" >$err_log_path 2>&1 &";
         hd_debug_print("exec: $cmd", true);
         shell_exec($cmd);
         return true;

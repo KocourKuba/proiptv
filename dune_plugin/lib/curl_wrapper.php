@@ -325,7 +325,8 @@ class Curl_Wrapper
     {
         if (self::$etag_db === null) {
             create_path(get_data_path(CURL_CACHE_SUBDIR));
-            self::$etag_db = new Sql_Wrapper(get_data_path(CURL_CACHE_SUBDIR . '/' . self::CACHE_TAG_FILE));
+            $db_path = get_data_path(CURL_CACHE_SUBDIR . '/' . self::CACHE_TAG_FILE);
+            self::$etag_db = new Sql_Wrapper($db_path, SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE, 'WAL');
             self::$etag_db->exec('CREATE TABLE IF NOT EXISTS etags (hash TEXT PRIMARY KEY, etag TEXT);');
             $old_etags = get_data_path('etag_cache.dat');
             if (file_exists($old_etags)) {

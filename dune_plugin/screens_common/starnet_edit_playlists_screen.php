@@ -956,10 +956,18 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $params[PARAM_NAME] = $name;
 
         $this->plugin->set_playlist_parameters($playlist_id, $params);
+
+        $new_db = $this->plugin->create_playlist_settings_db($playlist_id);
+        $query = '';
         foreach ($saved_source as $key => $value) {
-            $this->plugin->set_xmltv_source_parameters($value, true);
-            $this->plugin->add_selected_xmltv_id($key);
+            $col = Sql_Wrapper::sql_make_list_from_keys($value);
+            $val = Sql_Wrapper::sql_make_list_from_values($value);
+            $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);',
+                Dune_Default_Sqlite_Engine::PLAYLIST_XMLTV_TABLE, $col, $val);
+            $query .= sprintf("INSERT OR IGNORE INTO %s (%s) VALUES (%s);",
+                Dune_Default_Sqlite_Engine::SELECTED_XMLTV_TABLE, COLUMN_HASH, Sql_Wrapper::sql_quote($key));
         }
+        $new_db->exec_transaction($query);
 
         return $post_action;
     }

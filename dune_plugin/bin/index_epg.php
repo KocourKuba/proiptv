@@ -37,16 +37,19 @@ function hd_print($str)
 {
     global $LOG_FILE;
 
-    if (!empty($LOG_FILE)) {
-        $log_file = fopen($LOG_FILE, 'ab+');
-        fwrite($log_file, date('[Y-m-d H:i:s] ') . $str . PHP_EOL);
-        fclose($log_file);
+    $out = date('[Y-m-d H:i:s] ') . $str . PHP_EOL;
+
+    if (empty($LOG_FILE)) {
+        echo $out;
     } else {
-        echo date('[Y-m-d H:i:s] ') . $str . PHP_EOL;
+        $log_file = fopen($LOG_FILE, 'ab+');
+        fwrite($log_file, $out);
+        fclose($log_file);
     }
 }
 
 error_reporting(E_ALL & ~E_NOTICE);
+date_default_timezone_set('UTC');
 
 DuneSystem::$properties['plugin_name'] = getenv('PLUGIN_NAME');
 DuneSystem::$properties['install_dir_path'] = getenv('PLUGIN_INSTALL_DIR_PATH');
