@@ -1363,7 +1363,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             && $this->get_bool_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) != PLAYLIST_PICONS;
 
 
-        Default_Dune_Plugin::cleanup_stalled_locks();
+        $this->cleanup_stalled_locks();
 
         // clear ext epg
         $ext_epg_channels = get_temp_path('channel_ids.txt');
@@ -1777,10 +1777,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Run background indexing for: '$source_id' with flag $indexing_flag: {$params[PARAM_URI]}");
         $params[PARAM_CURL_CONNECT_TIMEOUT] = $this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30);
         $params[PARAM_CURL_DOWNLOAD_TIMEOUT] = $this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
-
         $config = array(
             PARAM_COOKIE_ENABLE_DEBUG => LogSeverity::$is_debug,
-            PARAM_CACHE_DIR => Epg_Manager_Xmltv::get_cache_dir(),
+            PARAM_CACHE_DIR => $this->get_parameter(PARAM_EPG_CACHE_PATH),
             PARAM_INDEXING_FLAG => $indexing_flag,
             PARAM_XMLTV => $params,
         );
@@ -3176,7 +3175,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $active_sources;
     }
 
-    public static function cleanup_stalled_locks()
+    public function cleanup_stalled_locks()
     {
         hd_debug_print(null, true);
         $locks = Epg_Manager_Xmltv::get_any_index_locked();
@@ -3192,7 +3191,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             if ($pid !== 0 && !send_process_signal($pid, 0)) {
                 hd_debug_print("Remove stalled lock: $lock");
-                delete_directory(Epg_Manager_Xmltv::get_cache_dir() . $lock);
+                delete_directory($this->get_parameter(PARAM_EPG_CACHE_PATH) . $lock);
             } else {
                 hd_debug_print("Process '$pid' still running for '$lock'");
             }

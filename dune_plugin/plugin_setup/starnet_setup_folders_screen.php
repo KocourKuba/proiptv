@@ -81,7 +81,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // EPG cache dir
-        $cache_dir = Epg_Manager_Xmltv::get_cache_dir();
+        $cache_dir = $this->plugin->get_parameter(PARAM_EPG_CACHE_PATH);
         $free_size = TR::t('setup_epg_storage_info__1', HD::get_storage_size($cache_dir));
         $cache_dir = string_ellipsis($cache_dir);
         Control_Factory::add_image_button($defs, $this, self::CONTROL_CHANGE_XMLTV_CACHE_PATH, $free_size, $cache_dir, get_image_path('folder.png'));
@@ -132,7 +132,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                 break;
 
             case self::ACTION_HISTORY_RESET_DEFAULT:
-                hd_debug_print('do set history folder to default: ' . get_data_path());
+                hd_debug_print('do set history folder to default: ' . get_data_path(HISTORY_SUBDIR));
                 $this->plugin->set_history_path();
                 $post_action = Action_Factory::show_title_dialog(
                     TR::t('folder_screen_selected_folder__1', ''),
@@ -148,7 +148,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                 hd_debug_print("copy to: $history_path");
                 try {
                     if ($history_path === $default_path) {
-                        throw new Exception("Cannot copy $history_path to itself!");
+                        throw new Exception("Cannot copy $history_path to itself!\nPlease change folder to other than default.");
                     }
                     HD::copy_data($default_path, "/_" . PARAM_TV_HISTORY_ITEMS . "$/", $history_path);
                     $post_action = Action_Factory::show_title_dialog(TR::t('information'), TR::t('setup_copy_done'));

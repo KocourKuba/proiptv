@@ -566,12 +566,4 @@ class Epg_Manager_Json
         hd_print('Cache folder:            ' . self::$cache_dir);
         hd_print('Storage space:           ' . HD::get_storage_size(self::$cache_dir));
     }
-
-    /**
-     * @return string
-     */
-    public static function get_cache_dir()
-    {
-        return self::$cache_dir;
-    }
 }

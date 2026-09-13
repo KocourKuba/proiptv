@@ -423,7 +423,7 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
 
     protected function fill_item($id, $order_key, $sticker, $icon)
     {
-        $files = glob(Epg_Manager_Json::get_cache_dir() . Hashed_Array::hash($id) . '_*.json');
+        $files = glob($this->plugin->get_parameter(PARAM_EPG_CACHE_PATH) . Hashed_Array::hash($id) . '_*.json');
         $total_size = 0;
         foreach ($files as $file) {
             $total_size += filesize($file);

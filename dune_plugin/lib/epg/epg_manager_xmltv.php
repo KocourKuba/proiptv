@@ -1151,14 +1151,6 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * @return string
-     */
-    public static function get_cache_dir()
-    {
-        return self::$cache_dir;
-    }
-
-    /**
      * @param string $hash
      * @param int $index_flag
      */
