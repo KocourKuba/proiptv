@@ -77,6 +77,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     {
         hd_debug_print();
         dump_input_handler($user_input, true);
+        set_debug_log(safe_get_value($plugin_cookies, PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off));
 
         if (!isset($user_input->control_id)) {
             hd_debug_print('user input control id not set');

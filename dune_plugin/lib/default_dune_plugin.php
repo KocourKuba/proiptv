@@ -569,7 +569,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return;
         }
 
-        LogSeverity::$is_debug = true;
         $this->active_provider = null;
         self::$iptv_m3u_parser = new M3uParser();
         $this->init_parameters();

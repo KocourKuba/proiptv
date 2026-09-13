@@ -258,7 +258,6 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 
             $param = PARAM_PLAYLIST_CACHE_TIME_IPTV . ($pl_idx === 'default' ? '' : "_$pl_idx");
             $cache_time = $this->plugin->get_setting($param, 1);
-            hd_debug_print("Playlist $param = $cache_time");
             Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_CACHE_TIME_IPTV,
                 TR::t('setup_cache_time_iptv'), $cache_time,
                 $caching_range, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);

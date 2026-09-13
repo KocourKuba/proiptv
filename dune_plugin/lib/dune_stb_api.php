@@ -791,13 +791,13 @@ function get_raw_firmware_version()
 }
 
 /**
- * @param bool $is_debug
+ * @param string $is_debug
  * @return void
  */
 function set_debug_log($is_debug)
 {
-    hd_print('Set debug logging: ' . var_export($is_debug, true));
-    LogSeverity::$is_debug = $is_debug;
+    hd_print('Set debug logging: ' . $is_debug);
+    LogSeverity::$is_debug = SwitchOnOff::to_bool($is_debug);
 }
 
 /**
