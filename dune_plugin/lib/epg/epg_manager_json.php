@@ -563,7 +563,7 @@ class Epg_Manager_Json
         create_path(self::$cache_dir);
 
         hd_print_separator();
-        hd_print('Cache folder:            ' . self::$cache_dir);
+        hd_print('Json cache folder:       ' . self::$cache_dir);
         hd_print('Storage space:           ' . HD::get_storage_size(self::$cache_dir));
     }
 }
