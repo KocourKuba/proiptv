@@ -1273,10 +1273,15 @@ class Dune_Default_Sqlite_Engine
     public function get_groups($type, $disabled, $column = null)
     {
         hd_debug_print(null, true);
-        $where = ($disabled === PARAM_ALL) ? '' : COLUMN_DISABLED . '=' . $disabled;
-        $and = empty($where) ? '' : 'AND';
-        $where = $type === PARAM_ALL ? '' : sprintf("%s %s %s=%d", $where, $and, COLUMN_SPECIAL, $type);
-        $query = sprintf('SELECT * FROM %s WHERE %s ORDER by ROWID;', self::get_table_name(GROUPS_INFO), $where);
+        $cond = array();
+        if ($disabled !== PARAM_ALL) {
+            $cond[] = COLUMN_DISABLED . '=' . (int)$disabled;
+        }
+        if ($type !== PARAM_ALL) {
+            $cond[] = COLUMN_SPECIAL . '=' . (int)$type;
+        }
+        $where = empty($cond) ? '' : 'WHERE ' . implode(' AND ', $cond);
+        $query = sprintf('SELECT * FROM %s %s ORDER by ROWID;', self::get_table_name(GROUPS_INFO), $where);
         $rows = $this->safe_sql_playlist('fetch_array', $query);
         if ($column !== null) {
             $rows = extract_column($rows, $column);
@@ -1297,7 +1302,7 @@ class Dune_Default_Sqlite_Engine
         $where = ($disabled === PARAM_ALL) ? '' : COLUMN_DISABLED . '=' . $disabled;
         $and = empty($where) ? '' : 'AND';
         $where = $type === PARAM_ALL ? '' : sprintf('WHERE %s %s %s=%s', $where, $and, COLUMN_SPECIAL, $type);
-        $query = sprintf('SELECT COUNT(*) FROM %s %s ORDER by ROWID;', self::get_table_name(GROUPS_INFO), $where);
+        $query = sprintf('SELECT COUNT(*) FROM %s %s;', self::get_table_name(GROUPS_INFO), $where);
         return (int)$this->safe_sql_playlist('query_value', $query);
     }
 
@@ -2251,7 +2256,7 @@ class Dune_Default_Sqlite_Engine
                 self::VOD_HISTORY_TABLE, COLUMN_MOVIE_ID, $q_movie_id, COLUMN_SERIES_ID, $q_series_id);
         } else {
             $query = sprintf('SELECT %s FROM %s WHERE %s=%s AND %s=%s;',
-                Sql_Wrapper::sql_quote($param_name), self::VOD_HISTORY_TABLE, COLUMN_MOVIE_ID, $q_movie_id, COLUMN_SERIES_ID, $q_series_id);
+                $param_name, self::VOD_HISTORY_TABLE, COLUMN_MOVIE_ID, $q_movie_id, COLUMN_SERIES_ID, $q_series_id);
         }
         return $this->safe_sql_vod_history('query_value', $query, $param_name === null);
     }
