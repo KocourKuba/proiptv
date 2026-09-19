@@ -28,16 +28,17 @@ class Rows_Factory
 {
     /**
      * @param array $rows
-     * @param array $focus # GCompFocusDef
-     * @param string $bg
+     * @param array|null $headers
+     * @param array|null $focus # GCompFocusDef
+     * @param string|null $bg
      * @param bool $header_enabled
      * @param bool $single_list_navigation
      * @param int $initial_focus_header
-     * @param string $initial_focus_item_id
-     * @param string $initial_focus_row_id
-     * @param double $hfactor
-     * @param double $vfactor
-     * @param double $vgravity
+     * @param string|null $initial_focus_item_id
+     * @param string|null $initial_focus_row_id
+     * @param float $hfactor
+     * @param float $vfactor
+     * @param float $vgravity
      * @param int $vend_min_offset
      * @return array
      */
@@ -120,6 +121,13 @@ class Rows_Factory
         $pane[PluginRowsPane::vod_r] = array('w' => $vod_w, 'h' => $vod_h, 'x' => $w - $vod_w, 'y' => 0);
     }
 
+    /**
+     * @param array $headers
+     * @param string $id
+     * @param string $title
+     * @param bool $first_in_cluster
+     * @return void
+     */
     public static function add_header(&$headers, $id, $title, $first_in_cluster = false)
     {
         $arr[PluginRowsHeader::id] = $id;
@@ -177,9 +185,10 @@ class Rows_Factory
      * @param string $id
      * @param string $caption
      * @param string $group_id
+     * @param string|null $color # RGBA format
+     * @param int|null $options
      * @param int $width
      * @param int $height
-     * @param string $color # RGBA format
      * @param int $font_size # size in pt
      * @param int $left
      * @param int $dy
@@ -239,6 +248,31 @@ class Rows_Factory
         $pane[PluginRowsPane::regular_item_params_templates][$id] = $params;
     }
 
+    /**
+     * @param string $id
+     * @param array $items
+     * @param string $params_template_id
+     * @param string $title
+     * @param string $group_id
+     * @param string|null $header_id
+     * @param array|null $show_all_action
+     * @param int $height
+     * @param int $inactive_height
+     * @param int $width
+     * @param int $left_padding
+     * @param int $inactive_left_padding
+     * @param int $right_padding
+     * @param bool $hide_captions
+     * @param bool $hide_icons
+     * @param bool $fade_enabled
+     * @param array|null $focusable
+     * @param string $fade_icon_mix_color # RGBA format
+     * @param int $fade_icon_mix_alpha # 0-255
+     * @param int $lite_fade_icon_mix_alpha # 0-255
+     * @param string $fade_caption_color # RGBA format
+     * @param array|null $params
+     * @return array
+     */
     public static function regular_row($id, $items, $params_template_id, $title, $group_id, $header_id,
                                        $show_all_action = null,
                                        $height = 0,

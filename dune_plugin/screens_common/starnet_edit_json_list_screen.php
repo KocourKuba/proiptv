@@ -47,6 +47,9 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
         return $this->do_get_action_map();
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_action_map()
     {
         hd_debug_print(null, true);
@@ -408,6 +411,12 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
         );
     }
 
+    /**
+     * @param string $id
+     * @param array $item
+     * @param array $provider_presets
+     * @return string
+     */
     protected static function get_icon($id, $item, $provider_presets)
     {
         if (in_array($id, $provider_presets) !== false) {
@@ -421,6 +430,13 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
         return $icon;
     }
 
+    /**
+     * @param string $id
+     * @param int|bool $order_key
+     * @param array $sticker
+     * @param string $icon
+     * @return array
+     */
     protected function fill_item($id, $order_key, $sticker, $icon)
     {
         $files = glob($this->plugin->get_parameter(PARAM_EPG_CACHE_PATH) . Hashed_Array::hash($id) . '_*.json');

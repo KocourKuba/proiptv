@@ -41,6 +41,9 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         return $this->do_get_action_map();
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_action_map()
     {
         hd_debug_print(null, true);
@@ -286,6 +289,10 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// Protected methods
 
+    /**
+     * @param string $group_id
+     * @return array
+     */
     protected function create_popup_menu($group_id)
     {
         $title = TR::t('playlist_name_msg__1', TR::t(VOD_GROUP_CAPTION));

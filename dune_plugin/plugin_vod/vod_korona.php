@@ -287,6 +287,10 @@ class vod_korona extends vod_standard
         return $movies;
     }
 
+    /**
+     * @param array $entry
+     * @return string
+     */
     protected static function collect_genres($entry)
     {
         $genres = array();

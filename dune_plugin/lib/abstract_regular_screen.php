@@ -72,6 +72,9 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
     ///////////////////////////////////////////////////////////////////////
     // Screen interface
 
+    /**
+     * @return int
+     */
     private function get_folder_view_index()
     {
         hd_debug_print(null, true);

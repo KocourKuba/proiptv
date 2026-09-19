@@ -47,6 +47,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
     ///////////////////////////////////////////////////////////////////////
 
+    /**
+     * @param Default_Dune_Plugin $plugin
+     */
     public function __construct(Default_Dune_Plugin $plugin)
     {
         parent::__construct($plugin);
@@ -61,6 +64,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         return $this->do_get_action_map();
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_action_map()
     {
         hd_debug_print(null, true);
@@ -316,6 +322,10 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// protected methods
 
+    /**
+     * @param string $playlist_id
+     * @return array|null
+     */
     protected function show_playlist_info($playlist_id)
     {
         hd_debug_print(null, true);
@@ -358,6 +368,10 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         return Action_Factory::show_dialog($defs, TR::t('playlist_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
     }
 
+    /**
+     * @param object $user_input
+     * @return array|null
+     */
     protected function edit_provider_dlg($user_input)
     {
         $playlist_id = safe_get_value($user_input, COLUMN_PLAYLIST_ID, '');
@@ -388,6 +402,12 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         return Action_Factory::show_dialog($defs, "{$provider->getName()} ({$provider->getId()})");
     }
 
+    /**
+     * @param object $user_input
+     * @param MediaURL $parent_media_url
+     * @param object $plugin_cookies
+     * @return array|null
+     */
     protected function apply_edit_provider_dlg($user_input, $parent_media_url, $plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -695,6 +715,10 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         return $post_action;
     }
 
+    /**
+     * @param object $user_input
+     * @return array
+     */
     protected function selected_text_file($user_input)
     {
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
@@ -764,6 +788,10 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         return Action_Factory::composite($actions);
     }
 
+    /**
+     * @param object $user_input
+     * @return array|null
+     */
     protected function selected_m3u_file($user_input)
     {
         $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
@@ -810,7 +838,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
     /**
      * @param object $user_input
-     * @return array
+     * @return array|null
      */
     protected function do_export_playlist($user_input)
     {
@@ -873,6 +901,12 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
     }
 
     /**
+     * @param string $uri
+     * @param string $type
+     * @param string $name
+     * @param string $detect_id
+     * @param string $pl_type
+     * @return array
      * @throws Exception
      */
     protected function add_playlist($uri, $type, $name, $detect_id, $pl_type)

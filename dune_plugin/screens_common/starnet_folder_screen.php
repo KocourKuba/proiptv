@@ -79,6 +79,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
 
     protected $imagelib_cache_path;
 
+    /**
+     * @param Default_Dune_Plugin $plugin
+     */
     public function __construct(Default_Dune_Plugin $plugin)
     {
         parent::__construct($plugin);
@@ -93,6 +96,10 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
         return $this->do_get_action_map($media_url);
     }
 
+    /**
+     * @param MediaURL $media_url
+     * @return array
+     */
     protected function do_get_action_map(MediaURL $media_url)
     {
         hd_debug_print(null, true);
@@ -427,7 +434,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
     /// protected methods
 
     /**
-     * @param array $path
+     * @param MediaURL $media_url
+     * @param array|string $path
      * @return array
      */
     protected function get_file_list($media_url, $path)
@@ -668,6 +676,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
      * @param array &$defs
      * @param string $user
      * @param string $password
+     * @return void
      */
     protected function GetSMBAccessDefs(&$defs, $user, $password)
     {

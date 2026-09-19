@@ -92,6 +92,10 @@ class Control_Factory_Ext extends Control_Factory
     ///////////////////////////////////////////////////////////////////////////
 
     /**
+     * @param array $defs
+     * @param int $height
+     * @param int $viewport_width
+     * @return void
      * @throws Exception
      */
     public static function add_box(&$defs, $height, $viewport_width)
@@ -108,6 +112,7 @@ class Control_Factory_Ext extends Control_Factory
     ///////////////////////////////////////////////////////////////////////////
 
     /**
+     * @return void
      * @throws Exception
      */
     public static function init()
@@ -186,6 +191,11 @@ class Control_Factory_Ext extends Control_Factory
     }
 
     /**
+     * @param array $defs
+     * @param string $path
+     * @param int $viewport_width
+     * @param int $max_visible_lines
+     * @return void
      * @throws Exception
      */
     public static function add_file_tree_view(&$defs, $path, $viewport_width, $max_visible_lines)
@@ -233,6 +243,14 @@ class Control_Factory_Ext extends Control_Factory
     }
 
     /**
+     * @param array $defs
+     * @param array $control_defs
+     * @param string|null $title
+     * @param int $viewport_width
+     * @param int $dx
+     * @param int $border_color_index
+     * @param int $border_thickness
+     * @return void
      * @throws Exception
      */
     public static function add_group_box(&$defs, &$control_defs, $title, $viewport_width, $dx = 0, $border_color_index = 0, $border_thickness = 3)
@@ -281,6 +299,12 @@ class Control_Factory_Ext extends Control_Factory
 
     /**
      * Show progress bar
+     * @param array $defs
+     * @param int $dx
+     * @param int $width
+     * @param int $pos_percent
+     * @param int $max_percent
+     * @return void
      */
     public static function add_progress_bar_ext(&$defs, $dx, $width, $pos_percent, $max_percent = 100)
     {
@@ -323,6 +347,13 @@ class Control_Factory_Ext extends Control_Factory
     }
 
     /**
+     * @param array $defs
+     * @param int $viewport_width
+     * @param int $line_height
+     * @param int $num_of_visible_lines
+     * @param int $num_of_lines
+     * @param int $scroll_position
+     * @return void
      * @throws Exception
      */
     public static function add_scrollbar(&$defs, $viewport_width, $line_height, $num_of_visible_lines, $num_of_lines, $scroll_position)

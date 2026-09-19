@@ -75,6 +75,9 @@ class Movie extends Json_Serializer implements User_Input_Handler
         $this->plugin = $plugin;
     }
 
+    /**
+     * @return array
+     */
     public function __sleep()
     {
         $vars = get_object_vars($this);
@@ -82,6 +85,9 @@ class Movie extends Json_Serializer implements User_Input_Handler
         return array_keys($vars);
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_action_map()
     {
         hd_debug_print(null, true);
@@ -229,6 +235,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
      * @param string $budget
      * @param array $details
      * @param array $rate_details
+     * @return void
      */
     public function set_data(
         $name,
@@ -304,6 +311,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
 
     /**
      * @param Movie_Season $movie_season
+     * @return void
      */
     public function add_season_data($movie_season)
     {
@@ -320,6 +328,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
 
     /**
      * @param Movie_Series $movie_series
+     * @return void
      */
     public function add_series_data($movie_series)
     {
@@ -351,7 +360,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
     }
 
     /**
-     * @return array
+     * @return Movie_Season[]
      */
     public function get_seasons_list()
     {
@@ -359,7 +368,8 @@ class Movie extends Json_Serializer implements User_Input_Handler
     }
 
     /**
-     * @return Movie_Season
+     * @param string $season_id
+     * @return Movie_Season|null
      */
     public function get_season($season_id)
     {
@@ -383,7 +393,8 @@ class Movie extends Json_Serializer implements User_Input_Handler
     }
 
     /**
-     * @return Movie_Series
+     * @param string $series_id
+     * @return Movie_Series|false
      */
     public function get_series($series_id)
     {
@@ -401,7 +412,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
     }
 
     /**
-     * @param $series_id
+     * @param string $series_id
      * @return array
      */
     public function get_qualities($series_id)
@@ -424,7 +435,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
     /**
      * @param string $series_id
      * @param string $id
-     * @return Movie_Variant
+     * @return Movie_Variant|null
      */
     public function get_quality($series_id, $id)
     {
@@ -680,6 +691,9 @@ class Movie extends Json_Serializer implements User_Input_Handler
         );
     }
 
+    /**
+     * @return string
+     */
     public function make_movie_caption()
     {
         $caption = $this->movie_info[PluginMovie::name];

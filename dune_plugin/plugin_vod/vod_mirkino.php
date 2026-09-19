@@ -493,6 +493,7 @@ class vod_mirkino extends vod_standard
     /**
      * @param array $movie_info
      * @param array $movies
+     * @return void
      */
     protected function CreateShortMovie($movie_info, &$movies)
     {

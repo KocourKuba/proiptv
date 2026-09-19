@@ -48,12 +48,14 @@ interface ExtTag
     public function getTagValues();
 
     /**
+     * @param int $idx
      * @return string
      */
     public function getTagValue($idx = 0);
 
     /**
      * @param string $tag_value ;
+     * @param int $idx
      * @return void
      */
     public function setTagValue($tag_value, $idx = 0);

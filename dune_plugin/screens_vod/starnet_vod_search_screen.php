@@ -51,6 +51,9 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen
         return $this->do_get_action_map();
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_action_map()
     {
         hd_debug_print(null, true);

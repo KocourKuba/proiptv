@@ -83,6 +83,9 @@ class HD
         return "$size_num $size_suf";
     }
 
+    /**
+     * @return array
+     */
     public static function load_firmware_features()
     {
         $path = getenv('FS_PREFIX') . '/tmp/firmware_features.txt';
@@ -110,6 +113,9 @@ class HD
         return self::$with_rows_api;
     }
 
+    /**
+     * @return bool
+     */
     public static function list_config_support()
     {
         if (!isset(self::$with_list_config))
@@ -119,6 +125,9 @@ class HD
         return self::$with_list_config;
     }
 
+    /**
+     * @return bool
+     */
     public static function with_lcfg_v2()
     {
         return self::list_config_support() && isset(self::$ff_set['lcfg_v2']);
@@ -144,6 +153,11 @@ class HD
         return format_size(filesize($path));
     }
 
+    /**
+     * @param mixed $opts
+     * @param int $ident
+     * @return void
+     */
     public static function print_array($opts, $ident = 0)
     {
         if (is_array($opts)) {
@@ -162,12 +176,18 @@ class HD
 
     ///////////////////////////////////////////////////////////////////////
 
+    /**
+     * @return int
+     */
     public static function http_local_port()
     {
         $port = getenv('HD_HTTP_LOCAL_PORT');
         return $port ? (int)$port : 80;
     }
 
+    /**
+     * @return string
+     */
     public static function get_default_user_agent()
     {
         if (empty(self::$default_user_agent))
@@ -176,6 +196,9 @@ class HD
         return self::$default_user_agent;
     }
 
+    /**
+     * @return void
+     */
     public static function http_init()
     {
         if (!empty(self::$default_user_agent))
@@ -209,6 +232,10 @@ class HD
         hd_debug_print('HTTP UserAgent: ' . self::$default_user_agent);
     }
 
+    /**
+     * @param string $user_agent
+     * @return void
+     */
     public static function set_dune_user_agent($user_agent)
     {
         self::$plugin_user_agent = $user_agent;
@@ -216,7 +243,7 @@ class HD
 
     /**
      * @param string $path
-     * @param array|null $arg
+     * @param int|null $arg
      * @return array|string
      */
     public static function get_storage_size($path, $arg = null)
@@ -242,6 +269,9 @@ class HD
 
     ///////////////////////////////////////////////////////////////////////
 
+    /**
+     * @return string
+     */
     public static function get_dune_user_agent()
     {
         if (empty(self::$default_user_agent))
@@ -291,6 +321,7 @@ class HD
     /**
      * @param string $path
      * @param bool $preserve_keys
+     * @param bool $json
      * @return array|mixed
      */
     public static function get_data_items($path, $preserve_keys = true, $json = true)
@@ -301,6 +332,7 @@ class HD
     /**
      * @param string $path
      * @param bool $preserve_keys
+     * @param bool $json
      * @return array|mixed
      */
     public static function get_items($path, $preserve_keys = true, $json = true)
@@ -320,6 +352,8 @@ class HD
     /**
      * @param string $path
      * @param mixed $items
+     * @param bool $json
+     * @return void
      */
     public static function put_data_items($path, $items, $json = true)
     {
@@ -329,6 +363,8 @@ class HD
     /**
      * @param string $path
      * @param mixed $items
+     * @param bool $json
+     * @return void
      */
     public static function put_items($path, $items, $json = true)
     {
@@ -339,6 +375,7 @@ class HD
 
     /**
      * @param string $path
+     * @return void
      */
     public static function erase_data_items($path)
     {
@@ -347,6 +384,7 @@ class HD
 
     /**
      * @param string $path
+     * @return void
      */
     public static function erase_items($path)
     {
@@ -366,6 +404,7 @@ class HD
     /**
      * @param string $path
      * @param mixed $item
+     * @return void
      */
     public static function put_data_item($path, $item)
     {
@@ -376,6 +415,7 @@ class HD
      * @param string $sourcePath absoulute path where files will be searched
      * @param string $source_pattern regex pattern to match files
      * @param string $destPath absolute path to destination folder
+     * @return void
      * @throws Exception
      */
     public static function copy_data($sourcePath, $source_pattern, $destPath)
@@ -401,6 +441,10 @@ class HD
         }
     }
 
+    /**
+     * @param string $string
+     * @return string|null
+     */
     public static function detect_encoding($string)
     {
         static $list = array('utf-8', 'windows-1251', 'windows-1252', 'ASCII');
@@ -426,6 +470,7 @@ class HD
      *
      * @param string $filename file name without path
      * @param bool $persistent [optional] is stored in persistent file storage
+     * @return void
      */
     public static function clear_cookie($filename, $persistent = false)
     {
@@ -436,7 +481,7 @@ class HD
     /**
      * Return true if palette is patched or not exist
      *
-     * @return true
+     * @return bool
      */
     public static function color_palette_check()
     {
@@ -565,6 +610,9 @@ class HD
         return Action_Factory::show_main_screen($reboot_action);
     }
 
+    /**
+     * @return array|null
+     */
     public static function color_palette_restore()
     {
         $skin_config = get_active_skin_path() . '/dune_skin_config.xml';

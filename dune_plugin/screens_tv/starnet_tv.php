@@ -59,6 +59,9 @@ class Starnet_Tv implements User_Input_Handler
         $this->playback_url_is_stream_url = false;
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_action_map()
     {
         hd_debug_print(null, true);
@@ -181,9 +184,9 @@ class Starnet_Tv implements User_Input_Handler
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param $playback_url
-     * @param $plugin_cookies
-     * @return mixed
+     * @param string $playback_url
+     * @param object $plugin_cookies
+     * @return string
      * @noinspection PhpUnusedParameterInspection
      */
     public function get_tv_stream_url($playback_url, &$plugin_cookies)

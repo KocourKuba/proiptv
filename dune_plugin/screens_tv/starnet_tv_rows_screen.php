@@ -58,6 +58,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         return $this->do_get_action_map();
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_action_map()
     {
         hd_debug_print(null, true);
@@ -622,6 +625,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     /**
      * @param array $rows
      * @param array $headers
+     * @return void
      */
     protected function get_history_rows(&$rows, &$headers)
     {
@@ -725,6 +729,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     /**
      * @param array $rows
      * @param array $headers
+     * @return void
      */
     protected function get_favorites_rows(&$rows, &$headers)
     {
@@ -764,6 +769,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     /**
      * @param array $rows
      * @param array $headers
+     * @return void
      */
     protected function get_changed_channels_rows(&$rows, &$headers)
     {
@@ -837,6 +843,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     /**
      * @param array $rows
      * @param array $headers
+     * @return void
      */
     protected function get_all_channels_row(&$rows, &$headers)
     {
@@ -938,6 +945,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         return false;
     }
 
+    /**
+     * @return array
+     */
     protected function get_fav_stickers()
     {
         $rowItemsParams = $this->GetRowsItemsParamsClass();
@@ -1446,12 +1456,19 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         return Action_Factory::show_popup_menu($menu_items);
     }
 
+    /**
+     * @return string
+     */
     protected function GetRowsItemsParamsClass()
     {
         $suff = $this->show_caption ? "" : "n";
         return 'RowsItemsParams' . $this->channels_in_row . $suff;
     }
 
+    /**
+     * @param string $param_name
+     * @return mixed
+     */
     protected function GetRowsItemsParams($param_name)
     {
         $rClass = new ReflectionClass('RowsItemsParams');
@@ -1462,6 +1479,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         return (isset($array[$sq_param])) ? $array[$sq_param] : $array[$param_name];
     }
 
+    /**
+     * @return void
+     */
     protected function update_new_ui_settings()
     {
         $this->show_caption = $this->plugin->get_bool_setting(PARAM_NEWUI_SHOW_CHANNEL_CAPTION);
@@ -1472,6 +1492,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
     /**
      * @param string $item_id
+     * @param bool $assoc
      * @return MediaURL|array
      */
     protected static function row_id_decoder($item_id, $assoc = false)

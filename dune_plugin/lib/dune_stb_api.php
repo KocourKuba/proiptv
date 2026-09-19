@@ -242,31 +242,56 @@ class SwitchOnOff
         self::off => 'off.png',
     );
 
+    /**
+     * @param bool|string $val
+     * @return string
+     */
     public static function to_def($val)
     {
         return $val ? self::on : self::off;
     }
 
+    /**
+     * @param string $val
+     * @return bool
+     */
     public static function to_bool($val)
     {
         return $val === self::on;
     }
 
+    /**
+     * @param string $val
+     * @return string
+     */
     public static function to_image($val)
     {
         return get_image_path(safe_get_value(self::$image, $val, self::$image[self::off]));
     }
 
+    /**
+     * @param string $val
+     * @return string
+     */
     public static function translate($val)
     {
         return safe_get_value(self::$translated, $val, self::$translated[self::off]);
     }
 
+    /**
+     * @param array $translated
+     * @param string $val
+     * @return string
+     */
     public static function translate_from($translated, $val)
     {
         return safe_get_value($translated, $val, $translated[self::off]);
     }
 
+    /**
+     * @param string $val
+     * @return string
+     */
     public static function toggle($val)
     {
         if ($val === self::on) {
@@ -491,6 +516,9 @@ class DuneIrControl
 # System functions
 ###############################################################################
 
+/**
+ * @return void
+ */
 function print_backtrace()
 {
     hd_print('Back trace:');
@@ -569,6 +597,7 @@ function backtrace_exception($ex, $as_string = false, $seen = null)
  *
  * @param Exception|Throwable $ex
  * @param bool $as_string
+ * @return void
  */
 function print_backtrace_exception($ex, $as_string = false)
 {
@@ -630,11 +659,17 @@ function hd_debug_print($val = null, $is_debug = false)
     hd_print($prefix . $val);
 }
 
+/**
+ * @return void
+ */
 function hd_print_separator()
 {
     hd_print(str_repeat('-', 80));
 }
 
+/**
+ * @return void
+ */
 function hd_debug_print_separator()
 {
     if (!LogSeverity::$is_debug)
@@ -712,6 +747,9 @@ function get_platform_info()
     return $platform;
 }
 
+/**
+ * @return string
+ */
 function get_platform_curl()
 {
     static $curl = null;
@@ -731,6 +769,9 @@ function get_platform_curl()
     return $curl;
 }
 
+/**
+ * @return string|false
+ */
 function get_platform_php()
 {
     static $php = null;
@@ -829,7 +870,7 @@ function get_parsed_firmware_ver()
 
 /**
  * return serial number
- * @return string
+ * @return string|null
  */
 function get_serial_number()
 {
@@ -882,7 +923,7 @@ function get_dns_address()
 }
 
 /**
- * @return string|null
+ * @return string
  */
 function get_mac_address()
 {
@@ -1014,6 +1055,7 @@ function format_datetime($fmt, $ts)
 
 /**
  * @param string $ticks
+ * @param bool $point
  * @return string
  */
 function format_duration($ticks, $point = false)
@@ -1403,6 +1445,9 @@ function get_playback_url()
 # Audio controls
 ###############################################################################
 
+/**
+ * @return string
+ */
 function get_volume()
 {
     # return string (value 0..100 - current volume in percents)
@@ -1411,6 +1456,10 @@ function get_volume()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @param int $percents 0-100
+ * @return string
+ */
 function set_volume($percents /*0-100*/)
 {
     # return string (command execution status)
@@ -1419,6 +1468,9 @@ function set_volume($percents /*0-100*/)
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return bool
+ */
 function is_mute_enabled()
 {
     # return boolean
@@ -1427,6 +1479,10 @@ function is_mute_enabled()
     return get_shell_exec($cmd) === '1';
 }
 
+/**
+ * @param int $mute
+ * @return string
+ */
 function toggle_mute($mute = 1)
 {
     # return string (command execution status)
@@ -1435,6 +1491,9 @@ function toggle_mute($mute = 1)
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return array
+ */
 function get_audio_tracks_description()
 {
     # return array(
@@ -1463,6 +1522,9 @@ function get_audio_tracks_description()
     return $result;
 }
 
+/**
+ * @return string
+ */
 function get_audio_track()
 {
     # Return: 0..N - current audio track index
@@ -1471,6 +1533,10 @@ function get_audio_track()
         rtrim(shell_exec('cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "audio_track" | sed -n "s/^.*audio_track = /\1/p"'), "\n");
 }
 
+/**
+ * @param int $track
+ * @return string
+ */
 function set_audio_track($track)
 {
     # Argument: 0..N - audio track index
@@ -1485,6 +1551,9 @@ function set_audio_track($track)
 # Teletext controls (playback in TV mode)
 ###############################################################################
 
+/**
+ * @return string
+ */
 function is_teletext_available()
 {
     # Return: boolean value of teletext available in the current stream
@@ -1493,6 +1562,9 @@ function is_teletext_available()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function is_teletext_enabled()
 {
     # Return: boolean value of teletext mode is turned
@@ -1501,6 +1573,10 @@ function is_teletext_enabled()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @param int $enable
+ * @return string
+ */
 function toggle_teletext($enable = 1)
 {
     # Return: command execution status
@@ -1509,6 +1585,9 @@ function toggle_teletext($enable = 1)
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_teletext_page_number()
 {
     # Return: string value of current teletext page number
@@ -1517,6 +1596,10 @@ function get_teletext_page_number()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @param int $value 100..899 - page number
+ * @return string
+ */
 function set_teletext_page_number($value)
 {
     # Argument: 100..899 - page number
@@ -1526,6 +1609,9 @@ function set_teletext_page_number($value)
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return bool
+ */
 function is_teletext_mix_mode_enabled()
 {
     # Return: boolean value of teletext mix mode is turned
@@ -1534,6 +1620,10 @@ function is_teletext_mix_mode_enabled()
     return get_shell_exec($cmd) === '1';
 }
 
+/**
+ * @param int $mode
+ * @return string
+ */
 function set_teletext_mix_mode($mode = 1)
 {
     # Return: command execution status
@@ -1546,6 +1636,9 @@ function set_teletext_mix_mode($mode = 1)
 # Video controls
 ###############################################################################
 
+/**
+ * @return bool
+ */
 function is_video_enabled()
 {
     # Returns true if primary video showing during primary video playback is enabled.
@@ -1557,6 +1650,10 @@ function is_video_enabled()
     return get_shell_exec($cmd) === '1';
 }
 
+/**
+ * @param int $enable
+ * @return string
+ */
 function toggle_video($enable = 1)
 {
     # Return: command execution status
@@ -1565,6 +1662,9 @@ function toggle_video($enable = 1)
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_video_zorder()
 {
     # Return: string value of current Z-order of primary video
@@ -1573,6 +1673,10 @@ function get_video_zorder()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @param int $value 0..1000 - Z-order
+ * @return string
+ */
 function set_video_zorder($value)
 {
     # Sets Z-order of primary video. If primary video playback is not running or primary
@@ -1589,6 +1693,9 @@ function set_video_zorder($value)
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_osd_zorder()
 {
     # Return: string value of current Z-order of OSD
@@ -1597,6 +1704,10 @@ function get_osd_zorder()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @param int $value 0..1000 - Z-order
+ * @return string
+ */
 function set_osd_zorder($value)
 {
     # Argument: 0..1000 - Z-order
@@ -1606,6 +1717,9 @@ function set_osd_zorder($value)
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function is_video_on_top()
 {
     # Return: true if primary video has Z-order greater than Z-order of OSD
@@ -1614,6 +1728,10 @@ function is_video_on_top()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @param int $enable
+ * @return string
+ */
 function toggle_video_on_top($enable = 1)
 {
     # Puts primary video above OSD. The function is equivalent to setVideoZOrder(900) and
@@ -1626,6 +1744,9 @@ function toggle_video_on_top($enable = 1)
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return bool
+ */
 function is_window_full_screen()
 {
     # Return: boolean value of window full screen mode enabled
@@ -1634,6 +1755,9 @@ function is_window_full_screen()
     return get_shell_exec($cmd) === '1';
 }
 
+/**
+ * @return string
+ */
 function enable_window_full_screen()
 {
     # Return: command execution status
@@ -1642,6 +1766,9 @@ function enable_window_full_screen()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_window_rect_x()
 {
     # Return: string value of window rect x
@@ -1650,6 +1777,9 @@ function get_window_rect_x()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_window_rect_y()
 {
     # Return: string value of window rect y
@@ -1658,6 +1788,9 @@ function get_window_rect_y()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_window_rect_width()
 {
     # Return: string value of window rect width
@@ -1666,6 +1799,9 @@ function get_window_rect_width()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_window_rect_height()
 {
     # Return: string value of window rect height
@@ -1674,6 +1810,13 @@ function get_window_rect_height()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @param int $x
+ * @param int $y
+ * @param int $width
+ * @param int $height
+ * @return string
+ */
 function set_window_rect($x, $y, $width, $height)
 {
     # Return: command execution status
@@ -1684,6 +1827,9 @@ function set_window_rect($x, $y, $width, $height)
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_clip_rect_x()
 {
     # Return: string value of clip rect x
@@ -1692,6 +1838,9 @@ function get_clip_rect_x()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_clip_rect_y()
 {
     # Return: string value of clip rect y
@@ -1700,6 +1849,9 @@ function get_clip_rect_y()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_clip_rect_width()
 {
     # Return: string value of clip rect width
@@ -1708,6 +1860,9 @@ function get_clip_rect_width()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_clip_rect_height()
 {
     # Return: string value of clip rect height
@@ -1716,6 +1871,13 @@ function get_clip_rect_height()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @param int $x
+ * @param int $y
+ * @param int $width
+ * @param int $height
+ * @return string
+ */
 function set_clip_rect($x, $y, $width, $height)
 {
     # Return: command execution status
@@ -1726,6 +1888,9 @@ function set_clip_rect($x, $y, $width, $height)
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_video_source_rect_x()
 {
     # Return: string value of video source rect x
@@ -1734,6 +1899,9 @@ function get_video_source_rect_x()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_video_source_rect_y()
 {
     # Return: string value of video source rect y
@@ -1742,6 +1910,9 @@ function get_video_source_rect_y()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_video_source_rect_width()
 {
     # Return: string value of video source rect width
@@ -1750,6 +1921,9 @@ function get_video_source_rect_width()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_video_source_rect_height()
 {
     # Return: string value of video source rect height
@@ -1758,6 +1932,13 @@ function get_video_source_rect_height()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @param int $x
+ * @param int $y
+ * @param int $width
+ * @param int $height
+ * @return string
+ */
 function set_video_source_rect($x, $y, $width, $height)
 {
     # Sets coordinates of a portion of the original video for displaying in window or on full
@@ -1785,6 +1966,9 @@ function set_video_source_rect($x, $y, $width, $height)
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_video_width()
 {
     # Return: string value of current video width
@@ -1793,6 +1977,9 @@ function get_video_width()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_video_height()
 {
     # Return: string value of current video height
@@ -1801,6 +1988,9 @@ function get_video_height()
     return get_shell_exec($cmd);
 }
 
+/**
+ * @return string
+ */
 function get_video_zoom()
 {
     # Return: string value of current video zoom
@@ -1839,36 +2029,62 @@ function get_zoom_value($preset)
 # Storage access
 ###############################################################################
 
+/**
+ * @param string $path
+ * @return string
+ */
 function get_temp_path($path = '')
 {
     return DuneSystem::$properties['tmp_dir_path'] . '/' . ltrim($path, "/");
 }
 
+/**
+ * @param string $path
+ * @return string
+ */
 function get_data_path($path = '')
 {
     return DuneSystem::$properties['data_dir_path'] . '/' . ltrim($path, "/");
 }
 
+/**
+ * @param string $path
+ * @return string
+ */
 function get_install_path($path = '')
 {
     return DuneSystem::$properties['install_dir_path'] . '/' . ltrim($path, "/");
 }
 
+/**
+ * @param string $path
+ * @return string
+ */
 function get_plugin_cgi_url($path = '')
 {
     return DuneSystem::$properties['plugin_cgi_url'] . ltrim($path, "/");
 }
 
+/**
+ * @param string $path
+ * @return string
+ */
 function get_plugin_www_url($path = '')
 {
     return DuneSystem::$properties['plugin_www_url'] . ltrim($path, "/");
 }
 
+/**
+ * @return string
+ */
 function get_plugin_name()
 {
     return DuneSystem::$properties['plugin_name'];
 }
 
+/**
+ * @return void
+ */
 function export_DuneSystem()
 {
     putenv('PLUGIN_NAME=' . DuneSystem::$properties['plugin_name']);
@@ -1924,6 +2140,9 @@ function get_cached_image($image)
     return $image;
 }
 
+/**
+ * @return array
+ */
 function get_plugin_manifest_info()
 {
     $result = array();
@@ -1961,6 +2180,7 @@ function get_plugin_manifest_info()
 }
 
 /**
+ * @param string $path
  * @return array array of local storages
  */
 function get_local_storages_list($path)
@@ -1993,37 +2213,59 @@ function get_local_storages_list($path)
 # Miscellaneous
 ###############################################################################
 
+/**
+ * @return bool
+ */
 function is_r22_or_higher()
 {
     return safe_get_value(get_parsed_firmware_ver(), 'rev_number', 0) > 21;
 }
 
+/**
+ * @return bool
+ */
 function is_r24_or_higher()
 {
     return safe_get_value(get_parsed_firmware_ver(), 'rev_number', 0) > 22;
 }
 
+/**
+ * @return bool
+ */
 function is_ext_epg_supported()
 {
     $apk_subst = getenv('FS_PREFIX');
     return (defined('PluginTvInfo::ext_epg_channel_ids_url') && is_file( "$apk_subst/firmware_ext/plugins/ext_epg/dune_plugin.xml"));
 }
 
+/**
+ * @return bool
+ */
 function is_ext_epg_enabled()
 {
     return defined('PluginUpdateEpgActionData::ext_epg_enabled');
 }
 
+/**
+ * @return bool
+ */
 function is_delay_load_supported()
 {
     return defined('PluginUpdateTvInfoActionData::channel_changes');
 }
 
+/**
+ * @return bool
+ */
 function is_choose_file_supported()
 {
     return defined('ChooseFileActionData::filter');
 }
 
+/**
+ * @param string $path
+ * @return string
+ */
 function normalizePath($path) {
     return str_replace(array('\\', '/'), DIRECTORY_SEPARATOR, $path);
 }
@@ -2069,6 +2311,10 @@ function get_paved_path($path, $dir_mode = 0777)
     return get_noslash_trailed_path($path);
 }
 
+/**
+ * @param string $path
+ * @return string
+ */
 function get_slash_trailed_path($path)
 {
     if (!empty($path) && substr($path, -1) !== '/') {
@@ -2078,18 +2324,32 @@ function get_slash_trailed_path($path)
     return $path;
 }
 
+/**
+ * @param string $path
+ * @return string
+ */
 function get_noslash_trailed_path($path)
 {
     return rtrim($path, '/');
 }
 
+/**
+ * @param string $path
+ * @return string
+ */
 function get_filename($path)
 {
     $ar = explode('/', $path);
     return (count($ar) === 1) ? $path : end($ar);
 }
 
-# creating directories along the way
+/**
+ * creating directories along the way
+ *
+ * @param string $path
+ * @param int $dir_mode in octal
+ * @return bool
+ */
 function create_path($path, $dir_mode = 0777)
 {
     if (!file_exists($path) && !@mkdir($path, $dir_mode, true) && !is_dir($path)) {
@@ -2100,6 +2360,10 @@ function create_path($path, $dir_mode = 0777)
     return true;
 }
 
+/**
+ * @param string $path
+ * @return void
+ */
 function safe_unlink($path)
 {
     if (!empty($path) && file_exists($path) && !is_dir($path)) {
@@ -2107,7 +2371,14 @@ function safe_unlink($path)
     }
 }
 
-/** @noinspection PhpUnusedParameterInspection */
+/**
+ * Analog of json_encode() with the JSON_UNESCAPED_UNICODE option available in PHP 5.4.0 and higher
+ *
+ * @param mixed $data
+ * @param int $flags
+ * @return string
+ * @noinspection PhpUnusedParameterInspection
+ */
 function json_encode_unicode($data, $flags = 0)
 {
     # Analog of json_encode() with the JSON_UNESCAPED_UNICODE option available in PHP 5.4.0 and higher
@@ -2124,6 +2395,9 @@ function json_encode_unicode($data, $flags = 0)
     return mb_decode_numericentity(json_encode($data), array(0x80, 0xffff, 0, 0xffff), 'UTF-8');
 }
 
+/**
+ * @return void
+ */
 function print_sysinfo()
 {
     hd_print_separator();
@@ -2259,6 +2533,13 @@ function get_dune_model()
     return isset($models[$product_code]) ? $models[$product_code] : "Unknown model";
 }
 
+/**
+ * Returns canonized string in lowercase
+ *
+ * @param string $str
+ * @param string $encoding
+ * @return string
+ */
 function get_canonize_string($str, $encoding = 'UTF-8')
 {
     # Returns canonized string in lowercase
@@ -2269,6 +2550,10 @@ function get_canonize_string($str, $encoding = 'UTF-8')
         mb_strtolower(trim($str), $encoding));
 }
 
+/**
+ * @param mixed $var1,... one or more values to dump (variadic, collected via func_get_args)
+ * @return void
+ */
 function debug_print(/*mixed $var1, $var2...*/)
 {
     if (!is_null($backtrace = debug_backtrace(false))) {
@@ -2363,6 +2648,7 @@ function delete_directory($dir)
 
 /**
  * @param string $dir
+ * @return void
  */
 function clear_directory($dir)
 {
@@ -2416,6 +2702,10 @@ function is_proto_rtsp($url)
     return strpos($url, 'rtsp://') === 0;
 }
 
+/**
+ * @param string $url
+ * @return bool
+ */
 function is_supported_proto($url)
 {
     return is_proto_http($url) || is_proto_udp($url) || is_proto_file($url) || is_proto_rtsp($url);
@@ -2505,6 +2795,11 @@ function safe_get_value($src, $param, $default = null)
     return $default;
 }
 
+/**
+ * @param array $rows
+ * @param string|int $column
+ * @return array
+ */
 function extract_column($rows, $column)
 {
     return array_map(function ($row) use ($column) { return $row[$column]; }, $rows);
@@ -2588,6 +2883,7 @@ function parse_xml_file($path)
 /**
  * @param string $path
  * @param mixed $content
+ * @return void
  */
 function store_to_json_file($path, $content)
 {
@@ -2601,6 +2897,7 @@ function store_to_json_file($path, $content)
 /**
  * @param string $path
  * @param bool $assoc
+ * @return mixed|false
  */
 function parse_json_file($path, $assoc = true)
 {
@@ -2612,16 +2909,29 @@ function parse_json_file($path, $assoc = true)
     return json_decode(file_get_contents($path), $assoc);
 }
 
+/**
+ * @param mixed $content
+ * @return string|false
+ */
 function json_format_readable($content)
 {
     return json_format($content, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }
 
+/**
+ * @param mixed $content
+ * @return string|false
+ */
 function json_format_unescaped($content)
 {
     return json_format($content, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }
 
+/**
+ * @param mixed $content
+ * @param int $options
+ * @return string|false
+ */
 function json_format($content, $options = 0)
 {
     $pretty_print = (bool)($options & JSON_PRETTY_PRINT);
@@ -2781,12 +3091,21 @@ function wrap_string_to_lines($long_string, $max_chars, $separator = PHP_EOL)
     return implode($separator, wrap_string_to_array($long_string, $max_chars));
 }
 
+/**
+ * @param array $array
+ * @return bool
+ */
 function is_assoc_array($array)
 {
     $keys = array_keys($array);
     return $keys !== array_keys($keys);
 }
 
+/**
+ * @param object $handler
+ * @param array $actions
+ * @return void
+ */
 function register_all_known_events($handler, &$actions)
 {
     $all_events = array(
@@ -2850,6 +3169,10 @@ function register_all_known_events($handler, &$actions)
     }
 }
 
+/**
+ * @param string $str
+ * @return array
+ */
 function dune_params_to_array($str)
 {
     if ($str === '[]') {
@@ -2878,6 +3201,10 @@ function dune_params_to_array($str)
     return $params_array;
 }
 
+/**
+ * @param array $value
+ * @return string
+ */
 function dune_params_array_to_string($value)
 {
     $dune_params_str = '';
@@ -3436,6 +3763,12 @@ function extract_dune_params($url)
     return $dune_magic;
 }
 
+/**
+ * @param array $arr
+ * @param string|int $key
+ * @param mixed $val
+ * @return array
+ */
 function array_unshift_assoc(&$arr, $key, $val)
 {
     $arr = array_reverse($arr, true);
@@ -3443,6 +3776,12 @@ function array_unshift_assoc(&$arr, $key, $val)
     return array_reverse($arr, true);
 }
 
+/**
+ * @param string $string
+ * @param int $num
+ * @param int|null $slice
+ * @return array
+ */
 function mb_str_split($string, $num = 1, $slice = null)
 {
     $out = array();
@@ -3486,6 +3825,11 @@ function array_search_i($needle, $haystack)
     return array_search(strtolower($needle), array_map('strtolower', $haystack));
 }
 
+/**
+ * @param string $source
+ * @param string $dest
+ * @return int|false
+ */
 function compress_file($source, $dest)
 {
     $data = file_get_contents($source);
@@ -3493,12 +3837,18 @@ function compress_file($source, $dest)
     return file_put_contents($dest, $gz_data);
 }
 
+/**
+ * @return bool
+ */
 function is_dual_system()
 {
     $ffs = readlines("/tmp/firmware_features.txt");
     return in_array('dual_system', $ffs);
 }
 
+/**
+ * @return bool
+ */
 function is_whale_tv()
 {
     $ffs = readlines("/tmp/firmware_features.txt");
@@ -3520,6 +3870,7 @@ function readlines($path)
 /**
  * @param LibXMLError $error
  * @param string $xml_str
+ * @return void
  */
 function display_xml_error(LibXMLError $error, $xml_str)
 {

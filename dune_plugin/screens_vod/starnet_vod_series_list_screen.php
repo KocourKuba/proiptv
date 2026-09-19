@@ -56,6 +56,10 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
         return $this->do_get_action_map($media_url);
     }
 
+    /**
+     * @param MediaURL $media_url
+     * @return array
+     */
     protected function do_get_action_map(MediaURL $media_url)
     {
         hd_debug_print($media_url, true);
@@ -98,6 +102,9 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
         return $actions;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         if (!isset($user_input->selected_media_url)) {
@@ -304,6 +311,11 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
         );
     }
 
+    /**
+     * @param string $movie_id
+     * @param string $episode_id
+     * @return array|null
+     */
     protected function create_popup_menu($movie_id, $episode_id)
     {
         $movie = $this->plugin->vod->get_loaded_movie($movie_id);

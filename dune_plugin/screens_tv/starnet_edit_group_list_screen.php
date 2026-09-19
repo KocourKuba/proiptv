@@ -47,6 +47,9 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
         return $this->do_get_action_map();
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_action_map()
     {
         hd_debug_print(null, true);
@@ -331,6 +334,9 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// Protected methods
 
+    /**
+     * @return array
+     */
     protected function create_popup_menu()
     {
         if ($this->selected_items) {
@@ -369,7 +375,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
 
     /**
      * @param string $selected_group
-     * @return array|null
+     * @return array
      */
     public function do_edit_title_dlg($selected_group)
     {

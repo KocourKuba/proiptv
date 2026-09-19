@@ -51,6 +51,9 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         return $this->do_get_action_map();
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_action_map()
     {
         hd_debug_print(null, true);
@@ -286,6 +289,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
     /// Protected methods
 
     /**
+     * @param string $selected_id
      * @return array|null
      */
     protected function create_popup_menu($selected_id)
@@ -513,6 +517,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         return Action_Factory::composite($actions);
     }
 
+    /**
+     * @param object $user_input
+     * @return array
+     */
     protected function selected_text_file($user_input)
     {
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
@@ -578,7 +586,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
     /**
      * @param object $user_input
-     * @return array
+     * @return array|null
      */
     protected function do_export_xmltv_sources($user_input)
     {
@@ -880,7 +888,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
     }
 
     /**
-     * @param string $xmltv_id
+     * @param string|null $xmltv_id
      * @return array|null
      */
     protected function do_check_epg_ids($xmltv_id)

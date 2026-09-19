@@ -162,6 +162,9 @@ class api_default
      */
     protected $packages = array();
 
+    /**
+     * @param DunePlugin $plugin
+     */
     public function __construct(DunePlugin $plugin)
     {
         $this->plugin = $plugin;
@@ -384,6 +387,9 @@ class api_default
         $this->curl_wrapper = $this->plugin->setup_curl($playlist_id);
     }
 
+    /**
+     * @return array
+     */
     public function get_provider_epg_preset_names()
     {
         $presets = array();
@@ -1362,6 +1368,9 @@ class api_default
         return true;
     }
 
+    /**
+     * @return bool
+     */
     public function has_ext_params()
     {
         hd_debug_print(null, true);

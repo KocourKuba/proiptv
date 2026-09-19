@@ -80,6 +80,7 @@ class Movie_Series
     /**
      * @param string $id
      * @param Movie_Variant $movie_variant
+     * @return void
      */
     public function add_variant_data($id, $movie_variant)
     {

@@ -28,11 +28,17 @@
 // result of serialization can't be desirialized!
 class Json_Serializer
 {
+    /**
+     * @return string
+     */
     public function __toString()
     {
         return json_encode($this->_toStdClass());
     }
 
+    /**
+     * @return stdClass
+     */
     public function _toStdClass()
     {
         $object = new stdClass();
@@ -54,6 +60,10 @@ class Json_Serializer
         return $object;
     }
 
+    /**
+     * @param array $value
+     * @return array
+     */
     public function _toArray($value)
     {
         $array = array();

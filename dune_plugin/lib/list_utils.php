@@ -27,6 +27,10 @@
 // class for working with config edit list
 class List_Utils
 {
+    /**
+     * @param string $config_id
+     * @return string
+     */
     public static function config_file_path($config_id)
     {
         return getenv('FS_PREFIX') . "/config/lcfg_$config_id.txt";

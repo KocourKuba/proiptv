@@ -70,8 +70,8 @@ class Sql_Wrapper
      * Returns 1 - if attach success
      * Returns 2 - if database already attached
      *
-     * @param $db_filename
-     * @param $name
+     * @param string $db_filename
+     * @param string $name
      * @return int
      */
     public function attachDatabase($db_filename, $name)
@@ -97,7 +97,7 @@ class Sql_Wrapper
      * Returns true - if detach success
      * Returns false - if detach failed
      *
-     * @param $name
+     * @param string $name
      * @return bool
      */
     public function detachDatabase($name)
@@ -119,7 +119,7 @@ class Sql_Wrapper
      * Return 3 if database attached and filename not match
      *
      * @param string $db_name
-     * @param string $db_filename Full path to database file
+     * @param string|null $db_filename Full path to database file
      * @return int
      */
     public function is_database_attached($db_name, $db_filename = null)

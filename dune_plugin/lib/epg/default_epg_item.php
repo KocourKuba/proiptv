@@ -63,7 +63,7 @@ class Default_Epg_Item implements Epg_Item
     }
 
     /**
-     * @inheritDoc
+     * @return string
      */
     public function get_title()
     {
@@ -71,7 +71,7 @@ class Default_Epg_Item implements Epg_Item
     }
 
     /**
-     * @inheritDoc
+     * @return string
      */
     public function get_description()
     {
@@ -79,7 +79,7 @@ class Default_Epg_Item implements Epg_Item
     }
 
     /**
-     * @inheritDoc
+     * @return int UNIX time
      */
     public function get_start_time()
     {
@@ -87,7 +87,7 @@ class Default_Epg_Item implements Epg_Item
     }
 
     /**
-     * @inheritDoc
+     * @return int UNIX time
      */
     public function get_finish_time()
     {

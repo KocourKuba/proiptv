@@ -110,6 +110,7 @@ class Curl_Wrapper
 
     /**
      * @param string $cache_subdir
+     * @return void
      */
     protected function __construct($cache_subdir = 'common')
     {
@@ -118,11 +119,19 @@ class Curl_Wrapper
         $this->reset();
     }
 
+    /**
+     * @param string $cache_subdir
+     * @return Curl_Wrapper
+     */
     public static function getInstance($cache_subdir = 'common')
     {
         return new self($cache_subdir);
     }
 
+    /**
+     * @param string $cache_subdir
+     * @return void
+     */
     public function set_cache_path($cache_subdir)
     {
         $this->file_cache_path = get_slash_trailed_path(get_data_path(CURL_CACHE_SUBDIR . '/' . $cache_subdir));
@@ -188,6 +197,7 @@ class Curl_Wrapper
     }
 
     /**
+     * @param string $header
      * @return string
      */
     public static function get_response_header($header)
@@ -196,7 +206,8 @@ class Curl_Wrapper
     }
 
     /**
-     * @param $value
+     * @param bool $value
+     * @return void
      */
     public function set_post($value = true)
     {
@@ -205,6 +216,7 @@ class Curl_Wrapper
 
     /**
      * @param array $headers
+     * @return void
      */
     public function set_send_headers($headers)
     {
@@ -213,6 +225,7 @@ class Curl_Wrapper
 
     /**
      * @param array $opts
+     * @return void
      */
     public function set_options($opts)
     {
@@ -221,6 +234,8 @@ class Curl_Wrapper
 
     /**
      * @param array $data
+     * @param bool $is_post
+     * @return void
      */
     public function set_post_data($data, $is_post = true)
     {
@@ -250,7 +265,8 @@ class Curl_Wrapper
     }
 
     /**
-     * @param  int $timeout
+     * @param int $timeout
+     * @return void
      */
     public function set_connect_timeout($timeout)
     {
@@ -259,6 +275,7 @@ class Curl_Wrapper
 
     /**
      * @param int $timeout
+     * @return void
      */
     public function set_download_timeout($timeout)
     {
@@ -267,6 +284,7 @@ class Curl_Wrapper
 
     /**
      * @param int $time in hours
+     * @return void
      */
     public function set_file_cache_time($time)
     {
@@ -274,7 +292,7 @@ class Curl_Wrapper
     }
 
     /**
-     * @return  int $time in hours
+     * @return int time in hours
      */
     public function get_file_cache_time()
     {
@@ -304,6 +322,10 @@ class Curl_Wrapper
     {
         return self::$error_desc;
     }
+    /**
+     * @param bool $all
+     * @return void
+     */
     public function clear_cache($all = false)
     {
         if ($all) {
@@ -321,6 +343,9 @@ class Curl_Wrapper
     /////////////////////////////////////////////////////////////
     /// static functions
 
+    /**
+     * @return void
+     */
     public static function init_etag_db()
     {
         if (self::$etag_db === null) {
@@ -336,6 +361,7 @@ class Curl_Wrapper
     }
     /**
      * @param string $url
+     * @return string
      */
     public static function get_url_hash($url)
     {
@@ -387,7 +413,12 @@ class Curl_Wrapper
         }
     }
 
-    /** @noinspection PhpUnusedParameterInspection */
+    /**
+     * @param resource $curl
+     * @param string $header
+     * @return int
+     * @noinspection PhpUnusedParameterInspection
+     */
     public static function http_header_function($curl, $header)
     {
         $len = strlen($header);

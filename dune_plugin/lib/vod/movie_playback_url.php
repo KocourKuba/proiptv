@@ -37,7 +37,7 @@ class Movie_Playback_Url
     public $is_stream_url = true;
 
     /**
-     * @param $url
+     * @param string $url
      * @param bool $is_stream_url
      */
     public function __construct($url, $is_stream_url = true)

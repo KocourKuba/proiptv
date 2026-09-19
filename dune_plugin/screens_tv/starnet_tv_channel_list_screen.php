@@ -51,6 +51,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         return $this->do_get_action_map($media_url);
     }
 
+    /**
+     * @param MediaURL $media_url
+     * @return array
+     */
     protected function do_get_action_map(MediaURL $media_url)
     {
         hd_debug_print(null, true);
@@ -334,6 +338,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// Protected methods
 
+    /**
+     * @param object $user_input
+     * @return array
+     */
     protected function create_popup_menu($user_input)
     {
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);

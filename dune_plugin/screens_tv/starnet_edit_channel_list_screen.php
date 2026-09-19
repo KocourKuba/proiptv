@@ -50,6 +50,10 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         return $this->do_get_action_map($media_url);
     }
 
+    /**
+     * @param MediaURL $media_url
+     * @return array
+     */
     protected function do_get_action_map($media_url)
     {
         hd_debug_print(null, true);
@@ -383,6 +387,10 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// Protected methods
 
+    /**
+     * @param string $parent_group
+     * @return array
+     */
     protected function create_popup_menu($parent_group)
     {
         if ($parent_group != TV_ALL_CHANNELS_GROUP_ID) {
@@ -408,7 +416,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
 
     /**
      * @param string $selected_channel
-     * @return array|null
+     * @return array
      */
     public function do_edit_title_dlg($selected_channel)
     {

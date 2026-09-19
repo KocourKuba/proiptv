@@ -547,17 +547,24 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     ////////////////////////////////////////////////////////////////////////////
     /// Main methods
 
+    /**
+     * @return bool
+     */
     public function is_channels_loaded()
     {
         return $this->channels_loaded;
     }
 
+    /**
+     * @return bool
+     */
     public function reset_channels_loaded()
     {
         return $this->channels_loaded = false;
     }
 
     /**
+     * @param bool $force
      * @return void
      */
     public function init_plugin($force = false)
@@ -635,6 +642,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $info;
     }
 
+    /**
+     * @return void
+     */
     public function init_providers_config()
     {
         if (!is_null(self::$providers) && !self::$providers->is_empty()) {
@@ -1646,6 +1656,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return true;
     }
 
+    /**
+     * @return void
+     */
     public function reset_channels()
     {
         $this->vod = null;
@@ -1683,6 +1696,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * @param string|null $playlist_id
      * @return Curl_Wrapper
      */
     public function setup_curl($playlist_id = null)
@@ -1710,7 +1724,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     /**
      * @param Hashed_Array<string, array> $sources
-     * @param $plugin_cookies
+     * @param object $plugin_cookies
      * @return void
      */
     public function check_and_run_bg_indexing($sources, $plugin_cookies)
@@ -1798,21 +1812,35 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return true;
     }
 
+    /**
+     * @return int
+     */
     public function get_internet_status()
     {
         return $this->internet_status;
     }
 
+    /**
+     * @param int $internet_status
+     * @return void
+     */
     public function set_internet_status($internet_status)
     {
         $this->internet_status = $internet_status;
     }
 
+    /**
+     * @return int
+     */
     public function get_opexec_id()
     {
         return $this->opexec_id;
     }
 
+    /**
+     * @param int $opexec_id
+     * @return void
+     */
     public function set_opexec_id($opexec_id)
     {
         $this->opexec_id = $opexec_id;
@@ -1867,11 +1895,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $this->vod_enabled;
     }
 
+    /**
+     * @return bool
+     */
     public function is_ext_epg_enabled()
     {
         return is_ext_epg_supported() && $this->get_bool_setting(PARAM_SHOW_EXT_EPG);
     }
 
+    /**
+     * @param bool $is_classic
+     * @return string
+     */
     public function get_default_channel_icon($is_classic)
     {
         if ($is_classic) {
@@ -1982,7 +2017,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * $param string $id
+     * @param string $id
      * @return void
      */
     public function set_active_playlist_id($id)
@@ -2024,6 +2059,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * @param string $playlist_id
      * @return string
      */
     public function get_active_epg_config($playlist_id = '')
@@ -2034,6 +2070,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @param string $fav_op_type
      * @param string $movie_id
+     * @return void
      */
     public function change_vod_favorites($fav_op_type, $movie_id)
     {
@@ -2074,6 +2111,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * Make url ts wrapped
      * @param array $channel_row
      * @param int $archive_ts
+     * @param bool $clean
      * @return string
      * @throws Exception
      */
@@ -2353,6 +2391,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @param MediaURL $media_url
      * @param int $archive_ts
+     * @return array|null
      * @throws Exception
      */
     public function tv_player_exec($media_url, $archive_ts = -1)
@@ -2428,7 +2467,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * Set new cache dir or init default and set Epg_Manager cache path
      * Cache dir can be only local, no network path
      *
-     * @param string $new_cache_dir
+     * @param string|null $new_cache_dir
      * @return string slash trailed path
      */
     public function init_epg_cache_dir($new_cache_dir = null)
@@ -2527,6 +2566,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     ///////////////////////////////////////////////////////////////////////
     // Misc.
 
+    /**
+     * @return void
+     */
     public function update_ui_settings()
     {
         $this->picons_source = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
@@ -2534,6 +2576,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->default_channel_icon_newui = '';
     }
 
+    /**
+     * @param string $id
+     * @return string|null
+     */
     public function get_icon($id)
     {
         $archive = $this->get_image_archive();
@@ -2596,6 +2642,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return empty($xmltv_icon_url) ? $this->get_default_channel_icon($is_classic) : $xmltv_icon_url;
     }
 
+    /**
+     * @return Default_Archive
+     */
     public function get_image_archive()
     {
         return Default_Archive::get_image_archive(self::ARCHIVE_ID, self::ARCHIVE_URL_PREFIX);
@@ -2782,6 +2831,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     ///////////////////////////////////////////////////////////////////////
     // Dialogs and screens
 
+    /**
+     * @return string
+     */
     public function get_plugin_title()
     {
         $playlist_parameters = $this->get_playlist_parameters($this->get_active_playlist_id());
@@ -2813,6 +2865,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param string $source_screen_id
      * @param string $action_edit
      * @param string|null $group_id
+     * @param array $ret_action
      * @return array|null
      */
     public function do_edit_list_screen($source_screen_id, $action_edit, $group_id = null,
@@ -3061,6 +3114,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     /**
      * @param MediaURL $media_url
+     * @param object $plugin_cookies
      * @return array|null
      */
     public function do_show_vod_info($media_url, $plugin_cookies)
@@ -3174,6 +3228,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $active_sources;
     }
 
+    /**
+     * @return void
+     */
     public function cleanup_stalled_locks()
     {
         hd_debug_print(null, true);
@@ -3197,6 +3254,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
     }
 
+    /**
+     * @return void
+     */
     public function cleanup_active_xmltv_source()
     {
         $all_sources = $this->get_xmltv_sources_hashes(XMLTV_SOURCE_ALL);
@@ -3273,7 +3333,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     /**
      * @param User_Input_Handler $handler
-     * @return array
+     * @param string $search_text
+     * @return array|null
      */
     public function do_search($handler, $search_text)
     {
@@ -3396,6 +3457,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * Remove all data for selected playlist
      * @param string $playlist_id
      * @param bool $remove_playlist
+     * @return void
      */
     public function remove_playlist_data($playlist_id, $remove_playlist = false)
     {
@@ -3432,6 +3494,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->clear_playlist_cache($playlist_id);
     }
 
+    /**
+     * @return bool
+     */
     public function is_full_size_remote()
     {
         return !is_limited_apk() || $this->get_bool_parameter(PARAM_FULL_SIZE_REMOTE, false);
@@ -3525,6 +3590,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         );
     }
 
+    /**
+     * @param string $group_id
+     * @return bool
+     */
     public static function is_special_group_id($group_id)
     {
         return ($group_id === TV_ALL_CHANNELS_GROUP_ID
@@ -3620,6 +3689,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      *
      * @param string $channel_id
      * @param int $archive_ts
+     * @return void
      */
     public function push_tv_history($channel_id, $archive_ts)
     {
@@ -3637,6 +3707,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * Called when playing stop
      *
      * @param string|null $id
+     * @return void
      */
     public function update_tv_history($id)
     {
@@ -3684,6 +3755,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Save history for channel_id $id at time mark: $archive_ts", true);
     }
 
+    /**
+     * @param string|null $error
+     * @return bool
+     */
     public static function send_log_to_developer(&$error = null)
     {
         $serial = get_serial_number();
@@ -3792,6 +3867,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     /**
      * @param string $folder_path
+     * @param bool $complete
      * @return bool|string
      */
     public static function do_backup_settings($folder_path, $complete = true)
@@ -3870,6 +3946,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * @param bool $force
      * @return bool
      */
     public function init_vod_class($force = false)
@@ -3905,7 +3982,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /// protected methods
 
     /**
-     * @param $playlist_id
+     * @param string $playlist_id
      * @return void
      */
     protected function upgrade_settings($playlist_id)
@@ -4221,6 +4298,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->safe_sql_playlist('exec_transaction', $query);
     }
 
+    /**
+     * @return bool
+     */
     protected function init_tv_history_db()
     {
         hd_debug_print(null, true);
@@ -4249,6 +4329,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return true;
     }
 
+    /**
+     * @return bool
+     */
     protected function init_vod_history_db()
     {
         hd_debug_print(null, true);
@@ -4276,7 +4359,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @param $stream_url
+     * @param string $stream_url
      * @return array
      */
     protected function get_streams_info($stream_url)
@@ -4423,6 +4506,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $result;
     }
 
+    /**
+     * @param array $items
+     * @return array
+     */
     protected static function check_epg_intervals($items)
     {
         $prev_end = 0;

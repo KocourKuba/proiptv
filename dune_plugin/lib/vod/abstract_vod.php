@@ -53,7 +53,7 @@ abstract class Abstract_Vod extends vod_pagination
 
     /**
      * @param string $playback_url
-     * @param $plugin_cookies
+     * @param object $plugin_cookies
      * @return string|null
      */
     public abstract function get_vod_stream_url($playback_url, $plugin_cookies);
@@ -62,6 +62,7 @@ abstract class Abstract_Vod extends vod_pagination
 
     /**
      * @param Movie $movie
+     * @return void
      */
     public function set_cached_movie(Movie $movie)
     {
@@ -73,6 +74,7 @@ abstract class Abstract_Vod extends vod_pagination
 
     /**
      * @param Short_Movie $short_movie
+     * @return void
      */
     public function set_cached_short_movie(Short_Movie $short_movie)
     {
@@ -81,6 +83,7 @@ abstract class Abstract_Vod extends vod_pagination
 
     /**
      * @param string $movie_id
+     * @return void
      */
     public function set_failed_movie_id($movie_id)
     {
@@ -173,6 +176,7 @@ abstract class Abstract_Vod extends vod_pagination
 
     /**
      * @param string $movie_id
+     * @return void
      */
     public function ensure_movie_loaded($movie_id)
     {

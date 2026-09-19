@@ -15,7 +15,7 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param $call_ctx_json
+     * @param string $call_ctx_json
      * @return false|string
      * @throws Exception
      */
@@ -25,7 +25,7 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
     }
 
     /**
-     * @param $call_ctx
+     * @param object $call_ctx
      * @return array
      * @throws Exception
      */
@@ -108,7 +108,7 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
     }
 
     /**
-     * @param $plugin_cookies
+     * @param object $plugin_cookies
      * @return object
      */
     public function create_plugin($plugin_cookies)
@@ -119,6 +119,13 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
 
 ///////////////////////////////////////////////////////////////////////////
 
+/**
+ * @param int $error_type
+ * @param string $message
+ * @param string $file
+ * @param int $line
+ * @return void
+ */
 function plugin_error_handler($error_type, $message, $file, $line)
 {
     hd_print("Error intercepted at $file on line $line");

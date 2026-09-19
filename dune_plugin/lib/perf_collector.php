@@ -48,6 +48,8 @@ class Perf_Collector
 
     /**
      * Clear all labels
+     * @param string $firstLabel Name for the first label
+     * @return void
      */
     public function reset($firstLabel = '')
     {
@@ -60,6 +62,7 @@ class Perf_Collector
     /**
      * Add a new label for measure
      * @param string $label Name for the label
+     * @return void
      */
     public function setLabel($label)
     {
@@ -82,6 +85,7 @@ class Perf_Collector
     /**
      * Remove label from measure
      * @param string $label Name for the label
+     * @return void
      */
     public function unsetLabel($label)
     {
@@ -108,6 +112,7 @@ class Perf_Collector
 
     /**
      * Obtain a memory limit set in php.ini
+     * @return string
      */
     public static function getMemoryLimit()
     {
@@ -165,6 +170,7 @@ class Perf_Collector
      * Obtain a report item with the measures between two labels
      * if no start label set - used first label in array
      * if no end label set - used last label in array
+     * @param string $item Report item key
      * @param string|false $startLabel Start label
      * @param string|false $endLabel End label
      * @return mixed
@@ -182,6 +188,7 @@ class Perf_Collector
 
     /**
      * Obtain a report array with the measures between start label and values at current call
+     * @param string $item Report item key
      * @param string|false $startLabel Start label
      * @return mixed
      */

@@ -8,6 +8,11 @@ class Dune_Last_Error
      */
     protected static $last_error;
 
+    /**
+     * @param string $entity
+     * @param bool $clear_after
+     * @return string
+     */
     public static function get_last_error($entity, $clear_after = true)
     {
         if ($entity === LAST_ERROR_XMLTV) {
@@ -24,6 +29,11 @@ class Dune_Last_Error
         return $last_error;
     }
 
+    /**
+     * @param string $entity
+     * @param string $value
+     * @return void
+     */
     public static function set_last_error($entity, $value)
     {
         $value = trim($value);
@@ -35,6 +45,10 @@ class Dune_Last_Error
         }
     }
 
+    /**
+     * @param string $entity
+     * @return void
+     */
     public static function clear_last_error($entity)
     {
         if ($entity === LAST_ERROR_XMLTV) {

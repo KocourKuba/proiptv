@@ -81,6 +81,9 @@ class Epg_Manager_Json
      */
     protected static $cache_dir;
 
+    /**
+     * @param Default_Dune_Plugin $plugin
+     */
     public function __construct($plugin)
     {
         $this->plugin = $plugin;
@@ -90,7 +93,7 @@ class Epg_Manager_Json
      * @param array $preset
      * @param int $day_start_ts
      * @param string $epg_id
-     * @return string|null
+     * @return string
      */
     public static function get_epg_url($preset, $day_start_ts, $epg_id)
     {
@@ -302,11 +305,19 @@ class Epg_Manager_Json
         return $day_epg;
     }
 
+    /**
+     * @param array $config_preset
+     * @return bool
+     */
     public static function is_proiptv_epg_preset($config_preset)
     {
         return isset($config_preset[EPG_JSON_PRESET_NAME]) && $config_preset[EPG_JSON_PRESET_NAME] === 'proiptv';
     }
 
+    /**
+     * @param string $name
+     * @return bool
+     */
     public static function is_proiptv_epg_preset_name($name)
     {
         return strpos($name, 'proiptv') === 0;
@@ -365,6 +376,10 @@ class Epg_Manager_Json
         return $ids;
     }
 
+    /**
+     * @param array $config_preset
+     * @return array
+     */
     public static function get_channels_info($config_preset)
     {
         $epg_source_id = $config_preset[EPG_JSON_PRESET_ID];
@@ -556,6 +571,7 @@ class Epg_Manager_Json
      * Set and create cache dir
      *
      * @param string $cache_dir
+     * @return void
      */
     public static function set_cache_dir($cache_dir)
     {

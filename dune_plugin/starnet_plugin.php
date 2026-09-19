@@ -68,6 +68,7 @@ require_once 'screens_common/starnet_edit_providers_list_screen.php';
 class Starnet_Plugin extends Default_Dune_Plugin
 {
     /**
+     * @param object $plugin_cookies
      * @throws Exception
      */
     public function __construct(&$plugin_cookies)

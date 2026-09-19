@@ -64,6 +64,7 @@ class Movie_Variant
     /**
      * @param string $id
      * @param Movie_Variant $variant_data
+     * @return void
      */
     public function add_variant_data($id, $variant_data)
     {

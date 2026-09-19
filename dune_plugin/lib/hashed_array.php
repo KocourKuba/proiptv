@@ -64,6 +64,9 @@ class Hashed_Array extends Json_Serializer implements Iterator
         return strnatcasecmp($a, $b);
     }
 
+    /**
+     * @return array
+     */
     public function __sleep()
     {
         $new_map = array();
@@ -75,6 +78,9 @@ class Hashed_Array extends Json_Serializer implements Iterator
         return array('pos', 'map');
     }
 
+    /**
+     * @return void
+     */
     public function __wakeup()
     {
         $this->seq = array_keys($this->map);
@@ -155,6 +161,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      * Add item. key for item is hash of item
      *
      * @param TValue $item
+     * @return void
      */
     public function add($item)
     {
@@ -176,6 +183,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      *
      * @param Tkey $key
      * @param TValue $item
+     * @return void
      */
     public function put($key, $item)
     {
@@ -189,6 +197,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      * Add items
      *
      * @param Hashed_Array<Tkey, TValue> $items
+     * @return void
      */
     public function add_items($items)
     {
@@ -201,6 +210,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      * Add items
      *
      * @param TValue[] $values
+     * @return void
      */
     public function add_values($values)
     {
@@ -214,6 +224,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      *
      * @param Tkey $key
      * @param TValue $item
+     * @return void
      */
     public function set($key, $item)
     {
@@ -261,6 +272,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      * Erase by key
      *
      * @param Tkey $key
+     * @return void
      */
     public function erase($key)
     {
@@ -275,6 +287,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      * Erase by keys from array
      *
      * @param Tkey[] $keys
+     * @return void
      */
     public function erase_keys($keys)
     {
@@ -286,6 +299,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      * Erase by values from array
      *
      * @param TValue[] $values
+     * @return void
      */
     public function erase_values($values)
     {
@@ -372,6 +386,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
 
     /**
      * Sort by values
+     *
+     * @return void
      */
     public function value_sort()
     {
@@ -411,6 +427,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
 
     /**
      * Clear Hashed_Array
+     *
+     * @return void
      */
     public function clear()
     {
@@ -422,6 +440,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
 
     /**
      * Reset position
+     *
+     * @return void
      */
     public function reset()
     {

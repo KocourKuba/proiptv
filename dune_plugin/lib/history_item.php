@@ -46,6 +46,12 @@ class History_Item
      */
     public $date;
 
+    /**
+     * @param bool $watched
+     * @param int $position
+     * @param int $duration
+     * @param int $date
+     */
     public function __construct($watched, $position, $duration, $date)
     {
         $this->watched = $watched;

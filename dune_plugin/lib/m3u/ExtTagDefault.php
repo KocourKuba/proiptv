@@ -129,6 +129,7 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
 
     /**
      * @param string $line
+     * @return ExtTagDefault|null
      */
     public function parseData($line)
     {

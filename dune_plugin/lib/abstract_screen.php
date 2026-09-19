@@ -36,6 +36,9 @@ abstract class Abstract_Screen implements Screen, User_Input_Handler
      */
     protected $plugin;
 
+    /**
+     * @param Default_Dune_Plugin $plugin
+     */
     public function __construct(Default_Dune_Plugin $plugin)
     {
         $this->plugin = $plugin;

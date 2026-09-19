@@ -87,11 +87,17 @@ class M3uParser extends Json_Serializer
      */
     public $icon_replace_pattern = array();
 
+    /**
+     * @return string
+     */
     public function get_icon_base_url()
     {
         return $this->icon_base_url;
     }
 
+    /**
+     * @return string
+     */
     public function get_filename()
     {
         return $this->file_name;
@@ -109,6 +115,7 @@ class M3uParser extends Json_Serializer
     /**
      * @param string $file_name
      * @param bool $force
+     * @return void
      */
     public function setPlaylistFile($file_name, $force = false)
     {
@@ -134,6 +141,7 @@ class M3uParser extends Json_Serializer
 
     /**
      * @param string $file_name
+     * @return void
      */
     public function setVodPlaylist($file_name)
     {
@@ -143,7 +151,8 @@ class M3uParser extends Json_Serializer
 
     /**
      * @param string $id_parser
-     * @param string $icon_replace_pattern
+     * @param array $icon_replace_pattern
+     * @return void
      */
     public function setupParserParameters($id_parser, $icon_replace_pattern)
     {
@@ -444,7 +453,7 @@ class M3uParser extends Json_Serializer
      * If tag not specified try to search in all available tags
      *
      * @param string|null $tag
-     * @return array|null
+     * @return array
      */
     public function getHeaderAttributes($tag = null)
     {
@@ -461,7 +470,7 @@ class M3uParser extends Json_Serializer
      *
      * @param string|array $name
      * @param string|null $tag
-     * @return string|null
+     * @return string
      */
     public function getHeaderAttribute($name, $tag = null)
     {
@@ -475,8 +484,8 @@ class M3uParser extends Json_Serializer
 
     /**
      * @param string|array $attrs
-     * @param null $tag
-     * @param null $found_attr
+     * @param string|null $tag
+     * @param string|null $found_attr
      * @return string
      */
     public function getAnyHeaderAttribute($attrs, $tag = null, &$found_attr = null)
@@ -650,11 +659,19 @@ class M3uParser extends Json_Serializer
             || strpos($lower_title, "xxx") !== false);
     }
 
+    /**
+     * @param string|false $contents
+     * @return bool
+     */
     public static function is_valid_m3u($contents)
     {
         return !($contents === false || (strpos($contents, TAG_EXTM3U) == false && strpos($contents, TAG_EXTINF) === false));
     }
 
+    /**
+     * @param string $filename
+     * @return resource|false
+     */
     protected static function open_m3u($filename)
     {
         if (!file_exists($filename)) {

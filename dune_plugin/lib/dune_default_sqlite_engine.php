@@ -127,11 +127,17 @@ class Dune_Default_Sqlite_Engine
      */
     protected $plugin_cookies;
 
+    /**
+     * @return Sql_Wrapper|null
+     */
     public function get_sql_playlist()
     {
         return $this->sql_playlist;
     }
 
+    /**
+     * @return Sql_Wrapper|null
+     */
     public function get_sql_vod()
     {
         return $this->sql_vod;
@@ -146,11 +152,18 @@ class Dune_Default_Sqlite_Engine
         $this->sql_vod = $sql_vod;
     }
 
+    /**
+     * @return object
+     */
     public function get_plugin_cookies()
     {
         return $this->plugin_cookies;
     }
 
+    /**
+     * @param object $plugin_cookies
+     * @return void
+     */
     public function set_plugin_cookies(&$plugin_cookies)
     {
         $this->plugin_cookies = $plugin_cookies;
@@ -222,6 +235,7 @@ class Dune_Default_Sqlite_Engine
      *
      * @param string $name
      * @param string $value
+     * @return void
      */
     public function set_parameter($name, $value)
     {
@@ -256,6 +270,7 @@ class Dune_Default_Sqlite_Engine
      * Remove parameter
      *
      * @param string $name
+     * @return void
      */
     public function remove_parameter($name)
     {
@@ -293,6 +308,7 @@ class Dune_Default_Sqlite_Engine
      *
      * @param string $type
      * @param bool $val
+     * @return void
      */
     public function set_bool_parameter($type, $val = true)
     {
@@ -303,6 +319,10 @@ class Dune_Default_Sqlite_Engine
     // Plugin settings methods (per playlist configuration)
     //
 
+    /**
+     * @param string $playlist_id
+     * @return void
+     */
     public function remove_playlist($playlist_id)
     {
         $tables = array(self::PLAYLISTS_TABLE, self::PLAYLIST_PARAMETERS_TABLE, self::PLAYLIST_XMLTV_TABLE, self::SELECTED_XMLTV_TABLE);
@@ -598,6 +618,7 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string $hash
+     * @return void
      */
     public function add_selected_xmltv_id($hash)
     {
@@ -610,6 +631,7 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string $hash
+     * @return void
      */
     public function remove_selected_xmltv_id($hash)
     {
@@ -675,6 +697,12 @@ class Dune_Default_Sqlite_Engine
         }
     }
 
+    /**
+     * move playlist xmltv source to playlist settings db
+     *
+     * @param string $playlist_id
+     * @return void
+     */
     public function move_playlist_xmltv_source($playlist_id)
     {
         if ($this->safe_sql_playlist_settings('is_column_exists', self::PLAYLIST_XMLTV_TABLE, COLUMN_PLAYLIST_ID)) {
@@ -722,6 +750,7 @@ class Dune_Default_Sqlite_Engine
      * Add preset to selected
      *
      * @param string $name
+     * @return void
      */
     public function add_selected_json_source($name)
     {
@@ -737,6 +766,7 @@ class Dune_Default_Sqlite_Engine
      * Remove preset from selected
      *
      * @param string $name
+     * @return void
      */
     public function remove_selected_json_source($name)
     {
@@ -942,6 +972,7 @@ class Dune_Default_Sqlite_Engine
      *
      * @param string $name
      * @param mixed $value
+     * @return void
      */
     public function set_setting($name, $value)
     {
@@ -960,6 +991,7 @@ class Dune_Default_Sqlite_Engine
      * Remove setting
      *
      * @param string $name
+     * @return void
      */
     public function remove_setting($name)
     {
@@ -1000,6 +1032,7 @@ class Dune_Default_Sqlite_Engine
      *
      * @param string $type
      * @param bool $val
+     * @return void
      */
     public function set_bool_setting($type, $val = true)
     {
@@ -1034,6 +1067,7 @@ class Dune_Default_Sqlite_Engine
      * @param string $name
      * @param string $value
      * @param int|null $expired
+     * @return void
      */
     public function set_cookie($name, $value, $expired = null)
     {
@@ -1048,9 +1082,10 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
-     * Get cookie
+     * Remove cookie
      *
      * @param string $name
+     * @return void
      */
     public function remove_cookie($name)
     {
@@ -1080,7 +1115,7 @@ class Dune_Default_Sqlite_Engine
      *
      * @param string $name
      * @param string $value
-     * @return array
+     * @return mixed
      */
     public function get_settings_value_id($name, $value)
     {
@@ -1094,7 +1129,7 @@ class Dune_Default_Sqlite_Engine
      *
      * @param string $name
      * @param int $id
-     * @return array
+     * @return mixed
      */
     public function get_settings_value($name, $id)
     {
@@ -1109,6 +1144,7 @@ class Dune_Default_Sqlite_Engine
      * @param string $name
      * @param string $value
      * @param int $id
+     * @return void
      */
     public function set_settings_value($name, $value, $id = -1)
     {
@@ -1126,6 +1162,7 @@ class Dune_Default_Sqlite_Engine
      *
      * @param string $name
      * @param string $value
+     * @return void
      */
     public function remove_settings_value($name, $value)
     {
@@ -1152,6 +1189,7 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string $channel_id
+     * @return void
      */
     public function remove_changed_channel($channel_id)
     {
@@ -1217,7 +1255,7 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param int $type // PARAM_CHANGED, PARAM_NEW, PARAM_REMOVED - total
-     * @param string $channel_id
+     * @param string|null $channel_id
      * @return int
      */
     public function get_changed_channels_count($type, $channel_id = null)
@@ -1414,7 +1452,7 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
-     * @param $group_id
+     * @param string $group_id
      * @return string|false
      */
     public function get_group_icon($group_id)
@@ -1855,6 +1893,9 @@ class Dune_Default_Sqlite_Engine
         return $this->safe_sql_playlist('fetch_array', $query, COLUMN_CHANNEL_ID);
     }
 
+    /**
+     * @return array
+     */
     public function get_playlist_epg_info()
     {
         if (!$this->is_attached_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
@@ -1914,7 +1955,7 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
-     * @param $include_adult
+     * @param bool $include_adult
      * @return array
      */
     public function get_groups_channels($include_adult)
@@ -1938,7 +1979,7 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
-     * @param $include_adult
+     * @param bool $include_adult
      * @return array
      */
     public function get_all_channels_count($include_adult)
@@ -2053,6 +2094,7 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * @param string $channel_id
      * @return string|null
      */
     public function get_channel_zoom($channel_id)
@@ -2103,7 +2145,6 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
-     * /**
      * @param string $channel_id
      * @param bool $external
      * @return void
@@ -2117,6 +2158,7 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * @param string $channel_id
      * @return bool
      */
     public function get_channel_ext_player($channel_id)
@@ -2152,6 +2194,7 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string $id
+     * @return void
      */
     public function erase_tv_history($id)
     {
@@ -2244,8 +2287,8 @@ class Dune_Default_Sqlite_Engine
      *
      * @param string $movie_id
      * @param string $series_id
-     * @param string $param_name
-     * @return array
+     * @param string|null $param_name
+     * @return mixed
      */
     public function get_vod_history_params($movie_id, $series_id, $param_name = null)
     {
@@ -2265,6 +2308,7 @@ class Dune_Default_Sqlite_Engine
      * Remove history by movie_id
      *
      * @param string $movie_id
+     * @return void
      */
     public function remove_vod_history($movie_id)
     {
@@ -2275,8 +2319,9 @@ class Dune_Default_Sqlite_Engine
     /**
      * Remove history by movie_id and series_id
      *
-     * @param $movie_id
-     * @param $series_id
+     * @param string $movie_id
+     * @param string $series_id
+     * @return void
      */
     public function remove_vod_history_part($movie_id, $series_id)
     {
@@ -2288,6 +2333,8 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * Clear all history
+     *
+     * @return void
      */
     public function clear_all_vod_history()
     {
@@ -2400,6 +2447,9 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * @param string $group_id
+     * @param bool $include_adult
+     * @param bool $include_hidden
      * @return int|false
      */
     public function get_channels_by_order_cnt($group_id, $include_adult = true, $include_hidden = false)
@@ -2437,6 +2487,7 @@ class Dune_Default_Sqlite_Engine
      *
      * @param string|array $channel_id
      * @param bool $show
+     * @return void
      */
     public function set_channel_visible($channel_id, $show)
     {
@@ -2469,6 +2520,7 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string $channel_id
+     * @param bool $only_enabled
      * @return array
      */
     public function get_channel_info($channel_id, $only_enabled = true)
@@ -2577,6 +2629,10 @@ class Dune_Default_Sqlite_Engine
         return $table_name;
     }
 
+    /**
+     * @param string $id
+     * @return string
+     */
     public static function get_table_full_name($id)
     {
         $table_name = self::get_table_name($id);
@@ -2588,6 +2644,10 @@ class Dune_Default_Sqlite_Engine
         return "$db.$table_name";
     }
 
+    /**
+     * @param string $id
+     * @return string
+     */
     public static function get_db_name($id)
     {
         $db = '';
@@ -2694,6 +2754,7 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string $table_name
+     * @param string|null $db_name
      * @return bool
      */
     protected function is_common_table_exists($table_name, $db_name = null)
@@ -2705,6 +2766,7 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string $table_name
+     * @param string|null $db_name
      * @return bool
      */
     protected function is_playlist_table_exists($table_name, $db_name = null)
@@ -2780,7 +2842,7 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string $function
-     * @return string|array|int|false
+     * @return SQLite3Stmt|string|array|int|false
      */
     protected function safe_sql_playlist($function)
     {
@@ -2857,6 +2919,9 @@ class Dune_Default_Sqlite_Engine
     /////////////////////////////////////////////////////////////
     /// private functions
 
+    /**
+     * @return void
+     */
     private function upgrade_6x_version()
     {
         // remove unused parameters
@@ -2889,6 +2954,9 @@ class Dune_Default_Sqlite_Engine
         $this->sql_plugin->exec_transaction($query);
     }
 
+    /**
+     * @return void
+     */
     private function upgrade_parameters()
     {
         $parameters = HD::get_data_items('common.settings', true, false);
@@ -2971,6 +3039,9 @@ class Dune_Default_Sqlite_Engine
         }
     }
 
+    /**
+     * @return void
+     */
     private function upgrade_cookies()
     {
         $get_query = function(&$plugin_cookies, $name, $default) {

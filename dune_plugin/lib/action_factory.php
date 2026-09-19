@@ -91,6 +91,7 @@ class Action_Factory
     }
 
     /**
+     * @param array|null $vod_info
      * @return array
      */
     public static function vod_play($vod_info = null)
@@ -165,6 +166,7 @@ class Action_Factory
      * @param array|string|null $multiline
      * @param array|null $post_action
      * @param int $preferred_width
+     * @param array $attrs
      * @return array
      */
     public static function show_title_dialog($title, $multiline, $post_action = null, $preferred_width = self::SMALL_DLG_WIDTH, $attrs = array())
@@ -229,6 +231,14 @@ class Action_Factory
 
     /**
      * Confirmation dialog
+     *
+     * @param string $title
+     * @param User_Input_Handler $handler
+     * @param string $action
+     * @param array|string|null $multiline
+     * @param int $preferred_width
+     * @param array|null $add_params
+     * @param array $attrs
      * @return array
      */
     public static function show_confirmation_dialog($title, $handler, $action, $multiline = null, $preferred_width = 0, $add_params = null, $attrs = array())
@@ -629,6 +639,7 @@ class Action_Factory
      * Used to invalidate classic folders and NewUI
      *
      * @param object $plugin_cookies
+     * @param array|null $media_urls
      * @param array|null $post_action
      * @return array
      */
@@ -663,7 +674,8 @@ class Action_Factory
      * Used to invalidate only classic folders
      *
      * @param array $media_urls
-     * @param array $post_action
+     * @param array|null $post_action
+     * @param bool $all_except
      * @return array
      */
     public static function invalidate_folders($media_urls, $post_action = null, $all_except = false)
@@ -710,6 +722,7 @@ class Action_Factory
      * @param int $day_start_tm_sec
      * @param string $programs
      * @param array $post_action
+     * @param bool $ext_epg_enabled
      * @return array
      */
     public static function update_epg($channel_id, $clear, $day_start_tm_sec = 0, $programs = null, $post_action = null, $ext_epg_enabled = true)
@@ -731,6 +744,11 @@ class Action_Factory
         return $defs;
     }
 
+    /**
+     * @param array $channels
+     * @param array|null $post_action
+     * @return array|null
+     */
     public static function update_tv_info($channels, $post_action = null)
     {
         if (is_delay_load_supported()) {
@@ -747,6 +765,15 @@ class Action_Factory
     }
 
     // available from r24
+    /**
+     * @param string $title
+     * @param array|string $ext
+     * @param bool $is_dir
+     * @param bool $check_writeable
+     * @param bool $with_fav
+     * @param array|null $post_action
+     * @return array|null
+     */
     public static function choose_file($title, $ext, $is_dir = false, $check_writeable = false, $with_fav = false, $post_action = null)
     {
         if (is_choose_file_supported()) {
@@ -776,6 +803,7 @@ class Action_Factory
      * @param int $y
      * @param int $image_width
      * @param int $image_height
+     * @return void
      */
     public static function add_osd_image(&$comps, $image_url, $x, $y, $image_width = 0, $image_height = 0)
     {
@@ -796,6 +824,7 @@ class Action_Factory
      * @param string $text_font_size
      * @param string $text_color
      * @param bool $text_halo
+     * @return void
      */
     public static function add_osd_text(&$comps, $text, $x, $y, $text_font_size = PLUGIN_FONT_NORMAL, $text_color = DEF_LABEL_TEXT_COLOR_WHITE, $text_halo = false)
     {
@@ -861,6 +890,10 @@ class Action_Factory
         );
     }
 
+    /**
+     * @param array|null $post_action
+     * @return array
+     */
     public static function clear_rows_info_cache($post_action = null)
     {
         return array(
@@ -872,6 +905,17 @@ class Action_Factory
         );
     }
 
+    /**
+     * @param string $folder_key
+     * @param string $item_id
+     * @param array $info_defs
+     * @param string|null $bg_url
+     * @param string|null $nl_bg_url
+     * @param string|null $mask_url
+     * @param array $playback_urls
+     * @param array|null $post_action
+     * @return array
+     */
     public static function update_rows_info($folder_key, $item_id, $info_defs,
                                             $bg_url = null, $nl_bg_url = null, $mask_url = null, $playback_urls = array(), $post_action = null)
     {
@@ -894,6 +938,10 @@ class Action_Factory
         );
     }
 
+    /**
+     * @param array|null $post_action
+     * @return array
+     */
     public static function refresh_entry_points($post_action = null)
     {
         return array(
@@ -904,6 +952,12 @@ class Action_Factory
         );
     }
 
+    /**
+     * @param string $name
+     * @param array|null $params
+     * @param array|null $callback_action
+     * @return array
+     */
     public static function bt_command($name, $params = null, $callback_action = null)
     {
         return array(
@@ -916,6 +970,10 @@ class Action_Factory
         );
     }
 
+    /**
+     * @param array $actions
+     * @return array
+     */
     public static function composite($actions)
     {
         return array(

@@ -133,7 +133,7 @@ class Sleep_Timer
     }
 
     /**
-     * @param $timer
+     * @param int $timer
      * @param array $comps
      * @param object $user_input
      * @param bool $force
@@ -157,6 +157,7 @@ class Sleep_Timer
      * set time in seconds before dune goes to standby
      *
      * @param int $sleep_timer_sec
+     * @return void
      */
     public static function set_sleep_timer($sleep_timer_sec)
     {
@@ -189,6 +190,9 @@ class Sleep_Timer
         file_put_contents($pid_file, $pid);
     }
 
+    /**
+     * @return array
+     */
     protected static function get_sleep_timer_ops()
     {
         static $range = array(1, 2, 3, 4, 5, 10, 15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 240, 300, 360);

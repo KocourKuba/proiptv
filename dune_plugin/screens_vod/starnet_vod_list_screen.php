@@ -41,6 +41,9 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
         return $this->do_get_action_map();
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_action_map()
     {
         hd_debug_print(null, true);
@@ -258,6 +261,9 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// Protected methods
 
+    /**
+     * @return array
+     */
     protected function create_popup_menu()
     {
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_WATCHED, TR::t('vod_screen_viewed_not_viewed'), 'hide.png');

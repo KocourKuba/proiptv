@@ -178,7 +178,7 @@ class Entry extends Json_Serializer
 
     /**
      * @param string $line
-     * @return ExtTag
+     * @return ExtTag|null
      */
     public function parseExtTag($line)
     {
@@ -247,7 +247,8 @@ class Entry extends Json_Serializer
     }
 
     /**
-     * @return ExtTag
+     * @param string $tag
+     * @return ExtTag|null
      */
     public function getEntryTag($tag)
     {
@@ -372,11 +373,17 @@ class Entry extends Json_Serializer
         $this->title = is_null($extInf) ? 'no name' : $extInf->getTagValue();
     }
 
+    /**
+     * @return string
+     */
     public function getDescription()
     {
         return $this->description;
     }
 
+    /**
+     * @return void
+     */
     public function updateDescription()
     {
         $this->description = $this->getAnyEntryAttribute(self::$desc_attrs, TAG_EXTINF);
@@ -565,6 +572,7 @@ class Entry extends Json_Serializer
      *
      * @param string $tag
      * @param int $playlist_value
+     * @return void
      */
     public function updateArchive($tag, $playlist_value = 0)
     {
@@ -682,8 +690,8 @@ class Entry extends Json_Serializer
 
     /**
      * @param string|array $attrs
-     * @param null $tag
-     * @param null $found_attr
+     * @param string|null $tag
+     * @param string|null $found_attr
      * @return string
      */
     public function getAnyEntryAttribute($attrs, $tag = null, &$found_attr = null)
@@ -707,7 +715,7 @@ class Entry extends Json_Serializer
 
     /**
      * @param array $attrs
-     * @param null $tag
+     * @param string|null $tag
      * @return array
      */
     public function getAllEntryAttributes($attrs, $tag = null)

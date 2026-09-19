@@ -54,6 +54,9 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
      */
     protected $last_epg_source = '';
 
+    /**
+     * @return void
+     */
     public function __construct()
     {
         HD::load_firmware_features();
@@ -105,7 +108,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
     /**
      * @param string $id
-     * @return Screen
+     * @return Screen|null
      */
     public function get_screen($id)
     {
@@ -121,6 +124,9 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         return safe_get_value($this->screens_views, $name, array());
     }
 
+    /**
+     * @return string
+     */
     public function get_last_epg_source()
     {
         return $this->last_epg_source;
@@ -173,6 +179,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
     /**
      * @param array $defs
+     * @return void
      */
     public function create_setup_header(&$defs)
     {
@@ -304,6 +311,9 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         return Action_Factory::show_dialog($defs, TR::t('setup_changelog'), Action_Factory::MAX_DLG_WIDTH);
     }
 
+    /**
+     * @return array
+     */
     public function do_donate_dialog()
     {
         try {
@@ -417,6 +427,11 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         return Action_Factory::show_dialog($defs, $title, Action_Factory::MAX_DLG_WIDTH, true, $attrs);
     }
 
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $channel_id
+     * @return array
+     */
     public function do_edit_channel_parameters($handler, $channel_id)
     {
         hd_debug_print("Do Edit channel: $channel_id", true);
@@ -448,6 +463,11 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         return Action_Factory::show_dialog($defs, TR::t('tv_screen_edit_channel'));
     }
 
+    /**
+     * @param object $user_input
+     * @param string $channel_id
+     * @return void
+     */
     public function do_edit_channel_apply($user_input, $channel_id)
     {
         if ($this->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
@@ -461,7 +481,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
     /**
      * @param string $channel_id
-     * @return array
+     * @return array|null
      */
     public function jump_to_channel($channel_id)
     {
@@ -492,6 +512,13 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
     ///////////////////////////////////////////////////////////////////////
 
+    /**
+     * @param array $defs
+     * @param User_Input_Handler $handler
+     * @param int $initial_epg_shift
+     * @param bool $apply
+     * @return void
+     */
     protected static function add_epg_shift_defs(&$defs, $handler, $initial_epg_shift, $apply)
     {
         $shift_ops_hours = array();
@@ -513,6 +540,9 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             (int)(abs($initial_epg_shift % 3600) / 60), $shift_ops_mins, 250, $params, false, $apply);
     }
 
+    /**
+     * @return array
+     */
     protected function get_zoom_opts_translated()
     {
         static $zoom_ops_translated;

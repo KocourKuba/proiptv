@@ -33,6 +33,12 @@ class Control_Factory
     const DLG_MAX_CONTROLS_WIDTH = 1400;
     const DLG_BUTTON_WIDTH = 300;
 
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $name
+     * @param array|null $add_params
+     * @return array
+     */
     public static function apply_action($handler, $name, $add_params)
     {
         $params = array('action_type' => 'apply');
@@ -43,6 +49,12 @@ class Control_Factory
         return User_Input_Handler_Registry::create_action($handler, $name, null, $params);
     }
 
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $name
+     * @param array|null $add_params
+     * @return array
+     */
     public static function confirm_action($handler, $name, $add_params)
     {
         $params = array('action_type' => 'confirm');
@@ -56,6 +68,7 @@ class Control_Factory
     /**
      * @param array &$defs
      * @param int $vgap
+     * @return void
      */
     public static function add_vgap(&$defs, $vgap)
     {
@@ -69,7 +82,8 @@ class Control_Factory
      * @param array &$defs
      * @param string $title
      * @param string $text
-     * @param bool $vgap_after
+     * @param int|false $vgap_after
+     * @return void
      */
     public static function add_label(&$defs, $title, $text, $vgap_after = 4)
     {
@@ -90,6 +104,7 @@ class Control_Factory
      * @param string $title
      * @param string $text
      * @param int $max_lines
+     * @return void
      */
     public static function add_multiline_label(&$defs, $title, $text, $max_lines = 2)
     {
@@ -106,7 +121,8 @@ class Control_Factory
      * @param array &$defs
      * @param string $title
      * @param string $text
-     * @param int $vgap_after
+     * @param int|false $vgap_after
+     * @return void
      */
     public static function add_smart_label_with_caption(&$defs, $title, $text, $vgap_after = false)
     {
@@ -125,7 +141,8 @@ class Control_Factory
     /**
      * @param array &$defs
      * @param string $text
-     * @param int $vgap_after
+     * @param int|false $vgap_after
+     * @return void
      */
     public static function add_smart_label(&$defs, $text, $vgap_after = false)
     {
@@ -178,6 +195,7 @@ class Control_Factory
      * @param array|null $add_params
      * @param int $width
      * @param bool $caption_centered
+     * @return void
      */
     public static function add_button(&$defs, $handler, $name, $title, $caption,
                                       $add_params = null, $width = self::SCR_CONTROLS_WIDTH, $caption_centered = false)
@@ -204,6 +222,7 @@ class Control_Factory
      * @param array|null $add_params
      * @param int $width
      * @param array|null $gui_params
+     * @return void
      */
     public static function add_custom_gui_button(&$defs, $handler, $name, $title, $caption,
                                       $add_params = null, $width = self::SCR_CONTROLS_WIDTH, $gui_params = null)
@@ -233,6 +252,7 @@ class Control_Factory
      * @param int $width
      * @param array $push_action
      * @param bool $caption_centered
+     * @return void
      */
     public static function add_custom_action_button(&$defs, $name, $title, $caption, $width, $push_action, $caption_centered = false)
     {
@@ -250,9 +270,9 @@ class Control_Factory
     }
 
     /**
-     * @param $defs
-     * @param $button_defs
-     * @param $viewport_width
+     * @param array &$defs
+     * @param array $button_defs
+     * @param int $viewport_width
      * @return void
      */
     public static function add_button_centered(&$defs, $button_defs, $viewport_width)
@@ -271,6 +291,7 @@ class Control_Factory
      * @param string $image
      * @param int $width
      * @param array $add_params
+     * @return void
      */
     public static function add_image_button(&$defs, $handler, $name, $title, $caption, $image, $width = self::SCR_CONTROLS_WIDTH, &$add_params = array())
     {
@@ -298,6 +319,7 @@ class Control_Factory
      * @param string $caption
      * @param bool $caption_centered
      * @param int $width
+     * @return void
      */
     public static function add_close_dialog_button(&$defs, $caption, $caption_centered = false, $width = self::DLG_BUTTON_WIDTH)
     {
@@ -316,6 +338,8 @@ class Control_Factory
 
     /**
      * @param array &$defs
+     * @param bool $caption_centered
+     * @return void
      */
     public static function add_ok_button(&$defs, $caption_centered = false)
     {
@@ -324,6 +348,8 @@ class Control_Factory
 
     /**
      * @param array &$defs
+     * @param bool $caption_centered
+     * @return void
      */
     public static function add_cancel_button(&$defs, $caption_centered = false)
     {
@@ -337,6 +363,7 @@ class Control_Factory
      * @param string $caption
      * @param array|null $add_params
      * @param int $width
+     * @return void
      */
     public static function add_close_dialog_and_apply_button(&$defs, $handler, $name, $caption, $add_params = null, $width = self::DLG_BUTTON_WIDTH)
     {
@@ -357,7 +384,8 @@ class Control_Factory
      * @param string $name
      * @param string $caption
      * @param int $width
-     * @param array $post_action
+     * @param array|null $post_action
+     * @return void
      */
     public static function add_custom_close_dialog_and_apply_button(&$defs, $name, $caption, $width = self::DLG_BUTTON_WIDTH, $post_action = null)
     {
@@ -387,6 +415,7 @@ class Control_Factory
      * @param bool $need_confirm
      * @param bool $need_apply
      * @param array|null $add_params
+     * @return void
      */
     public static function add_text_field(&$defs,
                                           $handler, $name,
@@ -437,6 +466,7 @@ class Control_Factory
      * @param array|null $add_params
      * @param bool $need_confirm
      * @param bool $need_apply
+     * @return void
      */
     public static function add_combobox(&$defs, $handler, $name, $title, $initial_value, $value_caption_pairs,
                                         $width = Control_Factory::SCR_CONTROLS_WIDTH, &$add_params = array(),
@@ -472,6 +502,14 @@ class Control_Factory
         }
     }
 
+    /**
+     * @param array &$defs
+     * @param string|null $title
+     * @param int $width
+     * @param int $progress
+     * @param array|null $gui_params
+     * @return void
+     */
     public static function add_progress_bar(&$defs, $title = null, $width = 0, $progress = 0, $gui_params = null)
     {
         $defs[] = array(
@@ -486,6 +524,9 @@ class Control_Factory
         );
     }
 
+    /**
+     * @return array
+     */
     public static function menu_separator()
     {
         return array(GuiMenuItemDef::is_separator => true);
@@ -497,6 +538,7 @@ class Control_Factory
      * @param int $img_y
      * @param string $img_halign
      * @param string $img_valign
+     * @param bool $above_selection
      * @return false|string
      */
     public static function create_sticker($img, $img_x = 0, $img_y = 0, $img_halign = 'right', $img_valign = 'top', $above_selection = false)
@@ -517,6 +559,14 @@ class Control_Factory
         return json_encode(array('items' => $items, 'above_selection' => $above_selection));
     }
 
+    /**
+     * @param string $img
+     * @param int $img_x
+     * @param int $img_y
+     * @param string $img_halign
+     * @param string $img_valign
+     * @return array
+     */
     public static function sticker_geometry($img, $img_x, $img_y, $img_halign, $img_valign)
     {
         return array(

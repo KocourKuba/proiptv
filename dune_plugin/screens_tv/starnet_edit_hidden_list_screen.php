@@ -44,6 +44,9 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen
         return $this->do_get_action_map();
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_action_map()
     {
         hd_debug_print(null, true);
@@ -189,6 +192,12 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// protected methods
 
+    /**
+     * @param int|string $id
+     * @param string $title
+     * @param string $icon_file
+     * @return array
+     */
     protected static function add_item($id, $title, $icon_file)
     {
         return array(

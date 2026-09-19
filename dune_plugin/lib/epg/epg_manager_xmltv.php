@@ -98,6 +98,8 @@ class Epg_Manager_Xmltv
 
     /**
      * clear all delayed epg
+     *
+     * @return void
      */
     public static function clear_delayed_epg()
     {
@@ -319,9 +321,9 @@ class Epg_Manager_Xmltv
     /**
      * Get picon for channel
      *
-     * @param $db_name
+     * @param string $db_name
      * @param string $placeHolders
-     * @return string
+     * @return string|false
      */
     public static function get_picon($db_name, $placeHolders)
     {
@@ -352,7 +354,7 @@ class Epg_Manager_Xmltv
      * Only one XMLTV source must be sent via config
      * Plugin not available at this time!
      *
-     * @param $config_file
+     * @param string $config_file
      * @return void
      */
     public static function index_by_config($config_file)
@@ -950,6 +952,12 @@ class Epg_Manager_Xmltv
         return empty($last_error) ? 0 : -2;
     }
 
+    /**
+     * @param array $params
+     * @param string $tag
+     * @param float $time
+     * @return void
+     */
     public static function update_stat($params, $tag, $time)
     {
         $db = self::open_sqlite_db($params[PARAM_HASH], false);
@@ -965,6 +973,10 @@ class Epg_Manager_Xmltv
         $db->exec($query);
     }
 
+    /**
+     * @param array $params
+     * @return array
+     */
     public static function get_stat($params)
     {
         $db = self::open_sqlite_db($params[PARAM_HASH], true);
@@ -1069,6 +1081,10 @@ class Epg_Manager_Xmltv
         hd_debug_print('Storage space:  ' . HD::get_storage_size(self::$cache_dir));
     }
 
+    /**
+     * @param array $params
+     * @return array
+     */
     public static function get_all_xmltv_channels($params)
     {
         $db = self::open_sqlite_db($params[PARAM_HASH], true);
@@ -1088,6 +1104,10 @@ class Epg_Manager_Xmltv
         return $db->fetch_array($query, COLUMN_CHANNEL_ID);
     }
 
+    /**
+     * @param array $params
+     * @return array
+     */
     public static function get_all_xmltv_aliases($params)
     {
         $db = self::open_sqlite_db($params[PARAM_HASH], true);
@@ -1108,6 +1128,10 @@ class Epg_Manager_Xmltv
         return $db->fetch_array($query);
     }
 
+    /**
+     * @param array $params
+     * @return array
+     */
     public static function get_all_xmltv_ids($params)
     {
         $db = self::open_sqlite_db($params[PARAM_HASH], true);
@@ -1139,6 +1163,7 @@ class Epg_Manager_Xmltv
      * Set and create cache dir
      *
      * @param string $cache_dir
+     * @return void
      */
     public static function set_cache_dir($cache_dir)
     {
@@ -1153,6 +1178,7 @@ class Epg_Manager_Xmltv
     /**
      * @param string $hash
      * @param int $index_flag
+     * @return void
      */
     protected static function lock_index($hash, $index_flag)
     {
@@ -1166,6 +1192,7 @@ class Epg_Manager_Xmltv
     /**
      * @param string $hash
      * @param int $index_flag
+     * @return void
      */
     protected static function unlock_index($hash, $index_flag)
     {
@@ -1176,6 +1203,11 @@ class Epg_Manager_Xmltv
         }
     }
 
+    /**
+     * @param string $name
+     * @param bool $lock
+     * @return void
+     */
     protected static function set_lock($name, $lock)
     {
         if ($lock) {
@@ -1348,6 +1380,10 @@ class Epg_Manager_Xmltv
         return $value;
     }
 
+    /**
+     * @param string $hash
+     * @return void
+     */
     protected static function clear_log($hash)
     {
         array_map('unlink', glob(get_temp_path("{$hash}_*.log")));
@@ -1387,6 +1423,7 @@ class Epg_Manager_Xmltv
 
     /**
      * @param array $params
+     * @return void
      * @throws Exception
      */
     protected static function download_xmltv($params)
@@ -1452,6 +1489,7 @@ class Epg_Manager_Xmltv
 
     /**
      * @param array $params
+     * @return void
      * @throws Exception
      */
     protected static function unpack_xmltv($params)
@@ -1545,6 +1583,9 @@ class Epg_Manager_Xmltv
         self::update_stat($params, 'unpack_size', $size);
     }
 
+    /**
+     * @return bool
+     */
     protected static function check_active_plugin_folder()
     {
         $port = getenv('HD_HTTP_LOCAL_PORT');

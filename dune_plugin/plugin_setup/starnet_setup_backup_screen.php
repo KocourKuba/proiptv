@@ -45,6 +45,9 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
         return $this->do_get_control_defs();
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_control_defs()
     {
         hd_debug_print(null, true);

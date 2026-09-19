@@ -50,6 +50,9 @@ class smb_tree
     private $no_pass = true;
     private $debug_level = 0;
 
+    /**
+     * @return void
+     */
     public function __construct()
     {
         $this->descriptor_spec = array
@@ -112,6 +115,10 @@ class smb_tree
         return empty($select_folder) ? $default : $select_folder;
     }
 
+    /**
+     * @param array $ip_smb
+     * @return array
+     */
     public static function get_mount_smb($ip_smb)
     {
         $mounts = array();
@@ -190,10 +197,9 @@ class smb_tree
         return $mounts;
     }
 
-    /*
-     * @return 0 if success
+    /**
+     * @return array
      */
-
     public static function get_df_smb()
     {
         $df_smb = array();
@@ -207,6 +213,13 @@ class smb_tree
         return $df_smb;
     }
 
+    /**
+     * @param string $server_id
+     * @param string $cmd_name
+     * @param int $cmd_id
+     * @param array $params
+     * @return false|string
+     */
     public static function write_request($server_id, $cmd_name, $cmd_id, $params)
     {
         $dir_path = "/tmp/run/ipc__$server_id";
@@ -270,6 +283,9 @@ class smb_tree
         return false;
     }
 
+    /**
+     * @return array
+     */
     public static function get_mount_nfs()
     {
         $d = array();
@@ -316,6 +332,9 @@ class smb_tree
         return $d;
     }
 
+    /**
+     * @return array
+     */
     public static function get_network_folder_nfs()
     {
         $nfs = array();
@@ -335,6 +354,9 @@ class smb_tree
         return $nfs;
     }
 
+    /**
+     * @return array
+     */
     protected static function parse_network_config()
     {
         $network_folder = array();
@@ -350,6 +372,9 @@ class smb_tree
         return $network_folder;
     }
 
+    /**
+     * @return array
+     */
     public static function get_df_nfs()
     {
         $df_nfs = array();
@@ -363,6 +388,10 @@ class smb_tree
         return $df_nfs;
     }
 
+    /**
+     * @param int $info
+     * @return array
+     */
     public function get_mount_all_smb($info)
     {
         switch ($info) {
@@ -385,6 +414,9 @@ class smb_tree
         return self::get_mount_smb($ip);
     }
 
+    /**
+     * @return array
+     */
     public static function get_ip_network_folder_smb()
     {
         $d = array();
@@ -410,6 +442,9 @@ class smb_tree
         return $d;
     }
 
+    /**
+     * @return array
+     */
     public static function get_network_folder_smb()
     {
         $d = array();
@@ -432,6 +467,9 @@ class smb_tree
         return $d;
     }
 
+    /**
+     * @return string
+     */
     public static function get_nmblookup_path()
     {
         $cmd = '&&$FS_PREFIX/firmware_ext/smbserver/bin/nmblookup --configfile=$FS_PREFIX/etc/samba/smb.conf';
@@ -450,6 +488,9 @@ class smb_tree
         return $path . $cmd;
     }
 
+    /**
+     * @return array
+     */
     public function get_ip_server_shares_smb()
     {
         $d = array();
@@ -476,6 +517,9 @@ class smb_tree
         return $d;
     }
 
+    /**
+     * @return array
+     */
     public function get_server_shares_smb()
     {
         $d = array();
@@ -489,11 +533,18 @@ class smb_tree
         return $d;
     }
 
+    /**
+     * @return array
+     */
     public function get_xdomains()
     {
         return ($this->execute('-X') !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
     }
 
+    /**
+     * @param string $args
+     * @return int
+     */
     private function execute($args = '')
     {
         $cmd = '$FS_PREFIX' . "/firmware/bin/smbtree {$this->get_auth_options()} {$this->get_debug_level()} $args";
@@ -515,21 +566,34 @@ class smb_tree
         return $this->return_value;
     }
 
+    /**
+     * @return string
+     */
     private function get_auth_options()
     {
         return ($this->is_no_pass()) ? '-N' : '';
     }
 
+    /**
+     * @return bool
+     */
     private function is_no_pass()
     {
         return $this->no_pass;
     }
 
+    /**
+     * @return string
+     */
     private function get_debug_level()
     {
         return '--debuglevel ' . $this->debug_level;
     }
 
+    /**
+     * @param string $input_lines
+     * @return array
+     */
     private static function parse_smbtree_output($input_lines)
     {
         $output = array();
@@ -561,11 +625,19 @@ class smb_tree
         return $output;
     }
 
+    /**
+     * @param string $domain
+     * @return array
+     */
     public function get_workgroup_servers($domain)
     {
         return ($this->execute('-W ' . $domain) !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
     }
 
+    /**
+     * @param string $server
+     * @return array
+     */
     public function get_server_shares($server)
     {
         return ($this->execute('-E ' . $server) !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);

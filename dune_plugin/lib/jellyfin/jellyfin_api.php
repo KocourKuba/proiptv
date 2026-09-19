@@ -47,6 +47,7 @@ class jellyfin_api
      * @param Default_Dune_Plugin $plugin
      * @param string $baseUrl
      * @param string $appVersion
+     * @return void
      */
     public function init($plugin, $baseUrl, $appVersion = '1.0.0')
     {
@@ -173,6 +174,7 @@ class jellyfin_api
     /**
      * Get User View
      *
+     * @param string|null $param
      * @return array
      */
     public function getUserViews($param = null)

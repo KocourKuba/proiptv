@@ -43,6 +43,9 @@ class vod_pagination
      */
     protected $movie_counter = array();
 
+    /**
+     * @return void
+     */
     public function try_reset_pages()
     {
         if ($this->is_entered) {
@@ -70,6 +73,7 @@ class vod_pagination
 
     /**
      * @param string $page_id
+     * @return bool
      */
     public function is_page_index_stopped($page_id)
     {
@@ -79,6 +83,7 @@ class vod_pagination
 
     /**
      * @param string $page_id
+     * @return void
      */
     public function stop_page_index($page_id)
     {
@@ -90,6 +95,7 @@ class vod_pagination
     /**
      * @param string $page_id
      * @param int $increment
+     * @return void
      */
     public function shift_next_page_index($page_id, $increment = 1)
     {
@@ -102,6 +108,9 @@ class vod_pagination
         hd_debug_print("get_next_page page_id: $page_id next_idx: {$this->pages[$page_id]}", true);
     }
 
+    /**
+     * @return void
+     */
     public function reset_movie_counter()
     {
         $this->is_entered = true;
@@ -124,6 +133,7 @@ class vod_pagination
     /**
      * @param string $key
      * @param int $val
+     * @return void
      */
     public function add_movie_counter($key, $val)
     {

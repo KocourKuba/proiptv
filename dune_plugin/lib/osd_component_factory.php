@@ -86,6 +86,7 @@ class OSD_Component_Factory
     }
 
     /**
+     * @return void
      */
     public static function init()
     {
@@ -145,6 +146,7 @@ class OSD_Component_Factory
      * @param int $dy
      * @param int $width
      * @param int $height
+     * @return void
      */
     public static function add_widget_box(&$comps, $dx, $dy, $width, $height)
     {

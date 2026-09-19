@@ -248,7 +248,7 @@ class vod_standard extends Abstract_Vod
 
     /**
      * @param string $movie_id
-     * @return Movie
+     * @return Movie|null
      */
     public function TryLoadMovie($movie_id)
     {
@@ -342,7 +342,7 @@ class vod_standard extends Abstract_Vod
 
     /**
      * @param object $user_input
-     * @param $plugin_cookies
+     * @param object $plugin_cookies
      * @return array|null
      */
     public function vod_player_exec($user_input, &$plugin_cookies)
@@ -606,6 +606,7 @@ class vod_standard extends Abstract_Vod
 
     /**
      * @param array $filter_types
+     * @return void
      */
     public function set_filter_types($filter_types)
     {
@@ -681,6 +682,8 @@ class vod_standard extends Abstract_Vod
      * get indexes count for selected group
      *
      * @param string $group_id
+     * @param int $from
+     * @param int $limit
      * @return array
      */
     public function getVodEntries($group_id, $from = 0, $limit = 0)

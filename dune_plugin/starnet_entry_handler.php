@@ -293,6 +293,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
     ///////////////////////////////////////////////////////////////////////
 
+    /**
+     * @param object $user_input
+     * @return array|null
+     */
     private function check_upgrade($user_input)
     {
         $flag = get_data_path('upgrade.flag');
@@ -312,6 +316,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
         return null;
     }
 
+    /**
+     * @param string $title
+     * @return array
+     */
     private function show_old_player($title) {
         $qr_code = get_temp_path('link_to_old.jpg');
         $url = 'http://api.qrserver.com/v1/create-qr-code/?size=450x450&format=png&data=' . urlencode(base64_decode(self::OLD_LINK));
@@ -355,7 +363,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
     }
 
     /**
-     * @return array
+     * @param object $user_input
+     * @param object $plugin_cookies
+     * @return array|null
      */
     public function run_resume_state($user_input, &$plugin_cookies)
     {
@@ -477,6 +487,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
         return $this->simple_start($plugin_cookies, false);
     }
 
+    /**
+     * @param object $plugin_cookies
+     * @param bool $load_channels
+     * @return array
+     */
     public function simple_start(&$plugin_cookies, $load_channels = true)
     {
         $playlist_first = $this->plugin->get_parameter(PARAM_PLAYLIST_FIRST, SwitchOnOff::off);
@@ -501,6 +516,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
         return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
     }
 
+    /**
+     * @param object $plugin_cookies
+     * @return array
+     */
     public function show_error($plugin_cookies)
     {
         $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);

@@ -38,6 +38,9 @@ class vod_sharavoz extends vod_standard
      */
     protected $xtream;
 
+    /**
+     * @param Default_Dune_Plugin $plugin
+     */
     public function __construct(Default_Dune_Plugin $plugin)
     {
         parent::__construct($plugin);
@@ -345,6 +348,7 @@ class vod_sharavoz extends vod_standard
     /**
      * @param string $stream_type
      * @param array &$category_tree
+     * @return void
      */
     protected function parse_categories($stream_type, &$category_tree)
     {
@@ -386,6 +390,12 @@ class vod_sharavoz extends vod_standard
         return $movie;
     }
 
+    /**
+     * @param string $stream_type
+     * @param string $keyword
+     * @param array &$movies
+     * @return void
+     */
     protected function search($stream_type, $keyword, &$movies)
     {
         $streams = $this->xtream->get_streams($stream_type);

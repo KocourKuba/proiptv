@@ -87,6 +87,7 @@ class xtream_codes_api
 
     /**
      * Get categories
+     * @param string $stream_type
      * @return array|false
      */
     public function get_categories($stream_type = self::VOD)
@@ -98,6 +99,7 @@ class xtream_codes_api
 
     /**
      * Get categories url
+     * @param string $stream_type
      * @return string
      */
     protected function get_categories_url($stream_type = self::VOD)
@@ -107,6 +109,7 @@ class xtream_codes_api
 
     /**
      * Get streams
+     * @param string $stream_type
      * @param string|null $category_id
      * @return bool|array
      */
@@ -117,6 +120,8 @@ class xtream_codes_api
 
     /**
      * Get streams url
+     * @param string $stream_type
+     * @param string|null $category_id
      * @return string|null
      */
     protected function get_streams_url($stream_type = self::VOD, $category_id = null)
@@ -137,6 +142,7 @@ class xtream_codes_api
     /**
      * Get stream info
      * @param string $id
+     * @param string $stream_type
      * @return bool|string|array
      */
     public function get_stream_info($id, $stream_type = self::VOD)
@@ -147,6 +153,8 @@ class xtream_codes_api
 
     /**
      * Get stream info url
+     * @param string $id
+     * @param string $stream_type
      * @return string
      */
     protected function get_stream_info_url($id, $stream_type = self::VOD)
@@ -157,6 +165,7 @@ class xtream_codes_api
     /**
      * Get stream url
      * @param string $id
+     * @param string $stream_type
      * @return string
      */
     public function get_stream_url($id, $stream_type = self::VOD)
@@ -170,6 +179,10 @@ class xtream_codes_api
             $id);
     }
 
+    /**
+     * @param string $url
+     * @return array|false
+     */
     protected function json_request($url)
     {
         $this->plugin->reset_curl($this->curl_wrapper);

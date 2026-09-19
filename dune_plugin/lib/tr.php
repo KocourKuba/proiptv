@@ -25,6 +25,9 @@
 
 class TR
 {
+    /**
+     * @return string
+     */
     public static function t()
     {
         $num_args = func_num_args();
@@ -45,6 +48,7 @@ class TR
 
     /**
      * @param string $key
+     * @return string
      */
     public static function g($key)
     {
@@ -122,6 +126,10 @@ class TR
         return self::load((string)$xml, $ar['p']);
     }
 
+    /**
+     * @param string $lang
+     * @return string
+     */
     protected static function get_translation_filename($lang)
     {
         $lang_file = get_install_path("translations/dune_language_$lang.txt");
@@ -137,6 +145,9 @@ class TR
         return '';
     }
 
+    /**
+     * @return string
+     */
     public static function get_current_language()
     {
         $lang = 'english';
@@ -150,6 +161,10 @@ class TR
         return $lang;
     }
 
+    /**
+     * @param string $string_key
+     * @return string
+     */
     public static function get_system_language_string_value($string_key)
     {
         # Returns a string constant in the system language by key
@@ -178,6 +193,10 @@ class TR
         return '';
     }
 
+    /**
+     * @param string $v
+     * @return string
+     */
     private static function strip_param($v)
     {
         if (0 === strpos($v, '%tr%')) {

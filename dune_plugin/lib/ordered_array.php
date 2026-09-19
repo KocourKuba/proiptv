@@ -81,6 +81,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
 
     /**
      * @param int $pos
+     * @return void
      */
     public function set_saved_pos($pos)
     {
@@ -170,6 +171,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
     /**
      * @param string $id
      * @param bool $last
+     * @return void
      */
     public function insert_item($id, $last)
     {
@@ -268,6 +270,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
     /**
      * @param int $idx
      * @param string $item
+     * @return void
      */
     public function set_item_by_idx($idx, $item)
     {

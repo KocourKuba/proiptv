@@ -106,6 +106,10 @@ class Json_Stream_Encoder
         return array_keys($keys) !== $keys;
     }
 
+    /**
+     * @param array $array
+     * @return int
+     */
     public static function getArraySize($array)
     {
         $size = 0;

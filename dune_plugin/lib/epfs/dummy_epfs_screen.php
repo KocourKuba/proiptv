@@ -43,6 +43,9 @@ class Dummy_Epfs_Screen extends Abstract_Rows_Screen
         return $this->do_get_action_map();
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_action_map()
     {
         hd_debug_print(null, true);
@@ -78,7 +81,7 @@ class Dummy_Epfs_Screen extends Abstract_Rows_Screen
     }
 
     /**
-     * @param string $no_internet
+     * @param bool $no_internet
      * @param object $plugin_cookies
      * @return array|null
      */

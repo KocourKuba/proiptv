@@ -33,6 +33,10 @@ if (!class_exists('DuneSystem')) {
     }
 }
 
+/**
+ * @param string $str
+ * @return void
+ */
 function hd_print($str)
 {
     global $LOG_FILE;

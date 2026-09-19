@@ -42,6 +42,9 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
         return $this->do_get_action_map();
     }
 
+    /**
+     * @return array
+     */
     protected function do_get_action_map()
     {
         hd_debug_print(null, true);

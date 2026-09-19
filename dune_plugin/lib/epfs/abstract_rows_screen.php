@@ -36,6 +36,10 @@ abstract class Abstract_Rows_Screen implements Screen, User_Input_Handler
      */
     protected $plugin;
 
+    /**
+     * @param Default_Dune_Plugin $plugin
+     * @return void
+     */
     public function __construct(Default_Dune_Plugin $plugin)
     {
         $this->plugin = $plugin;
