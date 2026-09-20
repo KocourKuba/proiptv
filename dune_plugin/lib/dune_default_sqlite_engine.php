@@ -345,6 +345,10 @@ class Dune_Default_Sqlite_Engine
         hd_debug_print(null, true);
         hd_debug_print("Setting playlist $playlist_id to " . json_format_unescaped($stg), true);
 
+        if (empty($stg)) {
+            return;
+        }
+
         // update playlist table
         $query = sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);',
             self::PLAYLISTS_TABLE, COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id));
@@ -358,10 +362,33 @@ class Dune_Default_Sqlite_Engine
             unset($stg[PARAM_PARAMS]);
         }
 
-        // save parameters
+        // save parameters as a single transaction instead of one BEGIN/COMMIT per parameter
+        $q_playlist_id = Sql_Wrapper::sql_quote($playlist_id);
+        $query = '';
         foreach ($stg as $name => $value) {
-            $this->set_playlist_parameter($playlist_id, $name, $value);
+            $query .= self::make_set_playlist_parameter_query($q_playlist_id, $name, $value);
         }
+        $this->safe_sql_plugin('exec_transaction', $query);
+    }
+
+    /**
+     * Build the INSERT OR IGNORE + UPDATE pair used to upsert a single playlist parameter
+     * (shared by set_playlist_parameter() and the batch loop in set_playlist_parameters()).
+     *
+     * @param string $q_playlist_id playlist id, already passed through Sql_Wrapper::sql_quote()
+     * @param string $name
+     * @param string $value
+     * @return string
+     */
+    private static function make_set_playlist_parameter_query($q_playlist_id, $name, $value)
+    {
+        $q_name = Sql_Wrapper::sql_quote($name);
+        $q_value = Sql_Wrapper::sql_quote($value);
+        $query = sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES (%s,%s,%s);', self::PLAYLIST_PARAMETERS_TABLE,
+            COLUMN_PLAYLIST_ID, COLUMN_NAME, COLUMN_VALUE, $q_playlist_id, $q_name, $q_value);
+        $query .= sprintf('UPDATE %s SET %s=%s WHERE %s=%s AND %s=%s;', self::PLAYLIST_PARAMETERS_TABLE,
+            COLUMN_VALUE, $q_value, COLUMN_PLAYLIST_ID, $q_playlist_id, COLUMN_NAME, $q_name);
+        return $query;
     }
 
     /**
@@ -401,13 +428,8 @@ class Dune_Default_Sqlite_Engine
         hd_debug_print("Playlist ID: $playlist_id, Name: $name, Value: $value", true);
         // save parameter
 
-        $q_name = Sql_Wrapper::sql_quote($name);
-        $q_value = Sql_Wrapper::sql_quote($value);
         $q_playlist_id = Sql_Wrapper::sql_quote($playlist_id);
-        $query = sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES (%s,%s,%s);', self::PLAYLIST_PARAMETERS_TABLE,
-            COLUMN_PLAYLIST_ID, COLUMN_NAME, COLUMN_VALUE, $q_playlist_id, $q_name, $q_value);
-        $query .= sprintf('UPDATE %s SET %s=%s WHERE %s=%s AND %s=%s;', self::PLAYLIST_PARAMETERS_TABLE,
-            COLUMN_VALUE, $q_value, COLUMN_PLAYLIST_ID, $q_playlist_id, COLUMN_NAME, $q_name);
+        $query = self::make_set_playlist_parameter_query($q_playlist_id, $name, $value);
         $this->safe_sql_plugin('exec_transaction', $query);
     }
 
@@ -1337,9 +1359,14 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_groups_count($type, $disabled)
     {
-        $where = ($disabled === PARAM_ALL) ? '' : COLUMN_DISABLED . '=' . $disabled;
-        $and = empty($where) ? '' : 'AND';
-        $where = $type === PARAM_ALL ? '' : sprintf('WHERE %s %s %s=%s', $where, $and, COLUMN_SPECIAL, $type);
+        $cond = array();
+        if ($disabled !== PARAM_ALL) {
+            $cond[] = COLUMN_DISABLED . '=' . (int)$disabled;
+        }
+        if ($type !== PARAM_ALL) {
+            $cond[] = COLUMN_SPECIAL . '=' . (int)$type;
+        }
+        $where = empty($cond) ? '' : 'WHERE ' . implode(' AND ', $cond);
         $query = sprintf('SELECT COUNT(*) FROM %s %s;', self::get_table_name(GROUPS_INFO), $where);
         return (int)$this->safe_sql_playlist('query_value', $query);
     }
@@ -1631,20 +1658,47 @@ class Dune_Default_Sqlite_Engine
     {
         $table_name = self::get_table_name(GROUPS_ORDER);
         $tmp_table = $table_name . '_tmp';
-        $query = sprintf(self::CREATE_ORDERED_TABLE, $tmp_table, COLUMN_GROUP_ID);
-        foreach ($groups_ids as $item) {
-            $query .= sprintf('INSERT INTO %s (%s) VALUES (%s);',
-                $tmp_table, COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($item));
-        }
-        $query .= sprintf('DROP TABLE IF EXISTS %s;', $table_name);
-        $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name(GROUPS_ORDER));
 
-        return $this->safe_sql_playlist('exec_transaction', $query);
+        if ($this->safe_sql_playlist('exec', 'BEGIN;') === false) {
+            return false;
+        }
+
+        if ($this->safe_sql_playlist('exec', sprintf(self::CREATE_ORDERED_TABLE, $tmp_table, COLUMN_GROUP_ID)) === false) {
+            $this->safe_sql_playlist('exec', 'ROLLBACK;');
+            return false;
+        }
+
+        $stmt = $this->safe_sql_playlist('prepare_bind', 'INSERT', $tmp_table, array(COLUMN_GROUP_ID));
+        if ($stmt === false) {
+            $this->safe_sql_playlist('exec', 'ROLLBACK;');
+            return false;
+        }
+
+        foreach ($groups_ids as $item) {
+            $stmt->bindValue(':' . COLUMN_GROUP_ID, $item);
+            if ($stmt->execute() === false) {
+                $this->safe_sql_playlist('exec', 'ROLLBACK;');
+                return false;
+            }
+        }
+
+        if ($this->safe_sql_playlist('exec', sprintf('DROP TABLE IF EXISTS %s;', $table_name)) === false) {
+            $this->safe_sql_playlist('exec', 'ROLLBACK;');
+            return false;
+        }
+
+        if ($this->safe_sql_playlist('exec', sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, $table_name)) === false) {
+            $this->safe_sql_playlist('exec', 'ROLLBACK;');
+            return false;
+        }
+
+        return $this->safe_sql_playlist('exec', 'COMMIT;');
     }
 
     /**
      * Arrange groups
      *
+     * @param string $group_id
      * @param array $channel_ids
      * @return bool
      */
@@ -1652,15 +1706,41 @@ class Dune_Default_Sqlite_Engine
     {
         $table_name = self::get_table_name($group_id);
         $tmp_table = $table_name . '_tmp';
-        $query = sprintf(self::CREATE_ORDERED_TABLE, $tmp_table, COLUMN_CHANNEL_ID);
-        foreach ($channel_ids as $item) {
-            $query .= sprintf('INSERT INTO %s (%s) VALUES (%s);',
-                $tmp_table, COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($item));
-        }
-        $query .= sprintf('DROP TABLE IF EXISTS %s;', $table_name);
-        $query .= sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, self::get_table_name($group_id));
 
-        return $this->safe_sql_playlist('exec_transaction', $query);
+        if ($this->safe_sql_playlist('exec', 'BEGIN;') === false) {
+            return false;
+        }
+
+        if ($this->safe_sql_playlist('exec', sprintf(self::CREATE_ORDERED_TABLE, $tmp_table, COLUMN_CHANNEL_ID)) === false) {
+            $this->safe_sql_playlist('exec', 'ROLLBACK;');
+            return false;
+        }
+
+        $stmt = $this->safe_sql_playlist('prepare_bind', 'INSERT', $tmp_table, array(COLUMN_CHANNEL_ID));
+        if ($stmt === false) {
+            $this->safe_sql_playlist('exec', 'ROLLBACK;');
+            return false;
+        }
+
+        foreach ($channel_ids as $item) {
+            $stmt->bindValue(':' . COLUMN_CHANNEL_ID, $item);
+            if ($stmt->execute() === false) {
+                $this->safe_sql_playlist('exec', 'ROLLBACK;');
+                return false;
+            }
+        }
+
+        if ($this->safe_sql_playlist('exec', sprintf('DROP TABLE IF EXISTS %s;', $table_name)) === false) {
+            $this->safe_sql_playlist('exec', 'ROLLBACK;');
+            return false;
+        }
+
+        if ($this->safe_sql_playlist('exec', sprintf('ALTER TABLE %s RENAME TO %s;', $tmp_table, $table_name)) === false) {
+            $this->safe_sql_playlist('exec', 'ROLLBACK;');
+            return false;
+        }
+
+        return $this->safe_sql_playlist('exec', 'COMMIT;');
     }
 
     /**
@@ -1760,22 +1840,21 @@ class Dune_Default_Sqlite_Engine
     public function bulk_change_channels_order($group_id, $channel_ids, $remove)
     {
         $table_name = self::get_table_name($group_id);
+        $target = self::is_playlist_settings_group($group_id) ? 'safe_sql_playlist_settings' : 'safe_sql_playlist';
+
         if ($remove) {
             $query = sprintf('DELETE FROM %s WHERE %s IN (%s);',
                 $table_name, COLUMN_CHANNEL_ID, Sql_Wrapper::sql_make_list_from_values($channel_ids));
-        } else {
-            $query = '';
-            foreach ($channel_ids as $channel_id) {
-                $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);',
-                    $table_name, COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($channel_id));
-            }
+
+            return $this->$target('exec', $query);
         }
 
-        if (self::is_playlist_settings_group($group_id)) {
-            return $this->safe_sql_playlist_settings('exec', $query);
+        $rows = array();
+        foreach ($channel_ids as $channel_id) {
+            $rows[] = array(COLUMN_CHANNEL_ID => $channel_id);
         }
 
-        return $this->safe_sql_playlist('exec', $query);
+        return $this->$target('bulk_insert', 'INSERT OR IGNORE', $table_name, array(COLUMN_CHANNEL_ID), $rows);
     }
 
     /**
@@ -2546,7 +2625,10 @@ class Dune_Default_Sqlite_Engine
     public function reset_playlist_settings_db()
     {
         hd_debug_print(null, true);
-        $this->sql_playlist_settings = null;
+        if ($this->sql_playlist_settings !== null) {
+            $this->sql_playlist_settings->close();
+            $this->sql_playlist_settings = null;
+        }
     }
 
     /**
@@ -2555,9 +2637,15 @@ class Dune_Default_Sqlite_Engine
     public function reset_playlist_db()
     {
         hd_debug_print(null, true);
-        $this->sql_playlist = null;
+        if ($this->sql_playlist !== null) {
+            $this->sql_playlist->close();
+            $this->sql_playlist = null;
+        }
     }
 
+    /**
+     * @return string
+     */
     public function get_id_column()
     {
         return safe_get_value(M3uParser::$id_to_column_mapper, $this->channel_id_map, PARAM_HASH);

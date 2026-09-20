@@ -364,6 +364,26 @@ class M3uParser extends Json_Serializer
         }
         $db->exec('COMMIT;');
 
+        // Built once, after the bulk load, so index maintenance doesn't slow down the insert loop above.
+        // get_channel_info()/get_id_column() join playlist channels to channels_info on one of these
+        // columns (whichever attribute the playlist uses as channel id) - without an index that join
+        // is a full table scan on every channel lookup/playback. group_id backs per-group channel listing.
+        // index name is schema-qualified (iptv.idx_...), the ON clause stays unqualified - that's how
+        // SQLite resolves indexes on an ATTACHed database (self::CHANNELS_TABLE == 'iptv.iptv_channels')
+        $query = sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_group_id ON %s (%s);',
+            self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE, COLUMN_GROUP_ID);
+        $query .= sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_parsed_id ON %s (%s);',
+            self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE, COLUMN_PARSED_ID);
+        $query .= sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_cuid ON %s (%s);',
+            self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE, COLUMN_CUID);
+        $query .= sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_epg_id ON %s (%s);',
+            self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE);
+        $query .= sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_tvg_name ON %s (%s);',
+            self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE, COLUMN_TVG_NAME);
+        $query .= sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_title ON %s (%s);',
+            self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE, COLUMN_TITLE);
+        $db->exec_transaction($query);
+
         $query = sprintf("SELECT COUNT(*) FROM %s;", self::CHANNELS_TABLE);
         return $db->query_value($query);
     }

@@ -1149,6 +1149,23 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             COLUMN_SHOW_TITLE, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_SHOW_TITLE);
         $this->safe_sql_playlist('exec', $query);
 
+        // group_id/disabled/special back get_groups()/get_channels_by_group(); changed backs
+        // get_changed_channels_ids()/get_changed_channels_count() which are polled by the UI on every
+        // groups/channels screen render - without these, both are full table scans
+        $channels_info_table = self::get_table_name(CHANNELS_INFO);
+        // one exec() per index: SQLite3::exec() stops at the first error in a glued
+        // multi-statement string, which would silently skip every index after it
+        $this->safe_sql_playlist('exec',
+            sprintf('CREATE INDEX IF NOT EXISTS idx_%s_group_id ON %s (%s);', $channels_info_table, $channels_info_table, COLUMN_GROUP_ID));
+        $this->safe_sql_playlist('exec',
+            sprintf('CREATE INDEX IF NOT EXISTS idx_%s_changed ON %s (%s);', $channels_info_table, $channels_info_table, COLUMN_CHANGED));
+        $this->safe_sql_playlist('exec',
+            sprintf('CREATE INDEX IF NOT EXISTS idx_%s_disabled ON %s (%s);', $channels_info_table, $channels_info_table, COLUMN_DISABLED));
+        $this->safe_sql_playlist('exec',
+            sprintf('CREATE INDEX IF NOT EXISTS idx_%s_disabled ON %s (%s);', $groups_info_table, $groups_info_table, COLUMN_DISABLED));
+        $this->safe_sql_playlist('exec',
+            sprintf('CREATE INDEX IF NOT EXISTS idx_%s_special ON %s (%s);', $groups_info_table, $groups_info_table, COLUMN_SPECIAL));
+
         // create order_groups table
         $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(GROUPS_ORDER), COLUMN_GROUP_ID);
         $this->safe_sql_playlist('exec', $query);
@@ -1791,7 +1808,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $params[PARAM_CURL_CONNECT_TIMEOUT] = $this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30);
         $params[PARAM_CURL_DOWNLOAD_TIMEOUT] = $this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
         $config = array(
-            PARAM_COOKIE_ENABLE_DEBUG => LogSeverity::$is_debug,
+            PARAM_COOKIE_ENABLE_DEBUG => SwitchOnOff::to_def(LogSeverity::$is_debug),
             PARAM_CACHE_DIR => $this->get_parameter(PARAM_EPG_CACHE_PATH),
             PARAM_INDEXING_FLAG => $indexing_flag,
             PARAM_XMLTV => $params,
@@ -4146,18 +4163,22 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // move groups order to database
         if (isset($plugin_orders[PARAM_GROUPS_ORDER]) && $plugin_orders[PARAM_GROUPS_ORDER]->size() !== 0) {
             hd_debug_print("Move 'group_orders' to 'groups' db table");
-            $query = '';
+            $groups_order_table = self::get_table_name(GROUPS_ORDER);
+            $info_rows = array();
+            $order_rows = array();
             foreach ($plugin_orders[PARAM_GROUPS_ORDER] as $group_id) {
-                $adult = M3uParser::is_adult_group($group_id);
-                $q_group_id = Sql_Wrapper::sql_quote($group_id);
-                $group_icon = Sql_Wrapper::sql_quote(DEFAULT_GROUP_ICON);
-                $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s,%s) VALUES (%s,%s,%s,%d);', $groups_info_table,
-                COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_ADULT,
-                    $q_group_id, $q_group_id, $group_icon, $adult);
-                $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);',
-                    self::get_table_name(GROUPS_ORDER), COLUMN_GROUP_ID, $q_group_id);
+                $info_rows[] = array(
+                    COLUMN_GROUP_ID => $group_id,
+                    COLUMN_TITLE => $group_id,
+                    COLUMN_ICON => DEFAULT_GROUP_ICON,
+                    COLUMN_ADULT => (int)M3uParser::is_adult_group($group_id),
+                );
+                $order_rows[] = array(COLUMN_GROUP_ID => $group_id);
             }
-            $this->safe_sql_playlist('exec_transaction', $query);
+            $this->safe_sql_playlist('bulk_insert', 'INSERT OR IGNORE', $groups_info_table,
+                array(COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_ADULT), $info_rows);
+            $this->safe_sql_playlist('bulk_insert', 'INSERT OR IGNORE', $groups_order_table,
+                array(COLUMN_GROUP_ID), $order_rows);
 
             unset($plugin_orders[PARAM_GROUPS_ORDER]);
         }
@@ -4165,16 +4186,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // move disabled groups to database
         if (isset($plugin_orders[PARAM_DISABLED_GROUPS]) && $plugin_orders[PARAM_DISABLED_GROUPS]->size() !== 0) {
             hd_debug_print("Move 'disabled_group' orders to 'groups' db table");
-            $query = '';
+            $rows = array();
             foreach ($plugin_orders[PARAM_DISABLED_GROUPS] as $group_id) {
-                $adult = M3uParser::is_adult_group($group_id);
-                $q_group_id = Sql_Wrapper::sql_quote($group_id);
-                $group_icon = Sql_Wrapper::sql_quote(DEFAULT_GROUP_ICON);
-                $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s,%s,%s) VALUES (%s,%s,%s,%d,%d);', $groups_info_table,
-                COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_DISABLED, COLUMN_ADULT,
-                    $q_group_id, $q_group_id, $group_icon, TRUE, $adult);
+                $rows[] = array(
+                    COLUMN_GROUP_ID => $group_id,
+                    COLUMN_TITLE => $group_id,
+                    COLUMN_ICON => DEFAULT_GROUP_ICON,
+                    COLUMN_DISABLED => true,
+                    COLUMN_ADULT => M3uParser::is_adult_group($group_id),
+                );
             }
-            $this->safe_sql_playlist('exec_transaction', $query);
+            $this->safe_sql_playlist('bulk_insert', 'INSERT OR IGNORE', $groups_info_table,
+                array(COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_DISABLED, COLUMN_ADULT), $rows);
             unset($plugin_orders[PARAM_DISABLED_GROUPS]);
         }
 
@@ -4182,14 +4205,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $channels_info_table = self::get_table_name(CHANNELS_INFO);
         if (isset($plugin_orders[PARAM_KNOWN_CHANNELS]) && $plugin_orders[PARAM_KNOWN_CHANNELS]->size() !== 0) {
             hd_debug_print("Move 'known_channels' to 'channels' db table");
-            $query = '';
+            $rows = array();
             foreach ($plugin_orders[PARAM_KNOWN_CHANNELS] as $channel_id => $title) {
-                $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
-                $q_title = Sql_Wrapper::sql_quote($title);
-                $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s,%s) VALUES (%s,%s,%s,%d);', $channels_info_table,
-                COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_CHANGED, $q_channel_id, $q_title, $q_title, FALSE);
+                $rows[] = array(
+                    COLUMN_CHANNEL_ID => $channel_id,
+                    COLUMN_TITLE => $title,
+                    COLUMN_SHOW_TITLE => $title,
+                    COLUMN_CHANGED => false,
+                );
             }
-            $this->safe_sql_playlist('exec_transaction', $query);
+            $this->safe_sql_playlist('bulk_insert', 'INSERT OR IGNORE', $channels_info_table,
+                array(COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_CHANGED), $rows);
             unset($plugin_orders[PARAM_KNOWN_CHANNELS]);
         }
 
@@ -4204,12 +4230,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         foreach ($plugin_orders as $order_name => $order) {
             $table_name = self::get_table_name($order_name);
             hd_debug_print("Move '$order_name' channels orders to $table_name db table");
-            $query = sprintf(self::CREATE_ORDERED_TABLE, $table_name, COLUMN_CHANNEL_ID);
+            $this->safe_sql_playlist('exec', sprintf(self::CREATE_ORDERED_TABLE, $table_name, COLUMN_CHANNEL_ID));
+            $rows = array();
             foreach ($order as $channel_id) {
-                $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);',
-                    $table_name, COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($channel_id));
+                $rows[] = array(COLUMN_CHANNEL_ID => $channel_id);
             }
-            $this->safe_sql_playlist('exec_transaction', $query);
+            $this->safe_sql_playlist('bulk_insert', 'INSERT OR IGNORE', $table_name, array(COLUMN_CHANNEL_ID), $rows);
             unset($plugin_orders[$order_name]);
         }
 
