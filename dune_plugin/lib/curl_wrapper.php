@@ -186,9 +186,13 @@ class Curl_Wrapper
             return $res;
         }
 
+        if ($res === false) {
+            return false;
+        }
+
         $contents = json_decode($res, $decode_opt === self::RET_ARRAY);
-        if ($contents === false) {
-            hd_debug_print('failed to decode json');
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            hd_debug_print('failed to decode json (error: ' . json_last_error() . ')');
             hd_debug_print("doc: $res", true);
             return false;
         }
@@ -490,7 +494,18 @@ class Curl_Wrapper
         }
 
         if (!empty($this->send_headers)) {
-            $opts[CURLOPT_HTTPHEADER] = array_values(safe_merge_array($opts[CURLOPT_HTTPHEADER], $this->send_headers));
+            foreach ($this->send_headers as $send_header) {
+                $parts = explode(':', $send_header, 2);
+                $name = strtolower(trim($parts[0]));
+                foreach ($opts[CURLOPT_HTTPHEADER] as $idx => $exist_header) {
+                    $exist_parts = explode(':', $exist_header, 2);
+                    if (strtolower(trim($exist_parts[0])) === $name) {
+                        unset($opts[CURLOPT_HTTPHEADER][$idx]);
+                    }
+                }
+                $opts[CURLOPT_HTTPHEADER][] = $send_header;
+            }
+            $opts[CURLOPT_HTTPHEADER] = array_values($opts[CURLOPT_HTTPHEADER]);
         }
 
         if (!empty($this->post_data)) {
@@ -549,8 +564,8 @@ class Curl_Wrapper
 
         if ($mode === self::SAVE_FILE) {
             $tmp_file = tempnam(pathinfo($save_file, PATHINFO_DIRNAME), hash('crc32', $url) . "_curl_");
-            $fp = fopen($tmp_file, "w+");
-            if (is_null($fp)) {
+            $fp = ($tmp_file === false) ? false : fopen($tmp_file, "w+");
+            if ($fp === false) {
                 hd_debug_print("Unable to open temp file: $tmp_file!");
                 return false;
             }
@@ -584,17 +599,6 @@ class Curl_Wrapper
 
         if ($mode === self::SAVE_FILE) {
             fclose($fp);
-            if (file_exists($tmp_file)) {
-                if (filesize($tmp_file) > 0) {
-                    if (file_exists($save_file)) {
-                        unlink($save_file);
-                    }
-                    rename($tmp_file, $save_file);
-                } else {
-                    unlink($tmp_file);
-                }
-                clearstatcache();
-            }
         }
 
         if (!empty(self::$http_response_headers) && LogSeverity::$is_debug) {
@@ -608,25 +612,42 @@ class Curl_Wrapper
         if (self::$http_code < 200 || (self::$http_code >= 300 && self::$http_code != 301 && self::$http_code != 304)) {
             hd_debug_print('HTTP request failed (' . self::$http_code . ')');
             hd_debug_print('HTTP response: ' . $content);
+            safe_unlink($tmp_file);
             return false;
         }
 
         if (self::$error_no !== 0) {
             hd_debug_print(sprintf('CURL errno: %s (%s); HTTP error: %s', self::$error_no, self::$error_desc, self::$http_code));
+            safe_unlink($tmp_file);
             return false;
         }
 
         hd_debug_print(sprintf('HTTP code: %d time: %.3fs', self::$http_code, $execution_tm), true);
 
+        if ($mode === self::SAVE_FILE && file_exists($tmp_file)) {
+            if (filesize($tmp_file) > 0) {
+                move_file($tmp_file, $save_file);
+            } else {
+                unlink($tmp_file);
+            }
+            clearstatcache();
+        }
+
         if ($cache_opts & self::USE_ETAG) {
             $new_etag = self::get_response_header('etag');
-            if (!empty($new_etag)) {
-                if ($etag !== $new_etag) {
-                    hd_debug_print("Save new ETag ($new_etag) for: $url", true);
-                    self::set_cached_etag($url, $new_etag);
-                } else {
+            // 304 is not required to repeat the ETag, so the code decides, not the header
+            if (self::$http_code === 304 || (!empty($new_etag) && $new_etag === $etag)) {
+                if ($mode === self::GET_CONTENT) {
+                    if (!file_exists($cached_path)) {
+                        hd_debug_print("Not modified, but cached copy not exist: $cached_path");
+                        return false;
+                    }
+                    hd_debug_print("Not modified. Response read from cache: $cached_path", true);
                     $content = file_get_contents($cached_path);
                 }
+            } else if (!empty($new_etag)) {
+                hd_debug_print("Save new ETag ($new_etag) for: $url", true);
+                self::set_cached_etag($url, $new_etag);
             }
         }
 
