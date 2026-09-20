@@ -226,9 +226,11 @@ class M3uParser extends Json_Serializer
      * But may cause OutOfMemory for large files
      *
      * @param Sql_Wrapper $db
+     * @param array $index_columns columns of the channels table to index after the load,
+     *                             normally group_id plus the column used as channel id
      * @return int|false
      */
-    public function parseIptvPlaylist($db)
+    public function parseIptvPlaylist($db, $index_columns = array())
     {
         $file_handle = self::open_m3u($this->file_name);
         if ($file_handle === false) {
@@ -284,6 +286,39 @@ class M3uParser extends Json_Serializer
             return false;
         }
 
+        $b_hash = null;
+        $b_title = null;
+        $b_parsed_id = null;
+        $b_cuid = null;
+        $b_tvg_name = null;
+        $b_epg_id = null;
+        $b_archive = 0;
+        $b_timeshift = 0;
+        $b_catchup = null;
+        $b_catchup_source = null;
+        $b_icon = null;
+        $b_path = null;
+        $b_adult = 0;
+        $b_parent_code = null;
+        $b_ext_params = null;
+        $b_group_id = null;
+        $stm_channels->bindParam(':' . COLUMN_HASH, $b_hash);
+        $stm_channels->bindParam(':' . COLUMN_TITLE, $b_title);
+        $stm_channels->bindParam(':' . COLUMN_PARSED_ID, $b_parsed_id);
+        $stm_channels->bindParam(':' . COLUMN_CUID, $b_cuid);
+        $stm_channels->bindParam(':' . COLUMN_TVG_NAME, $b_tvg_name);
+        $stm_channels->bindParam(':' . COLUMN_EPG_ID, $b_epg_id);
+        $stm_channels->bindParam(':' . COLUMN_ARCHIVE, $b_archive, SQLITE3_INTEGER);
+        $stm_channels->bindParam(':' . COLUMN_TIMESHIFT, $b_timeshift, SQLITE3_INTEGER);
+        $stm_channels->bindParam(':' . COLUMN_CATCHUP, $b_catchup);
+        $stm_channels->bindParam(':' . COLUMN_CATCHUP_SOURCE, $b_catchup_source);
+        $stm_channels->bindParam(':' . COLUMN_ICON, $b_icon);
+        $stm_channels->bindParam(':' . COLUMN_PATH, $b_path);
+        $stm_channels->bindParam(':' . COLUMN_ADULT, $b_adult, SQLITE3_INTEGER);
+        $stm_channels->bindParam(':' . COLUMN_PARENT_CODE, $b_parent_code);
+        $stm_channels->bindParam(':' . COLUMN_EXT_PARAMS, $b_ext_params);
+        $stm_channels->bindParam(':' . COLUMN_GROUP_ID, $b_group_id);
+
         $groups_cache = array();
         $entry = new Entry();
 
@@ -310,22 +345,22 @@ class M3uParser extends Json_Serializer
                         $adult_channel = $entry->getAdult();
                     }
 
-                    $stm_channels->bindValue(':' . COLUMN_HASH, $entry->getHash());
-                    $stm_channels->bindValue(':' . COLUMN_TITLE, $entry->getTitle());
-                    $stm_channels->bindValue(':' . COLUMN_PARSED_ID, $entry->getParsedId());
-                    $stm_channels->bindValue(':' . COLUMN_CUID, $entry->getCUID());
-                    $stm_channels->bindValue(':' . COLUMN_TVG_NAME, $entry->getEntryAttribute(ATTR_TVG_NAME, TAG_EXTINF));
-                    $stm_channels->bindValue(':' . COLUMN_EPG_ID, $entry->getAnyEntryAttribute(self::$epg_id_attrs, TAG_EXTINF));
-                    $stm_channels->bindValue(':' . COLUMN_ARCHIVE, $entry->getArchive(), SQLITE3_INTEGER);
-                    $stm_channels->bindValue(':' . COLUMN_TIMESHIFT, $entry->getTimeshift(), SQLITE3_INTEGER);
-                    $stm_channels->bindValue(':' . COLUMN_CATCHUP, $entry->getCatchupType());
-                    $stm_channels->bindValue(':' . COLUMN_CATCHUP_SOURCE, $entry->getCatchupSource());
-                    $stm_channels->bindValue(':' . COLUMN_ICON, $entry->getIcon());
-                    $stm_channels->bindValue(':' . COLUMN_PATH, $entry->getPath());
-                    $stm_channels->bindValue(':' . COLUMN_ADULT, $adult_channel, SQLITE3_INTEGER);
-                    $stm_channels->bindValue(':' . COLUMN_PARENT_CODE, $entry->getParentCode());
-                    $stm_channels->bindValue(':' . COLUMN_EXT_PARAMS, $entry->getExtParams(true));
-                    $stm_channels->bindValue(':' . COLUMN_GROUP_ID, $group_title);
+                    $b_hash = $entry->getHash();
+                    $b_title = $entry->getTitle();
+                    $b_parsed_id = $entry->getParsedId();
+                    $b_cuid = $entry->getCUID();
+                    $b_tvg_name = $entry->getEntryAttribute(ATTR_TVG_NAME, TAG_EXTINF);
+                    $b_epg_id = $entry->getAnyEntryAttribute(self::$epg_id_attrs, TAG_EXTINF);
+                    $b_archive = $entry->getArchive();
+                    $b_timeshift = $entry->getTimeshift();
+                    $b_catchup = $entry->getCatchupType();
+                    $b_catchup_source = $entry->getCatchupSource();
+                    $b_icon = $entry->getIcon();
+                    $b_path = $entry->getPath();
+                    $b_adult = $adult_channel;
+                    $b_parent_code = $entry->getParentCode();
+                    $b_ext_params = $entry->getExtParams(true);
+                    $b_group_id = $group_title;
                     $stm_channels->execute();
 
                     $entry = new Entry();
@@ -364,28 +399,57 @@ class M3uParser extends Json_Serializer
         }
         $db->exec('COMMIT;');
 
-        // Built once, after the bulk load, so index maintenance doesn't slow down the insert loop above.
-        // get_channel_info()/get_id_column() join playlist channels to channels_info on one of these
-        // columns (whichever attribute the playlist uses as channel id) - without an index that join
-        // is a full table scan on every channel lookup/playback. group_id backs per-group channel listing.
-        // index name is schema-qualified (iptv.idx_...), the ON clause stays unqualified - that's how
-        // SQLite resolves indexes on an ATTACHed database (self::CHANNELS_TABLE == 'iptv.iptv_channels')
-        $query = sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_group_id ON %s (%s);',
-            self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE, COLUMN_GROUP_ID);
-        $query .= sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_parsed_id ON %s (%s);',
-            self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE, COLUMN_PARSED_ID);
-        $query .= sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_cuid ON %s (%s);',
-            self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE, COLUMN_CUID);
-        $query .= sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_epg_id ON %s (%s);',
-            self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE);
-        $query .= sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_tvg_name ON %s (%s);',
-            self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE, COLUMN_TVG_NAME);
-        $query .= sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_title ON %s (%s);',
-            self::S_CHANNELS_TABLE, self::S_CHANNELS_TABLE, COLUMN_TITLE);
-        $db->exec_transaction($query);
+        self::createIptvIndexes($db, $index_columns);
 
         $query = sprintf("SELECT COUNT(*) FROM %s;", self::CHANNELS_TABLE);
         return $db->query_value($query);
+    }
+
+    /**
+     * Create the lookup indexes on the parsed channels table.
+     *
+     * Built after the bulk load so index maintenance does not slow down the insert loop, and only
+     * for the columns actually queried: get_channel_info() and the per-group channel lists join
+     * iptv_channels on the column the playlist uses as channel id (get_id_column()) and filter by
+     * group_id. Without those indexes each of those joins is a full scan of the whole playlist -
+     * on every channel lookup and every playback.
+     *
+     * Only one id column is in use for a given playlist, so indexing every candidate would build
+     * five indexes to use one. Creating them is idempotent, which is what lets the index be added
+     * later if the id mapping is changed without reloading the playlist.
+     *
+     * The index name is schema-qualified (iptv.idx_...) while the ON clause stays unqualified -
+     * that is how SQLite resolves indexes on an ATTACHed database.
+     *
+     * @param Sql_Wrapper $db
+     * @param array $columns
+     * @return bool
+     */
+    public static function createIptvIndexes($db, $columns)
+    {
+        if (empty($columns) || !$db || !$db->is_valid()) {
+            return false;
+        }
+
+        $query = '';
+        foreach (array_unique($columns) as $column) {
+            // the hash column is the primary key and already carries an index of its own
+            if (empty($column) || $column === COLUMN_HASH) continue;
+
+            $query .= sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_%s ON %s (%s);',
+                self::S_CHANNELS_TABLE, $column, self::S_CHANNELS_TABLE, $column);
+        }
+
+        if (empty($query)) {
+            return true;
+        }
+
+        $res = $db->exec_transaction($query);
+        if (!$res) {
+            hd_debug_print("Can't create indexes for " . self::CHANNELS_TABLE . ": $query");
+        }
+
+        return $res;
     }
 
 
@@ -425,6 +489,21 @@ class M3uParser extends Json_Serializer
         $perf->reset('start');
 
         $stm_index = $db->prepare_bind('INSERT OR IGNORE', self::VOD_TABLE, array_keys($init_vod));
+
+        // bound once by reference, see parseIptvPlaylist()
+        $b_hash = null;
+        $b_group_id = null;
+        $b_title = null;
+        $b_icon = null;
+        $b_path = null;
+        $b_desc = null;
+        $stm_index->bindParam(':' . COLUMN_HASH, $b_hash);
+        $stm_index->bindParam(':' . COLUMN_GROUP_ID, $b_group_id);
+        $stm_index->bindParam(':' . COLUMN_TITLE, $b_title);
+        $stm_index->bindParam(':' . COLUMN_ICON, $b_icon);
+        $stm_index->bindParam(':' . COLUMN_PATH, $b_path);
+        $stm_index->bindParam(':' . COLUMN_DESC, $b_desc);
+
         $db->exec('BEGIN;');
         $entry = new Entry();
         while (!feof($file_handle)) {
@@ -434,12 +513,12 @@ class M3uParser extends Json_Serializer
             $res = $this->parseLineFast($line, $entry);
             switch ($res) {
                 case 1:
-                    $stm_index->bindValue(':' . COLUMN_HASH, $entry->getHash());
-                    $stm_index->bindValue(':' . COLUMN_GROUP_ID, $entry->getGroupTitle());
-                    $stm_index->bindValue(':' . COLUMN_TITLE, $entry->getTitle());
-                    $stm_index->bindValue(':' . COLUMN_ICON, $entry->getIcon());
-                    $stm_index->bindValue(':' . COLUMN_PATH, $entry->getPath());
-                    $stm_index->bindValue(':' . COLUMN_DESC, $entry->getDescription());
+                    $b_hash = $entry->getHash();
+                    $b_group_id = $entry->getGroupTitle();
+                    $b_title = $entry->getTitle();
+                    $b_icon = $entry->getIcon();
+                    $b_path = $entry->getPath();
+                    $b_desc = $entry->getDescription();
                     $stm_index->execute();
                     $entry = new Entry();
                     break;
@@ -456,6 +535,16 @@ class M3uParser extends Json_Serializer
         fclose($file_handle);
 
         $db->exec('COMMIT;');
+
+        // Every VOD screen filters or groups by group_id - getVodGroups() takes the distinct
+        // values, getVodEntries()/getVodCount() select one group - and the table only had the
+        // primary key on hash, so each of those read the whole catalogue. Built after the load
+        // for the same reason as the channels indexes.
+        $query = sprintf('CREATE INDEX IF NOT EXISTS idx_%s_group_id ON %s (%s);',
+            self::VOD_TABLE, self::VOD_TABLE, COLUMN_GROUP_ID);
+        if ($db->exec_transaction($query) === false) {
+            hd_debug_print("Can't create index for " . self::VOD_TABLE);
+        }
 
         $perf->setLabel('end');
         $report = $perf->getFullReport();
@@ -566,7 +655,7 @@ class M3uParser extends Json_Serializer
 
             $query = "SELECT sum(cnt - 1) AS dupes
                 FROM (SELECT $value, COUNT(*) AS cnt
-                      FROM $table GROUP BY $value HAVING cnt > 0 ORDER BY cnt DESC);";
+                      FROM $table GROUP BY $value);";
             $res = $db->query_value($query);
             if ($res !== false && $res !== null) {
                 $stat[$key] = ($res > 0) ? $res - 1 : $res;

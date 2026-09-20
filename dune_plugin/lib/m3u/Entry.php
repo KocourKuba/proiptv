@@ -89,6 +89,24 @@ class Entry extends Json_Serializer
     protected $tags;
 
     /**
+     * Attributes of each tag, flattened. Resolving an attribute through the tag object costs a
+     * call per lookup, and one entry is asked for ~30 attributes while it is being built, so the
+     * array is taken out of the tag once and read directly afterwards. Dropped whenever a tag is
+     * added or merged, because that can introduce or overwrite attributes.
+     *
+     * @var array|null
+     */
+    protected $attr_by_tag;
+
+    /**
+     * Attributes of all tags merged for the "search every tag" lookups, first tag holding an
+     * attribute wins - the order the untuned lookup returned them in.
+     *
+     * @var array|null
+     */
+    protected $attr_merged;
+
+    /**
      * @var string
      */
     protected $path;
@@ -182,6 +200,12 @@ class Entry extends Json_Serializer
      */
     public function parseExtTag($line)
     {
+        // every url line reaches here too, and parseData() would only allocate a tag to throw it
+        // away again - the check it does first is cheap enough to do before the allocation
+        if (!isset($line[0]) || $line[0] !== '#') {
+            return null;
+        }
+
         $tag = new ExtTagDefault();
         $parsed_tag = $tag->parseData($line);
         if (is_null($parsed_tag)) {
@@ -208,11 +232,15 @@ class Entry extends Json_Serializer
      */
     public function addTag($tag)
     {
-        if (isset($this->tags[$tag->getTagName()])) {
-            $this->tags[$tag->getTagName()]->addAttributes($tag->getAttributes());
+        $name = $tag->getTagName();
+        if (isset($this->tags[$name])) {
+            $this->tags[$name]->addAttributes($tag->getAttributes());
         } else {
-            $this->tags[$tag->getTagName()] = $tag;
+            $this->tags[$name] = $tag;
         }
+
+        $this->attr_by_tag = null;
+        $this->attr_merged = null;
     }
 
     /**
@@ -668,24 +696,55 @@ class Entry extends Json_Serializer
                 return $this->getHash();
 
             default:
-                if (is_null($this->tags)) break;
-
-                if (is_null($tag)) {
-                    foreach ($this->tags as $item) {
-                        $val = $item->getAttributeValue($attribute_name);
-                        if (!is_null($val)) {
-                            return $val;
-                        }
-                    }
-                    break;
-                }
-
-                if ($this->hasTag($tag)) {
-                    return $this->tags[$tag]->getAttributeValue($attribute_name);
+                $map = $this->getAttributesMap($tag);
+                if (isset($map[$attribute_name])) {
+                    return $map[$attribute_name];
                 }
         }
 
         return null;
+    }
+
+    /**
+     * Attributes readable by name for one tag, or merged across all tags when no tag is given.
+     * Built once per entry and dropped by addTag().
+     *
+     * @param string|null $tag
+     * @return array
+     */
+    protected function getAttributesMap($tag)
+    {
+        if (is_null($this->tags)) {
+            return array();
+        }
+
+        if (is_null($tag)) {
+            if ($this->attr_merged === null) {
+                $this->attr_merged = array();
+                foreach ($this->tags as $item) {
+                    $attrs = $item->getAttributes();
+                    if (empty($attrs)) continue;
+                    foreach ($attrs as $name => $value) {
+                        // first tag that carries the attribute wins, as the per-tag walk did
+                        if (!array_key_exists($name, $this->attr_merged)) {
+                            $this->attr_merged[$name] = $value;
+                        }
+                    }
+                }
+            }
+
+            return $this->attr_merged;
+        }
+
+        if (!isset($this->attr_by_tag[$tag])) {
+            if (!isset($this->tags[$tag])) {
+                return array();
+            }
+            $attrs = $this->tags[$tag]->getAttributes();
+            $this->attr_by_tag[$tag] = is_array($attrs) ? $attrs : array();
+        }
+
+        return $this->attr_by_tag[$tag];
     }
 
     /**
@@ -700,9 +759,21 @@ class Entry extends Json_Serializer
             return $this->getEntryAttribute($attrs, $tag);
         }
 
+        // resolved once for the whole candidate list instead of once per candidate - these lists
+        // are up to six names long and are walked for every entry of the playlist
+        $map = $this->getAttributesMap($tag);
+
         $val = '';
         foreach ($attrs as $attr) {
-            $val = $this->getEntryAttribute($attr, $tag);
+            if (isset($map[$attr])) {
+                $val = $map[$attr];
+            } else if ($attr === ATTR_CHANNEL_NAME || $attr === ATTR_CHANNEL_ID_ATTRS || $attr === ATTR_CHANNEL_HASH) {
+                // names the plain attribute map does not answer
+                $val = $this->getEntryAttribute($attr, $tag);
+            } else {
+                $val = null;
+            }
+
             if (empty($val)) continue;
 
             if ($found_attr !== null) {

@@ -852,6 +852,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $database_attached = $this->safe_sql_playlist('attachDatabase', $m3u_db_file, M3uParser::IPTV_DB);
                     if ($database_attached === 2) {
                         hd_debug_print("Playlist up to date. Database '" . M3uParser::IPTV_DB . "' is attached: '$m3u_db_file'");
+                        // the playlist was parsed before, possibly under a different id mapping -
+                        // creating the index is a no-op when it is already there
+                        M3uParser::createIptvIndexes($this->sql_playlist,
+                            array(COLUMN_GROUP_ID, $this->get_id_column()));
                         return 1;
                     }
 
@@ -999,7 +1003,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             hd_debug_print("Database attached: $database_attached");
-            $count = self::$iptv_m3u_parser->parseIptvPlaylist($this->sql_playlist);
+            $count = self::$iptv_m3u_parser->parseIptvPlaylist($this->sql_playlist,
+                array(COLUMN_GROUP_ID, $this->get_id_column()));
             if (!$count) {
                 $exception_msg = TR::load('err_load_playlist') . " Empty playlist!\n\n$contents";
                 throw new Exception($exception_msg);
