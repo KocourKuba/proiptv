@@ -317,21 +317,21 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
 
         return array(
-            $this->plugin->get_screen_view('icons_4x3_caption'),
-            $this->plugin->get_screen_view('icons_4x3_no_caption'),
-            $this->plugin->get_screen_view('icons_3x3_caption'),
-            $this->plugin->get_screen_view('icons_3x3_no_caption'),
-            $this->plugin->get_screen_view('icons_5x3_caption'),
-            $this->plugin->get_screen_view('icons_5x3_no_caption'),
-            $this->plugin->get_screen_view('icons_5x4_caption'),
-            $this->plugin->get_screen_view('icons_5x4_no_caption'),
+            $this->plugin->get_screen_view(VIEW_ICONS_4X3_CAPTION),
+            $this->plugin->get_screen_view(VIEW_ICONS_4X3_NO_CAPTION),
+            $this->plugin->get_screen_view(VIEW_ICONS_3X3_CAPTION),
+            $this->plugin->get_screen_view(VIEW_ICONS_3X3_NO_CAPTION),
+            $this->plugin->get_screen_view(VIEW_ICONS_5X3_CAPTION),
+            $this->plugin->get_screen_view(VIEW_ICONS_5X3_NO_CAPTION),
+            $this->plugin->get_screen_view(VIEW_ICONS_5X4_CAPTION),
+            $this->plugin->get_screen_view(VIEW_ICONS_5X4_NO_CAPTION),
 
-            $this->plugin->get_screen_view('icons_7x4_no_caption'),
-            $this->plugin->get_screen_view('icons_7x4_caption'),
+            $this->plugin->get_screen_view(VIEW_ICONS_7X4_NO_CAPTION),
+            $this->plugin->get_screen_view(VIEW_ICONS_7X4_CAPTION),
 
-            $this->plugin->get_screen_view('list_1x11_small_info'),
-            $this->plugin->get_screen_view('list_2x11_small_info'),
-            $this->plugin->get_screen_view('list_3x11_no_info'),
+            $this->plugin->get_screen_view(VIEW_LIST_1X11_SMALL_INFO),
+            $this->plugin->get_screen_view(VIEW_LIST_2X11_SMALL_INFO),
+            $this->plugin->get_screen_view(VIEW_LIST_3X11_NO_INFO),
         );
     }
 

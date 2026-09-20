@@ -255,6 +255,28 @@ const PARAM_SELECTED_ACTION = 'selected_action';
 const PARAM_SOURCE_WINDOW_ID = 'source_window_id';
 const PARAM_WINDOW_COUNTER = 'window_counter';
 
+// Screen view ids - keys of Dune_Default_UI_Parameters::$screens_views, looked up by
+// get_screen_view(). An id that does not match a key there silently yields an empty view.
+const VIEW_LIST_1X11_SMALL_INFO = 'list_1x11_small_info';
+const VIEW_LIST_1X11_INFO = 'list_1x11_info';
+const VIEW_LIST_2X11_SMALL_INFO = 'list_2x11_small_info';
+const VIEW_LIST_3X11_NO_INFO = 'list_3x11_no_info';
+const VIEW_LIST_1X10_VOD_INFO_NORMAL = 'list_1x10_vod_info_normal';
+const VIEW_LIST_1X12_VOD_INFO_SMALL = 'list_1x12_vod_info_small';
+const VIEW_ICONS_3X3_CAPTION = 'icons_3x3_caption';
+const VIEW_ICONS_3X3_NO_CAPTION = 'icons_3x3_no_caption';
+const VIEW_ICONS_4X3_CAPTION = 'icons_4x3_caption';
+const VIEW_ICONS_4X3_NO_CAPTION = 'icons_4x3_no_caption';
+const VIEW_ICONS_5X3_CAPTION = 'icons_5x3_caption';
+const VIEW_ICONS_5X3_NO_CAPTION = 'icons_5x3_no_caption';
+const VIEW_ICONS_5X4_CAPTION = 'icons_5x4_caption';
+const VIEW_ICONS_5X4_NO_CAPTION = 'icons_5x4_no_caption';
+const VIEW_ICONS_7X4_CAPTION = 'icons_7x4_caption';
+const VIEW_ICONS_7X4_NO_CAPTION = 'icons_7x4_no_caption';
+const VIEW_ICONS_5X2_MOVIE_CAPTION = 'icons_5x2_movie_caption';
+const VIEW_ICONS_5X2_MOVIE_NO_CAPTION = 'icons_5x2_movie_no_caption';
+const VIEW_ICONS_5X3_MOVIE_NO_CAPTION = 'icons_5x3_movie_no_caption';
+
 // cookie params
 const PARAM_COOKIE_ENABLE_DEBUG = 'enable_debug';
 const PARAM_COOKIE_MEMORY_LIMIT = 'memory_limit';

@@ -327,7 +327,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
 
         return array(
-            $this->plugin->get_screen_view('list_1x11_info'),
+            $this->plugin->get_screen_view(VIEW_LIST_1X11_INFO),
         );
     }
 

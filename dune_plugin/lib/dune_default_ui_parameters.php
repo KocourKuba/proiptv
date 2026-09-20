@@ -611,7 +611,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
         $this->screens_views = array(
             // 1x10 title list view with right side icon
-            'list_1x11_small_info' => array(
+            VIEW_LIST_1X11_SMALL_INFO => array(
                 PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array(
@@ -655,7 +655,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'list_1x11_info' => array(
+            VIEW_LIST_1X11_INFO => array(
                 PluginRegularFolderView::async_icon_loading => true,
                 PluginRegularFolderView::view_params => array(
                     ViewParams::num_cols => 1,
@@ -696,7 +696,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'list_2x11_small_info' => array(
+            VIEW_LIST_2X11_SMALL_INFO => array(
                 PluginRegularFolderView::async_icon_loading => true,
                 PluginRegularFolderView::view_params => array(
                     ViewParams::num_cols => 2,
@@ -735,7 +735,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'list_3x11_no_info' => array(
+            VIEW_LIST_3X11_NO_INFO => array(
                 PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array(
@@ -768,7 +768,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'icons_5x3_caption' => array(
+            VIEW_ICONS_5X3_CAPTION => array(
                 PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array(
@@ -804,7 +804,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'icons_5x3_no_caption' => array
+            VIEW_ICONS_5X3_NO_CAPTION => array
             (
                 PluginRegularFolderView::async_icon_loading => true,
 
@@ -840,7 +840,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'icons_5x4_caption' => array(
+            VIEW_ICONS_5X4_CAPTION => array(
                 PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array(
@@ -876,7 +876,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'icons_5x4_no_caption' => array(
+            VIEW_ICONS_5X4_NO_CAPTION => array(
                 PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array(
@@ -911,7 +911,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'icons_4x3_caption' => array(
+            VIEW_ICONS_4X3_CAPTION => array(
                 PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array(
@@ -946,7 +946,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'icons_4x3_no_caption' => array(
+            VIEW_ICONS_4X3_NO_CAPTION => array(
                 PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array(
@@ -981,7 +981,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'icons_3x3_caption' => array(
+            VIEW_ICONS_3X3_CAPTION => array(
                 PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array(
@@ -1016,7 +1016,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'icons_3x3_no_caption' => array(
+            VIEW_ICONS_3X3_NO_CAPTION => array(
                 PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array(
@@ -1051,7 +1051,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'icons_7x4_no_caption' => array(
+            VIEW_ICONS_7X4_NO_CAPTION => array(
                 PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array(
@@ -1086,7 +1086,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'icons_7x4_caption' => array(
+            VIEW_ICONS_7X4_CAPTION => array(
                 PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array(
@@ -1122,7 +1122,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            'icons_5x2_movie_no_caption' => array(
+            VIEW_ICONS_5X2_MOVIE_NO_CAPTION => array(
                 PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array(
@@ -1168,7 +1168,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => $not_loaded_vod
             ),
 
-            'icons_5x2_movie_caption' => array(
+            VIEW_ICONS_5X2_MOVIE_CAPTION => array(
                 PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array(
@@ -1216,7 +1216,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => $not_loaded_vod
             ),
 
-            'icons_5x3_movie_no_caption' => array(
+            VIEW_ICONS_5X3_MOVIE_NO_CAPTION => array(
                 PluginRegularFolderView::async_icon_loading => true,
                 PluginRegularFolderView::view_params => array(
                     ViewParams::num_cols => 5,
@@ -1260,7 +1260,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => $not_loaded_vod
             ),
 
-            'list_1x10_vod_info_normal' => array(
+            VIEW_LIST_1X10_VOD_INFO_NORMAL => array(
                 PluginRegularFolderView::async_icon_loading => true,
                 PluginRegularFolderView::view_params => array(
                     ViewParams::num_cols => 1,
@@ -1307,7 +1307,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => $not_loaded_vod
             ),
 
-            'list_1x12_vod_info_small' => array(
+            VIEW_LIST_1X12_VOD_INFO_SMALL => array(
                 PluginRegularFolderView::async_icon_loading => false,
                 PluginRegularFolderView::view_params => array(
                     ViewParams::num_cols => 1,
