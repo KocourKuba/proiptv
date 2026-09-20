@@ -44,6 +44,13 @@ class Epg_Manager_Xmltv
     const CREATE_ENTRIES_TABLE = 'CREATE TABLE epg_entries (channel_id STRING not null, start INTEGER, end INTEGER, UNIQUE (channel_id, start) ON CONFLICT REPLACE);';
     const CREATE_STAT_TABLE = 'CREATE TABLE IF NOT EXISTS epg_stat (name TEXT PRIMARY KEY, value REAL);';
 
+    /**
+     * Size of the chunk read at once while scanning the xmltv file for <programme> open tags.
+     * Big enough that one fread() covers many elements, small enough to stay well inside the
+     * device memory budget (the block is held as a single PHP string).
+     */
+    const INDEX_BLOCK_SIZE = 65536;
+
     protected static $index_flags = array(INDEXING_DOWNLOAD, INDEXING_CHANNELS, INDEXING_ENTRIES);
 
     /**
@@ -669,14 +676,33 @@ class Epg_Manager_Xmltv
                 return;
             }
 
-            $query = '';
+            $picon_stmt = $db->prepare_bind('INSERT OR REPLACE', $picons_table_name, array(COLUMN_PICON_HASH, COLUMN_PICON_URL));
+            $alias_stmt = $db->prepare_bind('INSERT OR IGNORE', $ch_table_name, array(COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_PICON_HASH));
+            if ($picon_stmt === false || $alias_stmt === false) {
+                fclose($file);
+                $msg = "Error preparing statements for: $ch_table_name / $picons_table_name";
+                hd_debug_print($msg);
+                Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $msg);
+                self::unlock_index($url_hash, INDEXING_CHANNELS);
+                return;
+            }
+            $db->exec('BEGIN;');
             $last_buffer = '';
+            $indexed_channels = 0;
             while (!feof($file)) {
                 // search for open tag <channel>
                 $chunk = fread($file, 8192);
                 $buffer = $last_buffer . $chunk;
                 $pos = strpos($buffer, '<channel id');
                 if ($pos === false) {
+                    // XMLTV declares <!ELEMENT tv (channel*, programme*)> - every <channel> comes
+                    // before the first <programme>, so once programmes start there is nothing left
+                    // to index here. Without this the loop walks the whole file (hundreds of Mb of
+                    // <programme> data) only to find nothing. Bail out only after at least one
+                    // channel was seen, so a source using an unusual order is still handled.
+                    if ($indexed_channels !== 0 && strpos($buffer, '<programme') !== false) {
+                        break;
+                    }
                     $last_buffer = $chunk;
                     continue;
                 }
@@ -716,38 +742,51 @@ class Epg_Manager_Xmltv
                     libxml_clear_errors();
                     continue;
                 }
+                $channel_id = '';
                 foreach ($xml_node->getElementsByTagName('channel') as $tag) {
                     $channel_id = $tag->getAttribute('id');
                 }
 
                 if (empty($channel_id)) continue;
 
-                $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
+                $indexed_channels++;
+
                 $picon_hash = '';
                 foreach ($xml_node->getElementsByTagName('icon') as $tag) {
                     if (is_proto_http($tag->getAttribute('src'))) {
                         $picon_url = $tag->getAttribute('src');
                         if (!empty($picon_url)) {
                             $picon_hash = md5($picon_url);
-                            $query .= sprintf('INSERT OR REPLACE INTO %s (%s,%s) VALUES(%s, %s);', $picons_table_name,
-                                COLUMN_PICON_HASH, COLUMN_PICON_URL, Sql_Wrapper::sql_quote($picon_hash), Sql_Wrapper::sql_quote($picon_url));
+                            $picon_stmt->bindValue(':' . COLUMN_PICON_HASH, $picon_hash);
+                            $picon_stmt->bindValue(':' . COLUMN_PICON_URL, $picon_url);
+                            $picon_stmt->execute();
                             break;
                         }
                     }
                 }
 
-                $q_picon_hash = Sql_Wrapper::sql_quote($picon_hash);
-                $q_alias = Sql_Wrapper::sql_quote(to_lower($channel_id));
-                $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES(%s,%s,%s);',
-                    $ch_table_name, COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_PICON_HASH, $q_alias, $q_channel_id, $q_picon_hash);
+                $alias_stmt->bindValue(':' . COLUMN_ALIAS, to_lower($channel_id));
+                $alias_stmt->bindValue(':' . COLUMN_CHANNEL_ID, $channel_id);
+                $alias_stmt->bindValue(':' . COLUMN_PICON_HASH, $picon_hash);
+                $alias_stmt->execute();
 
                 foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
-                    $q_alias = Sql_Wrapper::sql_quote(to_lower($tag->nodeValue));
-                    $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES(%s,%s,%s);',
-                        $ch_table_name, COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_PICON_HASH, $q_alias, $q_channel_id, $q_picon_hash);
+                    $alias_stmt->bindValue(':' . COLUMN_ALIAS, to_lower($tag->nodeValue));
+                    $alias_stmt->bindValue(':' . COLUMN_CHANNEL_ID, $channel_id);
+                    $alias_stmt->bindValue(':' . COLUMN_PICON_HASH, $picon_hash);
+                    $alias_stmt->execute();
                 }
             }
-            $db->exec_transaction($query);
+            if ($db->exec('COMMIT;') === false) {
+                fclose($file);
+                $msg = 'Error commit channels/picons transaction!';
+                hd_debug_print($msg);
+                Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $msg);
+                $db->exec('ROLLBACK;');
+                self::unlock_index($url_hash, INDEXING_CHANNELS);
+                libxml_use_internal_errors(false);
+                return;
+            }
 
             $channels = (int)$db->query_value(sprintf('SELECT count(DISTINCT %s) FROM %s;', COLUMN_CHANNEL_ID, $ch_table_name));
             $picons = (int)$db->query_value(sprintf("SELECT COUNT(*) FROM %s;", $picons_table_name));
@@ -802,57 +841,108 @@ class Epg_Manager_Xmltv
 
             $start_program_block = 0;
             $prev_channel = null;
-            fseek($file, 0);
-            while (!feof($file)) {
-                $tag_start_pos = ftell($file);
-                $line = stream_get_line($file, 0, "</programme>");
-                if ($line === false) break;
+            $prev_channel_len = 0;
 
-                $offset = strpos($line, '<programme');
-                if ($offset === false) {
-                    // check if end
-                    $end_tv = strpos($line, "</tv>");
-                    if ($end_tv !== false) {
-                        $tag_end_pos = $end_tv + $tag_start_pos;
+            // Walk the file in INDEX_BLOCK_SIZE blocks and read the <programme> open tags straight
+            // out of the block. The previous implementation called stream_get_line() once per
+            // programme, which allocated the whole element body (~600 bytes x ~700k elements on a
+            // typical source) just to look at the channel attribute in its open tag.
+            $stat = fstat($file);
+            $file_size = $stat['size'];
+            $block_pos = 0;
+            while ($block_pos < $file_size) {
+                fseek($file, $block_pos);
+                $block = fread($file, self::INDEX_BLOCK_SIZE);
+                if ($block === false || $block === '') break;
+
+                $block_len = strlen($block);
+                $last_block = ($block_pos + $block_len >= $file_size);
+
+                // Positions at or after $limit are left to the next block: the open tag starting
+                // there may be cut in half by the block boundary.
+                $limit = $block_len;
+                $next_block_pos = $block_pos + $block_len;
+                if (!$last_block) {
+                    $last_open = strrpos($block, '<programme');
+                    if ($last_open === false) {
+                        // nothing here, keep 9 bytes in case '<programme' straddles the block edge
+                        $block_pos += $block_len - 9;
+                        continue;
+                    }
+
+                    if ($last_open === 0) {
+                        // a single element longer than the block - its open tag is at the very
+                        // start so it is complete, the rest of the block is element body
+                        $next_block_pos = $block_pos + $block_len - 9;
+                    } else {
+                        $limit = $last_open;
+                        $next_block_pos = $block_pos + $last_open;
+                    }
+                }
+
+                $pos = 0;
+                while ($pos < $limit && ($pos = strpos($block, '<programme', $pos)) !== false) {
+                    if ($pos >= $limit) break;
+
+                    $ch_start = strpos($block, 'channel="', $pos);
+                    if ($ch_start === false) break;
+
+                    // guard against picking up the next element's attribute when this open tag
+                    // carries no channel= at all (cheap distance check first, '>' scan only if odd)
+                    if ($ch_start - $pos > 512) {
+                        $tag_end = strpos($block, '>', $pos);
+                        if ($tag_end !== false && $ch_start > $tag_end) {
+                            $pos += 10;
+                            continue;
+                        }
+                    }
+
+                    $ch_start += 9;
+                    // still the same channel - the current block of programs just continues,
+                    // compare in place instead of cutting the id out of the block
+                    if ($prev_channel !== null
+                        && substr_compare($block, $prev_channel, $ch_start, $prev_channel_len) === 0
+                        && isset($block[$ch_start + $prev_channel_len])
+                        && $block[$ch_start + $prev_channel_len] === '"') {
+                        $pos += 10;
+                        continue;
+                    }
+
+                    $ch_end = strpos($block, '"', $ch_start);
+                    if ($ch_end === false) break;
+
+                    $channel_id = substr($block, $ch_start, $ch_end - $ch_start);
+                    if (empty($channel_id)) {
+                        $pos += 10;
+                        continue;
+                    }
+
+                    $tag_start_pos = $block_pos + $pos;
+                    if ($prev_channel !== null) {
+                        // close the previous channel block at this open tag
+                        $tag_end_pos = $tag_start_pos;
+                        if ($stm->execute() === false) {
+                            hd_debug_print("Error inserting position start: $start_program_block end: $tag_end_pos for channel: $prev_channel");
+                        }
+                    }
+
+                    $prev_channel = $channel_id;
+                    $prev_channel_len = strlen($channel_id);
+                    $start_program_block = $tag_start_pos;
+                    $pos += 10;
+                }
+
+                if ($last_block) {
+                    // close the trailing block at </tv>
+                    $end_tv = strpos($block, '</tv>');
+                    if ($end_tv !== false && $prev_channel !== null) {
+                        $tag_end_pos = $block_pos + $end_tv;
                         $stm->execute();
-                        break;
                     }
-
-                    // if open tag not found - skip chunk
-                    continue;
+                    break;
                 }
 
-                // end position include closing tag!
-                // $tag_end_pos = ftell($file);
-                // append position of open tag to file position of chunk
-                $tag_start_pos += $offset;
-                // calculate channel id
-                $ch_start = strpos($line, 'channel="', $offset);
-                if ($ch_start === false) {
-                    continue;
-                }
-
-                $ch_start += 9;
-                $ch_end = strpos($line, '"', $ch_start);
-                if ($ch_end === false) {
-                    continue;
-                }
-
-                $channel_id = substr($line, $ch_start, $ch_end - $ch_start);
-                if (empty($channel_id)) continue;
-
-                if ($prev_channel === null) {
-                    $prev_channel = $channel_id;
-                    $start_program_block = $tag_start_pos;
-                } else if ($prev_channel !== $channel_id) {
-                    $tag_end_pos = $tag_start_pos;
-                    $res = $stm->execute();
-                    if ($res === false) {
-                        hd_debug_print("Error inserting position start: $start_program_block end: $tag_end_pos for channel: $prev_channel");
-                    }
-                    $prev_channel = $channel_id;
-                    $start_program_block = $tag_start_pos;
-                }
+                $block_pos = $next_block_pos;
             }
 
             hd_debug_print('End transactions...', true);
@@ -1407,7 +1497,7 @@ class Epg_Manager_Xmltv
         if (!isset(self::$epg_db[$db_name]) || (!$readonly && self::$epg_db[$db_name]->is_readonly())) {
             hd_debug_print("Open new wrapper for: '$db_file'", true);
             if (isset(self::$epg_db[$db_name])) {
-                self::$epg_db[$db_name]->get_db()->close();
+                self::$epg_db[$db_name]->close();
                 unset(self::$epg_db[$db_name]);
             }
             $flags = $readonly ? SQLITE3_OPEN_READONLY : (SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
