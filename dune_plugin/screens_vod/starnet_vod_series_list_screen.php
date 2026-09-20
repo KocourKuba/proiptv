@@ -113,8 +113,8 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
         }
 
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
-        $movie_id = safe_get_value($selected_media_url, 'movie_id');
-        $episode_id = safe_get_value($selected_media_url, 'episode_id');
+        $movie_id = safe_get_value($selected_media_url, PARAM_MOVIE_ID);
+        $episode_id = safe_get_value($selected_media_url, PARAM_EPISODE_ID);
 
         switch ($user_input->control_id) {
             case ACTION_PLAY_ITEM:
@@ -287,7 +287,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
                 PluginRegularFolderItem::media_url => self::make_vod_media_url_str($movie->get_id(), $episode->season_id, $episode->id),
                 PluginRegularFolderItem::caption => $info,
                 PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::icon_path => 'gui_skin://small_icons/movie.aai',
+                    ViewItemParams::icon_path => Dune_Default_UI_Parameters::VOD_ICON_PATH,
                     ViewItemParams::item_detailed_info => empty($description) ? $episode->name : $description,
                     ViewItemParams::item_detailed_icon_path => empty($episode->poster) ? 'gui_skin://large_icons/movie.aai' : $episode->poster,
                     ViewItemParams::item_caption_color => $color,

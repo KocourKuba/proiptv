@@ -1338,7 +1338,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             } else if ($media_url->{PARAM_GROUP_ID} === $fav_id && $this->plugin->is_full_size_remote()) {
                 hd_debug_print('in favorites rows', true);
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete_from_favorite'), 'star.png');
+                    PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete_from_favorite'), RowsItemsParams::fav_sticker_icon_url);
             } else {
                 hd_debug_print("Selected channel in row: " . $media_url->{PARAM_CHANNEL_ID}, true);
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,

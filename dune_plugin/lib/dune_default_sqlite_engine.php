@@ -984,8 +984,8 @@ class Dune_Default_Sqlite_Engine
             return $default;
         }
 
-        settype($row['value'], $type);
-        return $row['value'];
+        settype($row[COLUMN_VALUE], $type);
+        return $row[COLUMN_VALUE];
     }
 
     /**

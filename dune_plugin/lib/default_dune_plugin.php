@@ -697,7 +697,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $this->epg_json_presets = new Hashed_Array();
-        foreach ($jsonArray['epg_presets'] as $key => $value) {
+        foreach ($jsonArray[EPG_JSON_PRESETS] as $key => $value) {
             if (isset($value[EPG_JSON_DISABLED])) continue;
 
             hd_debug_print("available epg preset: $key");
@@ -720,7 +720,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $this->epg_xmltv_presets = new Hashed_Array();
-        foreach ($jsonArray['xmltv_sources'] as $key => $value) {
+        foreach ($jsonArray[CONFIG_XMLTV_SOURCES] as $key => $value) {
             hd_debug_print("available xmltv preset: $key");
             $this->epg_xmltv_presets->set($key, $value);
         }
@@ -1190,8 +1190,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $query = '';
         foreach ($special_group as $group) {
-            $group['disabled'] = 0;
-            $group['special'] = 1;
+            $group[COLUMN_DISABLED] = 0;
+            $group[COLUMN_SPECIAL] = 1;
             $col = Sql_Wrapper::sql_make_list_from_keys($group);
             $val = Sql_Wrapper::sql_make_list_from_values($group);
             $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);', $groups_info_table, $col, $val);
@@ -1514,7 +1514,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $q_group_icon = Sql_Wrapper::sql_quote($row[COLUMN_ICON]);
                 $query .= sprintf("UPDATE %s SET %s=%s WHERE %s=%s AND %s<>%s AND (%s = '' OR %s=%s);", $groups_info_table,
                     COLUMN_ICON, $q_group_icon, COLUMN_GROUP_ID, $q_group_id, COLUMN_ICON, $q_group_icon, COLUMN_ICON, COLUMN_ICON,
-                    Sql_Wrapper::sql_quote('plugin_file://icons/default_group.png'));
+                    Sql_Wrapper::sql_quote(DEFAULT_GROUP_ICON));
             }
             $this->safe_sql_playlist('exec_transaction', $query);
         }
@@ -2227,10 +2227,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $params = safe_get_value($m, 5, '');
                     if ($m[3] === 'mpegts') {
                         //$archive_url = "$m[1]/$m[2]/timeshift_abs-" . '${start}' . ".ts$params";
-                        $archive_url = "$m[1]/$m[2]/archive-" . '${start}' . "-14400.ts$params";
+                        $archive_url = "$m[1]/$m[2]/archive-" . catchup_params::CU_START . "-14400.ts$params";
                     } else {
                         $ext = safe_get_value($m, 4, '');
-                        $archive_url = "$m[1]/$m[2]/$m[3]-" . '${start}' . "-14400$ext$params";
+                        $archive_url = "$m[1]/$m[2]/$m[3]-" . catchup_params::CU_START . "-14400$ext$params";
                     }
                     hd_debug_print("archive url template (flussonic): $archive_url", true);
                 } else if (KnownCatchupSourceTags::is_tag(ATTR_CATCHUP_XTREAM_CODES, $catchup)
@@ -4075,7 +4075,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $type = 'string';
                 $value = '';
             }
-            if ($key !== 'dune_params') {
+            if ($key !== PARAM_DUNE_PARAMS) {
                 $query .= sprintf('INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES (%s,%s,%s);', self::SETTINGS_TABLE,
                 COLUMN_NAME, COLUMN_VALUE, COLUMN_TYPE,
                     Sql_Wrapper::sql_quote($key), Sql_Wrapper::sql_quote($value), Sql_Wrapper::sql_quote($type));
