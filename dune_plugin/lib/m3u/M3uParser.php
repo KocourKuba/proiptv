@@ -436,6 +436,7 @@ class M3uParser extends Json_Serializer
             // the hash column is the primary key and already carries an index of its own
             if (empty($column) || $column === COLUMN_HASH) continue;
 
+            /** @noinspection Annotator */
             $query .= sprintf('CREATE INDEX IF NOT EXISTS iptv.idx_%s_%s ON %s (%s);',
                 self::S_CHANNELS_TABLE, $column, self::S_CHANNELS_TABLE, $column);
         }

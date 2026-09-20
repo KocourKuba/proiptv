@@ -433,7 +433,7 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
     /**
      * @param string $id
      * @param int|bool $order_key
-     * @param array $sticker
+     * @param string $sticker
      * @param string $icon
      * @return array
      */

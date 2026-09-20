@@ -143,7 +143,7 @@ class xtream_codes_api
      * Get stream info
      * @param string $id
      * @param string $stream_type
-     * @return bool|string|array
+     * @return bool|array
      */
     public function get_stream_info($id, $stream_type = self::VOD)
     {

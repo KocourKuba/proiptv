@@ -2551,7 +2551,7 @@ function get_canonize_string($str, $encoding = 'UTF-8')
 }
 
 /**
- * @param mixed $var1,... one or more values to dump (variadic, collected via func_get_args)
+ * one or more values to dump (variadic, collected via func_get_args)
  * @return void
  */
 function debug_print(/*mixed $var1, $var2...*/)

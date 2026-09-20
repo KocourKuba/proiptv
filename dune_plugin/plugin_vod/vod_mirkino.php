@@ -168,7 +168,7 @@ class vod_mirkino extends vod_standard
                     $default_url = new Movie_Playback_Url(MediaURL::encode(array('id' => $episode_id)), false);
                     $movie_series = new Movie_Series($episode_id,
                         TR::t('vod_screen_series__1', safe_get_value($episode, 'Name', 'no name')),
-                        new Movie_Playback_Url($default_url), $season_id
+                        $default_url, $season_id
                     );
                     $movie_series->poster = $this->jfc->getItemImageUrl($episode_id);
                     $movie->add_series_data($this->fill_series($movie_series, $episode_id, safe_get_value($episode_item, 'MediaSources')));

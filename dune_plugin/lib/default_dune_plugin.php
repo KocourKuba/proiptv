@@ -3780,6 +3780,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $val = Sql_Wrapper::sql_make_list_from_values($list);
         $query = sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);', self::TV_HISTORY_TABLE, $col, $val);
 
+        /** @noinspection Annotator */
         $query .= sprintf('UPDATE %s SET %s WHERE %s=%s;',
             self::TV_HISTORY_TABLE, Sql_Wrapper::sql_make_set_list($list), COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($id));
         $query .= sprintf('DELETE FROM %s WHERE ROWID NOT IN (SELECT ROWID FROM %s ORDER BY %s DESC LIMIT 7);',
