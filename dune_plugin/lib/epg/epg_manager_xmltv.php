@@ -41,7 +41,11 @@ class Epg_Manager_Xmltv
     const TABLE_STAT = 'epg_stat';
     const CREATE_CHANNELS_TABLE = 'CREATE TABLE epg_channels (alias TEXT PRIMARY KEY not null, channel_id TEXT not null, picon_hash TEXT);';
     const CREATE_PICONS_TABLE = 'CREATE TABLE epg_picons (picon_hash TEXT PRIMARY KEY not null, picon_url TEXT);';
-    const CREATE_ENTRIES_TABLE = 'CREATE TABLE epg_entries (channel_id STRING not null, start INTEGER, end INTEGER, UNIQUE (channel_id, start) ON CONFLICT REPLACE);';
+    // The (channel_id, start) index is built after the bulk insert instead of being maintained
+    // row by row - see CREATE_ENTRIES_INDEX. 'end' is part of the index so that the only query
+    // run against this table (start/end by channel_id) is answered from the index alone.
+    const CREATE_ENTRIES_TABLE = 'CREATE TABLE epg_entries (channel_id STRING not null, start INTEGER, end INTEGER);';
+    const CREATE_ENTRIES_INDEX = 'CREATE INDEX IF NOT EXISTS epg_entries_idx ON epg_entries (channel_id, start, end);';
     const CREATE_STAT_TABLE = 'CREATE TABLE IF NOT EXISTS epg_stat (name TEXT PRIMARY KEY, value REAL);';
 
     /**
@@ -50,6 +54,45 @@ class Epg_Manager_Xmltv
      * device memory budget (the block is held as a single PHP string).
      */
     const INDEX_BLOCK_SIZE = 65536;
+
+    /**
+     * Number of <programme> open tags a block must hold before the regex jump is used for the
+     * next one. Below this the block is mostly element bodies and there is not enough per-tag
+     * work to pay for the jump.
+     */
+    const SPARSE_BLOCK_TAGS = 16;
+
+    /**
+     * Number of channel changes inside one block above which the regex jump is dropped for the
+     * next one. Every change compiles a new pattern, so a source that interleaves the programmes
+     * of different channels is scanned faster by walking the open tags.
+     */
+    const DENSE_BLOCK_TRANSITIONS = 16;
+
+    /**
+     * While the regex jump is in use the open tags are not counted, so every this many blocks one
+     * block is walked tag by tag to re-measure how dense they are.
+     */
+    const RESAMPLE_BLOCKS = 128;
+
+    /**
+     * Size of the chunk read at once while collecting <channel> elements.
+     */
+    const CHANNELS_BLOCK_SIZE = 65536;
+
+    /**
+     * How many <channel> elements are parsed with a single DOMDocument. Parsing them one by one
+     * sets up a libxml parser per channel, which dominates the pass on sources with thousands of
+     * channels. Measured on the libxml 2.7 the device ships, the gain is flat from ~32 and turns
+     * back down past ~128, where the tree built per batch costs more than the parser setup saved.
+     */
+    const CHANNELS_BATCH_SIZE = 64;
+
+    /**
+     * A <channel> element that does not close within this many bytes is treated as malformed
+     * and dropped, so a broken source cannot pull the whole file into the buffer.
+     */
+    const MAX_CHANNEL_ELEMENT_SIZE = 1048576;
 
     protected static $index_flags = array(INDEXING_DOWNLOAD, INDEXING_CHANNELS, INDEXING_ENTRIES);
 
@@ -248,10 +291,10 @@ class Epg_Manager_Xmltv
                             }
                         }
 
-                        fclose($handle);
-
                         if (!empty($day_items)) break;
                     }
+
+                    fclose($handle);
                 }
 
                 if (!empty($day_items) && ($day_start_ts > $last_in_range || $day_end_ts < $first_in_range)) {
@@ -687,94 +730,62 @@ class Epg_Manager_Xmltv
                 return;
             }
             $db->exec('BEGIN;');
-            $last_buffer = '';
             $indexed_channels = 0;
-            while (!feof($file)) {
-                // search for open tag <channel>
-                $chunk = fread($file, 8192);
-                $buffer = $last_buffer . $chunk;
-                $pos = strpos($buffer, '<channel id');
-                if ($pos === false) {
+            // The elements are cut out of a forward-only buffer and handed over in batches. The
+            // previous implementation seeked back and forth over every element (once to find
+            // </channel>, once to read it back) and built a DOMDocument per channel.
+            $buffer = '';
+            $pending = array();
+            $eof = false;
+            $done = false;
+            while (!$done) {
+                if (!$eof) {
+                    $chunk = fread($file, self::CHANNELS_BLOCK_SIZE);
+                    if ($chunk === false || $chunk === '') {
+                        $eof = true;
+                    } else {
+                        $buffer .= $chunk;
+                        $eof = feof($file);
+                    }
+                }
+
+                // cut out every <channel id ...> ... </channel> the buffer already holds
+                $consumed = 0;
+                while (($start = strpos($buffer, '<channel id', $consumed)) !== false) {
+                    $end = strpos($buffer, '</channel>', $start + 11);
+                    if ($end === false) break;
+                    $pending[] = substr($buffer, $start, $end + 10 - $start);
+                    $consumed = $end + 10;
+                }
+
+                if ($start === false) {
                     // XMLTV declares <!ELEMENT tv (channel*, programme*)> - every <channel> comes
                     // before the first <programme>, so once programmes start there is nothing left
                     // to index here. Without this the loop walks the whole file (hundreds of Mb of
                     // <programme> data) only to find nothing. Bail out only after at least one
                     // channel was seen, so a source using an unusual order is still handled.
-                    if ($indexed_channels !== 0 && strpos($buffer, '<programme') !== false) {
-                        break;
+                    if (($indexed_channels !== 0 || !empty($pending))
+                        && strpos($buffer, '<programme', $consumed) !== false) {
+                        $done = true;
                     }
-                    $last_buffer = $chunk;
-                    continue;
+                    // keep a short tail so an open tag split across two reads is still matched
+                    $keep = strlen($buffer) - 11;
+                    $buffer = ($keep > $consumed) ? substr($buffer, $keep) : substr($buffer, $consumed);
+                } else if (strlen($buffer) - $start > self::MAX_CHANNEL_ELEMENT_SIZE) {
+                    // unterminated <channel> - drop it instead of buffering the rest of the file
+                    hd_debug_print('Unterminated <channel> element, skipped');
+                    $buffer = substr($buffer, $start + 11);
+                } else {
+                    $buffer = substr($buffer, $start);
                 }
 
-                // calculate start position in file and seek to + length of searched tag
-                $last_buffer = '';
-                $start_pos = ftell($file) - strlen($buffer) + $pos;
-                fseek($file, $start_pos + 11);
-
-                // read content until closed tag found
-                $line = '';
-                while (!feof($file)) {
-                    // search for closing tag </channel>
-                    $chunk = fread($file, 8192);
-                    $buffer = $last_buffer . $chunk;
-                    $pos = strpos($buffer, '</channel>');
-                    if ($pos === false) {
-                        $last_buffer = $chunk;
-                        continue;
-                    }
-
-                    $last_buffer = '';
-                    // calculate end position in file
-                    $end_pos = ftell($file) - strlen($buffer) + $pos + 10;
-                    // seek to start position and read found text
-                    fseek($file, $start_pos);
-                    $line = fread($file, $end_pos - $start_pos);
-                    break;
-                }
-                if (feof($file) || empty($line)) continue;
-
-                $xml_node = new DOMDocument();
-                if ($xml_node->loadXML($line, LIBXML_NOWARNING | LIBXML_NOERROR) === false) {
-                    foreach (libxml_get_errors() as $error) {
-                        display_xml_error($error, $line);
-                    }
-                    libxml_clear_errors();
-                    continue;
-                }
-                $channel_id = '';
-                foreach ($xml_node->getElementsByTagName('channel') as $tag) {
-                    $channel_id = $tag->getAttribute('id');
+                if ($eof) {
+                    $done = true;
                 }
 
-                if (empty($channel_id)) continue;
-
-                $indexed_channels++;
-
-                $picon_hash = '';
-                foreach ($xml_node->getElementsByTagName('icon') as $tag) {
-                    if (is_proto_http($tag->getAttribute('src'))) {
-                        $picon_url = $tag->getAttribute('src');
-                        if (!empty($picon_url)) {
-                            $picon_hash = md5($picon_url);
-                            $picon_stmt->bindValue(':' . COLUMN_PICON_HASH, $picon_hash);
-                            $picon_stmt->bindValue(':' . COLUMN_PICON_URL, $picon_url);
-                            $picon_stmt->execute();
-                            break;
-                        }
-                    }
-                }
-
-                $alias_stmt->bindValue(':' . COLUMN_ALIAS, to_lower($channel_id));
-                $alias_stmt->bindValue(':' . COLUMN_CHANNEL_ID, $channel_id);
-                $alias_stmt->bindValue(':' . COLUMN_PICON_HASH, $picon_hash);
-                $alias_stmt->execute();
-
-                foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
-                    $alias_stmt->bindValue(':' . COLUMN_ALIAS, to_lower($tag->nodeValue));
-                    $alias_stmt->bindValue(':' . COLUMN_CHANNEL_ID, $channel_id);
-                    $alias_stmt->bindValue(':' . COLUMN_PICON_HASH, $picon_hash);
-                    $alias_stmt->execute();
+                if (!empty($pending) && ($done || count($pending) >= self::CHANNELS_BATCH_SIZE)) {
+                    $indexed_channels += self::index_channels_batch($pending, $picon_stmt, $alias_stmt);
+                    $pending = array();
                 }
             }
             if ($db->exec('COMMIT;') === false) {
@@ -841,15 +852,43 @@ class Epg_Manager_Xmltv
 
             $start_program_block = 0;
             $prev_channel = null;
-            $prev_channel_len = 0;
 
             // Walk the file in INDEX_BLOCK_SIZE blocks and read the <programme> open tags straight
             // out of the block. The previous implementation called stream_get_line() once per
             // programme, which allocated the whole element body (~600 bytes x ~700k elements on a
             // typical source) just to look at the channel attribute in its open tag.
+            //
+            // A row is only produced where the channel changes, which on most sources is a few
+            // thousand times out of millions of open tags, so the scan has two strategies:
+            //
+            //  - $find_other is a regex for "a channel attribute that is not the current channel".
+            //    One call skips every programme of the current channel in one sweep inside pcre
+            //    instead of one php call per open tag. Php function calls are expensive on the
+            //    php 5.3 the device runs, so this is worth several times its cost - but only while
+            //    channel changes are rare, because each change compiles a new pattern.
+            //
+            //  - otherwise the open tags are walked one at a time. Inside a source the channel
+            //    attribute sits at the same offset in every open tag (the start/stop timestamps in
+            //    front of it have a fixed width), so $probe holds 'channel="<current id>"' and
+            //    $attr_offset where it was last seen, and the walk costs one compare against the
+            //    block rather than a search for the attribute plus a comparison of its value.
+            //
+            // Which one runs is decided per block from what the previous block looked like:
+            // sources that interleave the programmes of different channels change channel on
+            // almost every element, and there the regex is recompiled far too often to pay off.
+            // A miss on $probe - a different channel, or a tag laid out differently - falls
+            // through to the general path, which re-learns the offset, so a source that does not
+            // keep its attributes in a fixed order still indexes correctly, only without the
+            // shortcut.
             $stat = fstat($file);
             $file_size = $stat['size'];
             $block_pos = 0;
+            $attr_offset = 0;
+            $probe = null;
+            $probe_len = 0;
+            $probe_end = 0;
+            $use_regex = false;
+            $since_sample = 0;
             while ($block_pos < $file_size) {
                 fseek($file, $block_pos);
                 $block = fread($file, self::INDEX_BLOCK_SIZE);
@@ -880,56 +919,108 @@ class Epg_Manager_Xmltv
                     }
                 }
 
+                $find_other = (!$use_regex || $prev_channel === null || $since_sample >= self::RESAMPLE_BLOCKS)
+                    ? null
+                    : '~channel="(?!' . preg_quote($prev_channel, '~') . '")~';
+
+                $changes = 0;
+                $tags = 0;
                 $pos = 0;
-                while ($pos < $limit && ($pos = strpos($block, '<programme', $pos)) !== false) {
-                    if ($pos >= $limit) break;
+                while ($pos < $limit) {
+                    if ($find_other === null) {
+                        // walk the open tags one at a time
+                        $pos = strpos($block, '<programme', $pos);
+                        if ($pos === false || $pos >= $limit) break;
 
-                    $ch_start = strpos($block, 'channel="', $pos);
-                    if ($ch_start === false) break;
-
-                    // guard against picking up the next element's attribute when this open tag
-                    // carries no channel= at all (cheap distance check first, '>' scan only if odd)
-                    if ($ch_start - $pos > 512) {
-                        $tag_end = strpos($block, '>', $pos);
-                        if ($tag_end !== false && $ch_start > $tag_end) {
+                        $tags++;
+                        // same channel, same layout as the tag before it - nothing to do here
+                        if ($probe !== null && $pos + $probe_end <= $block_len
+                            && substr_compare($block, $probe, $pos + $attr_offset, $probe_len) === 0) {
                             $pos += 10;
                             continue;
                         }
-                    }
 
-                    $ch_start += 9;
-                    // still the same channel - the current block of programs just continues,
-                    // compare in place instead of cutting the id out of the block
-                    if ($prev_channel !== null
-                        && substr_compare($block, $prev_channel, $ch_start, $prev_channel_len) === 0
-                        && isset($block[$ch_start + $prev_channel_len])
-                        && $block[$ch_start + $prev_channel_len] === '"') {
-                        $pos += 10;
-                        continue;
+                        $ch_start = strpos($block, 'channel="', $pos);
+                        if ($ch_start === false) break;
+
+                        // guard against picking up the next element's attribute when this open tag
+                        // carries no channel= at all (cheap distance check first, '>' scan only if odd)
+                        if ($ch_start - $pos > 512) {
+                            $tag_end = strpos($block, '>', $pos);
+                            if ($tag_end !== false && $ch_start > $tag_end) {
+                                $pos += 10;
+                                continue;
+                            }
+                        }
+
+                        $tag_start = $pos;
+                        $new_offset = $ch_start - $pos;
+                    } else {
+                        // jump over every programme that still belongs to the current channel
+                        if (!preg_match($find_other, $block, $match, PREG_OFFSET_CAPTURE, $pos)) break;
+
+                        $ch_start = $match[0][1];
+                        if ($ch_start + 9 >= $limit) break;
+
+                        // the attribute has to belong to an open tag and not to element content
+                        $tag_start = strrpos($block, '<programme', $ch_start - $block_len);
+                        if ($tag_start === false) {
+                            $pos = $ch_start + 9;
+                            continue;
+                        }
+                        $tag_end = strpos($block, '>', $tag_start);
+                        if ($tag_end !== false && $tag_end < $ch_start) {
+                            $pos = $ch_start + 9;
+                            continue;
+                        }
+
+                        $new_offset = $ch_start - $tag_start;
                     }
+                    $ch_start += 9;
 
                     $ch_end = strpos($block, '"', $ch_start);
                     if ($ch_end === false) break;
 
                     $channel_id = substr($block, $ch_start, $ch_end - $ch_start);
-                    if (empty($channel_id)) {
-                        $pos += 10;
+                    if ($channel_id === '') {
+                        $pos = $ch_start;
                         continue;
                     }
 
-                    $tag_start_pos = $block_pos + $pos;
-                    if ($prev_channel !== null) {
-                        // close the previous channel block at this open tag
-                        $tag_end_pos = $tag_start_pos;
-                        if ($stm->execute() === false) {
-                            hd_debug_print("Error inserting position start: $start_program_block end: $tag_end_pos for channel: $prev_channel");
+                    $attr_offset = $new_offset;
+                    $probe = 'channel="' . $channel_id . '"';
+                    $probe_len = strlen($probe);
+                    $probe_end = $attr_offset + $probe_len;
+
+                    if ($channel_id !== $prev_channel) {
+                        $tag_start_pos = $block_pos + $tag_start;
+                        if ($prev_channel !== null) {
+                            // close the previous channel block at this open tag
+                            $tag_end_pos = $tag_start_pos;
+                            if ($stm->execute() === false) {
+                                hd_debug_print("Error inserting position start: $start_program_block end: $tag_end_pos for channel: $prev_channel");
+                            }
+                        }
+
+                        $prev_channel = $channel_id;
+                        $start_program_block = $tag_start_pos;
+                        $changes++;
+                        if ($find_other !== null) {
+                            $find_other = '~channel="(?!' . preg_quote($channel_id, '~') . '")~';
                         }
                     }
+                    $pos = $ch_start;
+                }
 
-                    $prev_channel = $channel_id;
-                    $prev_channel_len = strlen($channel_id);
-                    $start_program_block = $tag_start_pos;
-                    $pos += 10;
+                // pick the strategy for the next block from what this one looked like
+                if ($find_other === null) {
+                    $since_sample = 0;
+                    $use_regex = ($tags >= self::SPARSE_BLOCK_TAGS && $changes <= self::DENSE_BLOCK_TRANSITIONS);
+                } else {
+                    $since_sample++;
+                    if ($changes > self::DENSE_BLOCK_TRANSITIONS) {
+                        $use_regex = false;
+                    }
                 }
 
                 if ($last_block) {
@@ -943,6 +1034,12 @@ class Epg_Manager_Xmltv
                 }
 
                 $block_pos = $next_block_pos;
+            }
+
+            // Build the lookup index in one pass now that the table is complete, instead of
+            // letting sqlite maintain it row by row while the rows are inserted.
+            if ($db->exec(self::CREATE_ENTRIES_INDEX) === false) {
+                hd_debug_print('Error creating index for ' . self::TABLE_ENTRIES);
             }
 
             hd_debug_print('End transactions...', true);
@@ -1338,6 +1435,73 @@ class Epg_Manager_Xmltv
         }
 
         return $ext;
+    }
+
+    /**
+     * Parse a batch of raw <channel> elements with one DOMDocument and store their
+     * picon and aliases.
+     *
+     * @param array $fragments raw '<channel id...>...</channel>' strings
+     * @param SQLite3Stmt $picon_stmt
+     * @param SQLite3Stmt $alias_stmt
+     * @return int number of channels indexed
+     */
+    protected static function index_channels_batch($fragments, $picon_stmt, $alias_stmt)
+    {
+        $xml_node = new DOMDocument();
+        if ($xml_node->loadXML('<tv>' . implode('', $fragments) . '</tv>', LIBXML_NOWARNING | LIBXML_NOERROR) === false) {
+            libxml_clear_errors();
+            if (count($fragments) > 1) {
+                // a single malformed element must not cost the whole batch
+                $indexed = 0;
+                foreach ($fragments as $fragment) {
+                    $indexed += self::index_channels_batch(array($fragment), $picon_stmt, $alias_stmt);
+                }
+                return $indexed;
+            }
+
+            $xml_node = new DOMDocument();
+            $xml_node->loadXML('<tv>' . $fragments[0] . '</tv>', LIBXML_NOWARNING | LIBXML_NOERROR);
+            foreach (libxml_get_errors() as $error) {
+                display_xml_error($error, $fragments[0]);
+            }
+            libxml_clear_errors();
+            return 0;
+        }
+
+        $indexed = 0;
+        foreach ($xml_node->getElementsByTagName('channel') as $channel) {
+            $channel_id = $channel->getAttribute('id');
+            if (empty($channel_id)) continue;
+
+            $indexed++;
+
+            $picon_hash = '';
+            foreach ($channel->getElementsByTagName('icon') as $tag) {
+                $picon_url = $tag->getAttribute('src');
+                if (!empty($picon_url) && is_proto_http($picon_url)) {
+                    $picon_hash = md5($picon_url);
+                    $picon_stmt->bindValue(':' . COLUMN_PICON_HASH, $picon_hash);
+                    $picon_stmt->bindValue(':' . COLUMN_PICON_URL, $picon_url);
+                    $picon_stmt->execute();
+                    break;
+                }
+            }
+
+            $alias_stmt->bindValue(':' . COLUMN_ALIAS, to_lower($channel_id));
+            $alias_stmt->bindValue(':' . COLUMN_CHANNEL_ID, $channel_id);
+            $alias_stmt->bindValue(':' . COLUMN_PICON_HASH, $picon_hash);
+            $alias_stmt->execute();
+
+            foreach ($channel->getElementsByTagName('display-name') as $tag) {
+                $alias_stmt->bindValue(':' . COLUMN_ALIAS, to_lower($tag->nodeValue));
+                $alias_stmt->bindValue(':' . COLUMN_CHANNEL_ID, $channel_id);
+                $alias_stmt->bindValue(':' . COLUMN_PICON_HASH, $picon_hash);
+                $alias_stmt->execute();
+            }
+        }
+
+        return $indexed;
     }
 
     /**

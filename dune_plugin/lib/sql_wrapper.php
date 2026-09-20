@@ -20,8 +20,21 @@ class Sql_Wrapper
     // Cap the per-connection page cache so N simultaneously open databases
     // (common/plugin, playlist, playlist_settings, vod, tv_history, vod_history ...)
     // can't push the process over the device's 384Mb memory budget.
-    // Negative value = size in KiB (SQLite semantics), independent of page_size.
     const MAX_CACHE_SIZE_KB = 1500;
+
+    // SQLite picked 1024 bytes as the default page size until 3.12; the device ships 3.7.4, so
+    // every database created here would use it. 4096 matches the erase/read granularity of the
+    // flash the plugin writes to and cuts the b-tree depth, which is what the bulk index build
+    // in Epg_Manager_Xmltv spends its time on. Only a database that has no page yet can change
+    // it - an existing file keeps the size it was created with until it is rebuilt.
+    const PAGE_SIZE = 4096;
+
+    // 'PRAGMA cache_size=-N' started meaning "N KiB" in SQLite 3.7.10, and 'PRAGMA mmap_size'
+    // only exists from 3.7.17. On the 3.7.4 the device ships, a negative cache_size is taken as
+    // a page count instead, so the same statement would reserve PAGE_SIZE/1024 times the memory
+    // it asks for, and mmap_size is silently ignored.
+    const SQLITE_CACHE_SIZE_KB_VERSION = 3007010;
+    const SQLITE_MMAP_VERSION = 3007017;
 
     // Default flags SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
     /**
@@ -34,11 +47,31 @@ class Sql_Wrapper
     {
         try {
             $this->db = new SQLite3($db_path, $flags, '');
+            $version = SQLite3::version();
+            $version = $version['versionNumber'];
+
+            // has to come before anything that makes the database allocate its first page
+            $this->db->exec('PRAGMA page_size=' . self::PAGE_SIZE . ';');
             $this->db->exec("PRAGMA journal_mode=$journal;");
+
             // bound the page cache instead of relying on the SQLite/OS default
-            $this->db->exec('PRAGMA cache_size=-' . self::MAX_CACHE_SIZE_KB . ';');
-            // memory-mapped I/O inflates RSS on embedded boxes for no query benefit here; keep it off
-            $this->db->exec('PRAGMA mmap_size=0;');
+            if ($version >= self::SQLITE_CACHE_SIZE_KB_VERSION) {
+                $this->db->exec('PRAGMA cache_size=-' . self::MAX_CACHE_SIZE_KB . ';');
+            } else {
+                // older SQLite counts pages, so convert the budget with the page size in use
+                $page_size = (int)$this->db->querySingle('PRAGMA page_size;');
+                if ($page_size <= 0) {
+                    $page_size = self::PAGE_SIZE;
+                }
+                $this->db->exec('PRAGMA cache_size=' . (int)ceil(self::MAX_CACHE_SIZE_KB * 1024 / $page_size) . ';');
+            }
+
+            // memory-mapped I/O inflates RSS on embedded boxes for no query benefit here; keep it
+            // off where the pragma exists at all (it is off by default in the versions without it)
+            if ($version >= self::SQLITE_MMAP_VERSION) {
+                $this->db->exec('PRAGMA mmap_size=0;');
+            }
+
             // spill temp b-trees (ORDER BY/GROUP BY on unindexed columns) to disk, not to the heap
             $this->db->exec('PRAGMA temp_store=FILE;');
             // journal_mode=MEMORY keeps the rollback journal in RAM, so unlike the default
