@@ -2372,6 +2372,38 @@ function safe_unlink($path)
 }
 
 /**
+ * Move a file, falling back to copy+unlink when source and destination are on
+ * different filesystems.
+ *
+ * rename() cannot cross a mount point (EXDEV), and the plugin routinely moves
+ * files between the tmpfs temp dir and the data dir, which live on different
+ * mounts on most devices.
+ *
+ * @param string $source
+ * @param string $dest
+ * @return bool true if the file now exists at $dest
+ */
+function move_file($source, $dest)
+{
+    if (@rename($source, $dest)) {
+        return true;
+    }
+
+    if (!@copy($source, $dest)) {
+        hd_debug_print("Failed to move '$source' to '$dest'");
+        return false;
+    }
+
+    // the copy is the file now - failing to drop the source only leaves a stale
+    // temp file behind, so it must not fail the move
+    if (!@unlink($source)) {
+        hd_debug_print("Moved '$source' to '$dest' but source was not removed");
+    }
+
+    return true;
+}
+
+/**
  * Analog of json_encode() with the JSON_UNESCAPED_UNICODE option available in PHP 5.4.0 and higher
  *
  * @param mixed $data

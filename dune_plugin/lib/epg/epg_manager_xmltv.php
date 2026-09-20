@@ -611,9 +611,12 @@ class Epg_Manager_Xmltv
      *
      * @param array $params
      * @param int $indexing_flag
+     * @param bool $flag_resolved true if $indexing_flag already comes from check_xmltv_source().
+     *                            In XMLTV_CACHE_AUTO mode that check issues an ETag request, so
+     *                            running it twice costs a second round trip per source.
      * @return void
      */
-    public static function reindex_xmltv($params, $indexing_flag)
+    public static function reindex_xmltv($params, $indexing_flag, $flag_resolved = false)
     {
         hd_debug_print('Indexing xmltv');
 
@@ -625,7 +628,9 @@ class Epg_Manager_Xmltv
             return;
         }
 
-        $new_flag = Epg_Manager_Xmltv::check_xmltv_source($params, $indexing_flag);
+        $new_flag = $flag_resolved
+            ? $indexing_flag
+            : Epg_Manager_Xmltv::check_xmltv_source($params, $indexing_flag);
         if ($new_flag === 0) {
             return;
         }
@@ -1061,6 +1066,10 @@ class Epg_Manager_Xmltv
             hd_print_separator();
 
             self::update_stat($params, 'entries', $report[Perf_Collector::TIME]);
+        }
+
+        if (is_resource($file)) {
+            fclose($file);
         }
 
         if ($perf->getLabelsCount() > 1) {

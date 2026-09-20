@@ -34,6 +34,10 @@ if (!class_exists('DuneSystem')) {
 }
 
 /**
+ * The indexer emits a line per step of a job that runs for minutes, so the log handle is
+ * held open instead of being reopened and closed for every line. The write is flushed so a
+ * killed or hung indexer still leaves a complete log behind.
+ *
  * @param string $str
  * @return void
  */
@@ -41,15 +45,34 @@ function hd_print($str)
 {
     global $LOG_FILE;
 
+    static $handle = null;
+    static $handle_path = null;
+
     $out = date('[Y-m-d H:i:s] ') . $str . PHP_EOL;
 
     if (empty($LOG_FILE)) {
         echo $out;
-    } else {
-        $log_file = fopen($LOG_FILE, 'ab+');
-        fwrite($log_file, $out);
-        fclose($log_file);
+        return;
     }
+
+    // $LOG_FILE is assigned once the config is read, after the first few lines have already
+    // gone to stdout - and the file is removed right after, so the handle is opened lazily
+    // and reopened if the path ever changes.
+    if ($handle_path !== $LOG_FILE) {
+        if (is_resource($handle)) {
+            fclose($handle);
+        }
+        $handle = @fopen($LOG_FILE, 'ab');
+        $handle_path = $LOG_FILE;
+    }
+
+    if ($handle === false || $handle === null) {
+        echo $out;
+        return;
+    }
+
+    fwrite($handle, $out);
+    fflush($handle);
 }
 
 error_reporting(E_ALL & ~E_NOTICE);

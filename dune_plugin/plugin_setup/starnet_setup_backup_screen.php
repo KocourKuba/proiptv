@@ -131,18 +131,15 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
      */
     protected function do_restore_settings($name, $filename)
     {
-        Epg_Manager_Json::clear_epg_files();
-        Epg_Manager_Xmltv::clear_epg_files();
-        $this->plugin->reset_playlist_db();
-        $this->plugin->clear_playlist_cache(null);
-
+        // Nothing is destroyed until the archive is unpacked and verified below - a corrupt
+        // or unreadable backup must leave the current settings untouched.
         $temp_folder = get_temp_path('restore');
         delete_directory($temp_folder);
         $tmp_filename = get_temp_path($name);
         try {
             hd_debug_print("Copy $filename to $tmp_filename");
             if (!copy($filename, $tmp_filename)) {
-                throw new Exception(error_get_last());
+                throw new Exception(TR::t('err_copy__2', $filename, $tmp_filename));
             }
 
             $unzip = new ZipArchive();
@@ -176,19 +173,34 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
 
         safe_unlink($tmp_filename);
 
+        // the archive is good - only now drop the current state
+        Epg_Manager_Json::clear_epg_files();
+        Epg_Manager_Xmltv::clear_epg_files();
+        $this->plugin->reset_playlist_db();
+        $this->plugin->clear_playlist_cache(null);
+
+        // keep the current databases and image cache aside so a failed restore can be rolled back
+        $rollback = array();
         $ext = ".db";
         foreach (glob_dir(get_data_path(), "/$ext$/i") as $file) {
             hd_debug_print("Rename $file to $file.prev");
-            rename($file, "$file.prev");
+            if (rename($file, "$file.prev")) {
+                $rollback["$file.prev"] = $file;
+            } else {
+                hd_debug_print("Failed to preserve $file");
+            }
         }
 
-        rename(get_data_path(CACHED_IMAGE_SUBDIR), get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
+        $cached_img = get_data_path(CACHED_IMAGE_SUBDIR);
+        $cached_img_prev = get_data_path(CACHED_IMAGE_SUBDIR . '_prev');
+        $cached_img_saved = is_dir($cached_img) && rename($cached_img, $cached_img_prev);
 
         /** @var SplFileInfo[] $files */
         $files = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($temp_folder, FilesystemIterator::SKIP_DOTS),
             RecursiveIteratorIterator::SELF_FIRST);
 
+        $failed = array();
         foreach ($files as $src) {
             /** @noinspection PhpUndefinedMethodInspection */
             $name = $files->getSubPathName();
@@ -200,16 +212,43 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
                     $dest = "/config/$name";
                 }
                 $mtime = filemtime($src);
-                rename($src, $dest);
-                touch($dest, $mtime);
+                // the temp dir and the data dir are usually on different mounts, so this is a
+                // copy and not a rename - and touch() would happily create an empty file if the
+                // move had failed, so it only runs once the file is actually there
+                if (move_file((string)$src, $dest)) {
+                    touch($dest, $mtime);
+                } else {
+                    $failed[] = $name;
+                }
             }
         }
 
         clearstatcache();
 
-        array_map('unlink', glob(get_data_path('*.prev')));
-        array_map('unlink', glob(get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*')));
-        delete_directory(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
+        if (!empty($failed)) {
+            hd_debug_print('Restore failed for: ' . implode(', ', $failed));
+            // put the preserved copies back - a restored file that did make it is
+            // overwritten by its original
+            foreach ($rollback as $prev => $file) {
+                safe_unlink($file);
+                rename($prev, $file);
+            }
+            if ($cached_img_saved) {
+                delete_directory($cached_img);
+                rename($cached_img_prev, $cached_img);
+            }
+
+            $this->plugin->init_plugin(true);
+            return Action_Factory::show_title_dialog(TR::t('err_restore'),
+                TR::t('err_copy__2', implode(', ', $failed), get_data_path()));
+        }
+
+        foreach (array_keys($rollback) as $prev) {
+            safe_unlink($prev);
+        }
+        if ($cached_img_saved) {
+            delete_directory($cached_img_prev);
+        }
 
         // force plugin to fully reinit
         $this->plugin->init_plugin(true);

@@ -1421,7 +1421,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     if ($flag !== 0) {
                         $params[PARAM_CURL_CONNECT_TIMEOUT] = $this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30);
                         $params[PARAM_CURL_DOWNLOAD_TIMEOUT] = $this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
-                        Epg_Manager_Xmltv::reindex_xmltv($params, $flag);
+                        Epg_Manager_Xmltv::reindex_xmltv($params, $flag, true);
                     }
                 }
             }
