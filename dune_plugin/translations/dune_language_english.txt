@@ -120,6 +120,7 @@ epg_url = EPG URL:
 err_already_exist = XMLTV source already present in list
 err_auth_no_spam = Previous authorization request failed,|to avoid blocking request not performed.|Change access data or reload playlist.
 err_backup = Backup error!
+err_bad_backup_file = Incorrect file name for ProIPTV backup settings file!
 err_bad_m3u_file = Bad or malformed M3U file
 err_bad_pass = Incorrect password
 err_cant_create_folder = Unable to create folder!

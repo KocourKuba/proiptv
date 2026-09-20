@@ -118,7 +118,11 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
-                return $this->do_restore_settings($data->{PARAM_CAPTION}, $data->{PARAM_FILEPATH});
+                $filename = basename($data->{PARAM_FILEPATH});
+                if (preg_match('/^proiptv_backup_\d{1,2}\.\d{1,2}\.\d{3,4}_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}\.zip$/', $filename)) {
+                    return $this->do_restore_settings($data->{PARAM_CAPTION}, $data->{PARAM_FILEPATH});
+                }
+                $post_action = Action_Factory::show_title_dialog(TR::t('information'), TR::t('err_bad_backup_file'));
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs(), $post_action);
