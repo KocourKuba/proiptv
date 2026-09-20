@@ -2229,13 +2229,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         //$archive_url = "$m[1]/$m[2]/timeshift_abs-" . '${start}' . ".ts$params";
                         $archive_url = "$m[1]/$m[2]/archive-" . '${start}' . "-14400.ts$params";
                     } else {
-                        $archive_url = "$m[1]/$m[2]/$m[3]-" . '${start}' . "-14400$m[4]$params";
+                        $ext = safe_get_value($m, 4, '');
+                        $archive_url = "$m[1]/$m[2]/$m[3]-" . '${start}' . "-14400$ext$params";
                     }
                     hd_debug_print("archive url template (flussonic): $archive_url", true);
                 } else if (KnownCatchupSourceTags::is_tag(ATTR_CATCHUP_XTREAM_CODES, $catchup)
                     && preg_match("#^(https?://[^/]+)/(?:live/)?([^/]+)/([^/]+)/([^/.]+)(\.m3u8?)?$#", $stream_url, $m)) {
-                    $extension = $m[6] ?: '.ts';
-                    $archive_url = "$m[1]/timeshift/$m[2]/$m[3]/240/{Y}-{m}-{d}:{H}-{M}/$m[5].$extension";
+                    $extension = ltrim(safe_get_value($m, 5, ''), '.');
+                    if ($extension === '') {
+                        $extension = 'ts';
+                    }
+                    $archive_url = "$m[1]/timeshift/$m[2]/$m[3]/240/{Y}-{m}-{d}:{H}-{M}/$m[4].$extension";
                     hd_debug_print("archive url template (xtream code): $archive_url", true);
                 } else {
                     // if no info about catchup, use 'shift'
@@ -3409,11 +3413,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print("Hide channels type: '$pattern' in group: '$group_id'");
 
+        if ($is_regex) {
+            // the mask comes straight from a user dialog: compile it once instead of letting
+            // every channel raise its own warning and silently match nothing
+            $mask = "#$pattern#";
+            if (@preg_match($mask, '') === false) {
+                hd_debug_print("Invalid channel mask: '$pattern'");
+                return 0;
+            }
+        }
+
         $disabled_ids = array();
         $groups = array();
         foreach ($this->get_channels($group_id, PARAM_ENABLED) as $item) {
             if ($is_regex) {
-                $add = preg_match("#$pattern#", $item[COLUMN_TITLE]);
+                $add = preg_match($mask, $item[COLUMN_TITLE]);
             } else {
                 $add = stripos($item[COLUMN_TITLE], $pattern) !== false;
             }
@@ -3457,7 +3471,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $len = strlen($rows[$i][COLUMN_TITLE]);
                 if (strncasecmp($rows[$i][COLUMN_TITLE], $rows[$j][COLUMN_TITLE], $len) !== 0) break;
 
-                $add = preg_match('#^\sHD|\sFHD#', substr($rows[$j][COLUMN_TITLE], $len));
+                $add = preg_match('#^\sF?HD#', substr($rows[$j][COLUMN_TITLE], $len));
                 if ($add) {
                     $disabled_ids[] = $rows[$i][COLUMN_CHANNEL_ID];
                     $i = $j;

@@ -192,7 +192,7 @@ class vod_korona extends vod_standard
             // genre:action
             // year:2024
             /** @var array $m */
-            if (!preg_match("/^(.+):(.+)$/", $pair, $m)) continue;
+            if (!preg_match("/^([^:]+):(.+)$/", $pair, $m)) continue;
 
             $filter = $this->get_filter_type($m[1]);
             if ($filter === null) continue;

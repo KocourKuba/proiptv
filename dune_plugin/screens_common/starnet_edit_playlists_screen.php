@@ -814,7 +814,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
-        $files = glob_dir($selected_media_url->{PARAM_FILEPATH}, "/\." . PLAYLIST_PATTERN . "$/i");
+        $files = glob_dir($selected_media_url->{PARAM_FILEPATH}, "/\.(" . PLAYLIST_PATTERN . ")$/i");
         if (empty($files)) {
             return Action_Factory::show_title_dialog(TR::t('error'), TR::t('edit_list_no_files'));
         }

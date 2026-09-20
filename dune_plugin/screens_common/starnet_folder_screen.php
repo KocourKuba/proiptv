@@ -361,7 +361,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                     $detailed_icon = $icon_file;
 
                     if (!isset($path_parts[PARAM_EXTENSION])
-                        || !preg_match('/^' . $new_media_url->{PARAM_EXTENSION} . '$/i', $path_parts[PARAM_EXTENSION])) {
+                        || !preg_match('/^(' . $new_media_url->{PARAM_EXTENSION} . ')$/i', $path_parts[PARAM_EXTENSION])) {
                         // skip extension not in allowed list
                         continue;
                     }

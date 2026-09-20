@@ -210,8 +210,8 @@ class HD
         $sysinfo = @file(getenv('FS_PREFIX') ."/tmp/sysinfo.txt", FILE_IGNORE_NEW_LINES);
         if ($sysinfo !== false) {
             foreach ($sysinfo as $line) {
-                if (preg_match('/product_id:/', $line) ||
-                    preg_match('/firmware_version:/', $line)) {
+                if (strpos($line, 'product_id:') !== false ||
+                    strpos($line, 'firmware_version:') !== false) {
                     $line = trim($line);
 
                     if (empty($extra_useragent))
@@ -561,7 +561,10 @@ class HD
         // cut <?xml> tag
         $patched_skin_config = substr($xml, strpos($xml, '?>') + 2);
 
-        if (preg_match('/\/*firmware/', $skin_path)) {
+        $fw_path = getenv('FS_PREFIX') . '/firmware';
+        $fw_len = strlen($fw_path);
+        if (strncmp($skin_path, $fw_path, $fw_len) === 0
+            && (!isset($skin_path[$fw_len]) || $skin_path[$fw_len] === '/')) {
             // copy system skin to custom skin
             $custom_skin_path = preg_replace('/(.*\/(flashdata|persistfs)).*$/', "$1", get_data_path()) . '/dune_skin';
             hd_debug_print("New custom skin path: $custom_skin_path");

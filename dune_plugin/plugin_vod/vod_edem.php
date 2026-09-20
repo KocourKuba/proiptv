@@ -241,7 +241,7 @@ class vod_edem extends vod_standard
         $post_params = array();
         foreach ($pairs as $pair) {
             /** @var array $m */
-            if (!preg_match("/^(.+):(.+)$/", $pair, $m)) continue;
+            if (!preg_match("/^([^:]+):(.+)$/", $pair, $m)) continue;
             $filter = $this->get_filter_type($m[1]);
             if ($filter !== null && !empty($filter['values'])) {
                 $item_idx = array_search($m[2], $filter['values']);

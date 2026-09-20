@@ -273,7 +273,7 @@ class vod_cbilling extends vod_standard
         $cur_year = date('Y', time());
         foreach ($pairs as $pair) {
             /** @var array $m */
-            if (!preg_match("/^(.+):(.+)$/", $pair, $m)) continue;
+            if (!preg_match("/^([^:]+):(.+)$/", $pair, $m)) continue;
             $filter = $this->get_filter_type($m[1]);
             if (isset($filter['text'])) {
                 if ((int)$m[2] <= 0) {

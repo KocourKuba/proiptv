@@ -562,10 +562,11 @@ class vod_standard extends Abstract_Vod
             // fill get value from already set user filter
             if (!empty($user_filter)) {
                 $pairs = explode(',', $user_filter);
+                $prefix = $name . ':';
+                $prefix_len = strlen($prefix);
                 foreach ($pairs as $pair) {
-                    /** @var array $m */
-                    if (strpos($pair, $name . ":") !== false && preg_match("/^$name:(.+)/", $pair, $m)) {
-                        $user_value = $m[1];
+                    if (strncmp($pair, $prefix, $prefix_len) === 0 && isset($pair[$prefix_len])) {
+                        $user_value = substr($pair, $prefix_len);
                         break;
                     }
                 }
@@ -730,7 +731,7 @@ class vod_standard extends Abstract_Vod
         $filter_params = array();
         foreach (explode(',', $query_id) as $pair) {
             /** @var array $m */
-            if (preg_match("/^(.+):(.+)$/", $pair, $m)) {
+            if (preg_match("/^([^:]+):(.+)$/", $pair, $m)) {
                 $filter = $this->get_filter_type($m[1]);
                 if ($filter !== null && !empty($filter['values'])) {
                     $item_key = array_search($m[2], $filter['values']);

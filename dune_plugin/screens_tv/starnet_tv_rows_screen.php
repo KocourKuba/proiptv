@@ -1087,7 +1087,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 $lines = array_slice(explode("\n",
                     iconv('Windows-1251', 'UTF-8',
                         wordwrap(iconv('UTF-8', 'Windows-1251',
-                            trim(preg_replace('/([!?])\.+\s*$/Uu', '$1', $title))),
+                            trim(preg_replace('/([!?])\.+\s*$/', '$1', $title))),
                             40, "\n", true)
                     )),
                     0, 2);

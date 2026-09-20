@@ -422,7 +422,8 @@ class smb_tree
         $d = array();
         $network_folder_smb = self::get_network_folder_smb();
         foreach ($network_folder_smb as $k => $v) {
-            if (!preg_match('/((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)/', $k)) {
+            // anchored: unanchored, a host name such as 'nas192.168.1.5x' counted as an address
+            if (!preg_match('/^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$/', $k)) {
                 $out = shell_exec(self::get_nmblookup_path() . ' "' . $k . '" -S');
                 /** @var array $m */
                 if (preg_match('/(.*) (.*)<00>/', $out, $m)) {

@@ -1136,7 +1136,7 @@ class Dune_Default_Sqlite_Engine
      *
      * @param string $name
      * @param string $value
-     * @return mixed
+     * @return array|false|int|string
      */
     public function get_settings_value_id($name, $value)
     {
@@ -1150,7 +1150,7 @@ class Dune_Default_Sqlite_Engine
      *
      * @param string $name
      * @param int $id
-     * @return mixed
+     * @return array|false|int|string
      */
     public function get_settings_value($name, $id)
     {
@@ -2366,7 +2366,7 @@ class Dune_Default_Sqlite_Engine
      * @param string $movie_id
      * @param string $series_id
      * @param string|null $param_name
-     * @return mixed
+     * @return array|false|int|string
      */
     public function get_vod_history_params($movie_id, $series_id, $param_name = null)
     {

@@ -157,7 +157,7 @@ class Control_Factory_Ext extends Control_Factory
         $indexed_colors_map = array_merge(array('0x5effffff'), func_get_args());
 
         foreach ($indexed_colors_map as $idx => $argb_color) {
-            if (preg_match('/0x[0-9|a-f]{8}$/i', $argb_color)) {
+            if (preg_match('/^0x[0-9a-f]{8}$/i', $argb_color)) {
                 $argb = str_split($argb_color, 2);
                 self::$instance->dots[$idx] = $dots_path . "/$argb_color.aai";
 
