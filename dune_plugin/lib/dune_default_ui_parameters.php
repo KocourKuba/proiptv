@@ -321,8 +321,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             $img_ym = get_temp_path('qr_ym.png');
             $img_pp = get_temp_path('qr_pp.png');
             $curl_wrapper = Curl_Wrapper::getInstance();
-            $curl_wrapper->download_file(self::RESOURCE_URL . "QR_YM.png", $img_ym, Curl_Wrapper::CACHE_RESPONSE);
-            $curl_wrapper->download_file(self::RESOURCE_URL . "QR_PP.png", $img_pp, Curl_Wrapper::CACHE_RESPONSE);
+            $curl_wrapper->download_file(self::RESOURCE_URL . "QR_YM.png", $img_ym);
+            $curl_wrapper->download_file(self::RESOURCE_URL . "QR_PP.png", $img_pp);
 
             $defs = array();
             Control_Factory::add_vgap($defs, 50);

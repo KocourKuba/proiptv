@@ -150,6 +150,7 @@ class Curl_Wrapper
         $this->send_headers = array();
         $this->is_post = false;
         $this->post_data = null;
+        $this->options = array();
     }
 
     /**
@@ -157,7 +158,7 @@ class Curl_Wrapper
      *
      * @param string $url
      * @param string $save_file path to file
-     * @param int $cache_opts caching parameters
+     * @param int $cache_opts caching parameters, CACHE_RESPONSE has no effect here - the response cache stores bodies, not files
      * @return bool result of operation
      */
     public function download_file($url, $save_file, $cache_opts = 0)
@@ -261,7 +262,7 @@ class Curl_Wrapper
     public static function get_raw_response_headers()
     {
         $headers = array();
-        foreach (self::$http_response_headers as $key => $header) {
+        foreach (self::get_response_headers() as $key => $header) {
             $headers[] = "$key: $header";
         }
 
@@ -539,7 +540,8 @@ class Curl_Wrapper
         }
 
         $cached_path = $this->file_cache_path . $hash;
-        if ($cache_opts & self::CACHE_RESPONSE) {
+        // the response cache holds bodies, it is meaningless for a file download or a HEAD
+        if (($cache_opts & self::CACHE_RESPONSE) && $mode === self::GET_CONTENT) {
             hd_debug_print("cache opts: Use cache response. Cache time: {$this->file_cache_time}h", true);
             if (file_exists($cached_path)) {
                 $now = time();
@@ -561,7 +563,18 @@ class Curl_Wrapper
         $etag = '';
         if ($cache_opts & self::USE_ETAG) {
             hd_debug_print('cache opts: Use ETag capability', true);
-            if (!file_exists($cached_path)) {
+            // a conditional request is only safe when a copy exists to fall back on when
+            // the server answers 304 - the response cache for GET_CONTENT, the destination
+            // for SAVE_FILE, while a HEAD wants no body at all
+            if ($mode === self::GET_CONTENT) {
+                $have_copy = file_exists($cached_path);
+            } else if ($mode === self::SAVE_FILE) {
+                $have_copy = file_exists($save_file);
+            } else {
+                $have_copy = true;
+            }
+
+            if (!$have_copy) {
                 hd_debug_print('Cached copy not exist!', true);
             } else {
                 $etag = self::get_cached_etag($url);
@@ -660,7 +673,7 @@ class Curl_Wrapper
             }
         }
 
-        if (($cache_opts & self::CACHE_RESPONSE) && $save_file === null && !empty($content)) {
+        if (($cache_opts & self::CACHE_RESPONSE) && $mode === self::GET_CONTENT && !empty($content)) {
             hd_debug_print("Save response to $cached_path", true);
             file_put_contents($cached_path, $content);
         }
