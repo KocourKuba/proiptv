@@ -334,12 +334,20 @@ class Curl_Wrapper
     {
         if ($all) {
             $path = get_slash_trailed_path(get_data_path(CURL_CACHE_SUBDIR));
-            delete_directory($path);
-            create_path($path);
+            // the etag db lives inside this path, an open handle would keep writing
+            // to the deleted file after the wipe
+            if (self::$etag_db !== null) {
+                self::$etag_db->close();
+                self::$etag_db = null;
+            }
         } else {
             $path = $this->file_cache_path;
-            delete_directory($path);
         }
+
+        delete_directory($path);
+        create_path($path);
+        // no-op unless the handle was dropped above
+        self::init_etag_db();
 
         hd_debug_print("Clear query cache: $path");
     }
@@ -363,6 +371,7 @@ class Curl_Wrapper
             }
         }
     }
+
     /**
      * @param string $url
      * @return string
