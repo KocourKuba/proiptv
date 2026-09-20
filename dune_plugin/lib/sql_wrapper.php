@@ -36,6 +36,64 @@ class Sql_Wrapper
     const SQLITE_CACHE_SIZE_KB_VERSION = 3007010;
     const SQLITE_MMAP_VERSION = 3007017;
 
+    // Statement templates shared across the plugin. Each one is a sprintf() format and the
+    // comment gives the argument order, since the placeholders are otherwise indistinguishable.
+    // Having one spelling per statement is also what removes the 'count(*)'/'COUNT(*)' and
+    // trailing-semicolon variants that used to differ between call sites.
+    const BEGIN_TRANSACTION = 'BEGIN;';
+    const COMMIT_TRANSACTION = 'COMMIT;';
+    const ROLLBACK_TRANSACTION = 'ROLLBACK;';
+
+    // $action argument of bulk_insert() and prepare_bind()
+    const INSERT_OR_IGNORE = 'INSERT OR IGNORE';
+
+    // (columns, table)
+    const SELECT_FROM = 'SELECT %s FROM %s;';
+    // (columns, table)
+    const SELECT_FROM_ORDERED = 'SELECT %s FROM %s ORDER BY ROWID;';
+    // (columns, table, column, value)
+    const SELECT_FROM_WHERE = 'SELECT %s FROM %s WHERE %s=%s;';
+    // (columns, table, column, value)
+    const SELECT_FROM_WHERE_ORDERED = 'SELECT %s FROM %s WHERE %s=%s ORDER BY ROWID;';
+    // (table, column, value)
+    const SELECT_ALL_WHERE = 'SELECT * FROM %s WHERE %s=%s;';
+    // (table)
+    const SELECT_COUNT = 'SELECT COUNT(*) FROM %s;';
+    // (table, column, value)
+    const SELECT_COUNT_WHERE = 'SELECT COUNT(*) FROM %s WHERE %s=%s;';
+    // (column, table)
+    const SELECT_COUNT_DISTINCT = 'SELECT COUNT(DISTINCT %s) FROM %s;';
+
+    // (table, columns, values)
+    const INSERT_OR_IGNORE_INTO = 'INSERT OR IGNORE INTO %s (%s) VALUES (%s);';
+    // (table, column, column, column, value, value, value)
+    const INSERT_OR_IGNORE_INTO_3 = 'INSERT OR IGNORE INTO %s (%s,%s,%s) VALUES (%s,%s,%s);';
+    // (table, column, column, column, value, value, value)
+    const INSERT_OR_REPLACE_INTO_3 = 'INSERT OR REPLACE INTO %s (%s,%s,%s) VALUES (%s,%s,%s);';
+
+    // (table, column, value, column, value)
+    const UPDATE_SET_WHERE = 'UPDATE %s SET %s=%s WHERE %s=%s;';
+    // (table, column, int value, column, value)
+    const UPDATE_SET_INT_WHERE = 'UPDATE %s SET %s=%d WHERE %s=%s;';
+    // (table, new rowid, old rowid)
+    const UPDATE_ROWID = 'UPDATE %s SET ROWID=%d WHERE ROWID=%d;';
+
+    // (table, column, value)
+    const DELETE_FROM_WHERE = 'DELETE FROM %s WHERE %s=%s;';
+    // (table, condition)
+    const DELETE_FROM_WHERE_COND = 'DELETE FROM %s WHERE %s;';
+
+    // (table, columns definition)
+    const CREATE_TABLE_IF_NOT_EXISTS = 'CREATE TABLE IF NOT EXISTS %s (%s);';
+    // (table)
+    const DROP_TABLE = 'DROP TABLE %s;';
+    // (table)
+    const DROP_TABLE_IF_EXISTS = 'DROP TABLE IF EXISTS %s;';
+    // (table, new name)
+    const ALTER_TABLE_RENAME = 'ALTER TABLE %s RENAME TO %s;';
+    // (table, column)
+    const ALTER_TABLE_ADD_INT_COLUMN = 'ALTER TABLE %s ADD COLUMN %s INTEGER DEFAULT 0;';
+
     // Default flags SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
     /**
      * @param string $db_path
@@ -534,7 +592,7 @@ class Sql_Wrapper
 
         // If we're already inside a caller-managed transaction, BEGIN fails here -
         // in that case don't COMMIT/ROLLBACK below either, leave it to the caller.
-        $own_transaction = $this->db->exec('BEGIN;');
+        $own_transaction = $this->db->exec(self::BEGIN_TRANSACTION);
 
         foreach ($rows as $row) {
             foreach ($columns as $column) {
@@ -553,7 +611,7 @@ class Sql_Wrapper
             if ($stmt->execute() === false) {
                 hd_debug_print("Error executing bulk_insert statement for table: $table");
                 if ($own_transaction !== false) {
-                    $this->db->exec('ROLLBACK;');
+                    $this->db->exec(self::ROLLBACK_TRANSACTION);
                 }
                 return false;
             }
@@ -563,9 +621,9 @@ class Sql_Wrapper
             return true;
         }
 
-        if ($this->db->exec('COMMIT;') === false) {
+        if ($this->db->exec(self::COMMIT_TRANSACTION) === false) {
             hd_debug_print("Error commit bulk_insert transaction for table: $table");
-            $this->db->exec('ROLLBACK;');
+            $this->db->exec(self::ROLLBACK_TRANSACTION);
             return false;
         }
 
@@ -585,7 +643,7 @@ class Sql_Wrapper
             return false;
         }
 
-        $query = 'BEGIN;' . $query . 'COMMIT;' ;
+        $query = self::BEGIN_TRANSACTION . $query . self::COMMIT_TRANSACTION ;
         if ($this->db->exec($query)) {
             return true;
         }
@@ -593,7 +651,7 @@ class Sql_Wrapper
         hd_debug_print();
         hd_debug_print('Error commit transaction!');
         hd_debug_print($query);
-        $this->db->exec('ROLLBACK;');
+        $this->db->exec(self::ROLLBACK_TRANSACTION);
         return false;
     }
 }

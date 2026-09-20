@@ -270,17 +270,17 @@ class M3uParser extends Json_Serializer
         $channels_columns = Sql_Wrapper::make_table_columns($init_channels);
         $channels_groups = Sql_Wrapper::make_table_columns($init_groups);
 
-        $query = sprintf('DROP TABLE IF EXISTS %s;', self::CHANNELS_TABLE);
-        $query .= sprintf('CREATE TABLE IF NOT EXISTS %s (%s);', self::CHANNELS_TABLE, $channels_columns);
-        $query .= sprintf('DROP TABLE IF EXISTS %s;', self::GROUPS_TABLE);
-        $query .= sprintf('CREATE TABLE IF NOT EXISTS %s (%s);', self::GROUPS_TABLE, $channels_groups);
+        $query = sprintf(Sql_Wrapper::DROP_TABLE_IF_EXISTS, self::CHANNELS_TABLE);
+        $query .= sprintf(Sql_Wrapper::CREATE_TABLE_IF_NOT_EXISTS, self::CHANNELS_TABLE, $channels_columns);
+        $query .= sprintf(Sql_Wrapper::DROP_TABLE_IF_EXISTS, self::GROUPS_TABLE);
+        $query .= sprintf(Sql_Wrapper::CREATE_TABLE_IF_NOT_EXISTS, self::GROUPS_TABLE, $channels_groups);
         $res = $db->exec_transaction($query);
         if (!$res) {
             hd_debug_print("Can't create table: " . self::CHANNELS_TABLE);
             return false;
         }
 
-        $stm_channels = $db->prepare_bind('INSERT OR IGNORE', self::CHANNELS_TABLE, array_keys($init_channels));
+        $stm_channels = $db->prepare_bind(Sql_Wrapper::INSERT_OR_IGNORE, self::CHANNELS_TABLE, array_keys($init_channels));
         if ($stm_channels === false) {
             hd_debug_print("Can't prepare bind statement");
             return false;
@@ -322,7 +322,7 @@ class M3uParser extends Json_Serializer
         $groups_cache = array();
         $entry = new Entry();
 
-        $db->exec('BEGIN;');
+        $db->exec(Sql_Wrapper::BEGIN_TRANSACTION);
         while (!feof($file_handle)) {
             $line = fgets($file_handle);
             if ($line === false) continue;
@@ -386,22 +386,22 @@ class M3uParser extends Json_Serializer
                     break;
             }
         }
-        $db->exec('COMMIT;');
+        $db->exec(Sql_Wrapper::COMMIT_TRANSACTION);
         fclose($file_handle);
 
-        $stm_groups = $db->prepare_bind('INSERT OR IGNORE', self::GROUPS_TABLE, array_keys($init_groups));
-        $db->exec('BEGIN;');
+        $stm_groups = $db->prepare_bind(Sql_Wrapper::INSERT_OR_IGNORE, self::GROUPS_TABLE, array_keys($init_groups));
+        $db->exec(Sql_Wrapper::BEGIN_TRANSACTION);
         foreach ($groups_cache as $group_title => $group) {
             $stm_groups->bindValue(':' . COLUMN_GROUP_ID, $group_title);
             $stm_groups->bindValue(':' . COLUMN_ICON, $group[COLUMN_ICON]);
             $stm_groups->bindValue(':' . COLUMN_ADULT, $group[COLUMN_ADULT]);
             $stm_groups->execute();
         }
-        $db->exec('COMMIT;');
+        $db->exec(Sql_Wrapper::COMMIT_TRANSACTION);
 
         self::createIptvIndexes($db, $index_columns);
 
-        $query = sprintf("SELECT COUNT(*) FROM %s;", self::CHANNELS_TABLE);
+        $query = sprintf(Sql_Wrapper::SELECT_COUNT, self::CHANNELS_TABLE);
         return $db->query_value($query);
     }
 
@@ -482,14 +482,14 @@ class M3uParser extends Json_Serializer
         );
         $vod_columns = Sql_Wrapper::make_table_columns($init_vod);
 
-        $query = sprintf('DROP TABLE IF EXISTS %s;', self::VOD_TABLE);
-        $query .= sprintf('CREATE TABLE IF NOT EXISTS %s (%s);', self::VOD_TABLE, $vod_columns);
+        $query = sprintf(Sql_Wrapper::DROP_TABLE_IF_EXISTS, self::VOD_TABLE);
+        $query .= sprintf(Sql_Wrapper::CREATE_TABLE_IF_NOT_EXISTS, self::VOD_TABLE, $vod_columns);
         $db->exec($query);
 
         $perf = new Perf_Collector();
         $perf->reset('start');
 
-        $stm_index = $db->prepare_bind('INSERT OR IGNORE', self::VOD_TABLE, array_keys($init_vod));
+        $stm_index = $db->prepare_bind(Sql_Wrapper::INSERT_OR_IGNORE, self::VOD_TABLE, array_keys($init_vod));
 
         // bound once by reference, see parseIptvPlaylist()
         $b_hash = null;
@@ -505,7 +505,7 @@ class M3uParser extends Json_Serializer
         $stm_index->bindParam(':' . COLUMN_PATH, $b_path);
         $stm_index->bindParam(':' . COLUMN_DESC, $b_desc);
 
-        $db->exec('BEGIN;');
+        $db->exec(Sql_Wrapper::BEGIN_TRANSACTION);
         $entry = new Entry();
         while (!feof($file_handle)) {
             $line = fgets($file_handle);
@@ -535,7 +535,7 @@ class M3uParser extends Json_Serializer
         }
         fclose($file_handle);
 
-        $db->exec('COMMIT;');
+        $db->exec(Sql_Wrapper::COMMIT_TRANSACTION);
 
         // Every VOD screen filters or groups by group_id - getVodGroups() takes the distinct
         // values, getVodEntries()/getVodCount() select one group - and the table only had the

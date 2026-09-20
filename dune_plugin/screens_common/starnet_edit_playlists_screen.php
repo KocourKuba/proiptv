@@ -996,9 +996,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         foreach ($saved_source as $key => $value) {
             $col = Sql_Wrapper::sql_make_list_from_keys($value);
             $val = Sql_Wrapper::sql_make_list_from_values($value);
-            $query .= sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);',
+            $query .= sprintf(Sql_Wrapper::INSERT_OR_IGNORE_INTO,
                 Dune_Default_Sqlite_Engine::PLAYLIST_XMLTV_TABLE, $col, $val);
-            $query .= sprintf("INSERT OR IGNORE INTO %s (%s) VALUES (%s);",
+            $query .= sprintf(Sql_Wrapper::INSERT_OR_IGNORE_INTO,
                 Dune_Default_Sqlite_Engine::SELECTED_XMLTV_TABLE, COLUMN_HASH, Sql_Wrapper::sql_quote($key));
         }
         $new_db->exec_transaction($query);

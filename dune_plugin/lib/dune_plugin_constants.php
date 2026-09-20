@@ -432,6 +432,19 @@ const GROUPS_INFO = 'groups_info';
 const GROUPS_ORDER = 'groups_order';
 const CHANNELS_INFO = 'channels_info';
 
+// Sql_Wrapper method names dispatched through the safe_sql_* wrappers
+const SQL_EXEC = 'exec';
+const SQL_EXEC_TRANSACTION = 'exec_transaction';
+const SQL_QUERY_VALUE = 'query_value';
+const SQL_FETCH_ARRAY = 'fetch_array';
+const SQL_BULK_INSERT = 'bulk_insert';
+const SQL_PREPARE_BIND = 'prepare_bind';
+const SQL_IS_TABLE_EXISTS = 'is_table_exists';
+const SQL_IS_COLUMN_EXISTS = 'is_column_exists';
+const SQL_IS_DATABASE_ATTACHED = 'is_database_attached';
+const SQL_ATTACH_DATABASE = 'attachDatabase';
+const SQL_DETACH_DATABASE = 'detachDatabase';
+
 const INDEXING_DOWNLOAD = 1;
 const INDEXING_CHANNELS = 2;
 const INDEXING_ENTRIES = 4;

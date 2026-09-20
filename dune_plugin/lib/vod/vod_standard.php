@@ -671,12 +671,12 @@ class vod_standard extends Abstract_Vod
     public function getVodCount($group_id)
     {
         if (empty($group_id)) {
-            $query = sprintf("SELECT COUNT(*) FROM %s", M3uParser::VOD_TABLE);
+            $query = sprintf(Sql_Wrapper::SELECT_COUNT, M3uParser::VOD_TABLE);
         } else {
-            $query = sprintf("SELECT COUNT(*) FROM %s WHERE %s=%s", M3uParser::VOD_TABLE, COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($group_id));
+            $query = sprintf(Sql_Wrapper::SELECT_COUNT_WHERE, M3uParser::VOD_TABLE, COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($group_id));
         }
 
-        return (int)$this->plugin->safe_sql_vod('query_value', $query);
+        return (int)$this->plugin->safe_sql_vod(SQL_QUERY_VALUE, $query);
     }
 
     /**
@@ -696,7 +696,7 @@ class vod_standard extends Abstract_Vod
         if ($limit > 0) {
             $query = sprintf("%s LIMIT %s, %s;", $query, $from, $limit);
         }
-        return $this->plugin->safe_sql_vod('fetch_array', $query);
+        return $this->plugin->safe_sql_vod(SQL_FETCH_ARRAY, $query);
     }
 
     /**
@@ -707,7 +707,7 @@ class vod_standard extends Abstract_Vod
     public function getVodGroups()
     {
         $query = sprintf("SELECT DISTINCT %s FROM %s;", COLUMN_GROUP_ID, M3uParser::VOD_TABLE);
-        return $this->plugin->safe_sql_vod('fetch_array', $query, COLUMN_GROUP_ID);
+        return $this->plugin->safe_sql_vod(SQL_FETCH_ARRAY, $query, COLUMN_GROUP_ID);
     }
 
     /**
@@ -718,8 +718,8 @@ class vod_standard extends Abstract_Vod
      */
     public function getVod($hash)
     {
-        $query = sprintf("SELECT * FROM %s WHERE %s=%s;", M3uParser::VOD_TABLE, COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
-        return $this->plugin->safe_sql_vod('query_value', $query, true);
+        $query = sprintf(Sql_Wrapper::SELECT_ALL_WHERE, M3uParser::VOD_TABLE, COLUMN_HASH, Sql_Wrapper::sql_quote($hash));
+        return $this->plugin->safe_sql_vod(SQL_QUERY_VALUE, $query, true);
     }
 
     /**
