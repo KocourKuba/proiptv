@@ -11,6 +11,7 @@ archive_url = 存档网址:
 attribute_name__1 = M3U属性 '%s'
 auto = 自动模式
 balance = 账户余额:
+bitrate = 比特率:
 bottom = 到底
 by_default = 默认
 cache = 缓存:

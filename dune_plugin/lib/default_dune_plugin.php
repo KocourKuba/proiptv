@@ -45,6 +45,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     const ARCHIVE_URL_PREFIX = 'http://iptv.esalecrm.net/res';
     const ARCHIVE_ID = 'common';
     const PARSE_CONFIG = "%s_parse_config.json";
+    const MEDIA_INFO_LOG_LINES = 20;
 
     /**
      * @var Starnet_Tv
@@ -3108,7 +3109,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 return null;
             }
 
-            $streams = $this->get_streams_info(htmlspecialchars($live_url));
+            $streams = $this->get_streams_info($live_url);
             $out = null;
             $title = '';
             if (!empty($streams['streams'])) {
@@ -3125,6 +3126,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             Control_Factory::add_vgap($defs, 15);
             foreach ($out as $line) {
                 Control_Factory::format_smart_label($defs, $title, $line);
+            }
+
+            if (!empty($streams['streams']) && !empty($streams['bitrate'])) {
+                Control_Factory::format_smart_label($defs, TR::load('bitrate'), $streams['bitrate']);
             }
             Control_Factory::add_vgap($defs, 15);
             Control_Factory::add_ok_button($defs, true);
@@ -3191,6 +3196,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 Control_Factory::format_smart_label($defs, 'ffmpeg info:', '');
                 foreach ($out as $line) {
                     Control_Factory::format_smart_label($defs, $title, $line);
+                }
+
+                if (!empty($info['streams']) && !empty($info['bitrate'])) {
+                    Control_Factory::format_smart_label($defs, TR::load('bitrate'), $info['bitrate']);
                 }
             }
         }
@@ -4404,10 +4413,20 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * Collect information about video and audio streams of the given url.
+     *
+     * bin/media_check.sh samples the stream for a few seconds instead of only probing it,
+     * so beside the stream description ffmpeg reports how many bytes it moved for every
+     * stream. That is the only way to get the bitrate of a live stream, the container
+     * itself almost never declares one.
+     *
      * @param string $stream_url
-     * @return array
+     * @param int $sample_duration how many seconds of the stream are read to measure the bitrate
+     * @return array 'streams' - description of each detected stream
+     *               'bitrate' - bitrate of the streams selected for playback
+     *               'log' - ffmpeg messages, filled only when no stream was detected
      */
-    protected function get_streams_info($stream_url)
+    protected function get_streams_info($stream_url, $sample_duration = 5)
     {
         $descriptors = array(
             0 => array('pipe', 'r'), // stdin
@@ -4418,7 +4437,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Get media info for: $stream_url");
         /** @var array $pipes */
         $process = proc_open(
-            get_install_path('bin/media_check.sh') . " '$stream_url'",
+            sprintf('%s -d %d %s',
+                get_install_path('bin/media_check.sh'), $sample_duration, escapeshellarg($stream_url)),
             $descriptors,
             $pipes);
 
@@ -4426,31 +4446,112 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if (is_resource($process)) {
             $output = stream_get_contents($pipes[1]);
 
+            fclose($pipes[0]);
             fclose($pipes[1]);
+            fclose($pipes[2]);
             proc_close($process);
 
-            foreach (explode("\n", $output) as $line) {
-                $line = trim($line);
-                if (empty($line)) continue;
-                if (strpos($line, "Output") !== false) break;
-                if (strpos($line, "Stream mapping") !== false) break;
-                if (strpos($line, "Stream #") !== false) {
-                    $line = substr($line, 7);
-                    $line = preg_replace('/ \(\[.*\)| \[.*]|, [0-9k.]+ tb[rcn]|, q=[0-9\-]+/', "", $line);
-                    $out['streams'][] = $line;
+            $out = self::parse_streams_info($output);
+        }
+
+        if (empty($out['streams'])) {
+            $ffmpeg_log = get_temp_path('ffmpeg.log');
+            if (file_exists($ffmpeg_log)) {
+                $log = array();
+                $content = str_replace("\r", PHP_EOL, file_get_contents($ffmpeg_log));
+                foreach (explode(PHP_EOL, $content) as $line) {
+                    if (preg_match('/\[.+]\s(.+)/', $line, $m)) {
+                        $log[] = $m[1];
+                    }
                 }
+
+                // verbose output is long and only the tail carries the reason of the failure
+                if (count($log) > self::MEDIA_INFO_LOG_LINES) {
+                    $log = array_slice($log, -self::MEDIA_INFO_LOG_LINES);
+                }
+                $out['log'] = $log;
             }
         }
 
-        $ffmpeg_log = get_temp_path('ffmpeg.log');
-        if (file_exists($ffmpeg_log)) {
-            $content = file_get_contents($ffmpeg_log);
-            foreach (explode(PHP_EOL, $content) as $line) {
-                if (preg_match('/\[.+]\s(.+)/', $line, $m)) {
-                    $out['log'][] = $m[1];
+        return $out;
+    }
+
+    /**
+     * Parse the ffmpeg output collected by bin/media_check.sh
+     *
+     * @param string $output
+     * @return array see get_streams_info()
+     */
+    protected static function parse_streams_info($output)
+    {
+        // the progress report is separated by CR, turn it into regular lines
+        $output = str_replace("\r", "\n", $output);
+
+        $streams = array();  // input stream index => description
+        $mapping = array();  // output stream index => input stream index
+        $muxed = array();    // output stream index => bytes muxed
+        $declared = '';      // bitrate declared by the container, if any
+        $duration = 0.0;     // how many seconds of the stream were really read
+        $in_header = true;   // everything before the 'Stream mapping' block describes the input
+
+        foreach (explode("\n", $output) as $line) {
+            $line = trim($line);
+            if (empty($line)) continue;
+
+            hd_debug_print($line);
+            if ($in_header) {
+                if (strpos($line, 'Stream mapping') !== false || strpos($line, 'Output ') === 0) {
+                    $in_header = false;
+                } else if (preg_match('/^Stream #\d+:(\d+)\D/', $line, $m)) {
+                    $streams[(int)$m[1]] = substr($line, 7);
+                } else if (preg_match('/^Duration:.*bitrate:\s*(.+)$/', $line, $m)) {
+                    $declared = trim($m[1]);
                 }
+                continue;
+            }
+
+            if (preg_match('/^Stream #\d+:(\d+) -> #\d+:(\d+)/', $line, $m)) {
+                $mapping[(int)$m[2]] = (int)$m[1];
+            } else if (preg_match('/Output stream #\d+:(\d+) \(\w+\): \d+ packets muxed \((\d+) bytes\)/', $line, $m)) {
+                $muxed[(int)$m[1]] = (float)$m[2];
+            } else if (preg_match('/\btime=(\d+):(\d+):(\d+(?:\.\d+)?)/', $line, $m)) {
+                // the last progress report tells how much of the stream was processed
+                $duration = $m[1] * 3600 + $m[2] * 60 + (float)$m[3];
             }
         }
+
+        // bytes muxed are reported per output stream, report them per input stream
+        $measured = array();
+        foreach ($muxed as $out_idx => $bytes) {
+            if (isset($mapping[$out_idx])) {
+                $measured[$mapping[$out_idx]] = $bytes;
+            }
+        }
+
+        $out = array();
+        foreach ($streams as $idx => $description) {
+            $description = preg_replace(
+                '/ \(\[.*?\)| \(\w+ \/ 0x[0-9A-Fa-f]+\)| \[.*?]|, \d+ reference frames?|, [0-9k.]+ tb[rcn]|, start [0-9.]+|, q=[0-9\-]+/',
+                "", $description);
+            if ($duration > 0 && isset($measured[$idx])) {
+                $rate = sprintf(', ~%d kb/s', format_kbits($measured[$idx], $duration));
+                // some streams declare a bitrate, the measured one is what really comes over the wire
+                $replaced = preg_replace('/,\s*\d+\s*kb\/s/', $rate, $description, 1, $count);
+                $description = $count ? $replaced : $description . $rate;
+            }
+            $out['streams'][] = $description;
+        }
+
+        if ($duration > 0 && !empty($measured)) {
+            $out['bitrate'] = sprintf('%d kb/s (%.1f sec sample)',
+                format_kbits(array_sum($measured), $duration), $duration);
+        } else if (!empty($declared) && stripos($declared, 'N/A') === false) {
+            // nothing was sampled, fall back to what the container declares
+            $out['bitrate'] = $declared;
+        }
+
+        hd_debug_print("Detected streams: " . count($streams) . ", measured: " . count($measured)
+            . ", sampled: $duration sec, bitrate: " . safe_get_value($out, 'bitrate', 'unknown'), true);
 
         return $out;
     }

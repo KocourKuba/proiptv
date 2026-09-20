@@ -11,6 +11,7 @@ archive_url = Архив:
 attribute_name__1 = M3U атрибут '%s'
 auto = Автоматически
 balance = Баланс:
+bitrate = Битрейт:
 bottom = В конец
 by_default = По умолчанию
 cache = Кэширование:

@@ -5,6 +5,9 @@ plugin_root=$(builtin cd "$thisdir/.." && pwd)
 plugin_name=$(basename "$plugin_root")
 LOG_FILE="$FS_PREFIX/tmp/plugins/$plugin_name/media_check.log"
 RESULT_FILE="$FS_PREFIX/tmp/plugins/$plugin_name/ffmpeg.log"
+# How many seconds of the stream are read to measure the real bitrate.
+# Overridden by the '-d <seconds>' option.
+SAMPLE_SEC=5
 
 RunWithTimeout()
 {
@@ -34,27 +37,44 @@ RunWithTimeout()
 
 ProcessURL()
 {
-  # Run ffmpeg to get media information
+  # Run ffmpeg to get media information.
+  #
+  # The stream is copied (not decoded) into the null muxer for SAMPLE_SEC seconds.
+  # Reading the stream instead of only probing it is what gives the bitrate: a live
+  # stream almost never declares one, but ffmpeg reports how many bytes it moved for
+  # each stream, and that is printed only with '-v verbose'.
+  # No '-map' is used on purpose - ffmpeg then reads exactly the streams the player
+  # would select, so a HLS master playlist is not pulled variant by variant.
+  #
   # Example output:
   # ...
-  #   Stream #0:0: Video: h264 (Main) ([27][0][0][0] / 0x001B), yuv420p, 1920x1080 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 90k tbn, 50 tbc
-  #   Stream #0:1: Audio: aac (LC) ([15][0][0][0] / 0x000F), 48000 Hz, stereo, fltp
-  #   Stream #0:2: Audio: aac (LC) ([15][0][0][0] / 0x000F), 48000 Hz, stereo, fltp
-  #   Stream #0:0: Video: wrapped_avframe, yuv420p, 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 200 kb/s, 25 fps, 25 tbn, 25 tbc
-  #   Stream #0:1: Audio: pcm_s16le, 48000 Hz, stereo, s16, 1536 kb/s
+  #   Duration: N/A, start: 1.456778, bitrate: N/A
+  #   Stream #0:0[0x100]: Video: h264 (High) ([27][0][0][0] / 0x001B), yuv420p(tv, bt709), 1920x1080 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 90k tbn
+  #   Stream #0:1[0x101](rus): Audio: aac (LC) ([15][0][0][0] / 0x000F), 48000 Hz, stereo, fltp
+  # Stream mapping:
+  #   Stream #0:0 -> #0:0 (copy)
+  #   Stream #0:1 -> #0:1 (copy)
+  # ...
+  # [out#0/null @ 0x...]   Output stream #0:0 (video): 127 packets muxed (1309699 bytes);
+  # [out#0/null @ 0x...]   Output stream #0:1 (audio): 216 packets muxed (80039 bytes);
+  # [out#0/null @ 0x...]   Total: 343 packets (1389738 bytes) muxed
+  # [out#0/null @ 0x...] video:1279KiB audio:78KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+  # frame=  127 fps=0.0 q=-1.0 Lsize=N/A time=00:00:05.02 bitrate=N/A speed=2.29e+03x
   # ...
 
   URL="$1"
-  FFMPEG_TIMEOUT_USEC=10000000
-  rm -rf $RESULT_FILE
+  # sampling alone takes SAMPLE_SEC, the rest is headroom for connect and probe
+  FFMPEG_TIMEOUT_USEC=`expr "$SAMPLE_SEC" \* 1000000 + 15000000`
+  rm -f "$RESULT_FILE"
 
-  RunWithTimeout "$FFMPEG_TIMEOUT_USEC" "$FFMPEG_PATH" -hide_banner -i "$URL" -vframes 0 -aframes 0 -f null /dev/null >"$RESULT_FILE" 2>&1
+  RunWithTimeout "$FFMPEG_TIMEOUT_USEC" "$FFMPEG_PATH" -hide_banner -no_buf_adj 1 -v verbose \
+    -t "$SAMPLE_SEC" -i "$URL" -c copy -f null /dev/null >"$RESULT_FILE" 2>&1
 
   STATUS="$?"
   cat "$RESULT_FILE"
 
-  if [ "$STATUS" > 1 ]; then
-    echo "`date`: ffmpeg finished with status $STATUS" | tee -a $LOG_FILE
+  if [ "$STATUS" -ne 0 ]; then
+    echo -e "\n`date`: ffmpeg finished with status $STATUS" | tee -a $LOG_FILE
     return 1
   fi
 }
@@ -66,6 +86,12 @@ FFMPEG_PATH="$plugin_root/bin/ffmpeg-7.1.3"
 
 if [ "$#" -gt 0 ]; then
   while [ "$#" -gt 0 ]; do
+    if [ "$1" = "-d" ]; then
+      SAMPLE_SEC="$2"
+      echo "sample duration: $SAMPLE_SEC" >>$LOG_FILE
+      shift 2
+      continue
+    fi
     echo "processing param URL: $1" >>$LOG_FILE
     ProcessURL "$1"
     shift

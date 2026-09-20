@@ -11,6 +11,7 @@ archive_url = URL des Archivs:
 attribute_name__1 = M3U-Attribut „%s“
 auto = Automatisch
 balance = Balanz:
+bitrate = Bitrate:
 bottom = Unteres
 by_default = standartmäßig
 cache = Caching:

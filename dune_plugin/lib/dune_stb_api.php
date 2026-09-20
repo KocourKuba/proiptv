@@ -1150,6 +1150,16 @@ function format_size($bytes)
 }
 
 /**
+ * @param float $bytes
+ * @param float $duration
+ * @return int
+ */
+function format_kbits($bytes, $duration)
+{
+    return (int)round($bytes * 8 / $duration / 1000);
+}
+
+/**
  * @param string $cmd
  * @return string
  */
