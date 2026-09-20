@@ -608,7 +608,6 @@ class Dune_Default_Sqlite_Engine
         $query = sprintf('INSERT OR IGNORE INTO %s (%s) VALUES (%s);', $table, $col, $val);
 
         if ($is_playlist) {
-            hd_debug_print($query, true);
             $this->safe_sql_playlist_settings('exec', $query);
         } else {
             $this->safe_sql_plugin('exec', $query);
