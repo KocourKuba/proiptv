@@ -7,7 +7,7 @@ Minimal firmware revision supported by the current version of the plugin (8.x) i
 
 For devices (Android-based), with a revision lower than R22, the latest version is [6.2.1358](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1358) Strongly recommend to update firmware to r22
 
-For old devices (Sigma chipset-based, non-Android), with a revision R11 or higher, the latest version is [5.1.1028](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1028)
+For old devices (Sigma chipset-based, non-Android), with a revision R11 or higher, the latest version is [5.1.1032](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1032)
 
 For Dune HD ATV devices (Homatics, Boxy, Premier) and Dune HD Whale TV there are some limitations like network access, Sleep timer, etc.
 
@@ -21,7 +21,7 @@ For Dune HD ATV devices (Homatics, Boxy, Premier) and Dune HD Whale TV there are
 
 Для приставок (на Android) с ревизией прошивки меньше R22 - актуальная версия [6.2.1358](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1358) рекомендую обновить прошивку до r22
 
-Для старых приставок (на чипсете Sigma, не Android), с ревизией прошивки R11 и выше - актуальная версия [5.1.1028](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1028)
+Для старых приставок (на чипсете Sigma, не Android), с ревизией прошивки R11 и выше - актуальная версия [5.1.1032](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1032)
 
 Для приставок Dune HD на базе ATV (Homatics, Boxy, Premier) и Dune HD Whale TV есть ограничения в функциональности. Сеть, таймер выключения.
 
