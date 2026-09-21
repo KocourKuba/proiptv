@@ -4579,11 +4579,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $find_chunks = function (&$total, $chunks, $raw_descr) {
             foreach ($chunks as $key => $pattern) {
-                if (is_string($pattern)) {
-                    $items[] = $pattern;
-                } else {
-                    $items = $pattern;
-                }
+                // $items must be rebuilt for each key, otherwise patterns of the
+                // previous keys are kept and retried before the current one
+                $items = is_string($pattern) ? array($pattern) : $pattern;
                 foreach ($items as $item) {
                     $m = preg_split($item, $raw_descr, 0, PREG_SPLIT_DELIM_CAPTURE);
                     if (!isset($m[1])) continue;
@@ -4597,18 +4595,47 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return trim($raw_descr, ", \n\r\t\v\0");
         };
 
-        if (strpos($icon, "media.24h.tv") !== false) {
-            $matcher = '24h.tv';
-            $icon = $icon . "?cover=true&w=320&h=180&crop=true";
-        } else if (strpos($icon, "resizer.mail.ru") !== false || strpos($icon, "kinopoisk-ru") !== false) {
-            $matcher = 'mail.ru';
-        } else {
-            $matcher = 'default';
+        // Pick the matcher from the config: 'icon' matches the picon host, 'detect' matches
+        // the shape of the description itself (needed because a provider may fall back to its
+        // own picon host for any feed). 'default' has neither and is used when nothing matched.
+        $matchers = isset($desc_parsers['matchers']) ? $desc_parsers['matchers'] : array();
+        $matcher = 'default';
+        foreach ($matchers as $name => $cfg) {
+            $found = false;
+            if (isset($cfg['icon'])) {
+                foreach ((array)$cfg['icon'] as $needle) {
+                    if (strpos($icon, $needle) !== false) {
+                        $found = true;
+                        break;
+                    }
+                }
+            }
+            if (!$found && isset($cfg['detect'])) {
+                $found = (bool)preg_match($cfg['detect'], $raw_descr);
+            }
+            if ($found) {
+                $matcher = $name;
+                break;
+            }
+        }
+
+        if (isset($matchers[$matcher]['icon_suffix'])) {
+            $icon .= $matchers[$matcher]['icon_suffix'];
+        }
+
+        // a matcher may define only what is special about its format and inherit the rest.
+        // '+' keeps the matcher's own keys (and their order) and appends the missing ones.
+        $chunks = isset($matchers[$matcher]['chunks']) ? $matchers[$matcher]['chunks'] : array();
+        if (isset($matchers[$matcher]['extends'])) {
+            $base = $matchers[$matcher]['extends'];
+            if (isset($matchers[$base]['chunks'])) {
+                $chunks += $matchers[$base]['chunks'];
+            }
         }
 
         $parsed = array();
-        if (isset($desc_parsers['matchers'][$matcher]['chunks'])) {
-            $raw_descr = $find_chunks($parsed, $desc_parsers['matchers'][$matcher]['chunks'], $raw_descr);
+        if (!empty($chunks)) {
+            $raw_descr = $find_chunks($parsed, $chunks, $raw_descr);
         }
 
         if (isset($desc_parsers['cleanup'])) {
@@ -4626,6 +4653,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if (isset($parsed['genre']))
             $result[PluginTvExtEpgProgram::main_category] = $parsed['genre'];
+        if (isset($parsed['sub_title']))
+            $result[PluginTvExtEpgProgram::sub_title] = $parsed['sub_title'];
         if (isset($parsed['year']))
             $result[PluginTvExtEpgProgram::year] = $parsed['year'];
         if (isset($parsed['country']))
@@ -4634,6 +4663,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $result[PluginTvExtEpgProgram::director] = $parsed['director'];
         if (isset($parsed['actor']))
             $result[PluginTvExtEpgProgram::actor] = $parsed['actor'];
+        if (isset($parsed['producer']))
+            $result[PluginTvExtEpgProgram::producer] = $parsed['producer'];
         if (isset($parsed['imdb_rating']))
             $result[PluginTvExtEpgProgram::imdb_rating] = $parsed['imdb_rating'];
         if (isset($parsed['kp_rating']))
