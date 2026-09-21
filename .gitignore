@@ -39,3 +39,5 @@
 /dune_fs/tmp/plugins/proiptv/*.json
 /dune_fs/tmp/plugins/proiptv/*.session_id
 /dune_fs/tmp/plugins/proiptv/*_session_id
+/dune_plugin/changelog*.md
+/dune_plugin/providers_*.json

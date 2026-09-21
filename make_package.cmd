@@ -1,19 +1,32 @@
 @echo off
 setlocal
 
+if not defined PHP_BIN set PHP_BIN=C:\php\php8\php.exe
+if not exist "%PHP_BIN%" set PHP_BIN=php
+
 set /p VERSION=<build\version.txt
-for /f "delims=" %%a in ('git log --oneline ^| find "" /v /c') do @set BUILD=%%a
+for /f "delims=" %%a in ('git rev-list --count HEAD') do @set BUILD=%%a
 
-php -f build\make_update.php %VERSION% %BUILD% %1
+"%PHP_BIN%" -f build\make_update.php %VERSION% %BUILD% %1
+if errorlevel 1 (
+  echo build failed
+  call :cleanup
+  exit /b 1
+)
 
-del dune_plugin_proiptv.zip >nul
+del dune_plugin_proiptv.zip >nul 2>&1
 
 pushd dune_plugin
 7z a ..\dune_plugin_proiptv.zip >nul
+set ZIP_RESULT=%ERRORLEVEL%
 popd
 
-del dune_plugin\changelog*.md   >nul 2>&1
-del dune_plugin\providers*.json >nul 2>&1
+call :cleanup
+
+if not %ZIP_RESULT% equ 0 (
+  echo 7z failed
+  exit /b 1
+)
 
 echo copy to Diskstation
 copy /Y dune_plugin_proiptv.zip \\DISKSTATION\Downloads\ >nul
@@ -22,11 +35,11 @@ echo.
 if '%1' == 'debug' goto :EOF
 
 choice /T 5 /D N /M "Upload"
-if ERRORLEVEL 2 goto :EOF
+if ERRORLEVEL 2 exit /b 0
 
 echo create GIT tag
 git tag %VERSION%.%BUILD%
-git.exe push --force  --tags  -- "origin" master:master
+git push --tags -- "origin" master:master
 
 echo copy to Dropbox
 copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\ >nul
@@ -37,7 +50,6 @@ echo.
 
 echo upload to server
 set /p CREDS=<creds.txt
-echo %CREDS%
 "C:\Program Files (x86)\WinSCP\WinSCP.com" ^
   /log="%~dp0WinSCP.log" /ini=nul ^
   /command ^
@@ -58,7 +70,12 @@ if %WINSCP_RESULT% equ 0 (
   echo Error
 )
 
-del .\providers_%VERSION%.json >nul
-del .\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
+del .\providers_%VERSION%.json >nul 2>&1
+del .\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul 2>&1
 
 exit /b %WINSCP_RESULT%
+
+:cleanup
+del dune_plugin\changelog*.md   >nul 2>&1
+del dune_plugin\providers*.json >nul 2>&1
+goto :EOF
