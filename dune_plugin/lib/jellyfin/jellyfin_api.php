@@ -140,8 +140,12 @@ class jellyfin_api
     public function getItemPlaybackInfo($id, $query)
     {
         $post_data['UserId'] = $this->userId;
-        $post_data['MediaSourceId'] = $query['MediaSourceId'];
-        $post_data['AudioStreamIndex'] = $query['AudioStreamIndex'];
+        // both are optional, without them the server picks the default source and audio track
+        foreach (array('MediaSourceId', 'AudioStreamIndex') as $key) {
+            if (isset($query[$key])) {
+                $post_data[$key] = $query[$key];
+            }
+        }
         $post_data['EnableTranscoding'] = false;
 
         $headers = $this->buildHeaders(true);
