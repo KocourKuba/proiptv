@@ -30,6 +30,7 @@ require_once "screens_tv/starnet_tv_rows_screen.php";
 
 require_once 'lib/dune_stb_api.php';
 require_once "lib/epfs/config.php";
+require_once "lib/epfs/rows_json_writer.php";
 require_once "lib/epfs/dummy_epfs_screen.php";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -116,11 +117,69 @@ class Starnet_Epfs_Handler
 
         self::ensure_no_internet_epfs_created($plugin_cookies);
 
-        $folder_view = self::$tv_rows_screen->get_folder_view_for_epf($plugin_cookies);
-
-        self::write_epfs_view(self::$epf_id, $folder_view);
+        if (!self::write_epfs_view_streamed(self::$epf_id, $plugin_cookies)) {
+            // nothing to stream, or the pane turned out to be the empty one
+            self::write_epfs_view(self::$epf_id, self::$tv_rows_screen->get_folder_view_for_epf($plugin_cookies));
+        }
 
         return Action_Factory::status(0);
+    }
+
+    /**
+     * Writes the rows pane straight to the epfs file, one row at a time.
+     *
+     * The pane for a large playlist is tens of MB of PHP arrays before
+     * json_encode() makes a string of the same size again; streaming it keeps
+     * only one row alive at a time. The file is compared with the existing one
+     * by md5 exactly as write_epfs_view() does, except the comparison happens
+     * after the temp file is written rather than before.
+     *
+     * @param string $epfs_id
+     * @param object $plugin_cookies
+     * @return bool false when the caller should fall back to the in-memory path
+     */
+    protected static function write_epfs_view_streamed($epfs_id, &$plugin_cookies)
+    {
+        $folder_view = self::$tv_rows_screen->get_streaming_folder_view($plugin_cookies);
+        if ($folder_view === null) {
+            return false;
+        }
+
+        $path = self::get_epfs_path($epfs_id);
+        $tmp_path = "$path.tmp";
+
+        $res = Rows_Json_Writer::write_to_file($tmp_path, $folder_view,
+            array(self::$tv_rows_screen, 'produce_rows'));
+
+        if ($res === false) {
+            safe_unlink($tmp_path);
+            return false;
+        }
+
+        if (!$res['produced']) {
+            // no category rows - the pane is the empty one, small enough to
+            // build the ordinary way
+            hd_debug_print('no category rows, not streamed', true);
+            safe_unlink($tmp_path);
+            return false;
+        }
+
+        if (is_file($path) && $res['md5'] === hash_file('md5', $path)) {
+            hd_debug_print("$path is up to date", true);
+            safe_unlink($tmp_path);
+            return true;
+        }
+
+        safe_unlink($path);
+        if (!rename($tmp_path, $path)) {
+            hd_debug_print("Failed to rename $tmp_path to $path");
+            safe_unlink($tmp_path);
+            return false;
+        }
+
+        hd_debug_print("written epf path: $path ({$res['rows']} rows)", true);
+
+        return true;
     }
 
     /**

@@ -454,7 +454,6 @@ class Sql_Wrapper
 
         $result = $this->db->exec($query);
         if ($result === false) {
-            hd_debug_print();
             hd_debug_print("failed to execute query: $query");
         }
         return $result;
@@ -496,7 +495,6 @@ class Sql_Wrapper
 
         $result = $this->db->prepare($query);
         if ($result === false) {
-            hd_debug_print();
             hd_debug_print("failed to prepare statement: $query");
         }
 
@@ -526,7 +524,6 @@ class Sql_Wrapper
 
         $result = $this->db->querySingle($query, $full_row);
         if ($result === false) {
-            hd_debug_print();
             hd_debug_print("failed to execute query: $query");
         }
         return $result;
@@ -558,11 +555,43 @@ class Sql_Wrapper
                 $rows[] = is_null($column) ? $row : $row[$column];
             }
         } else {
-            hd_debug_print();
             hd_debug_print("failed to fetch array: $query");
         }
 
         return $rows;
+    }
+
+    /**
+     * The same rows fetch_array() would return, as a cursor the caller walks
+     * itself with fetchArray(SQLITE3_ASSOC), instead of an array of all of
+     * them. For result sets big enough that the array is itself the problem -
+     * the NewUI pane on a large playlist reads tens of thousands of channel
+     * rows and never needs two of them at once.
+     *
+     * A cursor rather than a callback on purpose: a callback would add one PHP
+     * call per row, and on the 5.3 target that is the expensive part.
+     *
+     * @param string $query
+     * @return SQLite3Result|false
+     */
+    public function query_cursor($query)
+    {
+        if (empty($query)) {
+            return false;
+        }
+
+        if ($this->db === null) {
+            hd_debug_print("failed to query, db is closed: $query");
+            return false;
+        }
+
+        $result = $this->db->query($query);
+        if (!$result) {
+            hd_debug_print("failed to query: $query");
+            return false;
+        }
+
+        return $result;
     }
 
     /**
@@ -648,7 +677,6 @@ class Sql_Wrapper
             return true;
         }
 
-        hd_debug_print();
         hd_debug_print('Error commit transaction!');
         hd_debug_print($query);
         $this->db->exec(self::ROLLBACK_TRANSACTION);

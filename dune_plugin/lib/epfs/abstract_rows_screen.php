@@ -103,13 +103,28 @@ abstract class Abstract_Rows_Screen implements Screen, User_Input_Handler
     {
         hd_debug_print(null, true);
 
+        return $this->make_folder_view($this->get_rows_pane($media_url, $plugin_cookies), $media_url, $plugin_cookies);
+    }
+
+    /**
+     * Wraps a pane into a folder view. Split out of get_folder_view() so a
+     * screen that writes its pane out by streaming can build the same view
+     * around a pane whose rows are filled in later.
+     *
+     * @param array $pane
+     * @param MediaURL $media_url
+     * @param object $plugin_cookies
+     * @return array
+     */
+    protected function make_folder_view($pane, MediaURL $media_url, &$plugin_cookies)
+    {
         return array(
             PluginFolderView::view_kind => PLUGIN_FOLDER_VIEW_ROWS,
             PluginFolderView::multiple_views_supported => false,
             PluginFolderView::folder_type => null,
             PluginFolderView::archive => null,
             PluginFolderView::data => array(
-                PluginRowsFolderView::pane => $this->get_rows_pane($media_url, $plugin_cookies),
+                PluginRowsFolderView::pane => $pane,
                 PluginRowsFolderView::actions => $this->get_action_map($media_url, $plugin_cookies),
                 PluginRowsFolderView::timer => $this->get_timer(),
                 PluginRowsFolderView::sel_state => null,

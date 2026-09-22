@@ -27,6 +27,7 @@
 require_once 'lib/epg/ext_epg_program.php';
 require_once 'lib/epfs/abstract_rows_screen.php';
 require_once 'lib/epfs/rows_factory.php';
+require_once 'lib/epfs/rows_json_writer.php';
 require_once 'lib/epfs/gcomps_factory.php';
 require_once 'lib/epfs/gcomp_geom.php';
 require_once 'lib/user_input_handler_registry.php';
@@ -48,6 +49,30 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     private $show_continues = true;
 
     private $toggle_move = false;
+
+    /**
+     * Constants of RowsItemsParams, read once through reflection and reused.
+     *
+     * @var array|null
+     */
+    private static $rows_items_consts = null;
+
+    /**
+     * The star put on a favorite channel. Depends only on the NewUI settings,
+     * so it is built once per pane rather than once per group.
+     *
+     * @var array|null
+     */
+    private $fav_stickers = null;
+
+    /**
+     * Whether produce_rows() drew a history row, which shifts where the
+     * shorter part of the screen starts. Only known once the rows are built.
+     *
+     * @var bool
+     */
+    private $has_history_rows = false;
+
     ///////////////////////////////////////////////////////////////////////////
 
     /**
@@ -230,8 +255,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 return Action_Factory::invalidate_epfs_folders($plugin_cookies);
 
             case ACTION_ITEM_TOGGLE_MOVE:
+                // Only the action map and the info panel depend on this flag -
+                // not one row of the pane. Rebuilding the whole epfs file for
+                // it costs seconds on a large playlist, so just swap the
+                // behaviour; the info panel is re-requested on its own.
                 $this->toggle_move = !$this->toggle_move;
-                return Action_Factory::invalidate_epfs_folders($plugin_cookies);
+                return Action_Factory::change_behaviour($this->do_get_action_map());
 
             case ACTION_ITEM_UP:
             case ACTION_ITEM_DOWN:
@@ -399,6 +428,36 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     }
 
     /**
+     * The folder view for the epfs file with its rows left out, for
+     * Rows_Json_Writer to fill in from produce_rows(). Building the pane this
+     * way keeps the rows - the only part that grows with the playlist - out of
+     * memory entirely.
+     *
+     * @param object $plugin_cookies
+     * @return array|null null when there is nothing to stream, in which case
+     *                    the caller should fall back to get_folder_view_for_epf()
+     */
+    public function get_streaming_folder_view(&$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $this->update_new_ui_settings();
+
+        if ($this->plugin->is_vod_playlist() || !$this->plugin->get_sql_playlist()) {
+            // those panes are a label on a gap row, not worth streaming
+            return null;
+        }
+
+        // headers are only emitted when the rows are clustered, and
+        // Rows_Factory::pane() leaves the key out when they are not
+        $headers = $this->show_continues ? null : Rows_Json_Writer::HEADERS_PLACEHOLDER;
+        $pane = $this->create_row_pane(Rows_Json_Writer::ROWS_PLACEHOLDER, $headers,
+            Rows_Json_Writer::MIN_ROW_INDEX_PLACEHOLDER);
+
+        return $this->make_folder_view($pane, MediaURL::decode(static::ID), $plugin_cookies);
+    }
+
+    /**
      * @return array
      */
     public function get_empty_rows_pane()
@@ -429,62 +488,90 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             return $this->get_empty_rows_pane();
         }
 
-        $all_channels_rows = array();
-        $all_channels_headers = array();
-        $fav_headers = array();
-        $favorites_rows = array();
-        $history_headers = array();
-        $history_rows = array();
-        $changed_headers = array();
-        $changed_rows = array();
-        $dummy_rows = array();
-        $dummy_headers = array();
-        $this->create_row($dummy_rows, $dummy_headers, '__dummy__row__');
-        foreach ($this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ALL, COLUMN_GROUP_ID) as $group_id) {
-            switch ($group_id) {
-                case TV_ALL_CHANNELS_GROUP_ID:
-                    $this->get_all_channels_row($all_channels_rows, $all_channels_headers);
-                    break;
-
-                case TV_FAV_GROUP_ID:
-                    $this->get_favorites_rows($favorites_rows, $fav_headers);
-                    break;
-
-                case TV_HISTORY_GROUP_ID:
-                    $this->get_history_rows($history_rows, $history_headers);
-                    break;
-
-                case TV_CHANGED_CHANNELS_GROUP_ID:
-                    $this->get_changed_channels_rows($changed_rows, $changed_headers);
-                    break;
-            }
-        }
-
-        $all_headers = array();
-        if ($this->get_regular_rows($category_rows, $all_headers)) {
-            $all_rows = array_merge($dummy_rows, $history_rows, $favorites_rows, $changed_rows, $all_channels_rows, $category_rows);
-            if (!$this->show_continues) {
-                $all_headers = array_merge($dummy_headers, $history_headers, $fav_headers, $changed_headers, $all_channels_headers, $all_headers);
-            }
-        }
-
-        if (empty($all_rows)) {
+        $collector = new Rows_Array_Collector();
+        if (!$this->produce_rows($collector)) {
             hd_debug_print('no category rows');
             return $this->get_empty_rows_pane();
         }
 
-        return $this->create_row_pane($all_rows, $all_headers);
+        return $this->create_row_pane($collector->get_rows(), $collector->get_headers(),
+            $this->min_row_index_for_y2());
+    }
+
+    /**
+     * Produces every row of the pane into $sink, in the order they are drawn.
+     *
+     * $sink is either a Rows_Array_Collector, when the rows become a pane
+     * handed back to the framework, or a Rows_Json_Writer, when they go
+     * straight into the epfs file. Having one implementation for both is what
+     * lets the streamed file and the in-memory pane stay identical.
+     *
+     * Rows only make a pane at all if the regular category rows produced
+     * something: a playlist with nothing but history and favorites has always
+     * rendered as the empty pane, and that is kept here.
+     *
+     * @param Rows_Array_Collector|Rows_Json_Writer $sink
+     * @return bool false when the caller should fall back to get_empty_rows_pane()
+     */
+    public function produce_rows($sink)
+    {
+        hd_debug_print(null, true);
+
+        $this->has_history_rows = false;
+
+        $specials = $this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ALL, COLUMN_GROUP_ID);
+        $specials = array_flip(is_array($specials) ? $specials : array());
+
+        // the order below is the order these rows appear on screen, which is
+        // what the array_merge() of the per-source row arrays used to decide
+        if (isset($specials[TV_HISTORY_GROUP_ID])) {
+            $this->get_history_rows($sink);
+        }
+
+        if (isset($specials[TV_FAV_GROUP_ID])) {
+            $this->get_favorites_rows($sink);
+        }
+
+        if (isset($specials[TV_CHANGED_CHANNELS_GROUP_ID])) {
+            $this->get_changed_channels_rows($sink);
+        }
+
+        if (isset($specials[TV_ALL_CHANNELS_GROUP_ID])) {
+            $this->get_all_channels_row($sink);
+        }
+
+        $produced = $this->get_regular_rows($sink);
+
+        // a streaming sink has already written the head of the file, so this
+        // reaches the pane through the tail instead
+        $sink->set_deferred_value(Rows_Json_Writer::MIN_ROW_INDEX_PLACEHOLDER, $this->min_row_index_for_y2());
+
+        return $produced;
+    }
+
+    /**
+     * The first row index the shorter part of the screen applies from. A
+     * history row is drawn above everything else and pushes it down by one.
+     *
+     * @return int
+     */
+    protected function min_row_index_for_y2()
+    {
+        return $this->has_history_rows ? 2 : 1;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// Protected methods
 
     /**
-     * @param array $rows
-     * @param array $headers
+     * @param array|string $rows # rows, or the writer placeholder when streaming
+     * @param array|string|null $headers
+     * @param int|string $min_row_index_for_y2 # 2 when a history row is drawn
+     *                   first, 1 otherwise - or the writer placeholder, since
+     *                   which it is only becomes known once the rows are built
      * @return array
      */
-    protected function create_row_pane($rows, $headers)
+    protected function create_row_pane($rows, $headers, $min_row_index_for_y2)
     {
         $pane = Rows_Factory::pane(
             $rows,
@@ -509,7 +596,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             PaneParams::dx,
             PaneParams::dy,
             PaneParams::info_height,
-            empty($history_rows) ? 1 : 2,
+            $min_row_index_for_y2,
             PaneParams::width - PaneParams::info_dx,
             PaneParams::info_height - PaneParams::info_dy,
             PaneParams::info_dx,
@@ -578,56 +665,82 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     }
 
     /**
-     * @param array $items
-     * @param array $headers
+     * Builds the streamer that turns one group's items into rows.
+     *
+     * Everything it needs except the items is constant for the whole group, so
+     * it is worked out once here rather than per row - a group of 7000
+     * channels is 1000 rows.
+     *
+     * @param Rows_Array_Collector|Rows_Json_Writer $sink
      * @param string $row_id
-     * @param string $title
-     * @param string $caption
+     * @param string $title # row title, carries the channel count when enabled
+     * @param string $caption # group caption, shown on the title row
      * @param array|null $action
      * @param string|null $color
-     * @return array
+     * @return Rows_Group_Streamer
      */
-    protected function create_row($items, &$headers, $row_id, $title = '', $caption = '', $action = null, $color = null)
+    protected function make_group_streamer($sink, $row_id, $title = '', $caption = '', $action = null, $color = null)
     {
-        if (empty($items)) {
-            return array();
-        }
-
         $options = null;
         $header_id = null;
+        $header = null;
         if (!$this->show_continues) {
             $options = PLUGIN_ROW_OPT_FIRST_IN_CLUSTER;
             $header_id = $row_id;
+            $headers = array();
             Rows_Factory::add_header($headers, $header_id, $caption, true);
+            $header = $headers[0];
         }
 
-        $rows = array();
         $group_id = self::row_id_encoder(array(PARAM_GROUP_ID => $row_id));
         $title_id = self::row_id_encoder(array('title_id' => $row_id));
-        $rows[] = Rows_Factory::title_row($title_id, $caption, $group_id, $color, $options);
+        $title_row = Rows_Factory::title_row($title_id, $caption, $group_id, $color, $options);
 
         $rowItemsParams = $this->GetRowsItemsParamsClass();
         $icon_prop = $this->GetRowsItemsParams(self::ICON_PROP);
         $height = (int)(RowsParams::width * $icon_prop / $rowItemsParams::items_in_row);
         $inactive_height = (int)(RowsParams::inactive_width * $icon_prop / $rowItemsParams::items_in_row);
 
-        for ($i = 0, $iMax = count($items); $i < $iMax; $i += $rowItemsParams::items_in_row) {
-            $idx = (int)($i / $rowItemsParams::items_in_row);
-            $row_items_id = array(PARAM_GROUP_ID => $row_id, 'row_idx' => $idx);
-            $row_items = array_slice($items, $i, $rowItemsParams::items_in_row);
-            $rows[] = Rows_Factory::regular_row(self::row_id_encoder($row_items_id), $row_items,
-                'common', $title, $group_id, $header_id, $action, $height, $inactive_height);
-        }
+        $template = Rows_Factory::regular_row_template(
+            'common', $title, $group_id, $header_id, $action, $height, $inactive_height);
 
-        return $rows;
+        return new Rows_Group_Streamer($sink, $rowItemsParams::items_in_row,
+            $title_row, $header, $group_id . ';row_idx:', $template);
     }
 
     /**
-     * @param array $rows
-     * @param array $headers
+     * Emits one group built from an already collected item list. For the rows
+     * that are small by nature - history, favorites, changed channels. The two
+     * rows that scale with the playlist feed a streamer directly instead.
+     *
+     * @param Rows_Array_Collector|Rows_Json_Writer $sink
+     * @param array $items
+     * @param string $row_id
+     * @param string $title
+     * @param string $caption
+     * @param array|null $action
+     * @param string|null $color
+     * @return bool whether the group produced any rows
+     */
+    protected function emit_group_rows($sink, $items, $row_id, $title = '', $caption = '', $action = null, $color = null)
+    {
+        if (empty($items)) {
+            return false;
+        }
+
+        $streamer = $this->make_group_streamer($sink, $row_id, $title, $caption, $action, $color);
+        foreach ($items as $item) {
+            $streamer->add_item($item);
+        }
+
+        return $streamer->flush();
+    }
+
+    /**
+     * @param Rows_Array_Collector|Rows_Json_Writer $sink
      * @return void
      */
-    protected function get_history_rows(&$rows, &$headers)
+    protected function get_history_rows($sink)
     {
         hd_debug_print(null, true);
         if ($this->clear_playback_points) {
@@ -652,7 +765,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             $channel_info = $this->plugin->get_channel_info($channel_id);
             if (empty($channel_info)) continue;
 
-            $title = $channel_info[COLUMN_TITLE];
+            $title = self::channel_caption($channel_info);
             // program epg available
             if ($channel_ts > 0) {
                 $title = format_datetime('d.m H:i', $channel_ts);
@@ -672,6 +785,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 PARAM_ARCHIVE_TM => $channel_ts,
                 PARAM_VIEW_PROGRESS => $progress,
                 PARAM_PROGRAM_TITLE => $title,
+                // keep the row we already queried, the item loop below needs it
+                PARAM_CHANNEL_ROW => $channel_info,
             );
         }
 
@@ -679,11 +794,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         $rowItemsParams = $this->GetRowsItemsParamsClass();
         $icon_prop = $this->GetRowsItemsParams(self::ICON_PROP);
         $sticker_y = $rowItemsParams::icon_width * $icon_prop - $rowItemsParams::view_progress_height;
+        $item_id_prefix = PARAM_GROUP_ID . ':' . TV_HISTORY_GROUP_ID . ';' . PARAM_CHANNEL_ID . ':';
         $items = array();
         foreach ($watched as $item) {
             $channel_id = $item[COLUMN_CHANNEL_ID];
-            $channel_row = $this->plugin->get_channel_info($channel_id);
-            if ($channel_row === null) continue;
+            $channel_row = $item[PARAM_CHANNEL_ROW];
 
             $stickers = null;
             $icon = $this->plugin->get_channel_picon($channel_row, false);
@@ -708,12 +823,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 ); // viewed
             }
 
-            $row_id = array(PARAM_GROUP_ID => TV_HISTORY_GROUP_ID, PARAM_CHANNEL_ID => $channel_id, PARAM_ARCHIVE_TM => $item[COLUMN_ARCHIVE_TM]);
-            $items[] = Rows_Factory::add_regular_item(self::row_id_encoder($row_id), $icon, $item[COLUMN_PROGRAM_TITLE], $stickers);
+            $items[] = Rows_Factory::add_regular_item(
+                $item_id_prefix . $channel_id . ';' . PARAM_ARCHIVE_TM . ':' . $item[COLUMN_ARCHIVE_TM],
+                $icon, $item[COLUMN_PROGRAM_TITLE], $stickers);
         }
 
-        $rows = $this->create_row($items,
-            $headers,
+        $added = $this->emit_group_rows($sink, $items,
             TV_HISTORY_GROUP_ID,
             TR::t('tv_screen_continue'),
             TR::t('tv_screen_continue_view'),
@@ -721,17 +836,18 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             TitleRowsParams::history_caption_color
         );
 
-        if (!empty($rows)) {
-            hd_debug_print('added history: ' . count($rows) . ' rows', true);
+        $this->has_history_rows = $added;
+
+        if ($added) {
+            hd_debug_print('added history: ' . count($items) . ' channels', true);
         }
     }
 
     /**
-     * @param array $rows
-     * @param array $headers
+     * @param Rows_Array_Collector|Rows_Json_Writer $sink
      * @return void
      */
-    protected function get_favorites_rows(&$rows, &$headers)
+    protected function get_favorites_rows($sink)
     {
         hd_debug_print(null, true);
         if (!$this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) {
@@ -739,21 +855,21 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         }
 
         $fav_id = $this->plugin->get_fav_id();
+        $item_id_prefix = PARAM_GROUP_ID . ':' . $fav_id . ';' . PARAM_CHANNEL_ID . ':';
         $items = array();
         foreach ($this->plugin->get_fav_ids_by_order($fav_id) as $id) {
             $channel_row = $this->plugin->get_channel_info($id, false);
             if (empty($channel_row)) continue;
 
-            $row_id = array(PARAM_GROUP_ID => $fav_id, PARAM_CHANNEL_ID => $id);
             $items[] = Rows_Factory::add_regular_item(
-                self::row_id_encoder($row_id),
+                $item_id_prefix . $id,
                 $this->plugin->get_channel_picon($channel_row, false),
-                $channel_row[COLUMN_TITLE]
+                self::channel_caption($channel_row)
             );
         }
 
         $caption = $this->plugin->get_fav_caption();
-        $rows = $this->create_row($items, $headers,
+        $added = $this->emit_group_rows($sink, $items,
             $fav_id,
             $caption,
             $caption,
@@ -761,17 +877,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             TitleRowsParams::fav_caption_color
         );
 
-        if (!empty($rows)) {
-            hd_debug_print('added favorites: ' . count($rows) . ' rows', true);
+        if ($added) {
+            hd_debug_print('added favorites: ' . count($items) . ' channels', true);
         }
     }
 
     /**
-     * @param array $rows
-     * @param array $headers
+     * @param Rows_Array_Collector|Rows_Json_Writer $sink
      * @return void
      */
-    protected function get_changed_channels_rows(&$rows, &$headers)
+    protected function get_changed_channels_rows($sink)
     {
         hd_debug_print(null, true);
 
@@ -799,13 +914,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
         $items = array();
         $group_id = TV_CHANGED_CHANNELS_GROUP_ID;
+        $item_id_prefix = PARAM_GROUP_ID . ':' . $group_id . ';' . PARAM_CHANNEL_ID . ':';
         foreach ($this->plugin->get_changed_channels(PARAM_NEW) as $channel_row) {
             if (empty($channel_row)) continue;
 
-            $channel_id = $channel_row[COLUMN_CHANNEL_ID];
-            $row_id = array(PARAM_GROUP_ID => $group_id, PARAM_CHANNEL_ID => $channel_id);
             $items[] = Rows_Factory::add_regular_item(
-                self::row_id_encoder($row_id),
+                $item_id_prefix . $channel_row[COLUMN_CHANNEL_ID],
                 $this->plugin->get_channel_picon($channel_row, false),
                 $channel_row[COLUMN_TITLE],
                 $added_stickers
@@ -813,21 +927,22 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         }
 
         $removed_channels = $this->plugin->get_changed_channels(PARAM_REMOVED);
-        $failed_url = $this->GetRowsItemsParams(self::ICON_FAILED);
+        // the constant is a bare file name ('unset.png'); it has to go through
+        // get_image_path() to become a url the box can resolve, the same way
+        // create_row_pane() wraps it for the item params template
+        $failed_url = get_image_path($this->GetRowsItemsParams(self::ICON_FAILED));
         foreach ($removed_channels as $channel_row) {
             if (empty($channel_row)) continue;
 
-            $channel_id = $channel_row[COLUMN_CHANNEL_ID];
-            $row_id = array(PARAM_GROUP_ID => $group_id, PARAM_CHANNEL_ID => $channel_id);
             $items[] = Rows_Factory::add_regular_item(
-                self::row_id_encoder($row_id),
+                $item_id_prefix . $channel_row[COLUMN_CHANNEL_ID],
                 $failed_url,
                 $channel_row[COLUMN_TITLE],
                 $removed_stickers
             );
         }
 
-        $rows = $this->create_row($items, $headers,
+        $added = $this->emit_group_rows($sink, $items,
             TV_CHANGED_CHANNELS_GROUP_ID,
             TR::t('plugin_changed'),
             TR::t('plugin_changed'),
@@ -835,17 +950,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             TitleRowsParams::fav_caption_color
         );
 
-        if (!empty($rows)) {
-            hd_debug_print('added changed channels: ' . count($rows) . ' rows', true);
+        if ($added) {
+            hd_debug_print('added changed channels: ' . count($items) . ' channels', true);
         }
     }
 
     /**
-     * @param array $rows
-     * @param array $headers
+     * @param Rows_Array_Collector|Rows_Json_Writer $sink
      * @return void
      */
-    protected function get_all_channels_row(&$rows, &$headers)
+    protected function get_all_channels_row($sink)
     {
         hd_debug_print(null, true);
 
@@ -853,92 +967,141 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             return;
         }
 
-        $fav_id = $this->plugin->get_fav_id();
-        $fav_stickers = $this->get_fav_stickers();
-        $channels_order = $this->plugin->get_channels(TV_ALL_CHANNELS_GROUP_ID, PARAM_ENABLED, true);
-        $fav_channels = $this->plugin->get_channels_order($fav_id);
-
-        $items = array();
-        foreach ($channels_order as $channel_row) {
-            if (empty($channel_row)) continue;
-
-            $channel_id = $channel_row[COLUMN_CHANNEL_ID];
-            $row_id = array(PARAM_GROUP_ID => TV_ALL_CHANNELS_GROUP_ID, PARAM_CHANNEL_ID => $channel_id);
-            $items[] = Rows_Factory::add_regular_item(
-                self::row_id_encoder($row_id),
-                $this->plugin->get_channel_picon($channel_row, false),
-                $channel_row[COLUMN_TITLE],
-                in_array($channel_id, $fav_channels) ? $fav_stickers : null
-            );
-        }
-
+        // The title carries the channel count when that is switched on, and it
+        // goes on every row of the group - so it has to be known before the
+        // first row is emitted. Counting in the database is what lets the
+        // channels themselves be streamed rather than collected.
         if ($this->plugin->get_bool_setting(PARAM_NEWUI_SHOW_CHANNEL_COUNT, false)) {
-            $title = TR::t('plugin_all_channels__1', count($items));
+            $title = TR::t('plugin_all_channels__1',
+                $this->plugin->get_channels_cnt(TV_ALL_CHANNELS_GROUP_ID, PARAM_ENABLED));
         } else {
             $title = TR::t('plugin_all_channels');
         }
 
-        $rows = $this->create_row($items,
-            $headers,
+        $streamer = $this->make_group_streamer($sink,
             TV_ALL_CHANNELS_GROUP_ID,
             $title,
             TR::t('plugin_all_channels'),
             User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER)
         );
 
-        if (!empty($rows)) {
-            hd_debug_print('added all channels: ' . count($rows) . ' rows', true);
+        // icons_only: this row draws an icon and a caption, nothing here reads
+        // the url/catchup/ext_params columns that pl.* would drag into PHP
+        $cursor = $this->plugin->query_channels(TV_ALL_CHANNELS_GROUP_ID, PARAM_ENABLED);
+        $count = $this->stream_channels($cursor, $streamer,
+            PARAM_GROUP_ID . ':' . TV_ALL_CHANNELS_GROUP_ID . ';' . PARAM_CHANNEL_ID . ':',
+            array_flip($this->plugin->get_channels_order($this->plugin->get_fav_id()))
+        );
+
+        if ($streamer->flush()) {
+            hd_debug_print("added all channels: $count channels", true);
         }
     }
 
     /**
-     * @param array $rows
-     * @param array $headers
-     * @return bool
+     * Walks a channel cursor, turning each row into a pane item for $streamer.
+     *
+     * This is the hottest loop in the whole pane, so it is written to make as
+     * few PHP calls per channel as it can: the cursor is walked here rather
+     * than handed to a callback, and Rows_Factory::add_regular_item() is built
+     * inline. On the 5.3 target a saved call per channel is worth more than
+     * the shared helper.
+     *
+     * @param SQLite3Result|false $cursor
+     * @param Rows_Group_Streamer $streamer
+     * @param string $item_id_prefix
+     * @param array $fav_map # channel ids in favorites, as keys
+     * @return int channels streamed
      */
-    protected function get_regular_rows(&$rows, &$headers)
+    protected function stream_channels($cursor, $streamer, $item_id_prefix, $fav_map)
+    {
+        if ($cursor === false) {
+            return 0;
+        }
+
+        $fav_stickers = $this->get_fav_stickers();
+        $items_in_row = $streamer->get_items_in_row();
+        $chunk = array();
+        $in_row = 0;
+        $count = 0;
+        while ($channel_row = $cursor->fetchArray(SQLITE3_ASSOC)) {
+            $channel_id = $channel_row[COLUMN_CHANNEL_ID];
+            $item = array(
+                PluginRegularItem::id => $item_id_prefix . $channel_id,
+                PluginRegularItem::icon_url => $this->plugin->get_channel_picon($channel_row, false),
+            );
+            // show_title, not title: the caption is the name the user gave the
+            // channel. The query resolved the fallback, so there is no branch
+            // for it here; COLUMN_TITLE is still what the picon matched on.
+            if (isset($channel_row[COLUMN_SHOW_TITLE])) {
+                $item[PluginRegularItem::caption] = $channel_row[COLUMN_SHOW_TITLE];
+            }
+            if (isset($fav_map[$channel_id])) {
+                $item[PluginRegularItem::stickers] = $fav_stickers;
+            }
+
+            $chunk[] = $item;
+            $count++;
+            if (++$in_row === $items_in_row) {
+                $streamer->put_chunk($chunk);
+                $chunk = array();
+                $in_row = 0;
+            }
+        }
+
+        if ($in_row !== 0) {
+            $streamer->put_chunk($chunk);
+        }
+
+        return $count;
+    }
+
+    /**
+     * @param Rows_Array_Collector|Rows_Json_Writer $sink
+     * @return bool whether any category row was produced
+     */
+    protected function get_regular_rows($sink)
     {
         hd_debug_print(null, true);
 
         $action_enter = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
 
         $fav_id = $this->plugin->get_fav_id();
-        $fav_stickers = $this->get_fav_stickers();
-        $fav_group = $this->plugin->get_channels_order($fav_id);
+        // flipped once: in_array() over the favorites list per channel is
+        // O(channels * favorites) and dominates the build on big playlists
+        $fav_group = array_flip($this->plugin->get_channels_order($fav_id));
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         $groups = $this->plugin->get_groups_by_order($show_adult);
         $show_count = $this->plugin->get_bool_setting(PARAM_NEWUI_SHOW_CHANNEL_COUNT, false);
 
+        $added = false;
+        $total = 0;
         foreach ($groups as $group_row) {
             $group_id = $group_row[COLUMN_GROUP_ID];
-            $items = array();
-            foreach ($this->plugin->get_channels_by_order($group_id, $show_adult) as $channel_row) {
-                $channel_id = $channel_row[COLUMN_CHANNEL_ID];
-                $row_id = array(PARAM_GROUP_ID => $group_id, PARAM_CHANNEL_ID => $channel_id);
-                $items[] = Rows_Factory::add_regular_item(
-                    self::row_id_encoder($row_id),
-                    $this->plugin->get_channel_picon($channel_row, false),
-                    $channel_row[COLUMN_TITLE],
-                    in_array($channel_id, $fav_group) ? $fav_stickers : null
-                );
-            }
 
-            if (empty($items)) continue;
-
+            // the count goes on every row of the group, so it has to be known
+            // before the first one is emitted - counted in the database rather
+            // than by collecting the group's channels first
             $title = str_replace('|', '¦', $group_row[COLUMN_TITLE]);
             if ($show_count) {
-                $title .= " (" . count($items) . ")";
+                $title .= " (" . $this->plugin->get_channels_by_order_cnt($group_id, $show_adult) . ")";
             }
 
-            $new_rows = $this->create_row($items, $headers, $group_id, $title, $group_id, $action_enter);
+            $streamer = $this->make_group_streamer($sink, $group_id, $title, $group_id, $action_enter);
 
-            foreach ($new_rows as $row) {
-                $rows[] = $row;
+            // icons_only: only the caption and the picon columns are read here
+            $cursor = $this->plugin->query_channels_by_order($group_id, $show_adult);
+            $count = $this->stream_channels($cursor, $streamer,
+                PARAM_GROUP_ID . ':' . $group_id . ';' . PARAM_CHANNEL_ID . ':', $fav_group);
+
+            if ($streamer->flush()) {
+                $added = true;
+                $total += $count;
             }
         }
 
-        if (!empty($rows)) {
-            hd_debug_print('added group channels: ' . count($rows) . ' rows', true);
+        if ($added) {
+            hd_debug_print("added group channels: $total channels", true);
             return true;
         }
 
@@ -946,10 +1109,36 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     }
 
     /**
+     * The caption to draw for a channel: the name the user gave it, falling
+     * back to the playlist name when they have not renamed it.
+     *
+     * The classic screens have always read show_title this way. These rows
+     * read the raw playlist title, so a renamed channel kept its old name in
+     * the NewUI only. For rows built from a cursor the query resolves this
+     * instead ({@see Dune_Default_Sqlite_Engine::ICON_ITEM_COLUMNS}); this is
+     * for the rows built from whole channel_info rows.
+     *
+     * @param array $channel_row
+     * @return string|null
+     */
+    protected static function channel_caption($channel_row)
+    {
+        if (isset($channel_row[COLUMN_SHOW_TITLE]) && $channel_row[COLUMN_SHOW_TITLE] !== '') {
+            return $channel_row[COLUMN_SHOW_TITLE];
+        }
+
+        return safe_get_value($channel_row, COLUMN_TITLE);
+    }
+
+    /**
      * @return array
      */
     protected function get_fav_stickers()
     {
+        if ($this->fav_stickers !== null) {
+            return $this->fav_stickers;
+        }
+
         $rowItemsParams = $this->GetRowsItemsParamsClass();
         $fav_stickers[] = Rows_Factory::add_regular_sticker_rect(
             $rowItemsParams::fav_sticker_bg_color,
@@ -970,6 +1159,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 $rowItemsParams::fav_sticker_icon_height
             )
         );
+
+        $this->fav_stickers = $fav_stickers;
 
         return $fav_stickers;
     }
@@ -1019,7 +1210,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         $defs[] = GComps_Factory::label(
             GComp_Geom::place_top_left(PaneParams::info_width, PaneParams::prog_item_height),
             null,
-            $channel_row[COLUMN_TITLE],
+            self::channel_caption($channel_row),
             1,
             PaneParams::ch_title_font_color,
             PaneParams::ch_title_font_size,
@@ -1471,12 +1662,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
      */
     protected function GetRowsItemsParams($param_name)
     {
-        $rClass = new ReflectionClass('RowsItemsParams');
-        $array = $rClass->getConstants();
+        if (self::$rows_items_consts === null) {
+            $rClass = new ReflectionClass('RowsItemsParams');
+            self::$rows_items_consts = $rClass->getConstants();
+        }
 
         $sq_param = $param_name . ($this->square_icons ? '_sq' : '');
 
-        return (isset($array[$sq_param])) ? $array[$sq_param] : $array[$param_name];
+        return isset(self::$rows_items_consts[$sq_param])
+            ? self::$rows_items_consts[$sq_param]
+            : self::$rows_items_consts[$param_name];
     }
 
     /**
@@ -1484,6 +1679,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
      */
     protected function update_new_ui_settings()
     {
+        // these decide what get_fav_stickers() builds
+        $this->fav_stickers = null;
+
         $this->show_caption = $this->plugin->get_bool_setting(PARAM_NEWUI_SHOW_CHANNEL_CAPTION);
         $this->channels_in_row = $this->plugin->get_setting(PARAM_NEWUI_ICONS_IN_ROW, 7);
         $this->square_icons = $this->plugin->get_bool_setting(PARAM_NEWUI_SQUARE_ICONS, false);
@@ -1514,12 +1712,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
      */
     protected static function row_id_encoder($items)
     {
-        return implode(';',
-            array_map(function ($k, $v) {
-                return $k . ':' . $v;
-            },
-                array_keys($items), array_values($items)
-            )
-        );
+        // Plain foreach rather than array_map()/closure over array_keys() and
+        // array_values(): three PHP calls per id, and PHP calls are what the
+        // 5.3 target is slow at. The hot loops build their ids inline instead.
+        $parts = array();
+        foreach ($items as $k => $v) {
+            $parts[] = $k . ':' . $v;
+        }
+
+        return implode(';', $parts);
     }
 }

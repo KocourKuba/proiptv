@@ -331,6 +331,80 @@ class Rows_Factory
     }
 
     /**
+     * Builds the part of a regular row that is the same for every row of a
+     * group, so a screen emitting hundreds of rows pays for it once instead of
+     * once per row. Everything here is constant per group;
+     * regular_row_from_template() then fills in the id and the items.
+     *
+     * Same shape regular_row() produces - keep the two in step.
+     *
+     * @param string $params_template_id
+     * @param string $title
+     * @param string $group_id
+     * @param string|null $header_id
+     * @param array|null $show_all_action
+     * @param int $height
+     * @param int $inactive_height
+     * @return array # two element array: the row prototype and its data prototype
+     */
+    public static function regular_row_template($params_template_id, $title, $group_id, $header_id,
+                                                $show_all_action = null,
+                                                $height = 0,
+                                                $inactive_height = 0)
+    {
+        $arr[PluginRow::type] = PLUGIN_ROW_TYPE_REGULAR;
+        $arr[PluginRow::id] = null;
+        $arr[PluginRow::title] = $title;
+        if ($header_id) {
+            $arr[PluginRow::header_id] = $header_id;
+        }
+        $arr[PluginRow::group_id] = $group_id;
+        $arr[PluginRow::height] = $height;
+        $arr[PluginRow::inactive_height] = $inactive_height;
+        if ($show_all_action) {
+            $arr[PluginRow::show_all_action] = $show_all_action;
+        }
+        $arr[PluginRow::data] = null;
+
+        $data[PluginRegularRow::item_params_template_id] = $params_template_id;
+        $data[PluginRegularRow::width] = RowsParams::full_width;
+        $data[PluginRegularRow::left_padding] = RowsParams::left_padding;
+        $data[PluginRegularRow::inactive_left_padding] = RowsParams::inactive_left_padding;
+        $data[PluginRegularRow::right_padding] = RowsParams::right_padding;
+        $data[PluginRegularRow::hide_captions] = false;
+        $data[PluginRegularRow::hide_icons] = false;
+        $data[PluginRegularRow::fade_enabled] = true;
+        $data[PluginRegularRow::fade_icon_mix_color] = GComps_Factory::rgba_to_argb(RowsParams::fade_icon_mix_color);
+        $data[PluginRegularRow::fade_icon_mix_alpha] = RowsParams::fade_icon_mix_alpha;
+        $data[PluginRegularRow::lite_fade_icon_mix_alpha] = RowsParams::lite_fade_icon_mix_alpha;
+        $data[PluginRegularRow::fade_caption_color] = GComps_Factory::rgba_to_argb(RowsParams::fade_caption_color);
+        $data[PluginRegularRow::items] = null;
+
+        return array($arr, $data);
+    }
+
+    /**
+     * Completes a row prototype from regular_row_template() with this row's id
+     * and items. Produces exactly what regular_row() would for the same input.
+     *
+     * @param array $template # from regular_row_template()
+     * @param string $id
+     * @param array $items
+     * @return array
+     */
+    public static function regular_row_from_template($template, $id, $items)
+    {
+        $data = $template[1];
+        $data[PluginRegularRow::items] = $items;
+
+        $arr = $template[0];
+        $arr[PluginRow::id] = $id;
+        $arr[PluginRow::data] = $data;
+
+        return $arr;
+    }
+
+    /**
      * @param string $id
      * @param string $icon_url
      * @param string $caption

@@ -30,6 +30,24 @@ class Dune_Default_Sqlite_Engine
     const SETTINGS_TABLE = 'settings';
     const COOKIES_TABLE = 'cookies';
 
+    /**
+     * Columns needed to draw a channel as an icon with a caption: the caption
+     * plus everything get_channel_picon() looks at. Selecting these instead of
+     * 'pl.*' leaves the rest of the playlist row (url, catchup, ext_params,
+     * ...) in the database - on a 4000 channel playlist that is ~300 KB
+     * fetched into PHP instead of ~1.4 MB.
+     *
+     * show_title is the caption, already resolved: the name the user gave the
+     * channel, or the playlist name when they have not renamed it. Doing it
+     * here keeps the fallback out of the per-channel loop.
+     *
+     * pl.title stays as COLUMN_TITLE because get_channel_picon() matches xmltv
+     * picons on the playlist name, which a rename must not change - and with
+     * 'pl.*' it shadowed the ch.title selected before it anyway, so that is
+     * what these queries have always returned.
+     */
+    const ICON_ITEM_COLUMNS = "IFNULL(NULLIF(ch.show_title, ''), pl.title) AS show_title, pl.title, pl.icon, pl.epg_id";
+
     const CREATE_PLUGIN_PARAMETERS_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY, value TEXT);";
     const CREATE_PLAYLISTS_TABLE = "CREATE TABLE IF NOT EXISTS %s (playlist_id TEXT PRIMARY KEY NOT NULL, shortcut TEXT DEFAULT '', last_update INTEGER DEFAULT 0);";
     const CREATE_PLAYLIST_PARAMETERS_TABLE = "CREATE TABLE IF NOT EXISTS %s (playlist_id TEXT NOT NULL, name TEXT NOT NULL, value TEXT, UNIQUE(playlist_id, name));";
@@ -1907,13 +1925,35 @@ class Dune_Default_Sqlite_Engine
      * @param string|null $group_id
      * @param int $disabled_channels PARAM_ALL - all, PARAM_ENABLED - only enabled, PARAM_DISABLED - only disabled
      * @param bool $full true - full information, false only channel_id, title and statuses
+     * @param bool $icons_only with $full, select only the columns needed to draw
+     *                         an icon with a caption ({@see self::ICON_ITEM_COLUMNS})
      * @return array
      */
-    public function get_channels($group_id, $disabled_channels, $full = false)
+    public function get_channels($group_id, $disabled_channels, $full = false, $icons_only = false)
+    {
+        $query = $this->make_channels_query($group_id, $disabled_channels, $full, $icons_only);
+        if ($query === false) {
+            return array();
+        }
+
+        return $this->safe_sql_playlist(SQL_FETCH_ARRAY, $query);
+    }
+
+    /**
+     * Builds the query behind get_channels() and query_channels(), so the two
+     * always select the same rows.
+     *
+     * @param string|null $group_id
+     * @param int $disabled_channels
+     * @param bool $full
+     * @param bool $icons_only
+     * @return string|false false when a table the query needs is missing
+     */
+    protected function make_channels_query($group_id, $disabled_channels, $full, $icons_only)
     {
         if (is_null($group_id) || $group_id === TV_ALL_CHANNELS_GROUP_ID) {
             if (!$this->is_playlist_table_exists(self::get_table_name(GROUPS_INFO))) {
-                return array();
+                return false;
             }
             $where = sprintf('ch.%s IN (SELECT %s FROM %s WHERE %s=%d AND %s=%d)',
             COLUMN_GROUP_ID, COLUMN_GROUP_ID, self::get_table_name(GROUPS_INFO), COLUMN_SPECIAL, FALSE, COLUMN_DISABLED, FALSE);
@@ -1926,22 +1966,61 @@ class Dune_Default_Sqlite_Engine
         }
 
         if (!$this->is_playlist_table_exists(self::get_table_name(CHANNELS_INFO))) {
-            return array();
+            return false;
         }
 
         $table_name = self::get_table_name(CHANNELS_INFO);
         if ($full) {
             if (!$this->is_attached_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
-                return array();
+                return false;
             }
 
-            $query = sprintf('SELECT ch.%s, pl.* FROM %s AS pl JOIN %s AS ch ON pl.%s = ch.%s WHERE %s;',
-                COLUMN_CHANNEL_ID, M3uParser::CHANNELS_TABLE, $table_name, $this->get_id_column(), COLUMN_CHANNEL_ID, $where);
-        } else {
-            $query = sprintf('SELECT * FROM %s AS ch WHERE %s;', $table_name, $where);
+            $columns = $icons_only ? self::ICON_ITEM_COLUMNS : 'pl.*';
+            return sprintf('SELECT ch.%s, %s FROM %s AS pl JOIN %s AS ch ON pl.%s = ch.%s WHERE %s;',
+                COLUMN_CHANNEL_ID, $columns,
+                M3uParser::CHANNELS_TABLE, $table_name, $this->get_id_column(), COLUMN_CHANNEL_ID, $where);
         }
 
-        return $this->safe_sql_playlist(SQL_FETCH_ARRAY, $query);
+        return sprintf('SELECT * FROM %s AS ch WHERE %s;', $table_name, $where);
+    }
+
+    /**
+     * How many channels get_channels()/query_channels() would return, counted
+     * in the database so a caller that streams its channels does not have to
+     * collect them just to know how many there are.
+     *
+     * @param string|null $group_id
+     * @param int $disabled_channels
+     * @return int
+     */
+    public function get_channels_cnt($group_id, $disabled_channels)
+    {
+        $query = $this->make_channels_query($group_id, $disabled_channels, true, true);
+        if ($query === false) {
+            return 0;
+        }
+
+        return (int)$this->safe_sql_playlist(SQL_QUERY_VALUE,
+            sprintf('SELECT COUNT(*) FROM (%s);', rtrim(trim($query), ';')));
+    }
+
+    /**
+     * The same rows as get_channels() with $full, in the same order, as a
+     * cursor the caller walks itself instead of an array of all of them.
+     *
+     * @param string|null $group_id
+     * @param int $disabled_channels
+     * @param bool $icons_only
+     * @return array|false|int|SQLite3Stmt|string
+     */
+    public function query_channels($group_id, $disabled_channels, $icons_only = true)
+    {
+        $query = $this->make_channels_query($group_id, $disabled_channels, true, $icons_only);
+        if ($query === false) {
+            return false;
+        }
+
+        return $this->safe_sql_playlist(SQL_QUERY_CURSOR, $query);
     }
 
     /**
@@ -2436,15 +2515,19 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * Builds the query behind get_channels_by_order() and
+     * query_channels_by_order(), so the two always select the same rows.
+     *
      * @param string $group_id
      * @param bool $include_adult
      * @param bool $include_hidden
-     * @return array
+     * @param bool $icons_only
+     * @return string|false false when the playlist table is not attached
      */
-    public function get_channels_by_order($group_id, $include_adult = true, $include_hidden = false)
+    protected function make_channels_by_order_query($group_id, $include_adult, $include_hidden, $icons_only)
     {
         if (!$this->is_attached_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
-            return array();
+            return false;
         }
 
         if ($include_adult) {
@@ -2460,14 +2543,56 @@ class Dune_Default_Sqlite_Engine
                 COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_DISABLED, FALSE);
         }
 
-        $query = sprintf('SELECT ord.%s, ch.%s, ch.%s, ch.%s, pl.*, pl.ROWID as ch_number
+        if ($icons_only) {
+            $columns = sprintf('ord.%s, %s', COLUMN_CHANNEL_ID, self::ICON_ITEM_COLUMNS);
+        } else {
+            $columns = sprintf('ord.%s, ch.%s, ch.%s, ch.%s, pl.*, pl.ROWID as ch_number',
+                COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_DISABLED);
+        }
+
+        return sprintf('SELECT %s
                     FROM %s AS pl
                     JOIN %s AS ord ON pl.%s=ord.%s
                     JOIN %s as ch ON %s
                     WHERE %s ORDER BY ord.ROWID;',
-            COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_DISABLED,
+            $columns,
             M3uParser::CHANNELS_TABLE, self::get_table_name($group_id), $this->get_id_column(), COLUMN_CHANNEL_ID,
             self::get_table_name(CHANNELS_INFO), $on, $where);
+    }
+
+    /**
+     * The same rows as get_channels_by_order(), in the same order, as a cursor
+     * the caller walks itself instead of an array of all of them.
+     *
+     * @param string $group_id
+     * @param bool $include_adult
+     * @param bool $icons_only
+     * @return array|false|int|SQLite3Stmt|string
+     */
+    public function query_channels_by_order($group_id, $include_adult, $icons_only = true)
+    {
+        $query = $this->make_channels_by_order_query($group_id, $include_adult, false, $icons_only);
+        if ($query === false) {
+            return false;
+        }
+
+        return $this->safe_sql_playlist(SQL_QUERY_CURSOR, $query);
+    }
+
+    /**
+     * @param string $group_id
+     * @param bool $include_adult
+     * @param bool $include_hidden
+     * @param bool $icons_only select only the columns needed to draw an icon
+     *                         with a caption ({@see self::ICON_ITEM_COLUMNS})
+     * @return array
+     */
+    public function get_channels_by_order($group_id, $include_adult = true, $include_hidden = false, $icons_only = false)
+    {
+        $query = $this->make_channels_by_order_query($group_id, $include_adult, $include_hidden, $icons_only);
+        if ($query === false) {
+            return array();
+        }
 
         if (self::is_playlist_settings_group($group_id)) {
             return $this->safe_sql_playlist_settings(SQL_EXEC, $query);
