@@ -1761,8 +1761,8 @@
     {
       "enable": true,
       "id": "sharavozpro",
-      "vod": "sharavozpro",
-      "name": "SharavozPro",
+      "vod": "sharavoz",
+      "name": "Sharavoz.Pro",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_sharavozpro.png",
       "provider_url": "https://sharavoz.pro/",
