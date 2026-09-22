@@ -94,6 +94,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return $this->show_old_player(TR::t('err_no_sqlite'));
         }
 
+        $this->plugin->init_providers_config();
+
         switch ($user_input->control_id) {
             case self::ACTION_CALL_REBOOT:
                 return Action_Factory::restart(true);

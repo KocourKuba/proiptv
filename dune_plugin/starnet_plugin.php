@@ -123,7 +123,6 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         Starnet_Epfs_Handler::init($this, $plugin_cookies);
 
-        $this->init_providers_config();
         $this->init_screen_view_parameters();
         if (self::$plugin_info['debug']) {
             $plugin_cookies->{PARAM_COOKIE_ENABLE_DEBUG} = SwitchOnOff::on;
