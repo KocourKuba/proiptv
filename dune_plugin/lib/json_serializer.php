@@ -29,35 +29,88 @@
 class Json_Serializer
 {
     /**
+     * Deeper than this the value is cut off; json_encode() itself stops at 512.
+     */
+    const MAX_DEPTH = 512;
+
+    /**
+     * Objects on the path currently being serialized, by spl_object_hash().
+     * An object met again while it is still on the path is a reference cycle.
+     * Only the path is tracked, not everything seen, so an object that simply
+     * appears twice in different places is written out both times, the way
+     * json_encode() does it.
+     *
+     * @var array
+     */
+    private static $json_path = array();
+
+    /**
+     * @var int
+     */
+    private static $json_depth = 0;
+
+    /**
      * @return string
      */
     public function __toString()
     {
-        return json_encode($this->_toStdClass());
+        // __toString() must return a string - anything else is a fatal error
+        $json = json_encode($this->_toStdClass());
+        return is_string($json) ? $json : '';
     }
 
     /**
+     * Public and protected members of this object, recursively converted.
+     * Private members are not reachable from here and are left out.
+     *
      * @return stdClass
      */
     public function _toStdClass()
     {
+        $hash = spl_object_hash($this);
+        self::$json_path[$hash] = true;
+
         $object = new stdClass();
         $object->_class = get_class($this);
-        $serialized = method_exists($this, '__sleep') ? $this->__sleep() : array();
 
-        foreach (get_object_vars($this) as $name => $value) {
-            if (!empty($serialized) && !in_array($name, $serialized)) continue;
+        foreach ($this->json_members() as $name => $value) {
+            $object->$name = self::to_json_value($value);
+        }
 
-            if (is_object($value) && method_exists($value, '_toStdClass')) {
-                $object->$name = $value->_toStdClass();
-            } else if (is_array($value)) {
-                $object->$name = $this->_toArray($value);
-            } else {
-                $object->$name = $value;
+        unset(self::$json_path[$hash]);
+
+        return $object;
+    }
+
+    /**
+     * The members written out by _toStdClass(), as name => value.
+     *
+     * By default: the public and protected members, filtered by __sleep()
+     * when the class has one. __sleep() returning array() means "no members",
+     * so only a missing __sleep() (or one returning something unusable) means
+     * "all members". A class whose JSON should differ from what __sleep() says
+     * - or whose __sleep() does more than name members - overrides this.
+     *
+     * @return array
+     */
+    protected function json_members()
+    {
+        $only = null;
+        if (method_exists($this, '__sleep')) {
+            $names = $this->__sleep();
+            if (is_array($names)) {
+                $only = array_flip($names);
             }
         }
 
-        return $object;
+        $members = array();
+        foreach (get_object_vars($this) as $name => $value) {
+            if ($only === null || isset($only[$name])) {
+                $members[$name] = $value;
+            }
+        }
+
+        return $members;
     }
 
     /**
@@ -66,16 +119,56 @@ class Json_Serializer
      */
     public function _toArray($value)
     {
-        $array = array();
-        foreach ($value as $key => $item) {
-            if (is_object($item) && method_exists($item, '_toStdClass')) {
-                $array[$key] = $item->_toStdClass();
-            } else if (is_array($item)) {
-                $array[$key] = $this->_toArray($item);
+        return self::to_json_value($value);
+    }
+
+    /**
+     * Converts any value into something json_encode() writes out completely.
+     *
+     * A Json_Serializer anywhere in the value - in a member, an array, a
+     * stdClass, or an object of some other class - comes out with its
+     * protected members; json_encode() on its own would give only the public
+     * ones. Other objects keep exactly what json_encode() gives them, their
+     * public members, but are walked so the serializers inside them are found.
+     *
+     * @param mixed $value
+     * @return mixed
+     */
+    public static function to_json_value($value)
+    {
+        if (!is_array($value) && !is_object($value)) {
+            return $value;
+        }
+
+        if (self::$json_depth >= self::MAX_DEPTH) {
+            return '*MAX DEPTH*';
+        }
+
+        self::$json_depth++;
+
+        if (is_array($value)) {
+            $out = array();
+            foreach ($value as $key => $item) {
+                $out[$key] = self::to_json_value($item);
+            }
+        } else {
+            $hash = spl_object_hash($value);
+            if (isset(self::$json_path[$hash])) {
+                $out = '*RECURSION ' . get_class($value) . '*';
+            } else if ($value instanceof Json_Serializer) {
+                $out = $value->_toStdClass();
             } else {
-                $array[$key] = $item;
+                self::$json_path[$hash] = true;
+                $out = new stdClass();
+                foreach (get_object_vars($value) as $name => $item) {
+                    $out->$name = self::to_json_value($item);
+                }
+                unset(self::$json_path[$hash]);
             }
         }
-        return $array;
+
+        self::$json_depth--;
+
+        return $out;
     }
 }

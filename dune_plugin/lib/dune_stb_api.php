@@ -2990,6 +2990,8 @@ function json_format($content, $options = 0)
 
     if ($content instanceof Json_Serializer) {
         $json_str = $content->__toString();
+    } else if ((is_array($content) || is_object($content)) && class_exists('Json_Serializer', false)) {
+        $json_str = json_encode(Json_Serializer::to_json_value($content));
     } else {
         $json_str = json_encode($content);
     }

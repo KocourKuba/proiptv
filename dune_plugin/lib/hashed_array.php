@@ -65,17 +65,16 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Only names what to save. It used to rewrite $map into $seq order first,
+     * so the order survived as map key order - which meant anything calling
+     * __sleep(), json logging included, reordered the live object. Saving $seq
+     * itself keeps the order without touching anything.
+     *
      * @return array
      */
     public function __sleep()
     {
-        $new_map = array();
-        foreach ($this->seq as $key) {
-            $new_map[$key] = $this->map[$key];
-        }
-        $this->map = $new_map;
-
-        return array('pos', 'map');
+        return array('pos', 'seq', 'map');
     }
 
     /**
@@ -83,7 +82,29 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function __wakeup()
     {
-        $this->seq = array_keys($this->map);
+        // data saved before $seq was part of it (the legacy .settings files
+        // read by the orders migration): the order is the map key order
+        if (empty($this->seq) && !empty($this->map)) {
+            $this->seq = array_keys($this->map);
+        }
+    }
+
+    /**
+     * For the JSON dump: the map, in iteration order. $seq is left out -
+     * it would only repeat the keys - so the output stays as it always was.
+     *
+     * @return array
+     */
+    protected function json_members()
+    {
+        $ordered = array();
+        foreach ($this->seq as $key) {
+            if (array_key_exists($key, $this->map)) {
+                $ordered[$key] = $this->map[$key];
+            }
+        }
+
+        return array('map' => $ordered);
     }
 
     /**
