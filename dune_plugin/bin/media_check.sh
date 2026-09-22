@@ -45,6 +45,7 @@ ProcessURL()
   # each stream, and that is printed only with '-v verbose'.
   # No '-map' is used on purpose - ffmpeg then reads exactly the streams the player
   # would select, so a HLS master playlist is not pulled variant by variant.
+  # '-nostdin' keeps ffmpeg from reading the caller's stdin for interactive keys.
   #
   # Example output:
   # ...
@@ -67,7 +68,7 @@ ProcessURL()
   FFMPEG_TIMEOUT_USEC=`expr "$SAMPLE_SEC" \* 1000000 + 15000000`
   rm -f "$RESULT_FILE"
 
-  RunWithTimeout "$FFMPEG_TIMEOUT_USEC" "$FFMPEG_PATH" -hide_banner -no_buf_adj 1 -v verbose \
+  RunWithTimeout "$FFMPEG_TIMEOUT_USEC" "$FFMPEG_PATH" -hide_banner -nostdin -no_buf_adj 1 -v verbose \
     -t "$SAMPLE_SEC" -i "$URL" -c copy -f null /dev/null >"$RESULT_FILE" 2>&1
 
   STATUS="$?"

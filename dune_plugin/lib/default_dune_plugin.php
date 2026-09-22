@@ -4531,7 +4531,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $out = array();
         foreach ($streams as $idx => $description) {
             $description = preg_replace(
-                '/ \(\[.*?\)| \(\w+ \/ 0x[0-9A-Fa-f]+\)| \[.*?]|, \d+ reference frames?|, [0-9k.]+ tb[rcn]|, start [0-9.]+|, q=[0-9\-]+/',
+                '/ \(\[.*?\)| \(\w+ \/ 0x[0-9A-Fa-f]+\)| \[.*?]|, \d+ reference frames?|, [0-9k.]+ tb[rcnf]|, start [0-9.]+|, q=[0-9\-]+/',
                 "", $description);
             if ($duration > 0 && isset($measured[$idx])) {
                 $rate = sprintf(', ~%d kb/s', format_kbits($measured[$idx], $duration));
