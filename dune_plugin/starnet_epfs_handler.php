@@ -148,8 +148,7 @@ class Starnet_Epfs_Handler
         $path = self::get_epfs_path($epfs_id);
         $tmp_path = "$path.tmp";
 
-        $res = Rows_Json_Writer::write_to_file($tmp_path, $folder_view,
-            array(self::$tv_rows_screen, 'produce_rows'));
+        $res = Rows_Json_Writer::write_to_file($tmp_path, $folder_view, self::$tv_rows_screen);
 
         if ($res === false) {
             safe_unlink($tmp_path);

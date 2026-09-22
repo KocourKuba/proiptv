@@ -151,8 +151,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 hd_debug_print('Applying epg shift hours: ' . $user_input->{PARAM_EPG_SHIFT_HOURS}, true);
                 hd_debug_print('Applying epg shift mins: ' . $user_input->{PARAM_EPG_SHIFT_MINS}, true);
                 $this->plugin->set_channel_epg_shift($channel_id, $user_input->{PARAM_EPG_SHIFT_HOURS}, $user_input->{PARAM_EPG_SHIFT_MINS});
-                if (!isset($new_value)) break;
 
+                // these combo boxes apply on change (add_epg_shift_defs(..., true)),
+                // so re-open the dialog to redraw the epg with the new shift,
+                // with the focus back on the box that was just changed
                 $attrs['initial_sel_ndx'] = $user_input->control_id === PARAM_EPG_SHIFT_HOURS ? 0 : 1;
                 $actions[] = Action_Factory::close_dialog();
                 $actions[] = Action_Factory::invalidate_folders(array($user_input->parent_media_url));

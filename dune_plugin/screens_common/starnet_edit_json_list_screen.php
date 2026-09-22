@@ -224,8 +224,11 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
             $source_ids = Epg_Manager_Json::get_channels_info($config_preset);
             if (isset($source_ids[COLUMN_EPG_ID])) {
                 $search_epg_id = array_merge($search_epg_id, $source_ids[COLUMN_EPG_ID]);
+                // flipped once: this is every playlist channel against every id
+                // in the source, so in_array() here is channels * ids per source
+                $epg_id_map = array_flip($source_ids[COLUMN_EPG_ID]);
                 foreach ($pl_epg_info as $info) {
-                    if (in_array($info[COLUMN_EPG_ID], $source_ids[COLUMN_EPG_ID])) {
+                    if (isset($epg_id_map[$info[COLUMN_EPG_ID]])) {
                         $found[] = $info[COLUMN_CHANNEL_ID];
                     }
                 }
@@ -234,11 +237,12 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
             if (isset($source_ids[COLUMN_EPG_ALIASES])) {
                 $ids = array_keys($source_ids[COLUMN_EPG_ALIASES]);
                 $search_aliases = array_merge($search_aliases, $ids);
+                $alias_map = array_flip($ids);
                 foreach ($pl_epg_info as $info) {
-                    if (in_array(to_lower($info[COLUMN_TITLE]), $ids) !== false) {
+                    if (isset($alias_map[to_lower($info[COLUMN_TITLE])])) {
                         $found[] = $info[COLUMN_CHANNEL_ID];
                     }
-                    if (in_array(to_lower($info[COLUMN_TVG_NAME]), $ids) !== false) {
+                    if (isset($alias_map[to_lower($info[COLUMN_TVG_NAME])])) {
                         $found[] = $info[COLUMN_CHANNEL_ID];
                     }
                 }

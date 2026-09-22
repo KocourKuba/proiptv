@@ -621,29 +621,37 @@ function hd_debug_print($val = null, $is_debug = false)
         return;
 
     $bt = debug_backtrace();
-    $caller = array_shift($bt);
-    $caller_name = array_shift($bt);
-    $prefix = "(" . str_pad($caller['line'], 4) . ") ";
+    $caller = (array)array_shift($bt);
+    $caller_name = (array)array_shift($bt);
+    $prefix = "(" . str_pad(isset($caller['line']) ? $caller['line'] : '?', 4) . ") ";
     if (isset($caller_name['class'])) {
         $prefix .= "{$caller_name['class']}::";
     }
 
-    $prefix .= "{$caller_name['function']}(): ";
+    $prefix .= (isset($caller_name['function']) ? $caller_name['function'] : '') . "(): ";
 
     if ($val === null) {
         $val = '';
-        $parent_caller = array_shift($bt);
-        if (!isset($caller_name['line'])) {
-            $prefix .= "unknown line: $caller ";
-            print_backtrace();
+        $parent_caller = (array)array_shift($bt);
+        if (isset($caller_name['line'])) {
+            $line = $caller_name['line'];
+        } else if (isset($parent_caller['line'])) {
+            // Reached through an internal dispatcher (call_user_func,
+            // call_user_func_array, array_map, ...): the called function's own
+            // frame has no file or line, but the dispatcher's frame does, and
+            // the dispatcher is what gets named below. A normal, expected way
+            // to be called - not worth a backtrace.
+            $line = $parent_caller['line'];
         } else {
-            $prefix .= "called from: (" . str_pad($caller_name['line'], 4) . ") ";
+            $line = '?';
         }
+        $prefix .= "called from: (" . str_pad($line, 4) . ") ";
+
         if (isset($parent_caller['class'])) {
             $prefix .= "{$parent_caller['class']}:";
         }
 
-        $prefix .= "{$parent_caller['function']}(): ";
+        $prefix .= (isset($parent_caller['function']) ? $parent_caller['function'] : '') . "(): ";
     } else if ($val instanceof Json_Serializer) {
         $val = $val->__toString();
     } else if (is_array($val)) {
@@ -3819,27 +3827,6 @@ function array_unshift_assoc(&$arr, $key, $val)
     $arr = array_reverse($arr, true);
     $arr[$key] = $val;
     return array_reverse($arr, true);
-}
-
-/**
- * @param string $string
- * @param int $num
- * @param int|null $slice
- * @return array
- */
-function mb_str_split($string, $num = 1, $slice = null)
-{
-    $out = array();
-    do {
-        $array[] = mb_substr($string, 0, 1, 'utf-8');
-    } while ($string = mb_substr($string, 1, mb_strlen($string), 'utf-8'));
-
-    $chunks = array_chunk($array, $num);
-    foreach ($chunks as $chunk)
-        $out[] = implode('', $chunk);
-    if ($slice !== null)
-        $out = array_slice($out, 0, $slice);
-    return $out;
 }
 
 /**

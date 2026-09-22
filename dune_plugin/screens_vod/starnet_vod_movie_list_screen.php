@@ -195,12 +195,15 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
         }
 
         $sticker = Control_Factory::create_sticker(get_image_path('play_small.png'), -20, -12, "left");
-        $fav_ids = $this->plugin->get_channels_order(VOD_FAV_GROUP_ID);
+        // flipped once: in_array() per movie over these is O(page * list), and
+        // the vod list group can hold the whole catalogue - tens of thousands
+        // of entries on a provider m3u
+        $fav_ids = array_flip($this->plugin->get_channels_order(VOD_FAV_GROUP_ID));
 
         $provider = $this->plugin->get_active_provider();
         $list_ids = array();
         if ($provider && Default_Dune_Plugin::is_provider_m3u_vod($provider)) {
-            $list_ids = $this->plugin->get_channels_order(VOD_LIST_GROUP_ID);
+            $list_ids = array_flip($this->plugin->get_channels_order(VOD_LIST_GROUP_ID));
         }
 
         $items = array();
@@ -209,9 +212,9 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
                 $items[] = array(
                     PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::make_vod_media_url_str($movie->id, $movie->name, $movie->poster_url, $movie->info),
                     PluginRegularFolderItem::caption => $movie->name,
-                    PluginRegularFolderItem::starred => in_array($movie->id, $fav_ids),
+                    PluginRegularFolderItem::starred => isset($fav_ids[$movie->id]),
                     PluginRegularFolderItem::view_item_params => array(
-                        ViewItemParams::item_sticker => in_array($movie->id, $list_ids) ? $sticker : null,
+                        ViewItemParams::item_sticker => isset($list_ids[$movie->id]) ? $sticker : null,
                         ViewItemParams::icon_path => $movie->poster_url,
                         ViewItemParams::item_detailed_info => $movie->info,
                         ViewItemParams::item_detailed_icon_path => empty($movie->big_poster_url) ? $movie->poster_url : $movie->big_poster_url,

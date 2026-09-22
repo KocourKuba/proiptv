@@ -84,11 +84,16 @@ class Rows_Json_Writer
     /**
      * Writes $folder_view to $path, asking $producer for the rows.
      *
+     * $producer is the screen supplying the rows; it is called directly rather
+     * than through call_user_func() so that its frame keeps a file and a line.
+     * hd_debug_print(null) reads those off the backtrace, and when they are
+     * missing it logs "unknown line" and dumps a full backtrace on every write.
+     *
      * @param string $path
      * @param array $folder_view # pane[rows] must be ROWS_PLACEHOLDER
-     * @param callable $producer # called as $producer($writer)
+     * @param Starnet_Tv_Rows_Screen $producer # must have produce_rows($writer)
      * @return array|false array('md5', 'rows', 'produced'), false if nothing was written.
-     *                     'produced' is whatever $producer returned
+     *                     'produced' is whatever produce_rows() returned
      */
     public static function write_to_file($path, $folder_view, $producer)
     {
@@ -111,7 +116,7 @@ class Rows_Json_Writer
         }
 
         $writer->put($parts[0] . '[');
-        $produced = call_user_func($producer, $writer);
+        $produced = $producer->produce_rows($writer);
         $writer->put(']');
         $writer->put($writer->fill_tail($parts[1]));
 

@@ -173,7 +173,7 @@ class vod_mirkino extends vod_standard
                     $movie_series->poster = $this->jfc->getItemImageUrl($episode_id);
                     $movie->add_series_data($this->fill_series($movie_series, $episode_id, safe_get_value($episode_item, 'MediaSources')));
 
-                    if (empty($quality_str)) {
+                    if (empty($qualities_str)) {
                         $qualities_str = implode(', ', $movie->get_qualities($episode_id));
                     }
                 }

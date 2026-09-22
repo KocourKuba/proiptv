@@ -107,9 +107,12 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         if (empty($this->selected_items)) {
             $selected_items[] = $selected_channel;
         } else {
+            // flipped once: in_array() per entry over the selection is
+            // O(entries * selected), and "select all" makes the two equal
+            $selected_map = array_flip($this->selected_items);
             $new_selected = array();
             foreach($channels_order as $item) {
-                if (in_array($item, $this->selected_items)) {
+                if (isset($selected_map[$item])) {
                     $new_selected[] = $item;
                 }
             }
@@ -315,7 +318,11 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print($media_url, true);
 
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
-        $fav_ids = $this->plugin->get_channels_order($this->plugin->get_fav_id());
+        // flipped once: in_array() per channel over these two is
+        // O(channels * favorites) and O(channels * selected), and "select all"
+        // on a big group makes the second list as long as the first
+        $fav_ids = array_flip($this->plugin->get_channels_order($this->plugin->get_fav_id()));
+        $selected_ids = array_flip($this->selected_items);
 
         if ($media_url->{PARAM_GROUP_ID} === TV_ALL_CHANNELS_GROUP_ID) {
             $help = '';
@@ -337,13 +344,13 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $channel_id = $channel_row[COLUMN_CHANNEL_ID];
                 $icon_url = $this->plugin->get_channel_picon($channel_row, true);
                 $title = $channel_row[COLUMN_SHOW_TITLE];
-                $selected = in_array($channel_id, $this->selected_items);
+                $selected = isset($selected_ids[$channel_id]);
 
                 $detailed_info = TR::load('tv_screen_edit_ch_channel_info__1', $title) . $help;
                 $items[] = array(
                     PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_CHANNEL_ID => $channel_id, PARAM_GROUP_ID => $group_id)),
                     PluginRegularFolderItem::caption => $title,
-                    PluginRegularFolderItem::starred => in_array($channel_id, $fav_ids),
+                    PluginRegularFolderItem::starred => isset($fav_ids[$channel_id]),
                     PluginRegularFolderItem::view_item_params => array(
                         ViewItemParams::item_sticker => $selected ? Control_Factory::create_sticker(get_image_path('mark.png'),
                             -30, 0, 'left', 'center') : null,

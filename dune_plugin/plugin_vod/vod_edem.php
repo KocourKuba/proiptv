@@ -100,7 +100,7 @@ class vod_edem extends vod_standard
                 hd_debug_print('Episode data: ' . json_format_unescaped($episodeData));
                 if (!empty($episodeData)) {
                     $movie->add_series_data(self::fill_variants($fid, $episodeData));
-                    if (empty($quality_str)) {
+                    if (empty($qualities_str)) {
                         $qualities_str = implode(', ', $movie->get_qualities($fid));
                     }
                 }

@@ -99,9 +99,12 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
         if (empty($this->selected_items)) {
             $selected_items[] = $selected_group;
         } else {
+            // flipped once: in_array() per entry over the selection is
+            // O(entries * selected), and "select all" makes the two equal
+            $selected_map = array_flip($this->selected_items);
             $new_selected = array();
             foreach($group_order as $item) {
-                if (in_array($item, $this->selected_items)) {
+                if (isset($selected_map[$item])) {
                     $new_selected[] = $item;
                 }
             }
@@ -283,9 +286,11 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
         $items = array();
         $help = TR::load('edit_help');
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
+        // flipped once, see the note in handle_user_input()
+        $selected_map = array_flip($this->selected_items);
         foreach ($this->plugin->get_groups_by_order($show_adult) as $group_row) {
             $icon = get_cached_image(safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON));
-            $selected = in_array($group_row[COLUMN_GROUP_ID], $this->selected_items);
+            $selected = isset($selected_map[$group_row[COLUMN_GROUP_ID]]);
             $detailed_info = TR::load('tv_screen_edit_ch_channel_info__1', $group_row[COLUMN_TITLE]) . $help;
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(

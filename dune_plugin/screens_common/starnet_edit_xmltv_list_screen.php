@@ -924,19 +924,23 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             $source_ids = Epg_Manager_Xmltv::get_all_xmltv_ids($params);
             $search_epg_id = array_merge($search_epg_id, $source_ids[COLUMN_EPG_ID]);
+            // flipped once: this is every playlist channel against every id in
+            // the source, so in_array() here is channels * ids per source
+            $epg_id_map = array_flip($source_ids[COLUMN_EPG_ID]);
             foreach ($pl_epg_info as $info) {
-                if (in_array($info[COLUMN_EPG_ID], $source_ids[COLUMN_EPG_ID])) {
+                if (isset($epg_id_map[$info[COLUMN_EPG_ID]])) {
                     $found[] = $info[COLUMN_CHANNEL_ID];
                 }
             }
 
             $aliases = $source_ids[COLUMN_EPG_ALIASES];
             $search_aliases = array_merge($search_aliases, $aliases);
+            $alias_map = array_flip($aliases);
             foreach ($pl_epg_info as $info) {
-                if (in_array(to_lower($info[COLUMN_TITLE]), $aliases) !== false) {
+                if (isset($alias_map[to_lower($info[COLUMN_TITLE])])) {
                     $found[] = $info[COLUMN_CHANNEL_ID];
                 }
-                if (in_array(to_lower($info[COLUMN_TVG_NAME]), $aliases) !== false) {
+                if (isset($alias_map[to_lower($info[COLUMN_TVG_NAME])])) {
                     $found[] = $info[COLUMN_CHANNEL_ID];
                 }
             }

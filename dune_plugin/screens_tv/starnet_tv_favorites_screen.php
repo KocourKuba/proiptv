@@ -150,15 +150,16 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
                 hd_debug_print('Applying epg shift hours: ' . $user_input->{PARAM_EPG_SHIFT_HOURS}, true);
                 hd_debug_print('Applying epg shift mins: ' . $user_input->{PARAM_EPG_SHIFT_MINS}, true);
                 $this->plugin->set_channel_epg_shift($channel_id, $user_input->{PARAM_EPG_SHIFT_HOURS}, $user_input->{PARAM_EPG_SHIFT_MINS});
-                if (isset($new_value)) {
-                    $attrs['initial_sel_ndx'] = $user_input->control_id === PARAM_EPG_SHIFT_HOURS ? 0 : 1;
-                    return Action_Factory::close_dialog_and_run(
-                        Action_Factory::invalidate_folders(array($user_input->parent_media_url),
-                            $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id), $attrs)
-                        )
-                    );
-                }
-                break;
+
+                // these combo boxes apply on change (add_epg_shift_defs(..., true)),
+                // so re-open the dialog to redraw the epg with the new shift,
+                // with the focus back on the box that was just changed
+                $attrs['initial_sel_ndx'] = $user_input->control_id === PARAM_EPG_SHIFT_HOURS ? 0 : 1;
+                return Action_Factory::close_dialog_and_run(
+                    Action_Factory::invalidate_folders(array($user_input->parent_media_url),
+                        $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id), $attrs)
+                    )
+                );
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 return $this->create_popup_menu($channel_id);
