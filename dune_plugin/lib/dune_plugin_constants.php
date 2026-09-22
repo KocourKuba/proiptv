@@ -302,6 +302,7 @@ const PARAM_HISTORY_PATH = 'history_path';
 const PARAM_ITEMS = 'items';
 const PARAM_LAST_PLAYLIST = 'current_playlist';
 const PARAM_LAST_TV_SEARCH = 'last_tv_search';
+const PARAM_MEDIA_INFO_SAMPLE = 'media_info_sample';
 const PARAM_PLAYLIST_FIRST = 'playlist_first';
 const PARAM_SELECTED_FIRST = 'selected_first';
 const PARAM_SELECTED_XMLTV_FIRST = 'selected_xmltv_first';

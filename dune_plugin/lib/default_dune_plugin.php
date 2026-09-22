@@ -3100,41 +3100,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return null;
         }
 
-        $defs = array();
-        Control_Factory::add_vgap($defs, -20);
-
         try {
-            $live_url = $this->generate_stream_url($channel_row, -1, true);
-            if (empty($live_url)) {
-                return null;
-            }
-
-            $streams = $this->get_streams_info($live_url);
-            $out = null;
-            $title = '';
-            if (!empty($streams['streams'])) {
-                $out = $streams['streams'];
-                $title = TR::load('stream');
-            } else if (!empty($streams['log'])) {
-                $out = $streams['log'];
-            }
-
-            if (empty($out)) {
-                return null;
-            }
-
-            Control_Factory::add_vgap($defs, 15);
-            foreach ($out as $line) {
-                Control_Factory::format_smart_label($defs, $title, $line);
-            }
-
-            if (!empty($streams['streams']) && !empty($streams['bitrate'])) {
-                Control_Factory::format_smart_label($defs, TR::load('bitrate'), $streams['bitrate']);
-            }
-            Control_Factory::add_vgap($defs, 15);
-            Control_Factory::add_ok_button($defs, true);
-
-            return Action_Factory::show_dialog($defs, TR::t('media_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
+            return $this->show_streams_info_dialog($this->generate_stream_url($channel_row, -1, true));
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
         }
@@ -3152,6 +3119,55 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
+        $series = $this->get_vod_series_stream($media_url, $plugin_cookies);
+        if (empty($series)) {
+            return null;
+        }
+
+        $defs = array();
+        Control_Factory::add_vgap($defs, -20);
+        Control_Factory::format_smart_label($defs, TR::load('name'), $series[PluginVodSeriesInfo::name]);
+
+        if (!empty($series['dune_params'])) {
+            Control_Factory::add_vgap($defs, 10);
+            Control_Factory::format_smart_label($defs, 'dune_params:', $series['dune_params']);
+        }
+
+        Control_Factory::format_smart_label($defs, TR::load('url'), htmlspecialchars($series['stream_url']));
+
+        Control_Factory::add_vgap($defs, 30);
+        Control_Factory::add_ok_button($defs, true);
+
+        return Action_Factory::show_dialog($defs, TR::t('vod_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
+    }
+
+    /**
+     * @param MediaURL $media_url
+     * @param object $plugin_cookies
+     * @return array|null
+     */
+    public function do_show_vod_media_info($media_url, $plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print($media_url, true);
+
+        $series = $this->get_vod_series_stream($media_url, $plugin_cookies);
+        if (empty($series)) {
+            return null;
+        }
+
+        return $this->show_streams_info_dialog($series['stream_url']);
+    }
+
+    /**
+     * Resolve the stream url of the series selected in the VOD info
+     *
+     * @param MediaURL $media_url
+     * @param object $plugin_cookies
+     * @return array|null series info extended with 'stream_url' (dune params stripped) and 'dune_params'
+     */
+    protected function get_vod_series_stream($media_url, $plugin_cookies)
+    {
         $vod_info = $this->vod->get_vod_info($media_url);
         if (empty($vod_info)) {
             return null;
@@ -3166,48 +3182,52 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $stream_url = strip_ts($stream_url);
-        $magic = extract_dune_params($stream_url);
-        $stream_url = strip_dune_params($stream_url);
+        $series['dune_params'] = extract_dune_params($stream_url);
+        $series['stream_url'] = strip_dune_params($stream_url);
+
+        return $series;
+    }
+
+    /**
+     * Show the streams detected by ffmpeg, or its log when nothing was detected
+     *
+     * @param string $stream_url
+     * @return array|null
+     */
+    protected function show_streams_info_dialog($stream_url)
+    {
+        if (empty($stream_url)) {
+            return null;
+        }
+
+        $streams = $this->get_streams_info($stream_url);
+        $out = null;
+        $title = '';
+        if (!empty($streams['streams'])) {
+            $out = $streams['streams'];
+            $title = TR::load('stream');
+        } else if (!empty($streams['log'])) {
+            $out = $streams['log'];
+        }
+
+        if (empty($out)) {
+            return null;
+        }
 
         $defs = array();
         Control_Factory::add_vgap($defs, -20);
-        Control_Factory::format_smart_label($defs, TR::load('name'), $series[PluginVodSeriesInfo::name]);
-
-        if (!empty($magic)) {
-            Control_Factory::add_vgap($defs, 10);
-            Control_Factory::format_smart_label($defs, 'dune_params:', $magic);
+        Control_Factory::add_vgap($defs, 15);
+        foreach ($out as $line) {
+            Control_Factory::format_smart_label($defs, $title, $line);
         }
 
-        Control_Factory::format_smart_label($defs, TR::load('url'), htmlspecialchars($stream_url));
-
-        if (!empty($stream_url) && !is_limited_apk()) {
-            $info = $this->get_streams_info($stream_url);
-            $out = null;
-            $title = '';
-            if (!empty($info['streams'])) {
-                $out = $info['streams'];
-                $title = TR::load('stream');
-            } else if (!empty($info['log'])) {
-                $out = $info['log'];
-            }
-
-            if (!empty($out)) {
-                Control_Factory::add_vgap($defs, 30);
-                Control_Factory::format_smart_label($defs, 'ffmpeg info:', '');
-                foreach ($out as $line) {
-                    Control_Factory::format_smart_label($defs, $title, $line);
-                }
-
-                if (!empty($info['streams']) && !empty($info['bitrate'])) {
-                    Control_Factory::format_smart_label($defs, TR::load('bitrate'), $info['bitrate']);
-                }
-            }
+        if (!empty($streams['streams']) && !empty($streams['bitrate'])) {
+            Control_Factory::format_smart_label($defs, TR::load('bitrate'), $streams['bitrate']);
         }
-
-        Control_Factory::add_vgap($defs, 30);
+        Control_Factory::add_vgap($defs, 15);
         Control_Factory::add_ok_button($defs, true);
 
-        return Action_Factory::show_dialog($defs, TR::t('vod_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
+        return Action_Factory::show_dialog($defs, TR::t('media_info_dlg'), Action_Factory::MAX_DLG_WIDTH);
     }
 
     /**
@@ -4421,13 +4441,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * itself almost never declares one.
      *
      * @param string $stream_url
-     * @param int $sample_duration how many seconds of the stream are read to measure the bitrate
+     * @param int|null $sample_duration how many seconds of the stream are read to measure the bitrate,
+     *                                  null takes the PARAM_MEDIA_INFO_SAMPLE setting
      * @return array 'streams' - description of each detected stream
      *               'bitrate' - bitrate of the streams selected for playback
      *               'log' - ffmpeg messages, filled only when no stream was detected
      */
-    protected function get_streams_info($stream_url, $sample_duration = 5)
+    protected function get_streams_info($stream_url, $sample_duration = null)
     {
+        if ($sample_duration === null) {
+            $sample_duration = $this->get_parameter(PARAM_MEDIA_INFO_SAMPLE, 5);
+        }
+
         $descriptors = array(
             0 => array('pipe', 'r'), // stdin
             1 => array('pipe', 'w'), // sdout

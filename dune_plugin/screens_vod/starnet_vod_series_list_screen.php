@@ -185,6 +185,9 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
             case GUI_EVENT_KEY_INFO:
                 return $this->plugin->do_show_vod_info($selected_media_url, $plugin_cookies);
 
+            case ACTION_MEDIA_INFO:
+                return $this->plugin->do_show_vod_media_info($selected_media_url, $plugin_cookies);
+
             default:
         }
 
@@ -350,8 +353,12 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
                 TR::t('tv_screen_external_player'),
                 'play.png',
                 array('external' => true));
+        }
 
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_INFO, TR::t('vod_info_dlg'), 'info.png');
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, GUI_EVENT_KEY_INFO, TR::t('vod_info_dlg'), 'info.png');
+
+        if (!is_limited_apk()) {
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_MEDIA_INFO, TR::t('media_info_dlg'), 'info.png');
         }
 
         return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);

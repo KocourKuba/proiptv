@@ -96,6 +96,17 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
             TR::t('setup_debug'), SwitchOnOff::translate($debug_state), SwitchOnOff::to_image($debug_state));
 
         //////////////////////////////////////
+        // Media info sampling time
+        $sample_range = array();
+        foreach (array(3, 5, 10, 15, 20, 30) as $sec) {
+            $sample_range[$sec] = $sec;
+        }
+        $sample_params = array();
+        Control_Factory::add_combobox($defs, $this, PARAM_MEDIA_INFO_SAMPLE, TR::t('setup_media_info_sample'),
+            $this->plugin->get_parameter(PARAM_MEDIA_INFO_SAMPLE, 5),
+            $sample_range, Control_Factory::SCR_CONTROLS_WIDTH, $sample_params, true);
+
+        //////////////////////////////////////
         // Plugin memory
         $plugin_memory = safe_get_value($plugin_cookies,PARAM_COOKIE_MEMORY_LIMIT, '256M');
         hd_debug_print(PARAM_COOKIE_MEMORY_LIMIT . ": $plugin_memory", true);
@@ -181,6 +192,10 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
                 $debug = toggle_cookie_param($plugin_cookies, PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off);
                 set_debug_log($debug);
                 hd_debug_print("Debug logging: $debug");
+                break;
+
+            case PARAM_MEDIA_INFO_SAMPLE:
+                $this->plugin->set_parameter($control_id, $user_input->{$control_id});
                 break;
 
             case PARAM_COOKIE_MEMORY_LIMIT:

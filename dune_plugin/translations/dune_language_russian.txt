@@ -364,6 +364,7 @@ setup_history_folder_path = Папка информации о просмотр�
 setup_icons_in_row = Количество иконок в ряду
 setup_interface_newui_title = Настройки интерфейса NewUI
 setup_interface_title = Настройки интерфейса
+setup_media_info_sample = Длительность анализа потока (сек)
 setup_native_file = Файл плейлиста
 setup_native_url = Ссылка из кабинета
 setup_new_pass = Новый пароль

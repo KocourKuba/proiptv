@@ -364,6 +364,7 @@ setup_history_folder_path = 历史记录文件夹
 setup_icons_in_row = 每行图标数
 setup_interface_newui_title = NewUI 界面设置
 setup_interface_title = 界面设置
+setup_media_info_sample = 媒体信息采样时间（秒）
 setup_native_file = 本地播放列表文件
 setup_native_url = 来自帐号的网址
 setup_new_pass = 新密码

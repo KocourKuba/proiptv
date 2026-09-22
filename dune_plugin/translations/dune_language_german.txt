@@ -364,6 +364,7 @@ setup_history_folder_path = Infoordner zur Geschichte
 setup_icons_in_row = Symbole in Reihe
 setup_interface_newui_title = NewUI-Schnittstelleneinstellungen
 setup_interface_title = Interface-Einstellungen
+setup_media_info_sample = Messdauer für Medieninfo (sec)
 setup_native_file = Playlist-Datei
 setup_native_url = URL vom Konto
 setup_new_pass = Neues Passwort
