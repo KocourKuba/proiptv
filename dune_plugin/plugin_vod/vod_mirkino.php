@@ -35,6 +35,13 @@ require_once 'lib/jellyfin/jellyfin_api.php';
 class vod_mirkino extends vod_standard
 {
     /**
+     * Audio codecs played by Dune in MPEG-TS segments. Without AudioCodec the server infers it from the url
+     * extension (mp3 for .ts segments) and transcodes every other audio track to mp3.
+     * Audio in these codecs is copied, other codecs are transcoded to the first one (aac).
+     */
+    const HLS_AUDIO_CODECS = 'aac,ac3,eac3,mp3,mp2,dts';
+
+    /**
      * @var jellyfin_api
      */
     protected $jfc;
@@ -83,10 +90,7 @@ class vod_mirkino extends vod_standard
             $query['MediaSourceId'] = $media_url->stream_id;
         }
 
-        if (isset($media_url->audio_index)) {
-            $query['AudioStreamIndex'] = $media_url->audio_index;
-        }
-
+        // PlaybackInfo registers the play session, the stream is served only within it
         $info = $this->jfc->getItemPlaybackInfo($media_url->id, $query);
         if ($info === false) {
             hd_debug_print("Can't get response on Playback info");
@@ -96,7 +100,21 @@ class vod_mirkino extends vod_standard
             $query['PlaySessionId'] = $info['PlaySessionId'];
         }
 
-        $url = $this->jfc->getPlayUrlMaster($media_url->id, $query);
+        // for requested media source the response contains only this source, otherwise the one selected by server
+        $source = safe_get_value($info, array('MediaSources', 0), array());
+        if (!isset($query['MediaSourceId']) && !empty($source['Id'])) {
+            $query['MediaSourceId'] = $source['Id'];
+        }
+
+        if (safe_get_value($source, 'SupportsDirectStream', false)) {
+            // original file as is: no load on server, all audio tracks are selectable in player.
+            // HLS is not used when possible, it fails for alternate versions (other qualities) of the movie
+            $url = $this->jfc->getStreamUrl($media_url->id, $query, self::get_stream_extension(safe_get_value($source, 'Container', '')));
+        } else {
+            $query['AudioCodec'] = self::HLS_AUDIO_CODECS;
+            $url = $this->jfc->getPlayUrlMaster($media_url->id, $query);
+        }
+        hd_debug_print("Stream url: " . $url, true);
 
         $vod_url = make_ts($url);
         $dune_params = $this->plugin->collect_dune_params();
@@ -142,7 +160,7 @@ class vod_mirkino extends vod_standard
             $name = safe_get_value($movie_item, 'Name', 'no name');
             $default_url = new Movie_Playback_Url(MediaURL::encode(array('id' => $item_id)), false);
             $movie_series = new Movie_Series($item_id, $name, $default_url);
-            $movie->add_series_data($this->fill_series($movie_series, $item_id, safe_get_value($movie_item, 'MediaSources')));
+            $movie->add_series_data($this->fill_series($movie_series, $item_id, safe_get_value($movie_item, 'MediaSources', array())));
             $qualities_str = implode(', ', $movie->get_qualities($item_id));
         } else if ($movie_type === jellyfin_api::SERIES) {
             $seasons = $this->jfc->getSeasons($item_id);
@@ -162,8 +180,12 @@ class vod_mirkino extends vod_standard
                     $episode_id = $episode['Id'];
                     if (empty($episode_id)) continue;
 
-                    hd_debug_print("episode id: $season_id", true);
-                    $episode_item = $this->jfc->getItemInfo($episode_id);
+                    hd_debug_print("episode id: $episode_id", true);
+                    // episodes list contains media sources, older servers may not return them
+                    $media_sources = safe_get_value($episode, 'MediaSources');
+                    if (empty($media_sources)) {
+                        $media_sources = safe_get_value($this->jfc->getItemInfo($episode_id), 'MediaSources', array());
+                    }
 
                     $default_url = new Movie_Playback_Url(MediaURL::encode(array('id' => $episode_id)), false);
                     $movie_series = new Movie_Series($episode_id,
@@ -171,7 +193,7 @@ class vod_mirkino extends vod_standard
                         $default_url, $season_id
                     );
                     $movie_series->poster = $this->jfc->getItemImageUrl($episode_id);
-                    $movie->add_series_data($this->fill_series($movie_series, $episode_id, safe_get_value($episode_item, 'MediaSources')));
+                    $movie->add_series_data($this->fill_series($movie_series, $episode_id, $media_sources));
 
                     if (empty($qualities_str)) {
                         $qualities_str = implode(', ', $movie->get_qualities($episode_id));
@@ -439,6 +461,28 @@ class vod_mirkino extends vod_standard
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * Extension for the direct stream url. Jellyfin reports container as ffprobe format names,
+     * for example "mov,mp4,m4a,3gp,3g2,mj2" or "matroska,webm"
+     *
+     * @param string $container
+     * @return string
+     */
+    protected static function get_stream_extension($container)
+    {
+        $formats = explode(',', strtolower($container));
+        if (in_array('mp4', $formats)) {
+            return 'mp4';
+        }
+        if (in_array('matroska', $formats) || in_array('mkv', $formats)) {
+            return 'mkv';
+        }
+        if (in_array('mov', $formats)) {
+            return 'mov';
+        }
+        return '';
+    }
+
+    /**
      * @param Movie_Series $movie_series
      * @param string $item_id
      * @param array $media_sources
@@ -452,34 +496,19 @@ class vod_mirkino extends vod_standard
             $stream_id = safe_get_value($source, 'Id');
             if (empty($stream_id)) continue;
 
-            /** @var Movie_Variant[] $audios */
-            $audios = array();
-            $q_name = '';
-            $default_audio = safe_get_value($source, 'DefaultAudioStreamIndex');
+            // audio track is selected in player: the direct stream contains all tracks of the source
             foreach (safe_get_value($source, 'MediaStreams', array()) as $stream) {
-                if (strcasecmp(safe_get_value($stream, 'Type'), 'Video') === 0) {
-                    $q_name = safe_get_value($stream, 'DisplayTitle');
-                    $media_url = MediaURL::encode(array('id' => $item_id, 'stream_id' => $stream_id));
-                    $quality = new Movie_Variant($q_name, new Movie_Playback_Url($media_url, false));
-                    $qualities[$q_name] = $quality;
-                    // default playback url for quality
-                    if ($stream_id == $item_id) {
-                        $qualities['auto'] = $quality;
-                    }
-                } else if (strcasecmp(safe_get_value($stream, 'Type'), 'Audio') === 0) {
-                    $a_name = safe_get_value($stream, 'DisplayTitle');
-                    $index = safe_get_value($stream, 'Index');
-                    $media_url = MediaURL::encode(array('id' => $item_id, 'stream_id' => $stream_id, 'audio_index' => $index));
-                    $audio = new Movie_Variant($a_name, new Movie_Playback_Url($media_url, false));
-                    $audios[$index] = $audio;
-                    if ($default_audio === $index) {
-                        $audios['auto'] = $audio;
-                    }
-                }
-            }
+                if (strcasecmp(safe_get_value($stream, 'Type'), 'Video') !== 0) continue;
 
-            if (!empty($q_name)) {
-                $qualities[$q_name]->set_variants($audios);
+                $q_name = safe_get_value($stream, 'DisplayTitle');
+                $media_url = MediaURL::encode(array('id' => $item_id, 'stream_id' => $stream_id));
+                $quality = new Movie_Variant($q_name, new Movie_Playback_Url($media_url, false));
+                $qualities[$q_name] = $quality;
+                // default playback url for quality
+                if ($stream_id == $item_id) {
+                    $qualities['auto'] = $quality;
+                }
+                break;
             }
         }
 

@@ -306,21 +306,26 @@ class Epg_Manager_Json
     }
 
     /**
+     * Preset of the EPG server created by proiptv-epg-converter.
+     * Such server provides channels_info.json with known epg ids and aliases.
+     *
      * @param array $config_preset
      * @return bool
      */
     public static function is_proiptv_epg_preset($config_preset)
     {
-        return isset($config_preset[EPG_JSON_PRESET_NAME]) && $config_preset[EPG_JSON_PRESET_NAME] === 'proiptv';
+        return isset($config_preset[EPG_JSON_SERVER])
+            || (isset($config_preset[EPG_JSON_PRESET_NAME]) && $config_preset[EPG_JSON_PRESET_NAME] === 'proiptv');
     }
 
     /**
-     * @param string $name
-     * @return bool
+     * @param array $config_preset
+     * @return string
      */
-    public static function is_proiptv_epg_preset_name($name)
+    protected static function get_channels_info_url($config_preset)
     {
-        return strpos($name, 'proiptv') === 0;
+        $channel_info_url = str_replace(MACRO_PROVIDER, $config_preset[EPG_JSON_PRESET_ID], $config_preset[EPG_JSON_SOURCE]);
+        return substr($channel_info_url, 0, strlen($channel_info_url) - strlen(basename($channel_info_url))) . 'channels_info.json';
     }
 
     /**
@@ -333,27 +338,26 @@ class Epg_Manager_Json
             return false;
         }
 
-        $epg_source_id = $config_preset[EPG_JSON_PRESET_ID];
-        if (!isset(self::$all_channels_info[$epg_source_id])
-            || (self::$all_channels_info[$epg_source_id]->valid && self::$all_channels_info[$epg_source_id]->expired < time())) {
+        // different EPG servers can serve the same source id, so the info is stored by its url
+        $channels_info_url = self::get_channels_info_url($config_preset);
+        if (!isset(self::$all_channels_info[$channels_info_url])
+            || (self::$all_channels_info[$channels_info_url]->valid && self::$all_channels_info[$channels_info_url]->expired < time())) {
             $curl_wrapper = Curl_Wrapper::getInstance();
-            $channel_info_url = str_replace(MACRO_PROVIDER, $epg_source_id, $config_preset[EPG_JSON_SOURCE]);
-            $channels_info_url = substr($channel_info_url, 0, strlen($channel_info_url) - strlen(basename($channel_info_url))) . 'channels_info.json';
             hd_debug_print("Fetching channels info from server: $channels_info_url");
             $ch_data = $curl_wrapper->download_content($channels_info_url,
                 Curl_Wrapper::RET_ARRAY, Curl_Wrapper::USE_ETAG | Curl_Wrapper::CACHE_RESPONSE
             );
 
-            self::$all_channels_info[$epg_source_id] = new ChannelInfo();
+            self::$all_channels_info[$channels_info_url] = new ChannelInfo();
 
             if (!empty($ch_data)) {
-                self::$all_channels_info[$epg_source_id]->valid = true;
-                self::$all_channels_info[$epg_source_id]->info = $ch_data;
-                self::$all_channels_info[$epg_source_id]->expired = time() + 4 * 3600;
+                self::$all_channels_info[$channels_info_url]->valid = true;
+                self::$all_channels_info[$channels_info_url]->info = $ch_data;
+                self::$all_channels_info[$channels_info_url]->expired = time() + 4 * 3600;
             }
         }
 
-        return self::$all_channels_info[$epg_source_id]->valid;
+        return self::$all_channels_info[$channels_info_url]->valid;
     }
 
     /**
@@ -363,14 +367,12 @@ class Epg_Manager_Json
     public static function get_all_json_ids($config_preset)
     {
         $ids = array();
-        $epg_source_id = $config_preset[EPG_JSON_PRESET_ID];
-        if (self::$all_channels_info[$epg_source_id]->valid) {
-            if (isset(self::$all_channels_info[$epg_source_id]->info[COLUMN_EPG_ID])) {
-                $ids = self::$all_channels_info[$epg_source_id]->info[COLUMN_EPG_ID];
-            }
-            if (isset(self::$all_channels_info[$epg_source_id]->info[COLUMN_EPG_ALIASES])) {
-                $ids = array_merge($ids, array_keys(self::$all_channels_info[$epg_source_id]->info[COLUMN_EPG_ALIASES]));
-            }
+        $info = self::get_channels_info($config_preset);
+        if (isset($info[COLUMN_EPG_ID])) {
+            $ids = $info[COLUMN_EPG_ID];
+        }
+        if (isset($info[COLUMN_EPG_ALIASES])) {
+            $ids = array_merge($ids, array_keys($info[COLUMN_EPG_ALIASES]));
         }
 
         return $ids;
@@ -382,9 +384,9 @@ class Epg_Manager_Json
      */
     public static function get_channels_info($config_preset)
     {
-        $epg_source_id = $config_preset[EPG_JSON_PRESET_ID];
-        if (self::$all_channels_info[$epg_source_id]->valid) {
-            return self::$all_channels_info[$epg_source_id]->info;
+        $channels_info_url = self::get_channels_info_url($config_preset);
+        if (isset(self::$all_channels_info[$channels_info_url]) && self::$all_channels_info[$channels_info_url]->valid) {
+            return self::$all_channels_info[$channels_info_url]->info;
         }
 
         return array();
@@ -406,13 +408,11 @@ class Epg_Manager_Json
             $epg_id = $epg_ids[COLUMN_EPG_ID];
         }
 
-        $epg_source_id = $config_preset[EPG_JSON_PRESET_ID];
-
-        if (!self::load_channels_info($config_preset) || empty(self::$all_channels_info[$epg_source_id])) {
+        if (!self::load_channels_info($config_preset)) {
             return $epg_id;
         }
 
-        $channels_info = self::$all_channels_info[$epg_source_id]->info;
+        $channels_info = self::get_channels_info($config_preset);
         if (!empty($channels_info[COLUMN_EPG_ID]) && in_array($epg_id, $channels_info[COLUMN_EPG_ID])) {
             return $epg_id;
         }

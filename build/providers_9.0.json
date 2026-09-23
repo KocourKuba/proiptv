@@ -84,34 +84,7 @@
       }
     },
     "proiptv": {
-      "aliases": [
-        "bcumedia",
-        "edem",
-        "fox",
-        "gabbarit",
-        "glanz",
-        "iptvonline",
-        "kineskop",
-        "lightiptv",
-        "mymagic",
-        "rutv",
-        "sharavoz",
-        "sharatv",
-        "smile",
-        "uspeh",
-        "viplime",
-        "vivamax",
-        "yosso"
-      ],
-      "json_source": "http://epg.esalecrm.com/{PROVIDER}/epg/{EPG_ID}.json",
-      "parser": {
-        "epg_root": "epg_data",
-        "epg_name": "name",
-        "epg_desc": "descr",
-        "epg_start": "time",
-        "epg_end": "time_to",
-        "epg_icon": "icon"
-      }
+      "presets_url": "https://epg.esalecrm.com/epg_presets.json"
     },
     "shuratv": {
       "json_source": "http://epg.propg.net/{EPG_ID}/epg2/{YEAR}-{MONTH}-{DAY}",

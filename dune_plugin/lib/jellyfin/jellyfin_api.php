@@ -44,6 +44,17 @@ class jellyfin_api
     private $curl_wrapper;
 
     /**
+     * credentials kept to log in again when the token is revoked during the session
+     * @var string
+     */
+    private $username = '';
+
+    /**
+     * @var string
+     */
+    private $password = '';
+
+    /**
      * @param Default_Dune_Plugin $plugin
      * @param string $baseUrl
      * @param string $appVersion
@@ -66,35 +77,54 @@ class jellyfin_api
      */
     public function login($access_info)
     {
-        $username = safe_get_value($access_info, MACRO_LOGIN);
-        $password = safe_get_value($access_info, MACRO_PASSWORD);
+        $this->username = safe_get_value($access_info, MACRO_LOGIN, '');
+        $this->password = safe_get_value($access_info, MACRO_PASSWORD, '');
         $this->accessToken = safe_get_value($access_info, PARAM_TOKEN);
         $this->userId = safe_get_value($access_info, PARAM_USER_ID);
 
-        if (!empty($this->accessToken) && !empty($this->userId)) {
-            $response = $this->systemInfo();
-            if ($response !== false) {
+        // saved token is still valid if the server knows its user
+        if (!empty($this->accessToken)) {
+            $user = $this->getCurrentUser();
+            if (!empty($user['Id'])) {
+                $this->userId = $user['Id'];
                 return true;
             }
         }
 
+        return $this->authenticate();
+    }
+
+    /**
+     * Log in by user name and password
+     *
+     * @return bool
+     */
+    private function authenticate()
+    {
         hd_debug_print("Performing login to '$this->baseUrl'");
+        $this->accessToken = null;
+        $this->userId = null;
+
         $headers = $this->buildHeaders(false);
         $headers[] = CONTENT_TYPE_JSON;
 
         $this->plugin->reset_curl($this->curl_wrapper);
-        $this->curl_wrapper->set_post_data(array('Username' => $username, 'Pw' => $password));
+        $this->curl_wrapper->set_post_data(array('Username' => $this->username, 'Pw' => $this->password));
         $this->curl_wrapper->set_send_headers($headers);
 
         $command_url = $this->baseUrl . '/Users/AuthenticateByName';
         $response = $this->curl_wrapper->download_content($command_url, Curl_Wrapper::RET_ARRAY);
         if ($response === false) {
-            hd_debug_print("Can't get response on request: $command_url");
+            hd_debug_print("Login failed (" . Curl_Wrapper::get_http_code() . ") on request: $command_url");
             return false;
         }
 
-        $this->userId = safe_get_value($response, array('SessionInfo', 'UserId'));
         $this->accessToken = safe_get_value($response, 'AccessToken');
+        $this->userId = safe_get_value($response, array('User', 'Id'));
+        if (empty($this->userId)) {
+            $this->userId = safe_get_value($response, array('SessionInfo', 'UserId'));
+        }
+
         if (!empty($this->accessToken) && !empty($this->userId)) {
             return true;
         }
@@ -115,20 +145,21 @@ class jellyfin_api
     }
 
     /**
-     * Get server Info
+     * Get user of the current token.
+     * Unlike System/Info it is allowed for every user, not only for the ones who ignore parental control.
+     *
      * @return array|bool
      */
-    public function systemInfo()
+    public function getCurrentUser()
     {
         $this->plugin->reset_curl($this->curl_wrapper);
         $this->curl_wrapper->set_send_headers($this->buildHeaders(true));
-        $response = $this->curl_wrapper->download_content($this->baseUrl . '/System/Info', Curl_Wrapper::RET_ARRAY);
+        $response = $this->curl_wrapper->download_content($this->baseUrl . '/Users/Me', Curl_Wrapper::RET_ARRAY);
         if (empty($response)) {
-            hd_debug_print('Unauthorized');
+            hd_debug_print('Unauthorized (' . Curl_Wrapper::get_http_code() . ')');
             return false;
         }
 
-        hd_debug_print('Auth response: ' . json_encode($response), true);
         return $response;
     }
 
@@ -139,6 +170,8 @@ class jellyfin_api
      */
     public function getItemPlaybackInfo($id, $query)
     {
+        // EnableDirectPlay/EnableDirectStream/EnableTranscoding are applied by the server only together with
+        // a DeviceProfile, without it they have no effect. The request is used to get media sources and PlaySessionId.
         $post_data['UserId'] = $this->userId;
         // both are optional, without them the server picks the default source and audio track
         foreach (array('MediaSourceId', 'AudioStreamIndex') as $key) {
@@ -146,7 +179,6 @@ class jellyfin_api
                 $post_data[$key] = $query[$key];
             }
         }
-        $post_data['EnableTranscoding'] = false;
 
         $headers = $this->buildHeaders(true);
         $headers[] = CONTENT_TYPE_JSON;
@@ -188,11 +220,7 @@ class jellyfin_api
             $path .= "/$param";
         }
 
-        $query = array();
-        if (!empty($this->userId)) {
-            $query['userId'] = $this->userId;
-        }
-        return $this->get($path, $query);
+        return $this->get($path, array('userId' => $this->userId));
     }
 
     /**
@@ -203,9 +231,6 @@ class jellyfin_api
      */
     public function getItems($query = array())
     {
-        if (isset($query['ParentId'])) {
-            $query['ParentId'] = urlencode($query['ParentId']);
-        }
         $query['userId'] = $this->userId;
 
         return $this->get('Items', $query);
@@ -217,7 +242,7 @@ class jellyfin_api
      */
     public function getItemInfo($id)
     {
-        return $this->get('Items/' . urlencode($id));
+        return $this->get('Items/' . urlencode($id), array('userId' => $this->userId));
     }
 
     /**
@@ -226,17 +251,21 @@ class jellyfin_api
      */
     public function getSeasons($seriesId)
     {
-        return $this->get('Shows/' . urlencode($seriesId) . '/Seasons');
+        return $this->get('Shows/' . urlencode($seriesId) . '/Seasons', array('userId' => $this->userId));
     }
 
     /**
+     * Episodes of the season, with media sources: no need to request every episode separately
+     *
      * @param string $seriesId
      * @param string $seasonId
      * @return array
      */
     public function getEpisodes($seriesId, $seasonId)
     {
-        $query['SeasonId'] = urlencode($seasonId);
+        $query['userId'] = $this->userId;
+        $query['seasonId'] = $seasonId;
+        $query['fields'] = 'MediaSources,Overview';
         $query['sortBy'] = 'IndexNumber';
         return $this->get('Shows/' . urlencode($seriesId) . '/Episodes', $query);
     }
@@ -268,6 +297,7 @@ class jellyfin_api
 
     /**
      * get master.m3u8 HLS manifest
+     * mediaSourceId is mandatory, the default media source has the same id as the item
      *
      * @param string $itemId
      * @param array $query
@@ -275,8 +305,30 @@ class jellyfin_api
      */
     public function getPlayUrlMaster($itemId, $query = array())
     {
+        if (empty($query['MediaSourceId'])) {
+            $query['MediaSourceId'] = $itemId;
+        }
         $this->updateQuery($query);
         return $this->baseUrl . '/Videos/' . urlencode($itemId) . '/master.m3u8?' . http_build_query($query);
+    }
+
+    /**
+     * get url of the original file of the media source (direct stream, no remux or transcoding)
+     *
+     * @param string $itemId
+     * @param array $query
+     * @param string $extension file extension of the container (mp4, mkv, mov), empty if unknown
+     * @return string
+     */
+    public function getStreamUrl($itemId, $query = array(), $extension = '')
+    {
+        $query['static'] = 'true';
+        if (empty($query['MediaSourceId'])) {
+            $query['MediaSourceId'] = $itemId;
+        }
+        $this->updateQuery($query);
+        $path = empty($extension) ? 'stream' : "stream.$extension";
+        return $this->baseUrl . '/Videos/' . urlencode($itemId) . "/$path?" . http_build_query($query);
     }
 
     /**
@@ -300,6 +352,7 @@ class jellyfin_api
      */
     public function getDownloadUrl($itemId)
     {
+        $query = array();
         $this->updateQuery($query);
         return $this->baseUrl . '/Items/' . urlencode($itemId) . '/Download?' . http_build_query($query);
     }
@@ -314,29 +367,30 @@ class jellyfin_api
      */
     public function getFilters($query = array())
     {
-        $this->updateQuery($query);
+        $query['userId'] = $this->userId;
         return $this->get('Items/Filters', $query);
     }
 
     /**
-     * Update query for necessary items
+     * Add authorization to the url played by the player, it can't send the Authorization header.
+     * ApiKey replaces the api_key parameter deprecated since 10.11
      *
      * @param array $query
      * @return void
      */
     private function updateQuery(&$query)
     {
-        $query['apiKey'] = $this->accessToken;
+        $query['ApiKey'] = $this->accessToken;
         $query['DeviceId'] = $this->deviceId;
-        $query['userId'] = $this->userId;
     }
 
     /**
      * @param string $path
      * @param array $query
+     * @param bool $retry log in again and repeat request on 401
      * @return array
      */
-    private function get($path, $query = array())
+    private function get($path, $query = array(), $retry = true)
     {
         if (empty($this->accessToken)) {
             return array();
@@ -358,8 +412,12 @@ class jellyfin_api
             return $response;
         }
 
-        print_backtrace();
-        hd_debug_print("Can't get response on request: $command_url");
+        // token revoked or expired during the session, log in again and repeat once
+        if ($retry && Curl_Wrapper::get_http_code() === 401 && $this->authenticate()) {
+            return $this->get($path, $query, false);
+        }
+
+        hd_debug_print("Can't get response (" . Curl_Wrapper::get_http_code() . ") on request: $command_url");
         return array();
     }
 

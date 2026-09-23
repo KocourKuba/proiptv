@@ -150,6 +150,30 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_CHECK_SELECTED_EPG:
                 return $this->do_check_epg_ids($this->plugin->get_selected_json_sources());
+
+            case ACTION_ADD_EPG_SERVER_DLG:
+                return $this->do_add_epg_server_dlg();
+
+            case ACTION_ADD_EPG_SERVER_DLG_APPLY:
+                $url = trim($user_input->{CONTROL_URL_PATH});
+                if (!is_proto_http($url)) {
+                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_incorrect_url'));
+                }
+
+                $url = Default_Dune_Plugin::make_epg_presets_url($url);
+                if (!$this->plugin->add_epg_json_server($url)) {
+                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_epg_server_presets__1', $url));
+                }
+                break;
+
+            case ACTION_REMOVE_EPG_SERVER:
+                $config_preset = $this->plugin->get_config_preset($selected_id);
+                if (!empty($config_preset[EPG_JSON_SERVER])) {
+                    $this->force_parent_reload = true;
+                    $this->plugin->remove_epg_json_server($config_preset[EPG_JSON_SERVER]);
+                    $sel_idx = 0;
+                }
+                break;
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_idx);
@@ -179,7 +203,7 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             $checked = 0;
             foreach ($this->plugin->get_selected_json_sources() as $selected_source) {
-                if (Epg_Manager_Json::is_proiptv_epg_preset_name($selected_source)) {
+                if (Epg_Manager_Json::is_proiptv_epg_preset($this->plugin->get_config_preset($selected_source))) {
                     $checked++;
                 }
             }
@@ -187,6 +211,16 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                     ACTION_CHECK_SELECTED_EPG, TR::t('entry_epg_selected_check_ids'), 'search.png');
             }
+        }
+
+        $menu_items[] = Control_Factory::menu_separator();
+
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+            ACTION_ADD_EPG_SERVER_DLG, TR::t('epg_server_add'), 'add.png');
+        $config_preset = $this->plugin->get_config_preset($id);
+        if (!empty($config_preset[EPG_JSON_SERVER])) {
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_REMOVE_EPG_SERVER,
+                TR::t('epg_server_remove__1', Default_Dune_Plugin::get_epg_server_name($config_preset[EPG_JSON_SERVER])), 'remove.png');
         }
 
         $menu_items[] = Control_Factory::menu_separator();
@@ -304,6 +338,30 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
         Control_Factory::add_vgap($defs, 10);
 
         return Action_Factory::show_dialog($defs, TR::t('epg_check_dlg'));
+    }
+
+    /**
+     * Dialog to add EPG server created by proiptv-epg-converter
+     *
+     * @return array|null
+     */
+    protected function do_add_epg_server_dlg()
+    {
+        hd_debug_print(null, true);
+
+        $defs = array();
+        Control_Factory::add_vgap($defs, 20);
+
+        Control_Factory::add_label($defs, '', TR::t('epg_server_url'), -10);
+        Control_Factory::add_text_field($defs, $this, CONTROL_URL_PATH, '', 'http://',
+            false, false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
+
+        Control_Factory::add_vgap($defs, 50);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_ADD_EPG_SERVER_DLG_APPLY, TR::t('ok'));
+        Control_Factory::add_cancel_button($defs);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog($defs, TR::t('epg_server_add'));
     }
 
     /**
@@ -427,6 +485,8 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
             $icon = get_image_path('engine2.png');
         } else if (isset($item[EPG_JSON_PRESET_PRIVATE])) {
             $icon = get_image_path('key.png');
+        } else if (isset($item[EPG_JSON_SERVER])) {
+            $icon = get_image_path('web.png');
         } else {
             $icon = get_image_path('link.png');
         }
