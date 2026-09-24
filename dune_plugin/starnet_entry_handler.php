@@ -95,6 +95,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
         }
 
         $this->plugin->init_providers_config();
+        $this->plugin->init_desc_parser();
 
         switch ($user_input->control_id) {
             case self::ACTION_CALL_REBOOT:

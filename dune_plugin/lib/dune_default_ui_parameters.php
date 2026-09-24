@@ -8,7 +8,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 {
     const AUTHOR_LOGO = "ProIPTV by sharky72  [ ´¯¤¤¯(ºº)¯¤¤¯` ]";
 
-    const RESOURCE_URL = 'http://iptv.esalecrm.net/res/';
+    const RESOURCE_URL = 'http://iptv.esalecrm.com/res/';
     const CHANGELOG_URL_PREFIX = 'https://raw.githubusercontent.com/KocourKuba/proiptv/master/build/';
 
     const DEFAULT_MOV_ICON_PATH = 'plugin_file://icons/mov_unset.png';

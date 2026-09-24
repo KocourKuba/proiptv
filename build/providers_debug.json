@@ -204,330 +204,13 @@
       "cache_time": "auto"
     }
   },
-  "desc_parsers": {
-    "cleanup": [
-      "/Нет описания/",
-      "/Описание отсутствует/",
-      "/Смотреть онлайн.*вас время!/",
-      "/[Сс]мотрите.*на Wink/u",
-      "/Описание[ \\t]+последует\\.*(?:[ \\t]*Desk wait\\.*)?/u",
-      "/Донат.*/s",
-      "/,\\s{2}\\((.*?)\\)/",
-      {
-        "if": [
-          "/",
-          "@",
-          "www",
-          "WWW"
-        ],
-        "rules": [
-          "/\\n[^\\n]{0,600}(?:https?:\\\/\\\/|www\\.|[\\w.+-]+@[\\w-]+\\.[a-z]{2,}\\b|(?:t\\.me|vk\\.com|ok\\.ru|wa\\.me|fb\\.com|dzen\\.ru|youtu\\.be|instagram\\.com|facebook\\.com|twitter\\.com|rutube\\.ru|boosty\\.to|patreon\\.com|bit\\.ly)\\\/)[^\\n]*/iu",
-          "/^[^\\n]{0,600}(?:https?:\\\/\\\/|www\\.|[\\w.+-]+@[\\w-]+\\.[a-z]{2,}\\b|(?:t\\.me|vk\\.com|ok\\.ru|wa\\.me|fb\\.com|dzen\\.ru|youtu\\.be|instagram\\.com|facebook\\.com|twitter\\.com|rutube\\.ru|boosty\\.to|patreon\\.com|bit\\.ly)\\\/)[^\\n]*\\n/iu"
-        ]
-      },
-      "/\\n[^\\n]{0,600}(?:\\+\\d[\\d \\t()-]{8,16}\\d|\\b8[ \\t-]?\\(?\\d{3,4}\\)?[ \\t-]?\\d{2,3}[ \\t-]?\\d{2}[ \\t-]?\\d{2}\\b|\\berid\\s*[=:]|\\bИНН[ \\t]*:?\\s*\\d{9,12})[^\\n]*/iu",
-      "/^[^\\n]{0,600}(?:\\+\\d[\\d \\t()-]{8,16}\\d|\\b8[ \\t-]?\\(?\\d{3,4}\\)?[ \\t-]?\\d{2,3}[ \\t-]?\\d{2}[ \\t-]?\\d{2}\\b|\\berid\\s*[=:]|\\bИНН[ \\t]*:?\\s*\\d{9,12})[^\\n]*\\n/iu",
-      "/(?:\\n[ \\t]*\\d{1,2}:\\d{2}(?::\\d{2})?[^\\n]*){2,}/u",
-      "/\\n[ \\t]*\\d{1,2}:\\d{2}(?::\\d{2})?[ \\t]*[-–—][^\\n]*/u",
-      "/Реклама\\.[ \\t]*(?:ООО|ИП|ТОО|АО|ОАО|ЗАО)[^\\n]*/u",
-      "/\\n[^\\n\\p{L}\\d \\t]{1,6}[ \\t]*[^\\n:]{1,28}:[ \\t]*(?=\\n|$)/u",
-      "/\\n[^\\n:]{0,24}(?:[Сс]оцсети|социальны[ех] сет|[Тт]елеграм|Telegram|[Ии]нстаграм|Instagram|[Вв][Кк]онтакте|Facebook|[Сс]сылк|[Ии]сточники|[Тт]айм-?коды|[Пп]атрион|Patreon|[Дд]онат|[Сс]отрудничеств|[Пп]ромокод|[Пп]одпиш|[Пп]оддерж|[Пп]ереходите|[Сс]мотрите больше|[Зз]аказ авто)[^\\n:]{0,24}:[ \\t]*(?=\\n|$)/u",
-      "/\\n[^\\n\\p{L}\\d]{3,}(?=\\n|$)/u",
-      {
-        "if": [
-          "#"
-        ],
-        "rules": [
-          "/(?:(?:^|[ \\t\\n])#[^\\s#]*\\p{L}[^\\s#]*){2,}/u",
-          "/(?:^|[ \\t\\n])#[^\\s#]*\\p{L}[^\\s#]*\\s*$/u"
-        ]
-      },
-      {
-        "if": [
-          "@",
-          "://",
-          "www."
-        ],
-        "rules": [
-          "/(?:^|[ \\t\\n])@[A-Za-z0-9_.]{2,30}\\b/u",
-          "/[ \\t]*(?:https?:\\\/\\\/|www\\.)\\S+/u",
-          "/[ \\t]*[\\w.+-]+@[\\w-]+\\.[a-z]{2,}\\b/iu"
-        ]
-      },
-      "/^Рейтинг:?[ \\t]*(?:\\n|$)/u",
-      "/\\nРейтинг:?[ \\t]*(?=\\n|$)/u",
-      "/^[ \\t]*\\d+[ \\t]*(?:ч(?:ас(?:а|ов)?)?\\.?(?:[ \\t]*\\d+[ \\t]*мин(?:ут[аы]?)?\\.?)?|мин(?:ут[аы]?)?\\.?)[ \\t]*(?:\\n|$)/u",
-      "/\\n[ \\t]*\\d+[ \\t]*(?:ч(?:ас(?:а|ов)?)?\\.?(?:[ \\t]*\\d+[ \\t]*мин(?:ут[аы]?)?\\.?)?|мин(?:ут[аы]?)?\\.?)[ \\t]*(?=\\n|$)/u",
-      "/^[ \\t.,;:]+(?:\\n|$)/",
-      "/\\n[ \\t.,;:]+(?=\\n|$)/"
-    ],
-    "prepare": [
-      [
-        "/\\n[ \\t]*(?:[-=_*~─━═▬╾╼][ \\t]?){3,}\\.?[ \\t]*(?=\\n|$)/u",
-        "\n"
-      ],
-      "/^[ \\t]*(?:[-=_*~─━═▬╾╼][ \\t]?){3,}\\.?[ \\t]*(?:\\n|$)/u",
-      [
-        "/\\n[ \\t]*[-=_*~─━═▬╾╼]{3,}[^\\n]{0,40}?[-=_*~─━═▬╾╼]{3,}[ \\t]*(?=\\n|$)/u",
-        "\n"
-      ],
-      [
-        "/-----+\\.?[ \\t]*(?=\\n|$)/",
-        "\n"
-      ],
-      [
-        "/=====+\\.?[ \\t]*(?=\\n|$)/",
-        "\n"
-      ],
-      [
-        "/_____+\\.?[ \\t]*(?=\\n|$)/",
-        "\n"
-      ],
-      [
-        "/(?:─|━|═|▬|╾|╼){5,}\\.?[ \\t]*(?=\\n|$)/u",
-        "\n"
-      ],
-      "/^Продолжительность: \\d+ мин\\.?[ \\t]*(?:\\n|$)/u",
-      "/\\nПродолжительность: \\d+ мин\\.?[ \\t]*(?=\\n|$)/u",
-      "/Продолжительность[ \\t]*(?::|▪|►)[ \\t]*\\d+[ \\t]*(?:ч(?:ас(?:а|ов)?)?\\.?(?:[ \\t]*\\d+[ \\t]*мин(?:ут[аы]?)?\\.?)?|мин(?:ут[аы]?)?\\.?)/u",
-      [
-        "/\\][ \\t]+\\d+[ \\t]*(?:ч(?:ас(?:а|ов)?)?\\.?(?:[ \\t]*\\d+[ \\t]*мин(?:ут[аы]?)?\\.?)?|мин(?:ут[аы]?)?\\.?)[ \\t]*(?=\\n|$)/u",
-        "]"
-      ],
-      [
-        "/(?<!ч)\\.[ \\t]+\\d+[ \\t]*(?:ч(?:ас(?:а|ов)?)?\\.?(?:[ \\t]*\\d+[ \\t]*мин(?:ут[аы]?)?\\.?)?|мин(?:ут[аы]?)?\\.?)[ \\t]*(?=\\n|$)/u",
-        "."
-      ],
-      "/Наш Рейтинг[ \\t]*\\[[^\\]\\n]*\\]/u",
-      "/Кино[Пп]оиск[ \\t]*[:▪]?[ \\t]*\\[[–-]?\\]/u",
-      "/IMDb[ \\t]*[:▪]?[ \\t]*\\[[–-]?\\]/u",
-      [
-        "/^\\(\"[^\"\\n]*\", ([^,()\\n]+), (?:[A-Z]{1,3}(?:\\\/[A-Z]{1,3})* )?(\\d{4})\\)\\.\\.\\./u",
-        "Жанр: $1.\nГод: $2\n"
-      ],
-      [
-        "/^\\(\"[^\"\\n]*\", ([^,()\\n]+)(?:, [A-Z]{1,3}(?:\\\/[A-Z]{1,3})*)?\\)\\.\\.\\./u",
-        "Жанр: $1.\n"
-      ],
-      [
-        "/^(Страна: [^.\\n]+\\. )?((?:S\\d+,)?Ep\\d+)\\. [^\\n]*? \\2 \\(([^)\\n]+)\\), (\\d{4})\\.\\.\\./u",
-        "$1Год: $4\n$2 ($3)\n"
-      ],
-      [
-        "/(Ep\\.\\d+ \"[^\"\\n]+\")\\.?[ \\t]*\\((\\d{4})\\)/u",
-        "$1. Год: $2."
-      ],
-      [
-        "/\\. (?:[^\\n.]{1,60}? )?(\\d{4})\\.\\.\\./u",
-        ".\nГод: $1\n"
-      ],
-      {
-        "if": [
-          "▪",
-          "►"
-        ],
-        "rules": [
-          [
-            "/^▪ сз\\. (\\d+),[ \\t]*▪ с\\. (\\d+)\\.[ \\t]*/u",
-            "$1 сезон, $2-я серия\n"
-          ],
-          "/Прод\\.[ \\t]*▪[ \\t]*\\d+[ \\t]*(?:ч(?:ас(?:а|ов)?)?\\.?(?:[ \\t]*\\d+[ \\t]*мин(?:ут[аы]?)?\\.?)?|мин(?:ут[аы]?)?\\.?)/u",
-          "/▪[ \\t]*\\d+[ \\t]*(?:ч(?:ас(?:а|ов)?)?\\.?(?:[ \\t]*\\d+[ \\t]*мин(?:ут[аы]?)?\\.?)?|мин(?:ут[аы]?)?\\.?)(?=[ \\t]*(?:▪|\\n|$))/u",
-          [
-            "/►[ \\t]*Режисс[её]р: ([^\\n\\\/]{2,80}?) \\\/ /u",
-            "Режиссёр: $1\n"
-          ],
-          [
-            "/^●[ \\t]*([^▪●\\n]+?)[ \\t]*▪[ \\t]*(\\d{4})\\. г\\.[ \\t]*●\\.?[ \\t]*/u",
-            "Жанр: $1.\nГод: $2\n"
-          ],
-          [
-            "/^●[ \\t]*([^▪●\\n]+?)[ \\t]*▪[ \\t]*●\\.?[ \\t]*/u",
-            "Жанр: $1.\n"
-          ],
-          [
-            "/(?<!\\p{L})Режия(?=[ \\t]*[▪►:])/u",
-            "Режиссер"
-          ],
-          [
-            "/(?<!\\p{L})Оригинал(?=[ \\t]*[▪►])/u",
-            "Оригинальное название"
-          ],
-          [
-            "/(?<!\\p{L})Cлоган(?=[ \\t]*[▪►])/u",
-            "Слоган"
-          ],
-          [
-            "/(?<!\\p{L})Рейтинг[ \\t]*▪[ \\t]*/u",
-            "\n"
-          ],
-          [
-            "/(?<![^\\n])(Жанр|Страна|Год|Режисс[её]ры?|В [Рр]олях|Сценари[йи]|Сценаристы?|Композиторы?|Операторы?|Продюсеры?|Ведущ(?:ий|ая|ие)|Оригинальное название|Альтернативное название|Бюджет|Премьера|Награды|Производство|Художники?|Официальный слоган|Российский слоган|Слоган|Из серии|Автор|Рейтинг IMDb|IMDb|Кино[Пп]оиск)[ \\t]*(?:▪|►)[ \\t]*/u",
-            "$1: "
-          ],
-          [
-            "/(?<!\\p{L})(Жанр|Страна|Год|Режисс[её]ры?|В [Рр]олях|Сценари[йи]|Сценаристы?|Композиторы?|Операторы?|Продюсеры?|Ведущ(?:ий|ая|ие)|Оригинальное название|Альтернативное название|Бюджет|Премьера|Награды|Производство|Художники?|Официальный слоган|Российский слоган|Слоган|Из серии|Автор|Рейтинг IMDb|IMDb|Кино[Пп]оиск)[ \\t]*(?:▪|►)[ \\t]*/u",
-            "\n$1: "
-          ],
-          "/(?:▪|►)[ \\t]*(?=\\[\\d{1,2} ?\\+\\])/u",
-          "/(?:▪|►)[ \\t]*(?=\\n|$)/u",
-          "/(?<![^\\n])(?:►|▶|▪)\\x{FE0F}?[ \\t]*(?:\\.[ \\t]+)?/u",
-          [
-            "/►\\x{FE0F}?[ \\t]*/u",
-            "\n"
-          ],
-          [
-            "/[ \\t]+▪[ \\t]+/u",
-            ", "
-          ]
-        ]
-      },
-      [
-        "/\\[(\\d{1,2}) \\+\\]/",
-        "[$1+]"
-      ],
-      [
-        "/,\\.(?=[ \\t]*(?:\\n|$))/",
-        "."
-      ],
-      "/(?<![^\\n])▶\\x{FE0F}?[ \\t]*/u",
-      [
-        "/\\n[ \\t]*\\.\\.\\.[ \\t]*(?=\\S)/u",
-        "\n"
-      ],
-      [
-        "/Название оригинала:/u",
-        "Оригинальное название:"
-      ],
-      [
-        "/,(?:[ \\t]+,)+/u",
-        ","
-      ],
-      [
-        "/,[ \\t]{2,}/u",
-        ", "
-      ],
-      "/^\\s+/u"
-    ],
-    "matchers": {
-      "mail.ru": {
-        "icon": [
-          "resizer.mail.ru",
-          "kinopoisk-ru"
-        ],
-        "chunks": {
-          "year": "/(?:Год|Гoд|Year): (\\d{4}(?:[ \\t]*[-–—][ \\t]*(?:\\d{4}|по н\\.[ \\t]?в\\.?))?)(?:[ \\t]*\\([^)\\n]*\\))?\\.?/u",
-          "country": "/Страна: (.*?)(?:\\.|\\s{2}|\\n|$)/u",
-          "genre": "/Жанр: (.*?)(?:\\.|(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\n|$)/u",
-          "imdb_rating": "/(?:Рейтинг:?\\s*)?IMDb\\s*:?\\s*\\[?(\\d+(?:[.,]\\d+)?)\\]?/u",
-          "kp_rating": "/(?:Рейтинг\\s+)?Кино[Пп]оиск[аи]?\\s*:?\\s*\\[?(\\d+(?:[.,]\\d+)?)\\]?/u",
-          "km_rating": "/(?:Рейтинг\\s+)?KinoMail\\s*\\[(.*?)\\]\\.?/u",
-          "director": "/Режисс[её]ры?: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "actor": "/В [Рр]олях: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "writer": "/Сценари(?:й|ст[ыа]?): (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "editor": "/Операторы?: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "composer": "/Композиторы?: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "rating": "/Рейтинг: \\((.*?)\\)/u",
-          "producer": "/Продюсеры?: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "presenter": "/Ведущ[а-яё]*: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "budget": "/Бюджет: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "original_name": "/Оригинальное название: (.*?)\\.?(?:\\n|$|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u"
-        }
-      },
-      "24h.tv": {
-        "icon": "media.24h.tv",
-        "icon_suffix": "?cover=true&w=320&h=180&crop=true",
-        "chunks": {
-          "year": "/(?:Год|Гoд|Year): (\\d{4}(?:[ \\t]*[-–—][ \\t]*(?:\\d{4}|по н\\.[ \\t]?в\\.?))?)(?:[ \\t]*\\([^)\\n]*\\))?\\.?/u",
-          "country": "/Страна: (.*?)(?:\\.|\\n|$)/u",
-          "genre": "/Жанр: (.*?)(?:\\.|(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\n|$)/u",
-          "imdb_rating": "/(?:Рейтинг:?\\s*)?IMDb\\s*:?\\s*\\[?(\\d+(?:[.,]\\d+)?)\\]?/u",
-          "kp_rating": "/(?:Рейтинг\\s+)?Кино[Пп]оиск[аи]?\\s*:?\\s*\\[?(\\d+(?:[.,]\\d+)?)\\]?/u",
-          "director": "/Режисс[её]ры?: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "actor": "/В [Рр]олях: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "writer": "/Сценари(?:й|ст[ыа]?): (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "editor": "/Операторы?: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "composer": "/Композиторы?: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "producer": "/Продюсеры?: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "presenter": "/Ведущ[а-яё]*: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u"
-        }
-      },
-      "teleman": {
-        "detect": "/(?:^|\\n)Opis:\\s|^[^\\n\"()]{1,40}\\s\\d{4}\\s\"[^\"]+\"/u",
-        "extends": "default",
-        "chunks": {
-          "country": "/^([^\\n\"]{2,60}?)(?=\\s\\d{4}\\s\")/u",
-          "year": "/^\\s*(\\d{4})(?=\\s\")/u",
-          "original_name": "/^\\s*\"([^\"]+)\"/u",
-          "genre": "/^\\s*\\(([^)]+)\\)/u",
-          "age": "/^\\s*\\[(\\d+\\+)\\]/u",
-          "fw_rating": "/FilmWeb\\s*\\[([\\d.,]+)\\]/u",
-          "opis": "/(?:^|\\n)(Opis):\\s*/u"
-        }
-      },
-      "tvdirekt": {
-        "detect": "/^\\s*\"[^\"]{2,90}\",/u",
-        "extends": "default",
-        "chunks": {
-          "original_name": "/^\\s*\"([^\"]+)\",/u"
-        }
-      },
-      "tvpassport": {
-        "detect": "/^Жанр: [^\\n]+\\.\\s[^\\n]*\\([^)]+\\)\\.\\./u",
-        "extends": "default",
-        "chunks": {
-          "sub_title": "/(?<=\\.\\s)([^\\n.(]{1,60}\\([^)]+\\))(?=\\.\\.)/u"
-        }
-      },
-      "default": {
-        "chunks": {
-          "country": "/Страна: (.*?)(?:\\.|,\\s*(?=(?:Год|Гoд|Year(?!s)|Жанр|Страна)\\s*:|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|(?=Количество|Хронометраж|Производство|Жанр|Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\n|$)/u",
-          "year": [
-            "/(?:Год|Гoд|Year): (\\d{4}(?:[ \\t]*[-–—][ \\t]*(?:\\d{4}|по н\\.[ \\t]?в\\.?))?)(?:[ \\t]*\\([^)\\n]*\\))?\\.?/u",
-            "/^(?:[^\\n.]{1,60}? )?(\\d{4})\\.\\.\\./u"
-          ],
-          "genre": [
-            "/Жанр: (.*?)(?:\\.|(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\n|$)/u",
-            "/Category: (.*?)[;\\n]/u"
-          ],
-          "imdb_rating": "/(?:Рейтинг:?\\s*)?IMDb\\s*:?\\s*\\[?(\\d+(?:[.,]\\d+)?)\\]?/u",
-          "kp_rating": "/(?:Рейтинг\\s+)?Кино[Пп]оиск[аи]?\\s*:?\\s*\\[?(\\d+(?:[.,]\\d+)?)\\]?/u",
-          "director": [
-            "/Режисс[её]ры?: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-            "/Реж\\.: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u"
-          ],
-          "actor": [
-            "/В [Рр]олях: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-            "/Акт[её]ры: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u"
-          ],
-          "composer": "/Композиторы?: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "writer": "/Сценари(?:й|ст[ыа]?): (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "editor": "/Операторы?: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "producer": "/Продюсеры?: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "presenter": "/Ведущ[а-яё]*: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "budget": "/Бюджет: (.*?)(?:\\.?\\n|\\.?$|\\.\\s+(?=Режисс|Реж\\.|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s)|Рейтинг|IMDb|Кино[Пп]оиск|KinoMail)|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Оригинальное|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "original_name": "/Оригинальное название: (.*?)\\.?(?:\\n|$|\\s+(?=(?:Режисс|Реж|В [Рр]олях|Акт[её]ры|Сценари|Оператор|Композитор|Продюсер|Бюджет|Ведущ|Жанр|Страна|Год|Гoд|Year(?!s))[^:\\n]{0,14}:))/u",
-          "sub_title": [
-            "/^(S\\.\\d+ Ep\\.\\d+:[^\\n]*?)\\.?[ \\t]+\\1(?=\\s|$)[ \\t]*/u",
-            "/(?<=^|\\. )((?:S\\.\\d+,\\s?)?Ep\\.\\d+ \"[^\"\\n]+\")\\.?[ \\t]*/u",
-            "/^((?:S\\d+,)?Ep\\d+ \\([^)\\n]+\\))\\n/u",
-            "/^(\\d+-я с\\. - \"[^\"\\n]+\")\\.?[ \\t]*/u",
-            "/^((?:Сезон \\d+\\. )?Серия \\d+)\\.[ \\t]*/u",
-            "/^\\[([^\\]\\n\\d][^\\]\\n]{1,60})\\][ \\t]*/u",
-            "/^((?:\\d+ сезон, )?\\d+-я(?: и \\d+-я)? сери(?:я|и))[ \\t]*(?:\\n|$)/u",
-            "/\\n((?:\\d+ сезон, )?\\d+-я(?: и \\d+-я)? сери(?:я|и))(?=[ \\t]*(?:\\n|$))/u"
-          ]
-        }
-      }
-    }
-  },
   "providers": [
     {
       "enable": true,
       "id": "101film",
       "name": "101film",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_101film.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_101film.png",
       "provider_url": "http://101film.org/",
       "api_url": "http://pl.101film.org",
       "config": {
@@ -558,7 +241,7 @@
       "id": "1cent",
       "name": "1cent",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_1cent.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_1cent.png",
       "provider_url": "https://1cent.tv/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8\\?.+$/",
@@ -582,7 +265,7 @@
       "class": "1ott",
       "name": "1ott",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_1ott.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_1ott.png",
       "provider_url": "http://1ott.net/",
       "api_url": "http://list.1ott.net",
       "api_commands": {
@@ -614,7 +297,7 @@
       "id": "1usd",
       "name": "1usd",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_1usd.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_1usd.png",
       "provider_url": "http://1usd.tv/",
       "api_url": "http://{API_DOMAIN_ID}",
       "config": {
@@ -650,7 +333,7 @@
       "id": "2tv",
       "name": "2tv",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_2tv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_2tv.png",
       "provider_url": "http://2tv.biz/",
       "api_url": "https://pptt.fun",
       "config": {
@@ -690,7 +373,7 @@
       "id": "allwaytv",
       "name": "Allway TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_allwaytv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_allwaytv.png",
       "provider_url": "https://allway.tv/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/.+\\/iptv\\/users\\/(?<login>.+)\\/(?<id>.+)\\.m3u8$/",
@@ -722,7 +405,7 @@
       "vod": "cbilling",
       "name": "Antifriz",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_antifriz.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_antifriz.png",
       "provider_url": "https://antifriz.tv/",
       "api_url": "http://protected-api.com",
       "api_commands": {
@@ -756,7 +439,7 @@
       "id": "bcumedia",
       "name": "BCU Media",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_bcumedia.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_bcumedia.png",
       "provider_url": "https://bcumedia.pro/",
       "config": {
         "id_map": "name",
@@ -780,7 +463,7 @@
       "id": "bittv",
       "name": "BitTV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_bittv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_bittv.png",
       "provider_url": "https://bittv.ltd/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>[^\\/]+)\\/(?<id>.+)\\/.*\\.m3u8\\?token=(?<token>.+)$/",
@@ -806,7 +489,7 @@
       "vod": "cbilling",
       "name": "Cbilling",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_cbilling.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_cbilling.png",
       "provider_url": "https://cbilling.eu/",
       "api_url": "http://protected-api.com",
       "vod_api_url": "http://protected-api.com",
@@ -849,7 +532,7 @@
       "id": "crdtv",
       "name": "CRD TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_crdtv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_crdtv.png",
       "provider_url": "https://crdtv.net/",
       "config": {
         "playlists": {
@@ -867,7 +550,7 @@
       "vod": "edem",
       "name": "iEdem/iLook",
       "type": "edem",
-      "logo": "http://iptv.esalecrm.net/res/logo_edem.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_edem.png",
       "provider_url": "https://ilook.tv/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/iptv\\/(?<ottkey>.+)\\/(?<id>.+)\\/.*\\.m3u8?$/",
@@ -920,7 +603,7 @@
       "id": "filmax",
       "name": "Filmax-tv",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_filmax.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_filmax.png",
       "provider_url": "https://filmax-tv.ru/",
       "config": {
         "id_map": "name",
@@ -956,7 +639,7 @@
       "id": "fox",
       "name": "Fox TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_fox.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_fox.png",
       "provider_url": "http://info.fox-tv.fun/",
       "api_url": "http://pl.fox-tv.fun",
       "config": {
@@ -989,7 +672,7 @@
       "vod": "glanz",
       "name": "Glanz",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_glanz.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_glanz.png",
       "provider_url": "http://ottg.tv/",
       "api_url": "http://pl.{API_DOMAIN_ID}",
       "vod_api_url": "http://api.{API_DOMAIN_ID}",
@@ -1037,7 +720,7 @@
       "vod": "ipstream",
       "name": "IPStream/iShara",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_ipstream.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_ipstream.png",
       "provider_url": "https://www.ipstream.one/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)(?:\\/.+\\.m3u8|\\.ts)$/",
@@ -1076,7 +759,7 @@
       "id": "iptv.best",
       "name": "IPTV Best",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptvbest.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_iptvbest.png",
       "provider_url": "https://ip-tv.best/",
       "config": {
         "epg_presets": [
@@ -1118,7 +801,7 @@
       "id": "iptvcinema",
       "name": "IPTV Cinema",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptvcinema.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_iptvcinema.png",
       "provider_url": "https://iptvcinema.ru/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
@@ -1142,7 +825,7 @@
       "vod": "iptvonline",
       "name": "IPTV Online",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptvonline.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_iptvonline.png",
       "provider_url": "https://iptv.online/",
       "api_url": "https://{API_DOMAIN_ID}/api/v4",
       "api_commands": {
@@ -1190,7 +873,7 @@
       "id": "iptvplay",
       "name": "IPTV Play",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptvplay.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_iptvplay.png",
       "provider_url": "https://iptv-play.ru/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
@@ -1214,7 +897,7 @@
       "class": "itvlive",
       "name": "ITV Live",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_itv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_itv.png",
       "provider_url": "https://itv.live/",
       "api_url": "http://api.itv.live",
       "api_commands": {
@@ -1250,7 +933,7 @@
       "id": "kineskop",
       "name": "Kineskop Club",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_kineskop.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_kineskop.png",
       "provider_url": "http://kineskop.club/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/.+\\.m3u8$/",
@@ -1282,7 +965,7 @@
       "vod": "korona",
       "name": "Korona TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_korona.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_korona.png",
       "provider_url": "https://korona-tv.top/",
       "api_url": "http://dev.korona-tv.top/api",
       "api_commands": {
@@ -1326,7 +1009,7 @@
       "id": "klimedia",
       "name": "KLI Media",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_klimedia.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_klimedia.png",
       "provider_url": "https://klimedia.space/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
@@ -1354,7 +1037,7 @@
       "id": "lightiptv",
       "name": "Light IPTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_lightiptv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_lightiptv.png",
       "provider_url": "https://ottbill.cc/",
       "config": {
         "id_map": "name",
@@ -1389,7 +1072,7 @@
       "type": "login",
       "vod": "mirkino",
       "vod_only": true,
-      "logo": "http://iptv.esalecrm.net/res/logo_mirkino.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_mirkino.png",
       "provider_url": "https://mir-kino.pp.ru/",
       "vod_api_url": "https://{SERVER_ID}.mir-kino.pp.ru",
       "config": {
@@ -1412,7 +1095,7 @@
       "id": "mymagic",
       "name": "MyMAGic TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_mymagic.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_mymagic.png",
       "provider_url": "http://mymagic.tv/",
       "config": {
         "epg_presets": [
@@ -1448,7 +1131,7 @@
       "id": "nasharu",
       "name": "Nasharu TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_nasharu.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_nasharu.png",
       "provider_url": "https://nasharu.tv/",
       "api_url": "http://nasharu.tv/iptv",
       "config": {
@@ -1479,7 +1162,7 @@
       "id": "onlineott",
       "name": "OnlineOTT TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_onlineott.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_onlineott.png",
       "provider_url": "https://www.onlineott-tv.site/",
       "api_url": "http://pl.onlineott-tv.site",
       "config": {
@@ -1504,7 +1187,7 @@
       "id": "ottclub",
       "name": "OTT Club",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_ottclub.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_ottclub.png",
       "provider_url": "https://www.ottclub.cc/",
       "api_url": "http://{API_DOMAIN_ID}",
       "config": {
@@ -1532,7 +1215,7 @@
       "id": "ottpub",
       "name": "OTT Pub",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_ottpub.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_ottpub.png",
       "provider_url": "https://ott.pub/",
       "api_url": "https://cassy.tv",
       "config": {
@@ -1581,7 +1264,7 @@
       "id": "peaktv",
       "name": "Peak TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_peaktv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_peaktv.png",
       "provider_url": "https://peaktv.su/",
       "api_url": "http://peaktv.su",
       "config": {
@@ -1608,7 +1291,7 @@
       "vod": "korona",
       "name": "Pik TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_piktv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_piktv.png",
       "provider_url": "http://pa.piktv.top/",
       "api_url": "http://stb.piktv.top/api",
       "api_commands": {
@@ -1652,7 +1335,7 @@
       "id": "ping",
       "name": "Ping TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_ping.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_ping.png",
       "provider_url": "http://ping-tv.com/",
       "api_url": "http://pl.ping-tv.com",
       "config": {
@@ -1683,7 +1366,7 @@
       "id": "reflextv",
       "name": "ReflexTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_reflextv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_reflextv.png",
       "provider_url": "https://reflextv.ru/",
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
@@ -1705,7 +1388,7 @@
       "id": "rutv",
       "name": "RU TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_rutv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_rutv.png",
       "provider_url": "https://rutv.vip/",
       "api_url": "http://pl.ru-tv.site",
       "config": {
@@ -1741,7 +1424,7 @@
       "id": "russkoetv",
       "name": "RusskoeTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_russkoetv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_russkoetv.png",
       "provider_url": "https://russkoetv.shop/",
       "api_url": "http://protected-api.com",
       "config": {
@@ -1765,7 +1448,7 @@
       "id": "satq",
       "name": "Satq TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_satq.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_satq.png",
       "provider_url": "https://satq.tv/",
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+?token=(?<token>.+)$/",
@@ -1809,7 +1492,7 @@
       "id": "sharatv",
       "name": "SharaTV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_sharatv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_sharatv.png",
       "provider_url": "https://shara-tv.org/",
       "config": {
         "id_map": "tvg-id",
@@ -1836,7 +1519,7 @@
       "vod": "sharaclub",
       "name": "SharaClub",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_sharaclub.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_sharaclub.png",
       "provider_url": "https://shara.club/",
       "api_url": "http://list.sh-tv.pro/api/players.php",
       "api_commands": {
@@ -1877,7 +1560,7 @@
       "vod": "sharavoz",
       "name": "Sharavoz",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_sharavoz.png",
       "provider_url": "https://sharavoz.tv/",
       "vod_api_url": "http://app.media24.cc",
       "config": {
@@ -1936,7 +1619,7 @@
       "vod": "sharavoz",
       "name": "Sharavoz.Pro",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_sharavozpro.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_sharavozpro.png",
       "provider_url": "https://sharavoz.pro/",
       "vod_api_url": "http://app.media24.cc",
       "config": {
@@ -1978,7 +1661,7 @@
       "id": "shuratv",
       "name": "ShuraTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_shuratv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_shuratv.png",
       "provider_url": "http://shura.tv/b/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$/",
@@ -2002,7 +1685,7 @@
       "class": "shurik",
       "name": "ShurikTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_shuriktv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_shuriktv.png",
       "provider_url": "https://schuriktv.nethouse.ru/",
       "api_url": "https://srv4you.net/api/v1",
       "config": {
@@ -2030,7 +1713,7 @@
       "id": "skaztv",
       "name": "Skaz TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_skaztv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_skaztv.png",
       "provider_url": "http://skaz.tv/",
       "api_url": "http://{API_DOMAIN_ID}",
       "config": {
@@ -2062,7 +1745,7 @@
       "id": "smile",
       "name": "Smile",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_smile.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_smile.png",
       "provider_url": "http://smile-tv.live/",
       "api_url": "http://pl.smile-tv.live",
       "config": {
@@ -2100,7 +1783,7 @@
       "id": "topiptv",
       "name": "TopIPTV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_topiptv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_topiptv.png",
       "provider_url": "https://topiptv.info/",
       "config": {
         "playlists": {
@@ -2118,7 +1801,7 @@
       "id": "tvboom",
       "name": "TV Boom",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_tvboom.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_tvboom.png",
       "provider_url": "https://tvboom.vip/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
@@ -2149,7 +1832,7 @@
       "class": "tvclub",
       "name": "TV Club",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_tvclub.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_tvclub.png",
       "provider_url": "https://tvclub.cc/",
       "api_url": "http://api.iptv.so/0.9/json",
       "api_commands": {
@@ -2182,7 +1865,7 @@
       "class": "tvteam",
       "name": "TV Team",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_tvteam.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_tvteam.png",
       "provider_url": "https://tv.team/",
       "api_url": "http://{API_DOMAIN_ID}",
       "api_commands": {
@@ -2234,7 +1917,7 @@
       "vod": "iptvonline",
       "name": "TVIZI Net",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_tvizi.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_tvizi.png",
       "provider_url": "https://tvizi.net/",
       "api_url": "https://{API_DOMAIN_ID}/api/v4",
       "api_commands": {
@@ -2282,7 +1965,7 @@
       "id": "uspeh",
       "name": "Uspeh TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_uspeh.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_uspeh.png",
       "provider_url": "https://uspeh.tv/",
       "config": {
         "id_map": "tvg-id",
@@ -2310,7 +1993,7 @@
       "id": "velestore",
       "name": "Velestore",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_velestore.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_velestore.png",
       "provider_url": "https://velestore.su/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+):(?<port>[^\\/]+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
@@ -2335,7 +2018,7 @@
       "class": "vidok",
       "name": "Vidok TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_vidok.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_vidok.png",
       "provider_url": "https://vidok.tv/",
       "api_url": "http://sapi.ott.st/v2.4/json",
       "api_commands": {
@@ -2364,7 +2047,7 @@
       "id": "viplime",
       "name": "VipLime",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_viplime.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_viplime.png",
       "provider_url": "http://viplime.fun/",
       "api_url": "http://cdntv.online",
       "vod_api_url": "http://m.cdntv.online/f",
@@ -2412,7 +2095,7 @@
       "id": "vivamax",
       "name": "VivaMax",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_vivamax.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_vivamax.png",
       "provider_url": "https://t.me/vivamax_portal",
       "api_url": "https://pl.vivamax.pro",
       "config": {
@@ -2447,7 +2130,7 @@
       "id": "yosso",
       "name": "Yosso TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_yosso.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_yosso.png",
       "provider_url": "https://streaming-elbrus.su/",
       "api_url": "https://{API_DOMAIN_ID}",
       "config": {

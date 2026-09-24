@@ -194,7 +194,7 @@
       "id": "101film",
       "name": "101film",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_101film.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_101film.png",
       "provider_url": "http://101film.org/",
       "api_url": "http://pl.101film.org",
       "config": {
@@ -225,7 +225,7 @@
       "id": "1cent",
       "name": "1cent",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_1cent.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_1cent.png",
       "provider_url": "https://1cent.tv/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8\\?.+$/",
@@ -254,7 +254,7 @@
       "class": "1ott",
       "name": "1ott",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_1ott.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_1ott.png",
       "provider_url": "http://1ott.net/",
       "api_url": "http://list.1ott.net",
       "api_commands": {
@@ -286,7 +286,7 @@
       "id": "1usd",
       "name": "1usd",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_1usd.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_1usd.png",
       "provider_url": "http://1usd.tv/",
       "api_url": "http://{API_DOMAIN_ID}",
       "config": {
@@ -322,7 +322,7 @@
       "id": "2tv",
       "name": "2tv",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_2tv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_2tv.png",
       "provider_url": "http://2tv.biz/",
       "api_url": "https://pptt.fun",
       "config": {
@@ -362,7 +362,7 @@
       "id": "allwaytv",
       "name": "Allway TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_allwaytv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_allwaytv.png",
       "provider_url": "https://allway.tv/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/.+\\/iptv\\/users\\/(?<login>.+)\\/(?<id>.+)\\.m3u8$/",
@@ -394,7 +394,7 @@
       "vod": "cbilling",
       "name": "Antifriz",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_antifriz.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_antifriz.png",
       "provider_url": "https://antifriz.tv/",
       "api_url": "http://protected-api.com",
       "api_commands": {
@@ -428,7 +428,7 @@
       "id": "bcumedia",
       "name": "BCU Media",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_bcumedia.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_bcumedia.png",
       "provider_url": "https://bcumedia.pro/",
       "config": {
         "id_map": "name",
@@ -451,7 +451,7 @@
       "id": "bittv",
       "name": "BitTV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_bittv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_bittv.png",
       "provider_url": "https://bittv.ltd/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>[^\\/]+)\\/(?<id>.+)\\/.*\\.m3u8\\?token=(?<token>.+)$/",
@@ -477,7 +477,7 @@
       "vod": "cbilling",
       "name": "Cbilling",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_cbilling.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_cbilling.png",
       "provider_url": "https://cbilling.eu/",
       "api_url": "http://protected-api.com",
       "vod_api_url": "http://protected-api.com",
@@ -520,7 +520,7 @@
       "id": "crdtv",
       "name": "CRD TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_crdtv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_crdtv.png",
       "provider_url": "https://crdtv.net/",
       "config": {
         "playlists": {
@@ -538,7 +538,7 @@
       "vod": "edem",
       "name": "iEdem/iLook",
       "type": "edem",
-      "logo": "http://iptv.esalecrm.net/res/logo_edem.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_edem.png",
       "provider_url": "https://ilook.tv/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/iptv\\/(?<ottkey>.+)\\/(?<id>.+)\\/.*\\.m3u8?$/",
@@ -590,7 +590,7 @@
       "id": "filmax",
       "name": "Filmax-tv",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_filmax.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_filmax.png",
       "provider_url": "https://filmax-tv.ru/",
       "config": {
         "id_map": "name",
@@ -626,7 +626,7 @@
       "id": "fox",
       "name": "Fox TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_fox.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_fox.png",
       "provider_url": "http://info.fox-tv.fun/",
       "api_url": "http://pl.fox-tv.fun",
       "config": {
@@ -658,7 +658,7 @@
       "vod": "glanz",
       "name": "Glanz",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_glanz.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_glanz.png",
       "provider_url": "http://ottg.tv/",
       "api_url": "http://pl.{API_DOMAIN_ID}",
       "vod_api_url": "http://api.{API_DOMAIN_ID}",
@@ -705,7 +705,7 @@
       "vod": "ipstream",
       "name": "IPStream/iShara",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_ipstream.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_ipstream.png",
       "provider_url": "https://www.ipstream.one/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)(?:\\/.+\\.m3u8|\\.ts)$/",
@@ -744,7 +744,7 @@
       "id": "iptv.best",
       "name": "IPTV Best",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptvbest.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_iptvbest.png",
       "provider_url": "https://ip-tv.best/",
       "config": {
         "epg_presets": [
@@ -786,7 +786,7 @@
       "id": "iptvcinema",
       "name": "IPTV Cinema",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptvcinema.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_iptvcinema.png",
       "provider_url": "https://iptvcinema.ru/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
@@ -810,7 +810,7 @@
       "vod": "iptvonline",
       "name": "IPTV Online",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptvonline.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_iptvonline.png",
       "provider_url": "https://iptv.online/",
       "api_url": "https://{API_DOMAIN_ID}/api/v4",
       "api_commands": {
@@ -857,7 +857,7 @@
       "id": "iptvplay",
       "name": "IPTV Play",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptvplay.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_iptvplay.png",
       "provider_url": "https://iptv-play.ru/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
@@ -882,7 +882,7 @@
       "class": "itvlive",
       "name": "ITV Live",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_itv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_itv.png",
       "provider_url": "https://itv.live/",
       "api_url": "http://api.itv.live",
       "api_commands": {
@@ -918,7 +918,7 @@
       "id": "kineskop",
       "name": "Kineskop Club",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_kineskop.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_kineskop.png",
       "provider_url": "http://kineskop.club/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/.+\\.m3u8$/",
@@ -949,7 +949,7 @@
       "vod": "korona",
       "name": "Korona TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_korona.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_korona.png",
       "provider_url": "https://korona-tv.top/",
       "api_url": "http://dev.korona-tv.top/api",
       "api_commands": {
@@ -993,7 +993,7 @@
       "id": "klimedia",
       "name": "KLI Media",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_klimedia.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_klimedia.png",
       "provider_url": "https://klimedia.space/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
@@ -1020,7 +1020,7 @@
       "id": "lightiptv",
       "name": "Light IPTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_lightiptv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_lightiptv.png",
       "provider_url": "https://ottbill.cc/",
       "config": {
         "id_map": "name",
@@ -1054,7 +1054,7 @@
       "type": "login",
       "vod": "mirkino",
       "vod_only": true,
-      "logo": "http://iptv.esalecrm.net/res/logo_mirkino.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_mirkino.png",
       "provider_url": "https://mir-kino.pp.ru/",
       "vod_api_url": "https://{SERVER_ID}.mir-kino.pp.ru",
       "config": {
@@ -1077,7 +1077,7 @@
       "id": "mymagic",
       "name": "MyMAGic TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_mymagic.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_mymagic.png",
       "provider_url": "http://mymagic.tv/",
       "config": {
         "epg_presets": [
@@ -1113,7 +1113,7 @@
       "id": "nasharu",
       "name": "Nasharu TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_nasharu.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_nasharu.png",
       "provider_url": "https://nasharu.tv/",
       "api_url": "http://nasharu.tv/iptv",
       "config": {
@@ -1145,7 +1145,7 @@
       "id": "onlineott",
       "name": "OnlineOTT TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_onlineott.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_onlineott.png",
       "provider_url": "https://www.onlineott-tv.site/",
       "api_url": "http://pl.onlineott-tv.site",
       "config": {
@@ -1170,7 +1170,7 @@
       "id": "ottclub",
       "name": "OTT Club",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_ottclub.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_ottclub.png",
       "provider_url": "https://www.ottclub.cc/",
       "api_url": "http://{API_DOMAIN_ID}",
       "config": {
@@ -1198,7 +1198,7 @@
       "id": "ottpub",
       "name": "OTT Pub",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_ottpub.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_ottpub.png",
       "provider_url": "https://ott.pub/",
       "api_url": "https://cassy.tv",
       "config": {
@@ -1247,7 +1247,7 @@
       "id": "peaktv",
       "name": "Peak TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_peaktv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_peaktv.png",
       "provider_url": "https://peaktv.su/",
       "api_url": "http://peaktv.su",
       "config": {
@@ -1274,7 +1274,7 @@
       "vod": "korona",
       "name": "Pik TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_piktv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_piktv.png",
       "provider_url": "http://pa.piktv.top/",
       "api_url": "http://stb.piktv.top/api",
       "api_commands": {
@@ -1318,7 +1318,7 @@
       "id": "ping",
       "name": "Ping TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_ping.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_ping.png",
       "provider_url": "http://ping-tv.com/",
       "api_url": "http://pl.ping-tv.com",
       "config": {
@@ -1349,7 +1349,7 @@
       "id": "reflextv",
       "name": "ReflexTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_reflextv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_reflextv.png",
       "provider_url": "https://reflextv.ru/",
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
@@ -1371,7 +1371,7 @@
       "id": "rutv",
       "name": "RU TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_rutv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_rutv.png",
       "provider_url": "https://rutv.vip/",
       "api_url": "http://pl.ru-tv.site",
       "config": {
@@ -1406,7 +1406,7 @@
       "id": "russkoetv",
       "name": "RusskoeTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_russkoetv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_russkoetv.png",
       "provider_url": "https://russkoetv.shop/",
       "api_url": "http://protected-api.com",
       "config": {
@@ -1430,7 +1430,7 @@
       "id": "satq",
       "name": "Satq TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_satq.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_satq.png",
       "provider_url": "https://satq.tv/",
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+?token=(?<token>.+)$/",
@@ -1475,7 +1475,7 @@
       "id": "sharatv",
       "name": "SharaTV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_sharatv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_sharatv.png",
       "provider_url": "https://shara-tv.org/",
       "config": {
         "id_map": "tvg-id",
@@ -1501,7 +1501,7 @@
       "vod": "sharaclub",
       "name": "SharaClub",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_sharaclub.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_sharaclub.png",
       "provider_url": "https://shara.club/",
       "api_url": "http://list.sh-tv.pro/api/players.php",
       "api_commands": {
@@ -1542,7 +1542,7 @@
       "vod": "sharavoz",
       "name": "Sharavoz",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_sharavoz.png",
       "provider_url": "https://sharavoz.tv/",
       "vod_api_url": "http://app.media24.cc",
       "config": {
@@ -1599,7 +1599,7 @@
       "id": "shuratv",
       "name": "ShuraTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_shuratv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_shuratv.png",
       "provider_url": "http://shura.tv/b/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$/",
@@ -1623,7 +1623,7 @@
       "class": "shurik",
       "name": "ShurikTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_shuriktv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_shuriktv.png",
       "provider_url": "https://schuriktv.nethouse.ru/",
       "api_url": "https://srv4you.net/api/v1",
       "config": {
@@ -1651,7 +1651,7 @@
       "id": "skaztv",
       "name": "Skaz TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_skaztv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_skaztv.png",
       "provider_url": "http://skaz.tv/",
       "api_url": "http://{API_DOMAIN_ID}",
       "config": {
@@ -1683,7 +1683,7 @@
       "id": "smile",
       "name": "Smile",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_smile.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_smile.png",
       "provider_url": "http://smile-tv.live/",
       "api_url": "http://pl.smile-tv.live",
       "config": {
@@ -1720,7 +1720,7 @@
       "id": "topiptv",
       "name": "TopIPTV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_topiptv.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_topiptv.png",
       "provider_url": "https://topiptv.info/",
       "config": {
         "playlists": {
@@ -1738,7 +1738,7 @@
       "id": "tvboom",
       "name": "TV Boom",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_tvboom.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_tvboom.png",
       "provider_url": "https://tvboom.vip/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
@@ -1769,7 +1769,7 @@
       "class": "tvclub",
       "name": "TV Club",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_tvclub.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_tvclub.png",
       "provider_url": "https://tvclub.cc/",
       "api_url": "http://api.iptv.so/0.9/json",
       "api_commands": {
@@ -1802,7 +1802,7 @@
       "class": "tvteam",
       "name": "TV Team",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_tvteam.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_tvteam.png",
       "provider_url": "https://tv.team/",
       "api_url": "http://{API_DOMAIN_ID}",
       "api_commands": {
@@ -1854,7 +1854,7 @@
       "vod": "iptvonline",
       "name": "TVIZI Net",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_tvizi.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_tvizi.png",
       "provider_url": "https://tvizi.net/",
       "api_url": "https://{API_DOMAIN_ID}/api/v4",
       "api_commands": {
@@ -1902,7 +1902,7 @@
       "id": "uspeh",
       "name": "Uspeh TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_uspeh.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_uspeh.png",
       "provider_url": "https://uspeh.tv/",
       "config": {
         "id_map": "tvg-id",
@@ -1929,7 +1929,7 @@
       "id": "velestore",
       "name": "Velestore",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_velestore.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_velestore.png",
       "provider_url": "https://velestore.su/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+):(?<port>[^\\/]+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
@@ -1954,7 +1954,7 @@
       "class": "vidok",
       "name": "Vidok TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_vidok.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_vidok.png",
       "provider_url": "https://vidok.tv/",
       "api_url": "http://sapi.ott.st/v2.4/json",
       "api_commands": {
@@ -1983,7 +1983,7 @@
       "id": "viplime",
       "name": "VipLime",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_viplime.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_viplime.png",
       "provider_url": "http://viplime.fun/",
       "api_url": "http://cdntv.online",
       "vod_api_url": "http://m.cdntv.online/f",
@@ -2030,7 +2030,7 @@
       "id": "vivamax",
       "name": "VivaMax",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_vivamax.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_vivamax.png",
       "provider_url": "https://t.me/vivamax_portal",
       "api_url": "https://pl.vivamax.pro",
       "config": {
@@ -2065,7 +2065,7 @@
       "id": "yosso",
       "name": "Yosso TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_yosso.png",
+      "logo": "https://iptv.esalecrm.com/res/logo_yosso.png",
       "provider_url": "https://streaming-elbrus.su/",
       "api_url": "https://{API_DOMAIN_ID}",
       "config": {

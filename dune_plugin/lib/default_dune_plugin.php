@@ -41,8 +41,14 @@ require_once 'lib/smb_tree.php';
 
 class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlugin
 {
-    const CONFIG_URL = 'http://iptv.esalecrm.net/config/providers';
-    const ARCHIVE_URL_PREFIX = 'http://iptv.esalecrm.net/res';
+    const CONFIG_URL = 'http://iptv.esalecrm.com/config/providers';
+    // EPG description parser published on the server, %d is DESC_PARSER_API.
+    // Not .php: the server would execute it instead of returning the source
+    const DESC_PARSER_URL = 'http://iptv.esalecrm.com/config/desc_parser_%d.txt';
+    // must match Desc_Parser::API, the plugin never loads a parser of another level
+    const DESC_PARSER_API = 1;
+    const DESC_PARSER_END = '// end of Desc_Parser';
+    const ARCHIVE_URL_PREFIX = 'http://iptv.esalecrm.com/res';
     const ARCHIVE_ID = 'common';
     const PARSE_CONFIG = "%s_parse_config.json";
     const MEDIA_INFO_LOG_LINES = 20;
@@ -61,11 +67,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @var Hashed_Array<string, api_default>
      */
     public static $providers;
-
-    /**
-     * @var array
-     */
-    public $desc_parsers;
 
     /**
      * @var Hashed_Array
@@ -407,7 +408,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                 $ext_params = array_map(function ($v) {
                     return $v;
-                }, self::reformat_description($this->desc_parsers, $name, $desc, $icon));
+                }, Desc_Parser::reformat($name, $desc, $icon));
 
                 $day_epg_item = array(
                     PluginTvEpgProgram::start_tm_sec => $tm_start,
@@ -728,11 +729,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->epg_xmltv_presets->set($key, $value);
         }
 
-        $this->desc_parsers = array();
-        if (isset($jsonArray['desc_parsers'])) {
-            $this->desc_parsers = $jsonArray['desc_parsers'];
-        }
-
         if ($jsonArray === false || !isset($jsonArray['providers'])) {
             hd_debug_print('Problem to get providers configuration');
             return;
@@ -788,6 +784,66 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
             self::$providers->set($provider->getId(), $provider);
         }
+    }
+
+    /**
+     * Load EPG description parser (rules and the code applying them).
+     * The parser is updated on the server without a new plugin release: the newest revision
+     * of the downloaded and the installed file is used. Debug build always uses the installed one.
+     *
+     * @return void
+     */
+    public function init_desc_parser()
+    {
+        if (class_exists('Desc_Parser', false)) {
+            return;
+        }
+
+        $parser_file = get_install_path('lib/desc_parser.php');
+        if (!self::$plugin_info['debug']) {
+            $installed_rev = self::get_desc_parser_revision(file_get_contents($parser_file));
+            $cached_file = get_data_path('desc_parser.php');
+            $url = sprintf(self::DESC_PARSER_URL, self::DESC_PARSER_API);
+            $content = Curl_Wrapper::getInstance()->download_content($url);
+            if (self::get_desc_parser_revision($content) !== false) {
+                // written aside and renamed: a half written file must never be included
+                $tmp_file = "$cached_file.tmp";
+                if (file_put_contents($tmp_file, $content) !== false) {
+                    rename($tmp_file, $cached_file);
+                }
+            } else {
+                hd_debug_print("Description parser is not available from $url");
+            }
+
+            $cached_rev = file_exists($cached_file) ? self::get_desc_parser_revision(file_get_contents($cached_file)) : false;
+            if ($cached_rev !== false && $cached_rev > $installed_rev) {
+                $parser_file = $cached_file;
+            }
+        }
+
+        hd_debug_print("Load description parser: $parser_file");
+        require_once $parser_file;
+    }
+
+    /**
+     * Revision of the description parser source or false if the source is not usable by this plugin:
+     * it is included as code, so a truncated or foreign file would break the whole plugin
+     *
+     * @param string|bool $content
+     * @return int|bool
+     */
+    protected static function get_desc_parser_revision($content)
+    {
+        if (empty($content)
+            || strpos($content, '<?php') !== 0
+            || substr(rtrim($content), -strlen(self::DESC_PARSER_END)) !== self::DESC_PARSER_END
+            || !preg_match('/^class Desc_Parser\b/m', $content)
+            || !preg_match('/^\s*const API = (\d+);/m', $content, $m) || (int)$m[1] !== self::DESC_PARSER_API
+            || !preg_match('/^\s*const REVISION = (\d+);/m', $content, $m)) {
+            return false;
+        }
+
+        return (int)$m[1];
     }
 
     /**
@@ -4817,172 +4873,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             . ", sampled: $duration sec, bitrate: " . safe_get_value($out, 'bitrate', 'unknown'), true);
 
         return $out;
-    }
-
-    /**
-     * Parse epg description for extended epg tags
-     * If ext_epg not enabled or channel in delayed queue no parsing performed
-     *
-     * @param array $desc_parsers
-     * @param string $title
-     * @param string $raw_descr
-     * @param string $icon
-     * @return array
-     */
-    public static function reformat_description($desc_parsers, $title, $raw_descr, $icon)
-    {
-        $result = array();
-        $result[PluginTvExtEpgProgram::title] = $title;
-        $result[PluginTvExtEpgProgram::desc] = $raw_descr;
-        $result[PluginTvExtEpgProgram::main_icon] = $icon;
-
-        if (empty($raw_descr)) {
-            return $result;
-        }
-
-        // some sources (tv team) use \r\n, all rules expect \n
-        $raw_descr = str_replace("\r\n", "\n", $raw_descr);
-
-        $find_chunks = function (&$total, $chunks, $raw_descr) {
-            foreach ($chunks as $key => $pattern) {
-                // $items must be rebuilt for each key, otherwise patterns of the
-                // previous keys are kept and retried before the current one
-                $items = is_string($pattern) ? array($pattern) : $pattern;
-                foreach ($items as $item) {
-                    $m = preg_split($item, $raw_descr, 0, PREG_SPLIT_DELIM_CAPTURE);
-                    if (!isset($m[1])) continue;
-
-                    $total[$key] = trim($m[1]);
-                    $raw_descr = preg_replace($item, '', $raw_descr);
-                    break;
-                }
-            }
-
-            return trim($raw_descr, ", \n\r\t\v\0");
-        };
-
-        // Pick the matcher from the config: 'icon' matches the picon host, 'detect' matches
-        // the shape of the description itself (needed because a provider may fall back to its
-        // own picon host for any feed). 'default' has neither and is used when nothing matched.
-        $matchers = isset($desc_parsers['matchers']) ? $desc_parsers['matchers'] : array();
-        $matcher = 'default';
-        foreach ($matchers as $name => $cfg) {
-            $found = false;
-            if (isset($cfg['icon'])) {
-                foreach ((array)$cfg['icon'] as $needle) {
-                    if (strpos($icon, $needle) !== false) {
-                        $found = true;
-                        break;
-                    }
-                }
-            }
-            if (!$found && isset($cfg['detect'])) {
-                $found = (bool)preg_match($cfg['detect'], $raw_descr);
-            }
-            if ($found) {
-                $matcher = $name;
-                break;
-            }
-        }
-
-        if (isset($matchers[$matcher]['icon_suffix'])) {
-            $icon .= $matchers[$matcher]['icon_suffix'];
-        }
-
-        // a matcher may define only what is special about its format and inherit the rest.
-        // '+' keeps the matcher's own keys (and their order) and appends the missing ones.
-        $chunks = isset($matchers[$matcher]['chunks']) ? $matchers[$matcher]['chunks'] : array();
-        if (isset($matchers[$matcher]['extends'])) {
-            $base = $matchers[$matcher]['extends'];
-            if (isset($matchers[$base]['chunks'])) {
-                $chunks += $matchers[$base]['chunks'];
-            }
-        }
-
-        // a rule is either a pattern (the match is removed) or a [pattern, replacement] pair.
-        // {"if": [needles], "rules": [...]} is a group used only when the text contains one of the needles:
-        // every /u pattern costs a few us even without a match, which adds up on the box.
-        // all rules taken go into one preg_replace call, which applies them in order.
-        $apply_rules = function ($rules, $raw_descr) {
-            $patterns = array();
-            $replacements = array();
-            foreach ($rules as $rule) {
-                // is_array first: php 5.3 answers isset($string['rules']) with true
-                if (is_array($rule) && isset($rule['rules'])) {
-                    $found = false;
-                    foreach ((array)$rule['if'] as $needle) {
-                        if (strpos($raw_descr, $needle) !== false) {
-                            $found = true;
-                            break;
-                        }
-                    }
-                    $group = $found ? $rule['rules'] : array();
-                } else {
-                    $group = array($rule);
-                }
-
-                foreach ($group as $item) {
-                    $patterns[] = is_array($item) ? $item[0] : $item;
-                    $replacements[] = is_array($item) ? $item[1] : '';
-                }
-            }
-            return empty($patterns) ? $raw_descr : preg_replace($patterns, $replacements, $raw_descr);
-        };
-
-        // 'prepare' rewrites decorated layouts (e.g. "Жанр ▪ драма ► Год ▪ 1990") to the plain
-        // "Label: value" lines the chunks expect, so it runs before them and for every matcher
-        if (isset($desc_parsers['prepare'])) {
-            $raw_descr = $apply_rules($desc_parsers['prepare'], $raw_descr);
-        }
-
-        $parsed = array();
-        if (!empty($chunks)) {
-            $raw_descr = $find_chunks($parsed, $chunks, $raw_descr);
-        }
-
-        if (isset($desc_parsers['cleanup'])) {
-            $raw_descr = $apply_rules($desc_parsers['cleanup'], $raw_descr);
-        }
-
-        $raw_descr = str_replace(array('“', '”'), '', $raw_descr);
-        $raw_descr = str_replace(array('<br>', "<'>br>"), "\n", $raw_descr);
-        // keep paragraphs, but no more than one empty line between them
-        $raw_descr = preg_replace(array('/[ \t]+(?=\n)/', '/\n{3,}/'), array('', "\n\n"), $raw_descr);
-        $raw_descr = trim($raw_descr, " .,;\n\r\t\v\0");
-
-        $result[PluginTvExtEpgProgram::desc] = $raw_descr;
-        $result[PluginTvExtEpgProgram::main_icon] = $icon;
-
-        if (isset($parsed['genre']))
-            $result[PluginTvExtEpgProgram::main_category] = $parsed['genre'];
-        if (isset($parsed['sub_title']))
-            $result[PluginTvExtEpgProgram::sub_title] = $parsed['sub_title'];
-        if (isset($parsed['year']))
-            $result[PluginTvExtEpgProgram::year] = $parsed['year'];
-        if (isset($parsed['country']))
-            $result[PluginTvExtEpgProgram::country] = $parsed['country'];
-        if (isset($parsed['director']))
-            $result[PluginTvExtEpgProgram::director] = $parsed['director'];
-        if (isset($parsed['actor']))
-            $result[PluginTvExtEpgProgram::actor] = $parsed['actor'];
-        if (isset($parsed['producer']))
-            $result[PluginTvExtEpgProgram::producer] = $parsed['producer'];
-        if (isset($parsed['imdb_rating']))
-            $result[PluginTvExtEpgProgram::imdb_rating] = $parsed['imdb_rating'];
-        if (isset($parsed['kp_rating']))
-            $result[PluginTvExtEpgProgram::kp_rating] = $parsed['kp_rating'];
-        if (isset($parsed['km_rating']))
-            $result[PluginTvExtEpgProgram::km_rating] = $parsed['km_rating'];
-        if (isset($parsed["writer"]))
-            $result[PluginTvExtEpgProgram::writer] = $parsed['writer'];
-        if (isset($parsed["editor"]))
-            $result[PluginTvExtEpgProgram::editor] = $parsed['editor'];
-        if (isset($parsed["composer"]))
-            $result[PluginTvExtEpgProgram::composer] = $parsed['composer'];
-        if (isset($parsed["presenter"]))
-            $result[PluginTvExtEpgProgram::presenter] = $parsed['presenter']; //Ведущий
-
-        return $result;
     }
 
     /**

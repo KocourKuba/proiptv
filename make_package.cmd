@@ -70,6 +70,12 @@ if %WINSCP_RESULT% equ 0 (
   echo Error
 )
 
+if not %WINSCP_RESULT% equ 0 goto :upload_done
+echo upload description parser
+call update_desc_parser.cmd
+set WINSCP_RESULT=%ERRORLEVEL%
+:upload_done
+
 del .\providers_%VERSION%.json >nul 2>&1
 del .\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul 2>&1
 
