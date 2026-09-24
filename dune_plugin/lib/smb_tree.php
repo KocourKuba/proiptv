@@ -165,7 +165,11 @@ class smb_tree
                     }
                     $exec_string = "mount -t cifs -o username=$username,password=$password,posixpaths,rsize=32768,wsize=130048 \"$k\" \"$fn\" 2>&1 &";
                     hd_debug_print("Mount string: $exec_string", true);
-                    $ret_code = exec($exec_string);
+                    // mount prints nothing on success
+                    $ret_code = trim(exec($exec_string));
+                    if ($ret_code === '') {
+                        $ret_code = false;
+                    }
                 } else {
                     $fn = $wr;
                 }
@@ -205,7 +209,9 @@ class smb_tree
         $df_smb = array();
         $out_mount = file_get_contents('/proc/mounts');
         /** @var array $m */
-        if (preg_match_all('|(.+)/tmp/mnt/smb/(.+?) |', $out_mount, $m)) {
+        // the space keeps the source apart from the mount point, and skips the bind mounts of
+        // the same share under other prefixes (/storage/.../tmp/mnt/smb/0)
+        if (preg_match_all('|(.+) /tmp/mnt/smb/(.+?) |', $out_mount, $m)) {
             foreach ($m[2] as $k => $v) {
                 $df_smb[str_replace(array('/', '\134'), '', $m[1][$k])] = $v;
             }
@@ -312,7 +318,11 @@ class smb_tree
                     if (!create_path($fn)) {
                         hd_debug_print("Directory '$fn' was not created");
                     }
-                    $q = shell_exec('mount -t nfs -o ' . $vel[self::PARAM_PROTOCOL] . " $k $fn 2>&1");
+                    // mount prints nothing on success, shell_exec() returns null for no output
+                    $q = trim((string)shell_exec('mount -t nfs -o ' . $vel[self::PARAM_PROTOCOL] . " $k $fn 2>&1"));
+                    if ($q === '') {
+                        $q = false;
+                    }
                 } else {
                     $fn = $wr;
                 }

@@ -119,7 +119,7 @@ class vod_mirkino extends vod_standard
         $vod_url = make_ts($url);
         $dune_params = $this->plugin->collect_dune_params();
         if (!empty($dune_params)) {
-            $magic = str_replace('=', ':', http_build_query($dune_params, null, ','));
+            $magic = str_replace(array('=', '+'), array(':', '%20'), http_build_query($dune_params, null, ','));
             $vod_url .= DUNE_PARAMS_MAGIC . $magic;
         }
 
@@ -344,7 +344,7 @@ class vod_mirkino extends vod_standard
         $query_params['IncludeItemTypes'] = $category_type === jellyfin_api::MOVIES ? jellyfin_api::MOVIES : jellyfin_api::SERIES;
 
         $vod_items = $this->jfc->getItems($query_params);
-        foreach (safe_get_value($vod_items, 'Items') as $item) {
+        foreach (safe_get_value($vod_items, 'Items', array()) as $item) {
             $this->CreateShortMovie($item, $movies);
         }
 

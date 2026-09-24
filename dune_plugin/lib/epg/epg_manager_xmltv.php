@@ -56,6 +56,11 @@ class Epg_Manager_Xmltv
     const INDEX_BLOCK_SIZE = 65536;
 
     /**
+     * Cache time in days used in XMLTV_CACHE_AUTO mode when the server does not provide an ETag
+     */
+    const AUTO_CACHE_FALLBACK_DAYS = 1;
+
+    /**
      * Number of <programme> open tags a block must hold before the regex jump is used for the
      * next one. Below this the block is mostly element bodies and there is not enough per-tag
      * work to pay for the jump.
@@ -465,6 +470,25 @@ class Epg_Manager_Xmltv
     }
 
     /**
+     * Cache time of xmltv source in days.
+     * In auto mode ETag is used if server supports it (returns null),
+     * otherwise AUTO_CACHE_FALLBACK_DAYS is used like manually set cache time
+     *
+     * @param string|float $cache cache parameter of xmltv source
+     * @param string $url
+     * @return float|int|null
+     */
+    public static function get_cache_days($cache, $url)
+    {
+        if (!isset($cache) || $cache === '' || $cache === XMLTV_CACHE_AUTO) {
+            $etag = Curl_Wrapper::get_cached_etag($url);
+            return empty($etag) ? self::AUTO_CACHE_FALLBACK_DAYS : null;
+        }
+
+        return (float)$cache;
+    }
+
+    /**
      * check xmltv source and return required flags for indexing
      * or -1 in case of error
      *
@@ -508,27 +532,26 @@ class Epg_Manager_Xmltv
             $modify_time_file = filemtime($cached_file);
             hd_debug_print("Xmltv cache ($cache_ttl) last modified: " . date('Y-m-d H:i', $modify_time_file), true);
 
-            if ($cache_ttl === XMLTV_CACHE_AUTO) {
-                $curl_wrapper = Curl_Wrapper::getInstance();
-
+            $cache_days = self::get_cache_days($cache_ttl, $url);
+            if ($cache_days === null) {
+                // auto mode, server supports ETag
                 $etag = Curl_Wrapper::get_cached_etag($url);
-                if (empty($etag)) {
-                    hd_debug_print('No ETag value');
-                } else {
-                    $res = $curl_wrapper->download_file($url, false, Curl_Wrapper::USE_ETAG);
-                    if ($res === false) {
-                        return -1;
-                    }
-                    $code = Curl_Wrapper::get_http_code();
-                    hd_debug_print("http code: $code", true);
-                    $expired = !($code === 304 || ($code === 200 && Curl_Wrapper::get_response_header('etag') === $etag));
+                $res = Curl_Wrapper::getInstance()->download_file($url, false, Curl_Wrapper::USE_ETAG);
+                if ($res === false) {
+                    return -1;
                 }
+                $code = Curl_Wrapper::get_http_code();
+                hd_debug_print("http code: $code", true);
+                $expired = !($code === 304 || ($code === 200 && Curl_Wrapper::get_response_header('etag') === $etag));
 
                 if ($expired) {
                     Curl_Wrapper::clear_cached_etag($url);
                 }
             } else if (filesize($cached_file) !== 0) {
-                $max_cache_time = 3600 * 24 * $cache_ttl;
+                if ($cache_ttl === XMLTV_CACHE_AUTO) {
+                    hd_debug_print("No ETag value, use cache time: $cache_days day(s)");
+                }
+                $max_cache_time = (int)(3600 * 24 * $cache_days);
                 $expired_time = $modify_time_file + $max_cache_time;
                 hd_debug_print('Xmltv cache expired at: ' . date('Y-m-d H:i', $expired_time), true);
                 if ($modify_time_file && $expired_time > time()) {
@@ -1267,7 +1290,24 @@ class Epg_Manager_Xmltv
             unset(self::$epg_db[$hash]);
         }
 
-        Curl_Wrapper::clear_cached_etag($hash, true);
+        // ETags are stored by url, the cached files by the source hash
+        if (empty($hash)) {
+            $urls = array();
+            foreach (glob(self::$cache_dir . '*.url') as $url_file) {
+                $urls[] = trim(file_get_contents($url_file));
+            }
+            if (!is_null(self::$xmltv_sources)) {
+                foreach (self::$xmltv_sources as $params) {
+                    $urls[] = safe_get_value($params, PARAM_URI);
+                }
+            }
+        } else {
+            $urls = array(self::get_source_url($hash));
+        }
+
+        foreach (array_unique(array_filter($urls)) as $url) {
+            Curl_Wrapper::clear_cached_etag($url);
+        }
 
         $files = self::$cache_dir . $hash . "*";
         hd_debug_print("clear epg files: $files");
@@ -1275,6 +1315,26 @@ class Epg_Manager_Xmltv
 
         clearstatcache();
         hd_debug_print('Storage space:  ' . HD::get_storage_size(self::$cache_dir));
+    }
+
+    /**
+     * Get url of xmltv source by its hash
+     *
+     * @param string $hash
+     * @return string
+     */
+    public static function get_source_url($hash)
+    {
+        $url_file = self::$cache_dir . "$hash.url";
+        if (file_exists($url_file)) {
+            return trim(file_get_contents($url_file));
+        }
+
+        if (!is_null(self::$xmltv_sources)) {
+            return safe_get_value(self::$xmltv_sources->get($hash), PARAM_URI, '');
+        }
+
+        return '';
     }
 
     /**
@@ -1730,10 +1790,12 @@ class Epg_Manager_Xmltv
         }
 
         $perf->setLabel('end_download');
+        // remember the url of the source to find its ETag when clearing cached files
+        file_put_contents(preg_replace('/\.xmltv$/', '.url', $cached_file), $url);
         $file_time = filemtime($tmp_filename);
         $dl_time = $perf->getReportItem(Perf_Collector::TIME, 'start_download', 'end_download');
         $file_size = filesize($tmp_filename);
-        $bps = $file_size / $dl_time;
+        $bps = $file_size / max($dl_time, 0.001);
         $si_prefix = array('B/s', 'KB/s', 'MB/s');
         $base = 1024;
         $class = min((int)log($bps, $base), count($si_prefix) - 1);
@@ -1801,26 +1863,9 @@ class Epg_Manager_Xmltv
             $action = 'UnGZip:';
         } else if (0 === mb_strpos($hdr, "\x50\x4b\x03\x04")) {
             hd_debug_print('ZIP signature: ' . bin2hex(substr($hdr, 0, 4)), true);
-            $filename = trim(shell_exec("unzip -lq '$tmp_filename'|grep -E '[\d:]+'"));
-            if (empty($filename)) {
-                throw new Exception(TR::t('err_empty_zip__1', $tmp_filename));
-            }
-
-            if (explode('\n', $filename) > 1) {
-                throw new Exception("Too many files in zip archive, wrong format??!\n$filename");
-            }
-
-            hd_debug_print("zip list: $filename");
-            $cmd = "unzip -oq $tmp_filename -d " . self::$cache_dir . " 2>&1";
-            /** @var int $ret */
-            system($cmd, $ret);
+            self::unzip_xmltv($tmp_filename, $cached_file);
             safe_unlink($tmp_filename);
-            if ($ret !== 0) {
-                throw new Exception("Failed to unpack $tmp_filename (error code: $ret)");
-            }
             clearstatcache();
-
-            rename($filename, $cached_file);
             $size = filesize($cached_file);
             touch($cached_file, $file_time);
             $action = 'UnZip: ';
@@ -1844,6 +1889,67 @@ class Epg_Manager_Xmltv
 
         self::update_stat($params, 'unpack', $unpack_time);
         self::update_stat($params, 'unpack_size', $size);
+    }
+
+    /**
+     * Unpack xmltv from zip archive. Archive must contain the only file.
+     *
+     * @param string $zip_file
+     * @param string $cached_file
+     * @return void
+     * @throws Exception
+     */
+    protected static function unzip_xmltv($zip_file, $cached_file)
+    {
+        if (!class_exists('ZipArchive')) {
+            // busybox unzip, -p writes the content of the archive to stdout
+            $cmd = 'unzip -p ' . escapeshellarg($zip_file) . ' > ' . escapeshellarg($cached_file) . ' 2>/dev/null';
+            /** @var int $ret */
+            system($cmd, $ret);
+            if ($ret !== 0 || !file_exists($cached_file) || filesize($cached_file) === 0) {
+                safe_unlink($cached_file);
+                throw new Exception("Failed to unpack $zip_file (error code: $ret)");
+            }
+            return;
+        }
+
+        $zip = new ZipArchive();
+        $res = $zip->open($zip_file);
+        if ($res !== true) {
+            throw new Exception("Failed to open $zip_file (error code: $res)");
+        }
+
+        if ($zip->numFiles === 0) {
+            $zip->close();
+            throw new Exception(TR::t('err_empty_zip__1', $zip_file));
+        }
+
+        if ($zip->numFiles > 1) {
+            $zip->close();
+            throw new Exception("Too many files in zip archive, wrong format??!\n$zip_file");
+        }
+
+        $filename = $zip->getNameIndex(0);
+        hd_debug_print("zip list: $filename");
+        $in = $zip->getStream($filename);
+        $out = fopen($cached_file, 'wb');
+        if ($in === false || $out === false) {
+            if ($in) fclose($in);
+            if ($out) fclose($out);
+            $zip->close();
+            safe_unlink($cached_file);
+            throw new Exception("Failed to unpack $zip_file");
+        }
+
+        $size = stream_copy_to_stream($in, $out);
+        fclose($in);
+        fclose($out);
+        $zip->close();
+
+        if (empty($size)) {
+            safe_unlink($cached_file);
+            throw new Exception("Failed to unpack $zip_file");
+        }
     }
 
     /**

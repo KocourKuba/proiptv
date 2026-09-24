@@ -656,7 +656,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
                 $vod_url = make_ts($playback_info->url);
                 $dune_params = $this->plugin->collect_dune_params();
                 if (!empty($dune_params)) {
-                    $magic = str_replace('=', ':', http_build_query($dune_params, null, ','));
+                    $magic = str_replace(array('=', '+'), array(':', '%20'), http_build_query($dune_params, null, ','));
                     $vod_url .= DUNE_PARAMS_MAGIC . $magic;
                 }
             } else {

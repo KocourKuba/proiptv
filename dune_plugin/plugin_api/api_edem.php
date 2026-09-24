@@ -182,7 +182,7 @@ class api_edem extends api_default
             $params[PARAM_NAME] = $user_input->{CONTROL_EDIT_NAME};
         }
 
-        if (empty($user_input->CONTROL_OTT_SUBDOMAIN)) {
+        if (empty($user_input->{self::CONTROL_OTT_SUBDOMAIN})) {
             $params[MACRO_SUBDOMAIN] = $this->getConfigValue(CONFIG_SUBDOMAIN);
         } else {
             $params[MACRO_SUBDOMAIN] = $user_input->{self::CONTROL_OTT_SUBDOMAIN};

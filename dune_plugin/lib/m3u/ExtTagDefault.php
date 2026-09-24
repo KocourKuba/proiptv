@@ -124,7 +124,7 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
      */
     public function hasAttributeValue($attribute_name)
     {
-        return array_key_exists($attribute_name, $this->attributes);
+        return is_array($this->attributes) && array_key_exists($attribute_name, $this->attributes);
     }
 
     /**

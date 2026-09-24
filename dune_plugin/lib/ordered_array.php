@@ -139,7 +139,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
      */
     public function in_order($id)
     {
-        return in_array($id, $this->order);
+        return in_array_id($id, $this->order);
     }
 
     /**
@@ -192,7 +192,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
      */
     public function remove_item($id)
     {
-        $key = array_search($id, $this->order);
+        $key = array_search_id($id, $this->order);
         if ($key !== false) {
             $selected_item = $this->get_selected_item();
             $removed = array_splice($this->order, $key, 1);
@@ -222,7 +222,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
         if ($item === null) {
             $pos = 0;
         } else {
-            $key = array_search($item, $this->order);
+            $key = array_search_id($item, $this->order);
             $pos = ($key !== false) ? $key : 0;
         }
 
@@ -283,7 +283,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
      */
     public function get_item_pos($item)
     {
-        return array_search($item, $this->order);
+        return array_search_id($item, $this->order);
     }
 
     /**
@@ -293,7 +293,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
      */
     public function arrange_item($id, $direction)
     {
-        $k = array_search($id, $this->order);
+        $k = array_search_id($id, $this->order);
         if ($k === false) {
             return false;
         }

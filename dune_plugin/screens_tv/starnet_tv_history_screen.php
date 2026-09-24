@@ -222,7 +222,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen
             if ($channel_ts > 0) {
                 $start_tm = $prog_info[PluginTvEpgProgram::start_tm_sec];
                 $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
-                if ($channel_ts >= $now - $channel_info[COLUMN_ARCHIVE] * 86400 - 60) {
+                if ($epg_len > 0 && $channel_ts >= $now - $channel_info[COLUMN_ARCHIVE] * 86400 - 60) {
                     $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2))) * 100;
                     $title = "$title | " . date('j.m H:i', $channel_ts) . " [$progress%]";
                     $description = "{$channel_info[COLUMN_SHOW_TITLE]}|{$prog_info[PluginTvEpgProgram::description]}";

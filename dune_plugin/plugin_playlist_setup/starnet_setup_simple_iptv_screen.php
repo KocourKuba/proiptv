@@ -184,6 +184,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
             case ACTION_FILE_SELECTED:
                 $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $selected_media_url->{PARAM_FILEPATH});
+                $this->force_parent_reload = true;
                 break;
 
             case PARAM_PLAYLIST_CACHE_TIME_IPTV:

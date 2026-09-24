@@ -241,7 +241,9 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                 $use_vod = $this->plugin->get_setting(PARAM_USE_VOD, SwitchOnOff::on);
                 Control_Factory::add_image_button($defs, $this, PARAM_USE_VOD,
                     TR::t('setup_use_vod'), SwitchOnOff::translate($use_vod), SwitchOnOff::to_image($use_vod));
-            } else if (count($vod_playlists) > 1) {
+            }
+
+            if (count($vod_playlists) > 1) {
                 $pl_vod_idx = $provider->GetPlaylistVodId();
                 $pl_vod_names = extract_column($vod_playlists, COLUMN_NAME);
                 if (isset($pl_vod_names['default'])) {

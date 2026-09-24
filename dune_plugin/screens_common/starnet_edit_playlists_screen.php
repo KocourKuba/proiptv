@@ -311,7 +311,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
             case ACTION_INVALIDATE:
                 if (isset($user_input->{PARAM_PLAYLIST_ID})) {
-                    $sel_idx = array_search($user_input->{PARAM_PLAYLIST_ID}, $this->plugin->get_all_playlists_ids());
+                    $sel_idx = array_search_id($user_input->{PARAM_PLAYLIST_ID}, $this->plugin->get_all_playlists_ids());
                 }
                 break;
         }
@@ -436,7 +436,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             return $res;
         }
 
-        $sel_idx = array_search($res, $this->plugin->get_all_playlists_ids());
+        $sel_idx = array_search_id($res, $this->plugin->get_all_playlists_ids());
         $this->force_parent_reload = $this->plugin->get_active_playlist_id() === $res;
         if ($this->plugin->load_channels($plugin_cookies, true)) {
             return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_idx);
@@ -761,13 +761,17 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 continue;
             }
 
-            $params = $provider->fill_default_provider_info($m);
+            $playlist_id = '';
+            $params = $provider->fill_default_provider_info($m, $playlist_id);
             if ($params === false) {
                 hd_debug_print("Incorrect provider parameters: $m[2]");
                 continue;
             }
 
-            $playlist_id = Hashed_Array::hash($uri);
+            // the same id as for the playlist created by the provider setup dialog
+            if (empty($playlist_id)) {
+                $playlist_id = Hashed_Array::hash($uri);
+            }
             if ($this->plugin->is_playlist_entry_exist($playlist_id)) {
                 hd_debug_print("already exist: $playlist_id", true);
                 continue;

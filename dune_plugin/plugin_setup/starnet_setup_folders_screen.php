@@ -169,7 +169,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                     if ($history_path === $default_path) {
                         throw new Exception("Cannot copy $history_path to itself!");
                     }
-                    HD::copy_data($history_path, '_' . PARAM_TV_HISTORY_ITEMS . '$/', $default_path);
+                    HD::copy_data($history_path, '/_' . PARAM_TV_HISTORY_ITEMS . '$/', $default_path);
                     $post_action = Action_Factory::show_title_dialog(TR::t('information'), TR::t('setup_copy_done'));
                 } catch (Exception $ex) {
                     print_backtrace_exception($ex);

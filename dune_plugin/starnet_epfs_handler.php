@@ -313,7 +313,7 @@ class Starnet_Epfs_Handler
     {
         $config = getenv('FS_PREFIX') . self::EPFS_PATH . 'epf_mapping.txt';
         foreach (readlines($config) as $line) {
-            if (strncmp($line, 'shell_ext:tv', 12) !== 0) {
+            if (strncmp($line, 'shell_ext:tv', 12) === 0) {
                 return trim(substr($line, 12), ' =');
             }
         }

@@ -739,7 +739,7 @@ class Action_Factory
         );
 
         if (is_ext_epg_enabled()) {
-            $defs[GuiAction::data]['PluginUpdateEpgActionData::ext_epg_enabled'] = $ext_epg_enabled;
+            $defs[GuiAction::data][constant('PluginUpdateEpgActionData::ext_epg_enabled')] = $ext_epg_enabled;
         }
         return $defs;
     }

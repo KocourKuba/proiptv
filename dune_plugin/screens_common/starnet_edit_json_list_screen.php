@@ -102,7 +102,7 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $provider = $this->plugin->get_active_provider();
                 if ($provider) {
                     $provider_presets = $provider->get_provider_epg_preset_names();
-                    if (!in_array($selected_id, $provider_presets) && isset($params[EPG_JSON_PRESET_PRIVATE])) {
+                    if (!in_array_id($selected_id, $provider_presets) && isset($params[EPG_JSON_PRESET_PRIVATE])) {
                         return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_private_epg_server'));
                     }
                 }
@@ -393,7 +393,7 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         if (!empty($preset[EPG_JSON_PRESET_DOMAINS])) {
             $domain = $this->plugin->get_json_source_domain($id);
-            $domain = empty($domain) ? reset($preset[EPG_JSON_PRESET_DOMAINS]) : $domain;
+            $domain = empty($domain) ? current(array_keys($preset[EPG_JSON_PRESET_DOMAINS])) : $domain;
             Control_Factory::add_label($defs, '', TR::t('api_domain'), -10);
             Control_Factory::add_combobox($defs, $this, self::CONTROL_DOMAIN, '', $domain,
                 $preset[EPG_JSON_PRESET_DOMAINS], Control_Factory::DLG_CONTROLS_WIDTH);
@@ -434,12 +434,12 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $items[] = $this->fill_item($id, $order_key++, $sticker, self::get_icon($id, $item, $provider_presets));
             }
             foreach ($this->plugin->get_config_presets() as $id => $item) {
-                if (in_array($id, $selected_sources)) continue;
-                $items[] = $this->fill_item($id, array_search($id, $selected_sources), $sticker, self::get_icon($id, $item, $provider_presets));
+                if (in_array_id($id, $selected_sources)) continue;
+                $items[] = $this->fill_item($id, array_search_id($id, $selected_sources), $sticker, self::get_icon($id, $item, $provider_presets));
             }
         } else {
             foreach ($this->plugin->get_config_presets() as $id => $item) {
-                $items[] = $this->fill_item($id, array_search($id, $selected_sources), $sticker, self::get_icon($id, $item, $provider_presets));
+                $items[] = $this->fill_item($id, array_search_id($id, $selected_sources), $sticker, self::get_icon($id, $item, $provider_presets));
             }
         }
         return $items;
@@ -481,7 +481,7 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     protected static function get_icon($id, $item, $provider_presets)
     {
-        if (in_array($id, $provider_presets) !== false) {
+        if (in_array_id($id, $provider_presets) !== false) {
             $icon = get_image_path('engine2.png');
         } else if (isset($item[EPG_JSON_PRESET_PRIVATE])) {
             $icon = get_image_path('key.png');

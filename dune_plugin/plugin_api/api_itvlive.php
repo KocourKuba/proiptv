@@ -75,7 +75,7 @@ class api_itvlive extends api_default
             }
 
             $packages = '';
-            foreach (safe_get_value($this->account_info, 'package_info') as $package) {
+            foreach (safe_get_value($this->account_info, 'package_info', array()) as $package) {
                 if (isset($package['name'])) {
                     $packages .= $package['name'] . PHP_EOL;
                 }

@@ -1563,11 +1563,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
             if (!$this->plugin->is_full_size_remote()) {
                 if ($media_url->{PARAM_GROUP_ID} === $fav_id) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, PLUGIN_FAVORITES_OP_MOVE_UP,
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_TOGGLE_MOVE,
                         TR::t('tv_screen_toggle_move_title'), PaneParams::fav_button_red);
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, PLUGIN_FAVORITES_OP_MOVE_UP,
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                        $this->toggle_move ? ACTION_ITEM_TOP : ACTION_ITEM_UP,
                         $this->toggle_move ? TR::t('top') : TR::t('left'), PaneParams::fav_button_green);
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, PLUGIN_FAVORITES_OP_MOVE_DOWN,
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                        $this->toggle_move ? ACTION_ITEM_BOTTOM : ACTION_ITEM_DOWN,
                         $this->toggle_move ? TR::t('bottom') : TR::t('right'), PaneParams::fav_button_yellow);
                 }
 

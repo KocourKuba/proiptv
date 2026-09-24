@@ -232,15 +232,16 @@ class M3uParser extends Json_Serializer
      */
     public function parseIptvPlaylist($db, $index_columns = array())
     {
+        if (!$db || !$db->is_valid()) {
+            return false;
+        }
+
         $file_handle = self::open_m3u($this->file_name);
         if ($file_handle === false) {
             return false;
         }
 
         $this->clear_data();
-        if (!$db || !$db->is_valid()) {
-            return false;
-        }
 
         $init_channels = array(
             COLUMN_HASH => 'TEXT PRIMARY KEY NOT NULL',
@@ -277,12 +278,14 @@ class M3uParser extends Json_Serializer
         $res = $db->exec_transaction($query);
         if (!$res) {
             hd_debug_print("Can't create table: " . self::CHANNELS_TABLE);
+            fclose($file_handle);
             return false;
         }
 
         $stm_channels = $db->prepare_bind(Sql_Wrapper::INSERT_OR_IGNORE, self::CHANNELS_TABLE, array_keys($init_channels));
         if ($stm_channels === false) {
             hd_debug_print("Can't prepare bind statement");
+            fclose($file_handle);
             return false;
         }
 
@@ -709,6 +712,7 @@ class M3uParser extends Json_Serializer
         $entry->updateTimeshift();
         $entry->updateIcon($this->icon_base_url, $this->icon_replace_pattern);
         $entry->updateExtParams();
+        $entry->updateParentCode();
         $entry->updateGroupTitle();
         $entry->updateGroupLogo($this->icon_base_url);
 
@@ -775,7 +779,7 @@ class M3uParser extends Json_Serializer
      */
     public static function is_valid_m3u($contents)
     {
-        return !($contents === false || (strpos($contents, TAG_EXTM3U) == false && strpos($contents, TAG_EXTINF) === false));
+        return !($contents === false || (strpos($contents, TAG_EXTM3U) === false && strpos($contents, TAG_EXTINF) === false));
     }
 
     /**

@@ -90,7 +90,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
         $movie_info = $movie->get_movie_info();
         $fav_ids = $this->plugin->get_channels_order(VOD_FAV_GROUP_ID);
         $movie_id = $movie->get_id();
-        $right_button_caption = in_array($movie_id, $fav_ids) ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
+        $right_button_caption = in_array_id($movie_id, $fav_ids) ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
         $right_button_action = User_Input_Handler_Registry::create_action($this, PARAM_FAVORITES, null, array(PARAM_MOVIE_ID => $movie_id));
 
         if ($movie->has_seasons()) {

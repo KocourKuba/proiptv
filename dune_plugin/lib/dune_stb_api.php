@@ -3729,13 +3729,13 @@ function unescape_entity_string($raw_string)
         '&apos;' => "'",
         '&quot;' => '"',
         '&amp;' => '&',
-        '&#196;' => 'Г„',
-        '&#228;' => 'Г¤',
-        '&#214;' => 'Г–',
-        '&#220;' => 'Гњ',
-        '&#223;' => 'Гџ',
-        '&#246;' => 'Г¶',
-        '&#252;' => 'Гј',
+        '&#196;' => 'Ä',
+        '&#228;' => 'ä',
+        '&#214;' => 'Ö',
+        '&#220;' => 'Ü',
+        '&#223;' => 'ß',
+        '&#246;' => 'ö',
+        '&#252;' => 'ü',
         '&#257;' => 'ā',
         '&#258;' => 'Ă',
         '&#268;' => 'Č',
@@ -3857,6 +3857,45 @@ function string_ellipsis($string, $max_size = 34)
 function array_search_i($needle, $haystack)
 {
     return array_search(strtolower($needle), array_map('strtolower', $haystack));
+}
+
+/**
+ * Search id (hash, channel id etc.) in array.
+ * Loose array_search() takes ids like '0e123456' and '0e654321' as the same number and 'abc' as equal to 0.
+ * Search is strict, but numeric id is also searched with the other type: array keys turn numeric strings into int.
+ *
+ * @param int|string $needle
+ * @param array $haystack
+ * @return false|int|string
+ */
+function array_search_id($needle, $haystack)
+{
+    $idx = array_search($needle, $haystack, true);
+    if ($idx !== false) {
+        return $idx;
+    }
+
+    if (is_int($needle)) {
+        return array_search((string)$needle, $haystack, true);
+    }
+
+    if (is_string($needle) && (string)(int)$needle === $needle) {
+        return array_search((int)$needle, $haystack, true);
+    }
+
+    return false;
+}
+
+/**
+ * Check if id exists in array. See array_search_id()
+ *
+ * @param int|string $needle
+ * @param array $haystack
+ * @return bool
+ */
+function in_array_id($needle, $haystack)
+{
+    return array_search_id($needle, $haystack) !== false;
 }
 
 /**

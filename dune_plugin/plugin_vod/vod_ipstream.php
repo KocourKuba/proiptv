@@ -113,7 +113,7 @@ class vod_ipstream extends vod_standard
 
             // case for serials
             if (isset($item['seasons'])) {
-                foreach (safe_get_value($item['seasons'], array()) as $season) {
+                foreach (safe_get_value($item, 'seasons', array()) as $season) {
                     $season_name = safe_get_value($season, 'season');
                     if (empty($season_name)) continue;
 
@@ -188,7 +188,7 @@ class vod_ipstream extends vod_standard
             // collect filters information
             $year = safe_get_value($movieData, array('info', 'year'), 0);
             $years[$year] = $year;
-            foreach (safe_get_value($movieData, array('info', 'genre')) as $genre) {
+            foreach (safe_get_value($movieData, array('info', 'genre'), array()) as $genre) {
                 if (!empty($genre)) {
                     $genres[$genre] = $genre;
                 }
@@ -380,8 +380,8 @@ class vod_ipstream extends vod_standard
         }
 
         $movie_info = safe_get_value($movieData, 'info', array());
-        $genres = HD::ArrayToStr(safe_get_value($movie_info, 'genre'));
-        $country = HD::ArrayToStr(safe_get_value($movie_info, 'country'));
+        $genres = HD::ArrayToStr(safe_get_value($movie_info, 'genre', array()));
+        $country = HD::ArrayToStr(safe_get_value($movie_info, 'country', array()));
 
         $movie = new Short_Movie(
             $id,

@@ -120,15 +120,17 @@ class vod_korona extends vod_standard
         hd_debug_print(null, true);
 
         $jsonItems = $this->make_json_request('/cat');
-        if ($jsonItems === false || empty($jsonItems->data)) {
+        $nodes = safe_get_value($jsonItems, 'data');
+        if (empty($nodes)) {
             return false;
         }
 
         $this->category_index = array();
 
-        foreach ($jsonItems->data as $node) {
-            $id = (string)$node->id;
-            $category = new Vod_Category($id, "$node->name ($node->count)");
+        foreach ($nodes as $node) {
+            $id = (string)safe_get_value($node, 'id');
+            $category = new Vod_Category($id,
+                safe_get_value($node, 'name') . ' (' . safe_get_value($node, 'count', 0) . ')');
 
             // fetch genres for category
             $genres = $this->make_json_request("/cat/$id/genres");
@@ -137,10 +139,9 @@ class vod_korona extends vod_standard
             }
 
             $gen_arr = array();
-            if (isset($genres->data)) {
-                foreach ($genres->data as $genre) {
-                    $gen_arr[] = new Vod_Category((string)$genre->id, "$genre->title ($genre->count)", $category);
-                }
+            foreach (safe_get_value($genres, 'data', array()) as $genre) {
+                $gen_arr[] = new Vod_Category((string)safe_get_value($genre, 'id'),
+                    safe_get_value($genre, 'title') . ' (' . safe_get_value($genre, 'count', 0) . ')', $category);
             }
 
             $category->set_sub_categories($gen_arr);

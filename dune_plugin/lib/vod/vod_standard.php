@@ -444,9 +444,12 @@ class vod_standard extends Abstract_Vod
         $group_id = $category_id === Vod_Category::FLAG_ALL_MOVIES ? '' : $category_id;
         $max = $this->getVodCount($group_id);
         $ubound = min($max, $page_idx + 50);
+        if ($ubound <= $page_idx) {
+            return $movies;
+        }
 
         hd_debug_print("Read from: $page_idx to $ubound");
-        $entries = $this->getVodEntries($group_id, $page_idx, $ubound);
+        $entries = $this->getVodEntries($group_id, $page_idx, $ubound - $page_idx);
 
         $pos = $page_idx;
         foreach ($entries as $entry) {
@@ -583,7 +586,11 @@ class vod_standard extends Abstract_Vod
             if (!empty($filter['values'])) {
                 $idx = -1;
                 if (isset($user_value)) {
-                    $idx = array_search($user_value, $filter['values']) ?: -1;
+                    // index 0 is a valid value, '?:' would turn it into -1
+                    $idx = array_search($user_value, $filter['values']);
+                    if ($idx === false) {
+                        $idx = -1;
+                    }
                 }
 
                 Control_Factory::add_combobox($defs, $parent, $name, $filter['title'],

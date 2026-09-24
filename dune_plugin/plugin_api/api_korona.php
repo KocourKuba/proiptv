@@ -68,7 +68,7 @@ class api_korona extends api_default
         $refresh_token = safe_get_value($data, 'refresh_token');
         if (!empty($access_token) && !empty($refresh_token)) {
             hd_debug_print('token requested: ' . json_format_unescaped($data), true);
-            $this->plugin->set_cookie(PARAM_TOKEN, $access_token, time() + $data->expires_in);
+            $this->plugin->set_cookie(PARAM_TOKEN, $access_token, time() + (int)safe_get_value($data, 'expires_in', 0));
             $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $refresh_token, PHP_INT_MAX);
             return true;
         }

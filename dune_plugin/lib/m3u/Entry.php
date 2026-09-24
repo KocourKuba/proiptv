@@ -234,7 +234,11 @@ class Entry extends Json_Serializer
     {
         $name = $tag->getTagName();
         if (isset($this->tags[$name])) {
+            // repeated tag (i.e. several #EXTVLCOPT lines): keep all values and attributes
             $this->tags[$name]->addAttributes($tag->getAttributes());
+            foreach ((array)$tag->getTagValues() as $value) {
+                $this->tags[$name]->addTagValue($value);
+            }
         } else {
             $this->tags[$name] = $tag;
         }
@@ -514,10 +518,8 @@ class Entry extends Json_Serializer
     {
         // set group logo
         $group_icon = $this->getEntryAttribute(ATTR_GROUP_LOGO, TAG_EXTINF);
-        if (!empty($group_logo)) {
-            if (!empty($icon_base_url) && !is_proto_http($group_logo)) {
-                $group_icon = $icon_base_url . $group_logo;
-            }
+        if (!empty($group_icon) && !empty($icon_base_url) && !is_proto_http($group_icon)) {
+            $group_icon = $icon_base_url . $group_icon;
         }
 
         $this->group_logo = $group_icon;
@@ -567,21 +569,30 @@ class Entry extends Json_Serializer
     }
 
     /**
+     * Set adult flag and parent code from channel attributes:
+     * "adult" and "censored" are flags (1/true/yes), "parent-code" contains the code itself
+     *
      * @return void
      */
     public function updateParentCode()
     {
-        $used_tag = '';
-        $parent_code = $this->getAnyEntryAttribute(self::$adult_attrs, TAG_EXTINF, $used_tag);
-        if ($used_tag === ATTR_ADULT && (int)$parent_code !== 1) {
-            $parent_code = '0000';
-        }
+        $this->adult = 0;
+        $this->parent_code = '';
 
-        if (!empty($parent_code)) {
-            $this->adult = 1;
-        }
+        foreach (self::$adult_attrs as $attr) {
+            $value = trim((string)$this->getEntryAttribute($attr, TAG_EXTINF));
+            if ($value === '') continue;
 
-        $this->parent_code = $parent_code;
+            if ($attr === ATTR_PARENT_CODE) {
+                $this->adult = 1;
+                $this->parent_code = $value;
+                return;
+            }
+
+            if (in_array(strtolower($value), array('1', 'true', 'yes'), true)) {
+                $this->adult = 1;
+            }
+        }
     }
 
     /**
@@ -605,17 +616,16 @@ class Entry extends Json_Serializer
     public function updateArchive($tag, $playlist_value = 0)
     {
         // set channel archive in days
-        $archive = $this->getAnyEntryAttribute(self::$tvg_archives_attrs, $tag, $used_tag);
-        if ($archive === null) {
-            $archive = 0;
-        }
+        // found attribute is reported only if variable is not null
+        $used_tag = '';
+        $archive = (int)$this->getAnyEntryAttribute(self::$tvg_archives_attrs, $tag, $used_tag);
 
         if ($used_tag === ATTR_CATCHUP_TIME) {
-            $archive /= 86400;
+            $archive = (int)round($archive / 86400);
         }
 
-        if ($archive === 0 && $playlist_value !== 0) {
-            $archive = $playlist_value;
+        if ($archive === 0) {
+            $archive = (int)$playlist_value;
         }
 
         $this->archive = $archive;

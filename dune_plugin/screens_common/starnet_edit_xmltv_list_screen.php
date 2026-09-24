@@ -175,7 +175,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_INDEX_EPG:
                 Epg_Manager_Xmltv::clear_epg_files($selected_id);
                 $selected_sources = $this->plugin->get_selected_xmltv_ids();
-                if (in_array($selected_id, $selected_sources)) {
+                if (in_array_id($selected_id, $selected_sources)) {
                     $this->force_parent_reload = true;
                 }
 
@@ -191,7 +191,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_CALL_CLEAR_ALL_EPG:
                 Epg_Manager_Xmltv::clear_epg_files($user_input->control_id === ACTION_CLEAR_CACHE ? $selected_id : null);
                 $selected_sources = $this->plugin->get_selected_xmltv_ids();
-                if (in_array($selected_id, $selected_sources)) {
+                if (in_array_id($selected_id, $selected_sources)) {
                     $this->force_parent_reload = true;
                     $this->plugin->reset_channels_loaded();
                 }
@@ -438,10 +438,11 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
 
         $source = $user_input->{CONTROL_ACTION_SOURCE};
+        $is_playlist = (bool)($source & XMLTV_SOURCE_PLAYLIST);
         if (isset($user_input->{CONTROL_ACTION_EDIT})) {
             // edit existing url
             $id = $user_input->{CONTROL_ACTION_EDIT};
-            $item = $this->plugin->get_xmltv_source_parameters($id, (bool)($source & XMLTV_SOURCE_PLAYLIST));
+            $item = $this->plugin->get_xmltv_source_parameters($id, $is_playlist);
         } else {
             $id = '';
             $item[PARAM_TYPE] = PARAM_LINK;
@@ -474,11 +475,12 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             $this->plugin->set_xmltv_source_parameters($item, false);
         } else {
             Epg_Manager_Xmltv::clear_epg_files($id);
+            // the source stays in the table it was edited in
             if ($id !== $new_id && ($source & XMLTV_SOURCE_EXTERNAL)) {
-                $this->plugin->remove_xmltv_source($id, false);
-                $this->plugin->set_xmltv_source_parameters($item, true);
+                $this->plugin->remove_xmltv_source($id, $is_playlist);
+                $this->plugin->set_xmltv_source_parameters($item, $is_playlist);
             } else {
-                $this->plugin->update_xmltv_source_parameters($item, true);
+                $this->plugin->update_xmltv_source_parameters($item, $is_playlist);
             }
         }
 
@@ -539,6 +541,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         foreach ($lines as $line) {
             $line = trim($line);
             hd_debug_print("Load string: '$line'", true);
+            $name = $link = $hash = '';
             /** @var array $m */
             if (preg_match(HTTP_PATTERN, $line, $m)) {
                 $hash = Hashed_Array::hash($line);
@@ -633,7 +636,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $order_items[] = $id;
             }
             foreach ($all_sources as $id => $item) {
-                if (in_array($id, $order_items)) continue;
+                if (in_array_id($id, $order_items)) continue;
                 $order_items[] = $id;
             }
         } else {
@@ -653,7 +656,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             if (empty($title)) {
                 $title = "Unrecognized or bad xmltv entry";
             } else {
-                $order_key = array_search($key, $selected_sources);
+                $order_key = array_search_id($key, $selected_sources);
                 $title = $order_key !== false ? "(" . ($order_key + 1) . ") - $title" : $title;
             }
 
@@ -667,17 +670,19 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $dl_date = format_datetime('Y-m-d H:i', $check_time_file);
                 $title = TR::t('edit_list_title_info__2', $title, $dl_date);
 
+                $cache = safe_get_value($item, PARAM_CACHE, XMLTV_CACHE_AUTO);
                 $etag = Curl_Wrapper::get_cached_etag($item[PARAM_URI]);
-                if (empty($etag) && $item[PARAM_CACHE] === XMLTV_CACHE_AUTO) {
-                    $info = TR::load('edit_list_wrong_cache_type');
+                if (empty($etag) && $cache === XMLTV_CACHE_AUTO) {
+                    $info = TR::load('edit_list_wrong_cache_type__1', Epg_Manager_Xmltv::AUTO_CACHE_FALLBACK_DAYS);
                 } else {
                     $info = TR::load('edit_list_cache_support__1', TR::load(empty($etag) ? 'no' : 'yes'));
                 }
 
-                if ($item[PARAM_CACHE] === XMLTV_CACHE_AUTO) {
+                $cache_days = Epg_Manager_Xmltv::get_cache_days($cache, $item[PARAM_URI]);
+                if ($cache_days === null) {
                     $expired = TR::load('setup_epg_cache_type_auto');
                 } else {
-                    $max_cache_time = $check_time_file + 3600 * 24 * $item[PARAM_CACHE];
+                    $max_cache_time = $check_time_file + (int)(3600 * 24 * $cache_days);
                     $expired = format_datetime('Y-m-d H:i', $max_cache_time);
                 }
 

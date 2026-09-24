@@ -175,7 +175,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function get_idx($key)
     {
-        return array_search($key, $this->seq);
+        return array_search_id($key, $this->seq);
     }
 
     /**
@@ -298,8 +298,10 @@ class Hashed_Array extends Json_Serializer implements Iterator
     public function erase($key)
     {
         if ($this->has($key)) {
-            $idx = array_search($key, $this->seq);
-            array_splice($this->seq, $idx, 1);
+            $idx = $this->get_idx($key);
+            if ($idx !== false) {
+                array_splice($this->seq, $idx, 1);
+            }
             unset($this->map[$key]);
         }
     }
@@ -425,7 +427,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function arrange_item($key, $direction)
     {
-        $k = array_search($key, $this->seq);
+        $k = $this->get_idx($key);
         //hd_debug_print("move id: $id from idx: $k to direction: $direction");
 
         if ($k === false || $direction === 0)

@@ -115,8 +115,12 @@ class api_iptvonline extends api_default
             return false;
         }
 
-        $data = file_get_contents($file);
-        $response = json_decode($data, true);
+        // response is saved to file only for the playlist, other commands return it directly
+        if (is_null($file)) {
+            $response = is_string($execResult) ? json_decode($execResult, true) : $execResult;
+        } else {
+            $response = json_decode(file_get_contents($file), true);
+        }
         if ($response === false || $response === null) {
             hd_debug_print("Can't decode response on request: " . $command, true);
         }

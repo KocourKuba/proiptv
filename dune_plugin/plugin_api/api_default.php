@@ -1124,7 +1124,6 @@ class api_default
         }
 
         $playlist_id = $this->get_hash($info);
-        $this->plugin->set_playlist_parameters($playlist_id, $info);
 
         return $info;
     }

@@ -110,7 +110,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
             }
             $selected_items = $this->selected_items = $new_selected;
         }
-        $sel_ndx_top = array_search(reset($selected_items), $group_order);
+        $sel_ndx_top = array_search_id(reset($selected_items), $group_order);
         $sel_ndx = safe_get_value($user_input, 'sel_ndx', 0);
 
         switch ($user_input->control_id) {
@@ -130,7 +130,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::close_and_run($target_action);
 
             case GUI_EVENT_KEY_ENTER:
-                $pos = array_search($selected_group, $this->selected_items);
+                $pos = array_search_id($selected_group, $this->selected_items);
                 if ($pos !== false) {
                     array_splice($this->selected_items, $pos, 1);
                 } else {
@@ -257,7 +257,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_RESET_DEFAULT:
                 hd_debug_print("Reset icon for group: " . $selected_media_url->{PARAM_GROUP_ID} . " to default");
                 $this->force_parent_reload = true;
-                $icon = $selected_media_url->{PARAM_GROUP_ID} === TV_ALL_CHANNELS_GROUP_ICON ? TV_ALL_CHANNELS_GROUP_ICON : '';
+                $icon = $selected_media_url->{PARAM_GROUP_ID} === TV_ALL_CHANNELS_GROUP_ID ? TV_ALL_CHANNELS_GROUP_ICON : '';
                 $this->plugin->set_group_icon($selected_media_url->{PARAM_GROUP_ID}, $icon);
                 break;
 
@@ -413,9 +413,9 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Preloaded_Regular_Screen
         array_splice($group_order, $offset, 0, $selected_items);
         $this->plugin->store_groups_order_rows($group_order);
 
-        if (!in_array($selected_group, $selected_items)) {
+        if (!in_array_id($selected_group, $selected_items)) {
             $selected_group = reset($selected_items);
         }
-        return array_search($selected_group, $group_order);
+        return array_search_id($selected_group, $group_order);
     }
 }

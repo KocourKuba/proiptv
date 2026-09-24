@@ -419,6 +419,7 @@ const PARAM_USE_DUNE_PARAMS = 'use_dune_params';
 const PARAM_USE_PICONS = 'use_picons';
 const PARAM_USE_VOD = 'use_vod';
 const PARAM_USER_AGENT = 'user_agent';
+const PARAM_CHANNELS_BUILD_STAMP = 'channels_build_stamp';
 const PARAM_USER_CATCHUP = 'user_catchup';
 const PARAM_USER_ID = 'user_id';
 const PARAM_VALUE = 'value';

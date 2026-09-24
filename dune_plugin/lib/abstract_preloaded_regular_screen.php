@@ -55,18 +55,17 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
         hd_debug_print("from_ndx: $from_ndx, MediaURL: " . $media_url->get_media_url_string(true), true);
 
         $items = $this->get_all_folder_items($media_url, $plugin_cookies);
-        $count = count($items);
-        $total = $count - $from_ndx;
+        $total = count($items);
 
         if ($from_ndx < 0) {
             $from_ndx = 0;
-        } else if ($from_ndx > $count) {
+        } else if ($from_ndx > $total) {
             $from_ndx = 0;
             $items = array();
         }
 
         if ($from_ndx > 0) {
-            array_splice($items, $count - $from_ndx);
+            $items = array_slice($items, $from_ndx);
         }
 
         return array(

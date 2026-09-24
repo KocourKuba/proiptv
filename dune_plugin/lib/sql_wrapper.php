@@ -311,9 +311,8 @@ class Sql_Wrapper
      */
     public function is_column_exists($table_name, $column_name)
     {
-        $query = sprintf("SELECT count(*) FROM sqlite_master WHERE type='table' AND name=%s AND sql like %s;",
-            Sql_Wrapper::sql_quote($table_name), Sql_Wrapper::sql_quote("%$column_name%"));
-        return (int)$this->query_value($query) !== 0;
+        $columns = $this->fetch_array(sprintf('PRAGMA table_info(%s);', Sql_Wrapper::sql_quote($table_name)), 'name');
+        return in_array($column_name, $columns, true);
     }
 
     /**

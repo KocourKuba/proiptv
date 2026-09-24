@@ -118,7 +118,7 @@ class vod_iptvonline extends vod_standard
                             $quality->add_variant_data($key, new Movie_Variant($key, new Movie_Playback_Url($item['url'])));
                         }
                     }
-                    $movie_season->description = safe_get_value($episode, 'title');
+                    $movie_series->description = safe_get_value($episode, 'title');
                     $movie_series->add_variant_data($series_id, $quality);
                     $movie->add_series_data($movie_series);
                 }
@@ -411,7 +411,7 @@ class vod_iptvonline extends vod_standard
             hd_debug_print("Last page: $page");
             $this->stop_page_index($page_id);
         } else {
-            $this->shift_next_page_index($query_id);
+            $this->shift_next_page_index($page_id);
         }
 
         hd_debug_print('Movies found: ' . count($movies));

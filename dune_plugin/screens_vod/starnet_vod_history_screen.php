@@ -163,7 +163,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen
                 $caption = $short_movie->name;
                 if ($history_cnt === 1) {
                     $view_date = format_datetime('d.m.Y H:i', $movie_info[COLUMN_TIMESTAMP]);
-                    if ($movie_info[COLUMN_WATCHED] || $movie_info[COLUMN_DURATION] === -1) {
+                    if ($movie_info[COLUMN_WATCHED] || $movie_info[COLUMN_DURATION] <= 0) {
                         $detailed_info = TR::t('vod_screen_all_viewed__2', $caption, $view_date);
                     } else {
                         $detailed_info = TR::t('vod_screen_last_viewed__4',

@@ -177,12 +177,15 @@ class Epg_Manager_Json
                     }
                 }
 
-                $cache_time = $this->plugin->get_json_source_cache($id);
-                $config_preset[EPG_JSON_PRESET_CACHE] = empty($preset_params) ? 3 : $cache_time;
+                $cache_time = (int)$this->plugin->get_json_source_cache($id);
+                if ($cache_time <= 0) {
+                    $cache_time = 3;
+                }
+                $config_preset[EPG_JSON_PRESET_CACHE] = $cache_time;
 
                 if (isset($config_preset[EPG_JSON_PRESET_DOMAINS])) {
                     $domain = $this->plugin->get_json_source_domain($id);
-                    $config_preset[EPG_JSON_PRESET_DOMAIN] = empty($domain) ? reset($config_preset[EPG_JSON_PRESET_DOMAINS]) : $domain;
+                    $config_preset[EPG_JSON_PRESET_DOMAIN] = empty($domain) ? current(array_keys($config_preset[EPG_JSON_PRESET_DOMAINS])) : $domain;
                 }
 
                 $epg_id = $this->check_and_update_epg_id($epg_ids, $config_preset);
@@ -221,11 +224,6 @@ class Epg_Manager_Json
                 } else {
                     hd_debug_print("EPG cache $epg_cache_file expired " . ($now - $cache_expired_at) . " sec ago.");
                     safe_unlink($epg_cache_file);
-
-                    if (!empty($channels_info) && !empty($channels_info['channels'])) {
-                        // no need to spam server if epg_id not exist in known epg source
-                        if (!in_array($epg_id, $channels_info['channels'])) continue;
-                    }
 
                     hd_debug_print("Fetching EPG ID: '$epg_id' from server: $epg_url");
                     if (empty($config_preset[EPG_JSON_PARSER])) {
@@ -413,7 +411,7 @@ class Epg_Manager_Json
         }
 
         $channels_info = self::get_channels_info($config_preset);
-        if (!empty($channels_info[COLUMN_EPG_ID]) && in_array($epg_id, $channels_info[COLUMN_EPG_ID])) {
+        if (!empty($channels_info[COLUMN_EPG_ID]) && in_array_id($epg_id, $channels_info[COLUMN_EPG_ID])) {
             return $epg_id;
         }
 
@@ -476,9 +474,22 @@ class Epg_Manager_Json
         if (!empty($param_epg_root)) {
             foreach (explode('|', $param_epg_root) as $level) {
                 $epg_root = trim($level, "[]");
+                if (!isset($ch_data[$epg_root]) || !is_array($ch_data[$epg_root])) {
+                    hd_debug_print("EPG root '$epg_root' not found in response");
+                    return $channel_epg;
+                }
                 $ch_data = $ch_data[$epg_root];
             }
         }
+
+        $time_format = '';
+        if (!empty($param_epg_time_format)) {
+            $time_format = str_replace(
+                array(MACRO_YEAR, MACRO_MONTH, MACRO_DAY, MACRO_HOUR, MACRO_MIN),
+                array('Y', 'm', 'd', 'H', 'i'),
+                $param_epg_time_format);
+        }
+        $tz_offset = (int)$param_epg_timezone * 3600;
 
         $update_value = function (&$values, $v_name, &$entry, $e_name, $unescape = false, $default = '') {
             if (!isset($entry[$e_name])) {
@@ -494,36 +505,23 @@ class Epg_Manager_Json
         // collect all program that starts after day start and before day end
         $prev_start = -1;
         foreach ($ch_data as $entry) {
-            if (!isset($entry[$param_epg_start])) {
+            if (!is_array($entry) || !isset($entry[$param_epg_start])) {
                 continue;
             }
-            $program_start = (int)$entry[$param_epg_start];
+            // formatted time must be parsed as string, int cast would leave only the leading number
+            $program_start = self::parse_epg_time($entry[$param_epg_start], $time_format, $tz_offset);
             unset($entry[$param_epg_start]);
+            if ($program_start === false) {
+                continue;
+            }
 
+            $program_end = -1;
             if (!empty($param_epg_end) && isset($entry[$param_epg_end])) {
-                $program_end = (int)$entry[$param_epg_end];
-                unset($entry[$param_epg_end]);
-            } else {
-                $program_end = -1;
-            }
-
-            if (!empty($param_epg_time_format)) {
-                $time_format = str_replace(
-                    array(MACRO_YEAR, MACRO_MONTH, MACRO_DAY, MACRO_HOUR, MACRO_MIN),
-                    array('Y', 'm', 'd', 'H', 'i'),
-                    $parser_params[self::EPG_TIME_FORMAT]);
-
-                $start = date_parse_from_format($time_format, $program_start);
-                $program_start = gmmktime($start['hour'], $start['minute'], $start['second'], $start['month'], $start['day'], $start['year']);
-
-                if ($program_end !== -1) {
-                    $end = date_parse_from_format($time_format, $program_end);
-                    $program_end = gmmktime($end['hour'], $end['minute'], $end['second'], $end['month'], $end['day'], $end['year']);
+                $end = self::parse_epg_time($entry[$param_epg_end], $time_format, $tz_offset);
+                if ($end !== false) {
+                    $program_end = $end;
                 }
-            }
-
-            if ($param_epg_timezone !== 0) {
-                $program_start -= $param_epg_timezone * 3600;
+                unset($entry[$param_epg_end]);
             }
 
             $values = array();
@@ -548,6 +546,26 @@ class Epg_Manager_Json
 
         ksort($channel_epg, SORT_NUMERIC);
         return $channel_epg;
+    }
+
+    /**
+     * @param string|int $value unix timestamp or time in $time_format
+     * @param string $time_format date_parse_from_format() format, empty if value is timestamp
+     * @param int $tz_offset offset of the formatted time from UTC in seconds
+     * @return int|false
+     */
+    protected static function parse_epg_time($value, $time_format, $tz_offset)
+    {
+        if (empty($time_format)) {
+            return (int)$value - $tz_offset;
+        }
+
+        $tm = date_parse_from_format($time_format, $value);
+        if (!empty($tm['error_count']) || $tm['year'] === false) {
+            return false;
+        }
+
+        return gmmktime((int)$tm['hour'], (int)$tm['minute'], (int)$tm['second'], $tm['month'], $tm['day'], $tm['year']) - $tz_offset;
     }
 
     /**

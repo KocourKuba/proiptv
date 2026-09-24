@@ -108,7 +108,10 @@ class Default_Archive implements Archive
         if ($doc === false) {
             hd_debug_print("Failed to fetch archive versions.txt from $version_url.");
         } else {
-            while (($tok = strtok($doc, "\n")) !== false) {
+            foreach (explode("\n", $doc) as $tok) {
+                $tok = trim($tok);
+                if ($tok === '') continue;
+
                 $pos = strrpos($tok, ' ');
                 if ($pos === false) {
                     hd_debug_print("Invalid line in versions.txt for archive '$id'.");

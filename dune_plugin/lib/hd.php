@@ -90,7 +90,7 @@ class HD
     {
         $path = getenv('FS_PREFIX') . '/tmp/firmware_features.txt';
 
-        if (!isset(self::$with_rows_api)) {
+        if (!isset(self::$ff_set)) {
             self::$ff_set = array();
             if (is_file($path)) {
                 foreach(readlines($path) as $ff) {

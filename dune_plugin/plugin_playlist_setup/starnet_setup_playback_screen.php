@@ -120,7 +120,7 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
             $catchup_ops[ATTR_CATCHUP_UNKNOWN] = TR::t('by_default');
             $catchup_ops[ATTR_CATCHUP_SHIFT] = ATTR_CATCHUP_SHIFT;
             $catchup_ops[ATTR_CATCHUP_FLUSSONIC] = ATTR_CATCHUP_FLUSSONIC;
-            $catchup_idx = safe_get_value($pl_params, PARAM_USER_CATCHUP, ATTR_CATCHUP_UNKNOWN);
+            $catchup_idx = $this->plugin->get_setting(PARAM_USER_CATCHUP, ATTR_CATCHUP_UNKNOWN);
             Control_Factory::add_combobox($defs, $this, PARAM_USER_CATCHUP, TR::t('setup_channels_archive_type'),
                 $catchup_idx, $catchup_ops, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         }
@@ -191,7 +191,7 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
                 break;
 
             case PARAM_USER_CATCHUP:
-                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{PARAM_USER_CATCHUP});
+                $this->plugin->set_setting(PARAM_USER_CATCHUP, $user_input->{PARAM_USER_CATCHUP});
                 break;
 
             case PARAM_USER_AGENT:

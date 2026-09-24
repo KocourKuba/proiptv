@@ -212,7 +212,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
             $color = DEF_LABEL_TEXT_COLOR_WHITE;
             foreach ($movie_history as $history) {
                 $view_date = format_datetime('d.m.Y H:i', $history[COLUMN_TIMESTAMP]);
-                if ($history[COLUMN_WATCHED] || $history[COLUMN_DURATION] === -1) {
+                if ($history[COLUMN_WATCHED] || $history[COLUMN_DURATION] <= 0) {
                     $detailed_info = TR::t('vod_screen_all_viewed__2', $caption, $view_date);
                     $color = DEF_LABEL_TEXT_COLOR_SKYBLUE;
                 } else {

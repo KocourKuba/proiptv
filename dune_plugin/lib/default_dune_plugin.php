@@ -348,12 +348,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $day_epg_items = $this->xmltv_epg_manager->get_day_epg_items($channel_row, $utc_day_start_tm_sec, $this->last_epg_source);
                 }
             } else {
-                return array(
+                $day_epg[] = array(
                     PluginTvEpgProgram::start_tm_sec => $utc_day_start_tm_sec,
                     PluginTvEpgProgram::end_tm_sec => $utc_day_start_tm_sec + 86400,
                     PluginTvEpgProgram::name => TR::load('epg_not_exist'),
                     PluginTvEpgProgram::description => "Unknown EPG engine"
                 );
+                return $day_epg;
             }
 
             hd_debug_print(json_format_unescaped($day_epg_items));
@@ -368,7 +369,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             if (empty($day_epg_items[PARAM_ITEMS])) {
-                $day_epg =  $this->getFakeEpg($channel_row, $utc_day_start_tm_sec);
+                foreach ($this->getFakeEpg($channel_row, $utc_day_start_tm_sec) as $start => $item) {
+                    $day_epg[] = array(
+                        PluginTvEpgProgram::start_tm_sec => $start - $time_shift,
+                        PluginTvEpgProgram::end_tm_sec => $item[PluginTvEpgProgram::end_tm_sec] - $time_shift,
+                        PluginTvEpgProgram::name => $item[PluginTvEpgProgram::name],
+                        PluginTvEpgProgram::description => $item[PluginTvEpgProgram::description]
+                    );
+                }
+
                 if (empty($day_epg)) {
                     $day_epg[] = array(
                         PluginTvEpgProgram::start_tm_sec => $utc_day_start_tm_sec,
@@ -415,7 +424,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                 $day_epg[] = $day_epg_item;
 
-                if ($show_ext_epg && !in_array($channel_id, Epg_Manager_Xmltv::get_delayed_epg())) {
+                if ($show_ext_epg && !in_array_id($channel_id, Epg_Manager_Xmltv::get_delayed_epg())) {
                     $ext_epg[$tm_start] = $ext_params;
                 }
 
@@ -1196,16 +1205,25 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         /// Upgrade settings to database
         $this->upgrade_orders($playlist_id);
 
+        $state = 1;
         if ($this->is_vod_playlist($playlist_id)) {
             hd_debug_print('VOD playlist inited', true);
-        } else if ($this->load_and_parse_m3u_iptv_playlist($force_reload_playlist) === 0) {
-            return 0;
+        } else {
+            $parse_state = $this->load_and_parse_m3u_iptv_playlist($force_reload_playlist);
+            if ($parse_state === 0) {
+                return 0;
+            }
+
+            if ($parse_state === 1) {
+                // cached playlist is not changed, its database is attached as is
+                $state = 2;
+            }
         }
 
-        hd_debug_print('Playlist db initialized.');
+        hd_debug_print("Playlist db initialized. State: $state");
         hd_print_separator();
 
-        return 1;
+        return $state;
     }
 
     /**
@@ -1385,7 +1403,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->update_ui_settings();
         $this->delay_load_picons = is_delay_load_supported()
             && $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)
-            && $this->get_bool_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) != PLAYLIST_PICONS;
+            && $this->picons_source !== PLAYLIST_PICONS;
 
 
         $this->cleanup_stalled_locks();
@@ -1436,10 +1454,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        $this->channels_loaded = $this->get_playlist_last_update($playlist_id) !== 0;
+        $last_update = (int)$this->get_playlist_last_update($playlist_id);
+        $this->channels_loaded = $last_update !== 0;
 
-        if (!$reload_playlist && $this->channels_loaded && $playlist_state === 1) {
-            // If not force to reload playlist just enough to load it from database
+        // get name of the column for channel ID
+        $id_column = $this->get_id_column();
+
+        // Playlist is not changed (2) and channels tables were built from it: nothing to update.
+        // Build stamp is stored in the playlist settings db, it is lost if settings are reset
+        // and it is changed if the column used for channel ID is changed.
+        $build_stamp = "$id_column|$last_update";
+        if (!$reload_playlist && $this->channels_loaded && $playlist_state === 2
+            && $this->get_setting(PARAM_CHANNELS_BUILD_STAMP, '') === $build_stamp) {
+            hd_debug_print('Playlist is not changed, channels loaded from database');
             $this->check_and_run_bg_indexing($this->get_active_sources(), $plugin_cookies);
             return true;
         }
@@ -1459,9 +1486,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $query = sprintf('SELECT COUNT(%s) FROM %s;', COLUMN_CHANNEL_ID, $channel_info_table);
         $is_new = $this->safe_sql_playlist(SQL_QUERY_VALUE, $query) === 0;
-
-        // get name of the column for channel ID
-        $id_column = $this->get_id_column();
 
         // update existing database for empty group_id (converted from known_channels.settings)
         $query = sprintf("SELECT COUNT(*) FROM %s WHERE %s='';", $channel_info_table, COLUMN_GROUP_ID);
@@ -1665,7 +1689,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_print_separator();
 
         $this->channels_loaded = true;
-        $this->set_playlist_last_update($playlist_id, time());
+        $last_update = time();
+        $this->set_playlist_last_update($playlist_id, $last_update);
+        $this->set_setting(PARAM_CHANNELS_BUILD_STAMP, "$id_column|$last_update");
 
         $this->check_and_run_bg_indexing($this->get_active_sources(), $plugin_cookies);
 
@@ -2235,7 +2261,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $id = $this->get_parameter(PARAM_CUR_PLAYLIST_ID);
         if (!$this->is_playlist_entry_exist($id) && $this->get_all_playlists_count()) {
             $ids = $this->get_all_playlists_ids();
-            $this->set_active_playlist_id(reset($ids));
+            $id = reset($ids);
+            $this->set_active_playlist_id($id);
         }
 
         return $id;
@@ -2477,14 +2504,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $replaces[catchup_params::CU_MONTH] = $replaces[catchup_params::CU_START_MONTH] = date('m', $archive_ts);
             $replaces[catchup_params::CU_DAY] = $replaces[catchup_params::CU_START_DAY] = date('d', $archive_ts);
             $replaces[catchup_params::CU_HOUR] = $replaces[catchup_params::CU_START_HOUR] = date('H', $archive_ts);
-            $replaces[catchup_params::CU_MIN] = $replaces[catchup_params::CU_START_MIN] = date('M', $archive_ts);
-            $replaces[catchup_params::CU_SEC] = $replaces[catchup_params::CU_START_SEC] = date('S', $archive_ts);
+            $replaces[catchup_params::CU_MIN] = $replaces[catchup_params::CU_START_MIN] = date('i', $archive_ts);
+            $replaces[catchup_params::CU_SEC] = $replaces[catchup_params::CU_START_SEC] = date('s', $archive_ts);
             $replaces[catchup_params::CU_END_YEAR] = date('Y', $now);
             $replaces[catchup_params::CU_END_MONTH] = date('m', $now);
             $replaces[catchup_params::CU_END_DAY] = date('d', $now);
             $replaces[catchup_params::CU_END_HOUR] = date('H', $now);
-            $replaces[catchup_params::CU_END_MIN] = date('M', $now);
-            $replaces[catchup_params::CU_END_SEC] = date('S', $now);
+            $replaces[catchup_params::CU_END_MIN] = date('i', $now);
+            $replaces[catchup_params::CU_END_SEC] = date('s', $now);
 
             hd_debug_print('replaces: ' . json_format_unescaped($replaces), true);
             foreach ($replaces as $key => $value) {
@@ -2555,29 +2582,28 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if (!empty($ext_params[PARAM_EXT_VLC_OPTS])) {
             $ext_vlc_opts = array();
-            foreach ($ext_params[PARAM_EXT_VLC_OPTS] as $value) {
-                $pair = explode('=', $value);
-                $ext_vlc_opts[strtolower(trim($pair[0]))] = trim($pair[1]);
+            $channel_dune_params = array();
+            foreach ((array)$ext_params[PARAM_EXT_VLC_OPTS] as $value) {
+                $pair = explode('=', $value, 2);
+                if (count($pair) < 2) continue;
+
+                $key = strtolower(trim($pair[0]));
+                $value = trim($pair[1]);
+                if ($key === 'dune-params') {
+                    // dune-params=key:value,key2:value2 (the same format as dune_params setting),
+                    // may be repeated in several #EXTVLCOPT lines
+                    $channel_dune_params = safe_merge_array($channel_dune_params, dune_params_to_array($value));
+                } else {
+                    $ext_vlc_opts[$key] = $value;
+                }
             }
 
+            // channel dune-params override playlist and provider values
+            $dune_params = safe_merge_array($dune_params, $channel_dune_params);
+
+            // #EXTVLCOPT http-user-agent from playlist has the highest priority
             if (isset($ext_vlc_opts['http-user-agent'])) {
                 $dune_params['http_headers'] = "User-Agent: " . $ext_vlc_opts['http-user-agent'];
-            }
-
-            if (isset($ext_vlc_opts['dune-params'])) {
-                foreach ($ext_vlc_opts['dune-params'] as $param) {
-                    $param_pair = explode(':', $param);
-                    if (count($param_pair) < 2) continue;
-
-                    $param_pair[0] = trim($param_pair[0]);
-                    if (strpos($param_pair[1], ",,") !== false) {
-                        $param_pair[1] = str_replace(array(',,', ',', '%2C%2C'), array('%2C%2C', ',,', ',,'), $param_pair[1]);
-                    } else {
-                        $param_pair[1] = str_replace(',', ',,', $param_pair[1]);
-                    }
-
-                    $dune_params[$param_pair[0]] = $param_pair[1];
-                }
             }
         }
 
@@ -3189,7 +3215,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     }
                     if (!empty($config_preset[EPG_JSON_PRESET_DOMAINS])) {
                         $domain = $this->get_json_source_domain($id);
-                        $domain = empty($domain) ? reset($config_preset[EPG_JSON_PRESET_DOMAINS]) : $domain;
+                        $domain = empty($domain) ? current(array_keys($config_preset[EPG_JSON_PRESET_DOMAINS])) : $domain;
                         $config_preset[EPG_JSON_PRESET_DOMAIN] = $domain;
                     }
 
@@ -3539,6 +3565,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function is_playlist_cache_expired($is_tv)
     {
         $cache_time = $is_tv ? PARAM_PLAYLIST_CACHE_TIME_IPTV : PARAM_PLAYLIST_CACHE_TIME_VOD;
+        if ($is_tv) {
+            // provider setup stores cache time for each provider playlist except the default one
+            $provider = $this->get_active_provider();
+            $pl_idx = is_null($provider) ? '' : $provider->GetPlaylistIptvId();
+            if (!empty($pl_idx) && $pl_idx !== PARAM_DEFAULT_CONFIG_PLAYLIST_ID) {
+                $cache_time .= "_$pl_idx";
+            }
+        }
+
         if ($this->get_setting($cache_time, 1) === PHP_INT_MAX) {
             hd_debug_print("Playlist cache always valid");
             return false;
@@ -4153,7 +4188,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         try {
             $zip = new ZipArchive();
-            if (!$zip->open($zip_file, ZipArchive::CREATE)) {
+            if ($zip->open($zip_file, ZipArchive::CREATE) !== true) {
                 throw new Exception(TR::t('err_create_zip__1', $zip_file));
             }
 
@@ -4490,11 +4525,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             unset($plugin_orders[$order_name]);
         }
 
-        if (empty($orders)) {
+        if (empty($plugin_orders)) {
             hd_debug_print("Remove orders: $orders_file");
             safe_unlink($orders_file);
         } else {
-            HD::put_data_items("$plugin_orders_name.settings", $orders, false);
+            HD::put_data_items("$plugin_orders_name.settings", $plugin_orders, false);
             foreach ($plugin_orders as $key => $value) {
                 hd_debug_print("!!!!! Order $key is not imported: " . $value);
             }

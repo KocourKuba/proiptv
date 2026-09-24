@@ -118,7 +118,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
             }
             $selected_items = $this->selected_items = $new_selected;
         }
-        $sel_ndx_top = array_search(reset($selected_items), $channels_order);
+        $sel_ndx_top = array_search_id(reset($selected_items), $channels_order);
         $sel_ndx = safe_get_value($user_input, 'sel_ndx', 0);
 
         switch ($user_input->control_id) {
@@ -138,7 +138,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::close_and_run($target_action);
 
             case GUI_EVENT_KEY_ENTER:
-                $pos = array_search($selected_channel, $this->selected_items);
+                $pos = array_search_id($selected_channel, $this->selected_items);
                 if ($pos !== false) {
                     array_splice($this->selected_items, $pos, 1);
                 } else {
@@ -287,7 +287,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $custom_string = $user_input->{self::ACTION_CUSTOM_DELETE};
                 if (!empty($custom_string)) {
                     $this->plugin->set_parameter(PARAM_CUSTOM_DELETE_STRING, $custom_string);
-                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($custom_string, $parent_group_for_item, false) !== 0;
+                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($custom_string, $parent_group, false) !== 0;
                 }
                 break;
 
@@ -457,9 +457,9 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         array_splice($channel_order, $offset, 0, $selected_items);
         $this->plugin->store_channels_order_rows($group_id, $channel_order);
 
-        if (!in_array($selected_channel, $selected_items)) {
+        if (!in_array_id($selected_channel, $selected_items)) {
             $selected_channel = reset($selected_items);
         }
-        return array_search($selected_channel, $channel_order);
+        return array_search_id($selected_channel, $channel_order);
     }
 }

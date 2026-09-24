@@ -136,13 +136,16 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
                 return self::make_return_action($parent_media_url);
 
             case PARAM_SHOW_TV:
-                $this->plugin->toggle_parameter($control_id, SwitchOnOff::on);
+                $this->plugin->toggle_parameter($control_id);
                 break;
 
             case PARAM_AUTO_PLAY:
             case PARAM_AUTO_RESUME:
             case PARAM_PLAYLIST_FIRST:
-                $this->plugin->toggle_parameter($control_id, SwitchOnOff::off);
+            case PARAM_ASK_EXIT:
+            case PARAM_EPG_FONT_SIZE:
+            case PARAM_GROUP_FONT_SIZE:
+                $this->plugin->toggle_parameter($control_id, false);
                 break;
 
             case PARAM_COOKIE_ENABLE_NEWUI:
@@ -153,7 +156,7 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
                 return Action_Factory::composite($actions);
 
             case PARAM_SHOW_VOD_ICON:
-                $this->plugin->toggle_parameter($control_id);
+                $this->plugin->toggle_parameter($control_id, false);
                 $enable_vod_icon = SwitchOnOff::to_def($this->plugin->is_vod_enabled() && $this->plugin->get_bool_parameter($control_id));
                 $plugin_cookies->{$control_id} = $enable_vod_icon;
                 hd_debug_print("Update cookie values: $enable_vod_icon", true);
@@ -163,12 +166,6 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
                     null,
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
                 );
-
-            case PARAM_ASK_EXIT:
-            case PARAM_EPG_FONT_SIZE:
-            case PARAM_GROUP_FONT_SIZE:
-                $this->plugin->toggle_parameter($control_id, false);
-                break;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));

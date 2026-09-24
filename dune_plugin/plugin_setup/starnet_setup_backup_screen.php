@@ -181,6 +181,7 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
         Epg_Manager_Json::clear_epg_files();
         Epg_Manager_Xmltv::clear_epg_files();
         $this->plugin->reset_playlist_db();
+        $this->plugin->reset_playlist_settings_db();
         $this->plugin->clear_playlist_cache(null);
 
         // keep the current databases and image cache aside so a failed restore can be rolled back

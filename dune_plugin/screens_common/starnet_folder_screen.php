@@ -281,6 +281,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
                     $info = TR::t('folder_screen_smb__2', $caption, $v[smb_tree::PARAM_IP]);
                     $type = self::SELECTED_TYPE_FOLDER;
                     $new_media_url->{smb_tree::PARAM_IP} = $v[smb_tree::PARAM_IP];
+                    $new_media_url->{smb_tree::PARAM_PROTOCOL} = false;
                     if (!empty($v[smb_tree::PARAM_USER])) {
                         $new_media_url->{smb_tree::PARAM_USER} = $v[smb_tree::PARAM_USER];
                     }
@@ -636,18 +637,19 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
             }
 
             $defs = array();
-            if ($selected_media_url->{smb_tree::PARAM_NFS_PROTOCOL} !== false) {
+            // listing items carry the share address in 'ip' and the nfs protocol in 'protocol'
+            if (!empty($selected_media_url->{smb_tree::PARAM_PROTOCOL})) {
                 Control_Factory::add_multiline_label($defs, TR::t('err_mount'), $selected_media_url->{smb_tree::PARAM_ERR}, 3);
                 Control_Factory::add_label($defs, TR::t('folder_screen_nfs'), $selected_media_url->{PARAM_CAPTION});
-                Control_Factory::add_label($defs, TR::t('folder_screen_nfs_ip'), $selected_media_url->{smb_tree::PARAM_IP_PATH});
-                Control_Factory::add_label($defs, TR::t('folder_screen_nfs_protocol'), $selected_media_url->{smb_tree::PARAM_NFS_PROTOCOL});
+                Control_Factory::add_label($defs, TR::t('folder_screen_nfs_ip'), $selected_media_url->{smb_tree::PARAM_IP});
+                Control_Factory::add_label($defs, TR::t('folder_screen_nfs_protocol'), $selected_media_url->{smb_tree::PARAM_PROTOCOL});
                 Control_Factory::add_ok_button($defs);
                 return Action_Factory::show_dialog($defs, TR::t('err_error_nfs'));
             }
 
             Control_Factory::add_multiline_label($defs, TR::t('err_mount'), $selected_media_url->{smb_tree::PARAM_ERR}, 4);
             Control_Factory::add_label($defs, TR::t('folder_screen_smb'), $selected_media_url->{PARAM_CAPTION});
-            Control_Factory::add_label($defs, TR::t('folder_screen_smb_ip'), $selected_media_url->{smb_tree::PARAM_IP_PATH});
+            Control_Factory::add_label($defs, TR::t('folder_screen_smb_ip'), $selected_media_url->{smb_tree::PARAM_IP});
 
             if (strpos($selected_media_url->{smb_tree::PARAM_ERR}, "Permission denied") !== false) {
                 $user = safe_get_value($selected_media_url, smb_tree::PARAM_USER, '');
@@ -815,17 +817,17 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
         hd_debug_print("open_folder: $path");
         if (preg_match($storage_pattern, $path)) {
             $path = preg_replace($storage_pattern, 'storage_name://', $path);
-        } else if (isset($parent_url->{smb_tree::PARAM_IP_PATH})) {
+        } else if (!empty($parent_url->{smb_tree::PARAM_IP})) {
             if (preg_match('|^' . self::SMB_MOUNT_PATH . '/|', $path)) {
-                if ($parent_url->{smb_tree::PARAM_USER} !== false && $parent_url->{smb_tree::PARAM_PASSWORD} !== false) {
-                    $smb_path = preg_replace($smb_pattern, str_replace('//', '', $parent_url->{smb_tree::PARAM_IP_PATH}), $path);
+                if (!empty($parent_url->{smb_tree::PARAM_USER}) && !empty($parent_url->{smb_tree::PARAM_PASSWORD})) {
+                    $smb_path = preg_replace($smb_pattern, str_replace('//', '', $parent_url->{smb_tree::PARAM_IP}), $path);
                     $path = "smb://" . $parent_url->{smb_tree::PARAM_USER} . ':' . $parent_url->{smb_tree::PARAM_PASSWORD} . "@$smb_path";
                 } else {
-                    $path = "smb:" . preg_replace($smb_pattern, $parent_url->{smb_tree::PARAM_IP_PATH}, $path);
+                    $path = "smb:" . preg_replace($smb_pattern, $parent_url->{smb_tree::PARAM_IP}, $path);
                 }
-            } else if ($parent_url->{smb_tree::PARAM_NFS_PROTOCOL} !== false && preg_match('|^' . self::NFS_MOUNT_PATH . '/|', $path)) {
-                $prot = ($parent_url->{smb_tree::PARAM_NFS_PROTOCOL} === smb_tree::PROTOCOL_TCP) ? 'nfs-tcp://' : 'nfs-udp://';
-                $path = $prot . preg_replace('|^' . self::NFS_MOUNT_PATH . '/\d|', $parent_url->{smb_tree::PARAM_IP_PATH} . ':/', $path);
+            } else if (!empty($parent_url->{smb_tree::PARAM_PROTOCOL}) && preg_match('|^' . self::NFS_MOUNT_PATH . '/|', $path)) {
+                $prot = ($parent_url->{smb_tree::PARAM_PROTOCOL} === smb_tree::PROTOCOL_TCP) ? 'nfs-tcp://' : 'nfs-udp://';
+                $path = $prot . preg_replace('|^' . self::NFS_MOUNT_PATH . '/\d|', $parent_url->{smb_tree::PARAM_IP} . ':/', $path);
             }
         }
 
@@ -844,12 +846,13 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
 
         $selected_url = MediaURL::decode($user_input->selected_media_url);
 
-        $ip_path = $selected_url->{smb_tree::PARAM_IP_PATH};
+        $ip_path = $selected_url->{smb_tree::PARAM_IP};
         $new_ip_smb[$ip_path][smb_tree::PARAM_FOLDERNAME] = $selected_url->{PARAM_CAPTION};
         $new_ip_smb[$ip_path][smb_tree::PARAM_USER] = $user_input->{self::PARAM_NEW_USER};
         $new_ip_smb[$ip_path][smb_tree::PARAM_PASSWORD] = $user_input->{self::PARAM_NEW_PASSWORD};
         $q = smb_tree::get_mount_smb($new_ip_smb);
-        $key = 'err_' . $selected_url->{PARAM_CANCEL_ACTION};
+        // get_mount_smb() keys a failed mount by its folder name, that is the caption of the item
+        $key = 'err_' . $selected_url->{PARAM_CAPTION};
         if (isset($q[$key])) {
             $defs = $this->do_get_mount_smb_err_defs($q[$key][smb_tree::PARAM_ERR],
                 $selected_url->{PARAM_CAPTION},
@@ -862,7 +865,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
         $selected_url->{PARAM_FILEPATH} = key($q);
         $selected_url->{smb_tree::PARAM_USER} = $user_input->{self::PARAM_NEW_USER};
         $selected_url->{smb_tree::PARAM_PASSWORD} = $user_input->{self::PARAM_NEW_PASSWORD};
-        $selected_url->{smb_tree::PARAM_NFS_PROTOCOL} = false;
+        $selected_url->{smb_tree::PARAM_PROTOCOL} = false;
         $selected_url->{smb_tree::PARAM_ERR} = false;
 
         return Action_Factory::open_folder($selected_url->get_media_url_string(), $selected_url->{PARAM_CAPTION});

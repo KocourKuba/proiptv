@@ -94,7 +94,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             return null;
         }
 
-        $fav_id = $this->plugin->get_fav_id();
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $selected_media_url = MediaURL::decode(safe_get_value($user_input, 'selected_media_url'));
         $sel_ndx = safe_get_value($user_input, 'sel_ndx', 0);
@@ -221,7 +220,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 }
 
-                if ($group_id === $fav_id) {
+                // the group is always TV_FAV_GROUP_ID, $fav_id differs for common favorites
+                if ($group_id === TV_FAV_GROUP_ID) {
                     $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, null, $plugin_cookies);
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 }
@@ -256,7 +256,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                         $icon = TV_ALL_CHANNELS_GROUP_ICON;
                         break;
 
-                    case $fav_id:
+                    case TV_FAV_GROUP_ID:
                         $icon = TV_FAV_GROUP_ICON;
                         break;
 
@@ -341,7 +341,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             return array();
         }
 
-        $show_count = $this->plugin->get_bool_setting(PARAM_SHOW_CLASSIC_CHANNEL_COUNT, SwitchOnOff::off);
+        $show_count = $this->plugin->get_bool_setting(PARAM_SHOW_CLASSIC_CHANNEL_COUNT, false);
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         $is_vod_playlist = $this->plugin->is_vod_playlist();
         $ordinary_items = array();

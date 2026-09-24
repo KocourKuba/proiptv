@@ -2889,14 +2889,18 @@ class Dune_Default_Sqlite_Engine
             $script = self::CREATE_PLAYLISTS_TABLE;
             $sql_wrapper = $this->sql_plugin;
             $table_name = self::PLAYLISTS_TABLE;
+            // get_table_name() knows nothing about this table and would return orders_<hash>
+            $rename_to = self::PLAYLISTS_TABLE;
         } else if (self::is_playlist_settings_group($group)) {
             $script = self::CREATE_ORDERED_TABLE;
             $sql_wrapper = $this->sql_playlist_settings;
             $table_name = self::get_table_full_name($group);
+            $rename_to = self::get_table_name($group);
         } else {
             $script = self::CREATE_ORDERED_TABLE;
             $sql_wrapper = $this->sql_playlist;
             $table_name = self::get_table_full_name($group);
+            $rename_to = self::get_table_name($group);
         }
 
         if (!$sql_wrapper) {
@@ -2954,7 +2958,7 @@ class Dune_Default_Sqlite_Engine
             $query .= sprintf(Sql_Wrapper::UPDATE_ROWID, $table_name, $new, $cur);
             $query .= sprintf('INSERT INTO %s SELECT * FROM %s ORDER BY ROWID;', $tmp_table, $table_name);
             $query .= sprintf(Sql_Wrapper::DROP_TABLE_IF_EXISTS, $table_name);
-            $query .= sprintf(Sql_Wrapper::ALTER_TABLE_RENAME, $tmp_table, self::get_table_name($group));
+            $query .= sprintf(Sql_Wrapper::ALTER_TABLE_RENAME, $tmp_table, $rename_to);
         } else {
             return false;
         }

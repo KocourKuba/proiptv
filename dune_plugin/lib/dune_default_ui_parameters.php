@@ -494,7 +494,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         }
 
         $group_id = $channel[COLUMN_GROUP_ID];
-        $pos = array_search($channel_id, $this->get_channels_order($group_id));
+        $pos = array_search_id($channel_id, $this->get_channels_order($group_id));
         return Action_Factory::open_folder(
             Default_Dune_Plugin::get_group_media_url_str($group_id),
             $group_id,

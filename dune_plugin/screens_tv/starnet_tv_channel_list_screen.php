@@ -284,7 +284,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                     $items[] = array(
                         PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_CHANNEL_ID => $channel_id, PARAM_GROUP_ID => $group_id)),
                         PluginRegularFolderItem::caption => $title,
-                        PluginRegularFolderItem::starred => in_array($channel_id, $fav_ids),
+                        PluginRegularFolderItem::starred => in_array_id($channel_id, $fav_ids),
                         PluginRegularFolderItem::view_item_params => array(
                             ViewItemParams::icon_path => $icon_url,
                             ViewItemParams::item_detailed_icon_path => $icon_url,

@@ -245,8 +245,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             return $this->open_playlist_screen();
                         }
 
-                        $show_vod_icon = SwitchOnOff::to_bool($plugin_cookies->{PARAM_COOKIE_SHOW_VOD_ICON});
-                        if ($this->plugin->load_channels($plugin_cookies) && $this->plugin->is_vod_enabled() && $show_vod_icon) {
+                        // the cookie is set by load_channels(), it has to be read after it
+                        if ($this->plugin->load_channels($plugin_cookies)
+                            && $this->plugin->is_vod_enabled()
+                            && SwitchOnOff::to_bool(safe_get_value($plugin_cookies, PARAM_COOKIE_SHOW_VOD_ICON))) {
                             $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                             $actions[] = Action_Factory::open_folder(Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID));
                             return Action_Factory::composite($actions);
@@ -481,7 +483,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
             }
         }
 
-        if (!$is_playlist_changed && ($auto_play || $is_mandatory_playback)) {
+        if (!$is_playlist_changed && (SwitchOnOff::to_bool($auto_play) || $is_mandatory_playback === 1)) {
             hd_debug_print('action: TV playback', true);
             return Action_Factory::tv_play($media_url);
         }

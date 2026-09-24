@@ -113,7 +113,7 @@ class vod_sharaclub extends vod_standard
 
             // case for serials
             if (isset($item['seasons'])) {
-                foreach (safe_get_value($item['seasons'], array()) as $season) {
+                foreach (safe_get_value($item, 'seasons', array()) as $season) {
                     $season_name = safe_get_value($season, 'season');
                     if (empty($season_name)) continue;
 
@@ -141,7 +141,7 @@ class vod_sharaclub extends vod_standard
                         $movie_serie = new Movie_Series(safe_get_value($episode, 'id'),
                             TR::t('vod_screen_series__1', safe_get_value($episode, 'episode')),
                             new Movie_Playback_Url($url),
-                            $season->season
+                            $season_name
                         );
                         $movie->add_series_data($movie_serie);
                     }
@@ -200,7 +200,7 @@ class vod_sharaclub extends vod_standard
             // collect filters information
             $year = safe_get_value($movieData, array('info', 'year'), 0);
             $years[$year] = $year;
-            foreach (safe_get_value($movieData, array('info', 'genre')) as $genre) {
+            foreach (safe_get_value($movieData, array('info', 'genre'), array()) as $genre) {
                 if (!empty($genre)) {
                     $genres[$genre] = $genre;
                 }
@@ -388,11 +388,11 @@ class vod_sharaclub extends vod_standard
 
         $name = safe_get_value($movieData, 'name');
         $info = safe_get_value($movieData, 'info');
-        $genres = HD::ArrayToStr(safe_get_value($info, 'genre'));
-        $country = HD::ArrayToStr(safe_get_value($info, 'country'));
+        $genres = HD::ArrayToStr(safe_get_value($info, 'genre', array()));
+        $country = HD::ArrayToStr(safe_get_value($info, 'country', array()));
         $movie_info = TR::t('vod_screen_movie_info__5',
-            safe_get_value($info, 'year'),
             $name,
+            safe_get_value($info, 'year'),
             $country,
             $genres,
             safe_get_value($info, 'rating')

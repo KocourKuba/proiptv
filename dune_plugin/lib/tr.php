@@ -122,8 +122,15 @@ class TR
         }
 
         $xml = simplexml_load_string(self::strip_param($tr_fmt));
-        $ar = (array)$xml;
-        return self::load((string)$xml, $ar['p']);
+        if ($xml === false) {
+            return $tr_fmt;
+        }
+
+        $args = array((string)$xml);
+        foreach ($xml->p as $p) {
+            $args[] = (string)$p;
+        }
+        return call_user_func_array(array('TR', 'load'), $args);
     }
 
     /**

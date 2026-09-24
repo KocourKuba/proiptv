@@ -102,7 +102,7 @@ class OSD_Component_Factory
 
         self::$instance->osd_glass_path = (file_exists(self::$instance->skin_path . '/cut_images/osd_glass/osd_glass.txt') ? self::$instance->skin_path : self::DUNE_BASE_SKIN_PATH) . '/cut_images/osd_glass';
         self::$instance->osd_glass_manifest = parse_ini_file(self::$instance->osd_glass_path . '/osd_glass.txt');
-        $osd_glass_center_icon = 'osd_glass_center' . self::$instance->osd_glass_manifest['ext'];
+        $osd_glass_center_icon = 'osd_glass_center.' . self::$instance->osd_glass_manifest['ext'];
 
         if (isset(self::$instance->osd_glass_manifest['has_center_icon']) && self::$instance->osd_glass_manifest['has_center_icon'] && file_exists(self::$instance->osd_glass_path . "/$osd_glass_center_icon")) {
             self::$instance->osd_glass_center = self::$instance->osd_glass_path . "/$osd_glass_center_icon";
@@ -122,10 +122,10 @@ class OSD_Component_Factory
 
         self::$instance->weather_glass_path = (file_exists(self::$instance->skin_path . '/cut_images/weather_glass/weather_glass.txt') ? self::$instance->skin_path : self::DUNE_BASE_SKIN_PATH) . '/cut_images/weather_glass';
         self::$instance->weather_glass_manifest = parse_ini_file(self::$instance->weather_glass_path . '/weather_glass.txt');
-        $weather_glass_center_icon = 'weather_glass_center' . self::$instance->weather_glass_manifest['ext'];
+        $weather_glass_center_icon = 'weather_glass_center.' . self::$instance->weather_glass_manifest['ext'];
 
         if (isset(self::$instance->weather_glass_manifest['has_center_icon']) && self::$instance->weather_glass_manifest['has_center_icon'] && file_exists(self::$instance->weather_glass_path . "/$weather_glass_center_icon")) {
-            self::$instance->weather_glass_center = self::$instance->osd_glass_path . "/$weather_glass_center_icon";
+            self::$instance->weather_glass_center = self::$instance->weather_glass_path . "/$weather_glass_center_icon";
         } else if (isset(self::$instance->weather_glass_manifest['center_color'])) {
             $center_color = str_replace('#', '0x', strtolower(trim(self::$instance->weather_glass_manifest['center_color'])));
             self::$instance->weather_glass_center = $dots_path . "/$center_color.aai";
