@@ -4840,6 +4840,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return $result;
         }
 
+        // some sources (tv team) use \r\n, all rules expect \n
+        $raw_descr = str_replace("\r\n", "\n", $raw_descr);
+
         $find_chunks = function (&$total, $chunks, $raw_descr) {
             foreach ($chunks as $key => $pattern) {
                 // $items must be rebuilt for each key, otherwise patterns of the
@@ -4896,19 +4899,55 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
+        // a rule is either a pattern (the match is removed) or a [pattern, replacement] pair.
+        // {"if": [needles], "rules": [...]} is a group used only when the text contains one of the needles:
+        // every /u pattern costs a few us even without a match, which adds up on the box.
+        // all rules taken go into one preg_replace call, which applies them in order.
+        $apply_rules = function ($rules, $raw_descr) {
+            $patterns = array();
+            $replacements = array();
+            foreach ($rules as $rule) {
+                // is_array first: php 5.3 answers isset($string['rules']) with true
+                if (is_array($rule) && isset($rule['rules'])) {
+                    $found = false;
+                    foreach ((array)$rule['if'] as $needle) {
+                        if (strpos($raw_descr, $needle) !== false) {
+                            $found = true;
+                            break;
+                        }
+                    }
+                    $group = $found ? $rule['rules'] : array();
+                } else {
+                    $group = array($rule);
+                }
+
+                foreach ($group as $item) {
+                    $patterns[] = is_array($item) ? $item[0] : $item;
+                    $replacements[] = is_array($item) ? $item[1] : '';
+                }
+            }
+            return empty($patterns) ? $raw_descr : preg_replace($patterns, $replacements, $raw_descr);
+        };
+
+        // 'prepare' rewrites decorated layouts (e.g. "Жанр ▪ драма ► Год ▪ 1990") to the plain
+        // "Label: value" lines the chunks expect, so it runs before them and for every matcher
+        if (isset($desc_parsers['prepare'])) {
+            $raw_descr = $apply_rules($desc_parsers['prepare'], $raw_descr);
+        }
+
         $parsed = array();
         if (!empty($chunks)) {
             $raw_descr = $find_chunks($parsed, $chunks, $raw_descr);
         }
 
         if (isset($desc_parsers['cleanup'])) {
-            foreach ($desc_parsers['cleanup'] as $item) {
-                $raw_descr = preg_replace($item, '', $raw_descr);
-            }
+            $raw_descr = $apply_rules($desc_parsers['cleanup'], $raw_descr);
         }
 
         $raw_descr = str_replace(array('“', '”'), '', $raw_descr);
-        $raw_descr = str_replace(array("\n\n", '<br>', "<'>br>"), "\n", $raw_descr);
+        $raw_descr = str_replace(array('<br>', "<'>br>"), "\n", $raw_descr);
+        // keep paragraphs, but no more than one empty line between them
+        $raw_descr = preg_replace(array('/[ \t]+(?=\n)/', '/\n{3,}/'), array('', "\n\n"), $raw_descr);
         $raw_descr = trim($raw_descr, " .,;\n\r\t\v\0");
 
         $result[PluginTvExtEpgProgram::desc] = $raw_descr;
