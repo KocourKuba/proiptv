@@ -209,15 +209,17 @@ class vod_mirkino extends vod_standard
             $persons[$person['Type']][] = $person['Name'];
         }
 
-        $rate_details = array();
-        if (isset($movie_item['OfficialRating'])) {
-            $rate_details['Official:'] = $movie_item['OfficialRating'];
+        // RunTimeTicks are in 100 ns units. Tick counts exceed 32-bit int, json_decode returns them as float
+        $length_min = '';
+        $ticks = safe_get_value($movie_item, 'RunTimeTicks');
+        if (!empty($ticks)) {
+            $length_min = (int)round($ticks / 600000000);
         }
-        if (isset($movie_item['CommunityRating'])) {
-            $rate_details['Community:'] = $movie_item['CommunityRating'];
-        }
-        if (isset($movie_item['CriticRating'])) {
-            $rate_details['Critic:'] = $movie_item['CriticRating'];
+
+        // CriticRating is usually a percentage, but may already be in 10 point (imdb) scale
+        $critic_rating = safe_get_value($movie_item, 'CriticRating');
+        if (is_numeric($critic_rating) && $critic_rating > 10) {
+            $critic_rating = round($critic_rating / 10, 1);
         }
 
         $movie->set_data(
@@ -225,19 +227,18 @@ class vod_mirkino extends vod_standard
             safe_get_value($movie_item, 'OriginalTitle'), // name_original,
             safe_get_value($movie_item, 'Overview'),  // description,
             $this->jfc->getItemImageUrl($item_id),  // poster_url,
-            '', // length_min,
+            $length_min, // length_min,
             safe_get_value($movie_item, 'ProductionYear'), // year,
             implode(', ', safe_get_value($persons, 'Director', array())),
             implode(', ', safe_get_value($persons, 'Writer', array())),
             implode(', ', safe_get_value($persons, 'Actor', array())),
             implode(', ', safe_get_value($movie_item, 'Genres', array())),
-            '',
-            '', // rate_kinopoisk,
-            '', // rate_mpaa,
+            $critic_rating, // rate_imdb,
+            safe_get_value($movie_item, 'CommunityRating', ''), // rate_kinopoisk,
+            safe_get_value($movie_item, 'OfficialRating', ''), // rate_mpaa,
             implode(', ', safe_get_value($movie_item, 'ProductionLocations', array())),
             '',
-            array(TR::t('vod_screen_quality') => $qualities_str), // details
-            $rate_details
+            array(TR::t('vod_screen_quality') => $qualities_str) // details
         );
 
         return $movie;
