@@ -4817,7 +4817,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $line = trim($line);
             if (empty($line)) continue;
 
-            hd_debug_print($line);
             if ($in_header) {
                 if (strpos($line, 'Stream mapping') !== false || strpos($line, 'Output ') === 0) {
                     $in_header = false;
