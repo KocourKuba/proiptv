@@ -160,7 +160,7 @@ class TR
         $lang = 'english';
         if (file_exists('/config/settings.properties')) {
             $sys_settings = parse_ini_file('/config/settings.properties', false, INI_SCANNER_RAW);
-            if ($sys_settings !== false) {
+            if ($sys_settings !== false && !empty($sys_settings['interface_language'])) {
                 $lang = $sys_settings['interface_language'];
             }
         }
