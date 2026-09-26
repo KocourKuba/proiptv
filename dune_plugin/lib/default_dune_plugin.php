@@ -3717,7 +3717,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if ($q_result === false) {
             Control_Factory::add_multiline_label($defs, '', TR::t('tv_screen_not_found'), 6);
             Control_Factory::add_vgap($defs, 20);
-            Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_SHOW_SEARCH_DLG, TR::t('new_search'));
+            Control_Factory::add_custom_close_dialog_and_apply_button($defs, ACTION_SHOW_SEARCH_DLG,
+                TR::t('new_search'), Control_Factory::DLG_BUTTON_WIDTH, $this->new_search($handler));
         }
 
         return Action_Factory::show_dialog($defs, TR::t('search'));
