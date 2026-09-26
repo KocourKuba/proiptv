@@ -39,6 +39,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     const ICON_LOADING = 'icon_loading_url';
     const ICON_FAILED = 'icon_loading_failed_url';
 
+    // the row of a search folder; its channels keep the group they came from
+    const SEARCH_GROUP_ID = '##search_tv_channels##';
+    const SEARCH_TEXT = 'search_text';
+
     ///////////////////////////////////////////////////////////////////////////
 
     private $clear_playback_points = false;
@@ -73,7 +77,26 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
      */
     private $has_history_rows = false;
 
+    /**
+     * Result of the search that is about to open a search folder, keyed by
+     * the search text, so the folder does not run the same search again.
+     * Used once: a later rebuild of the folder (after hiding a channel, say)
+     * has to search again to see the change.
+     *
+     * @var array|null
+     */
+    private $search_results = null;
+
     ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param string $search_text
+     * @return string
+     */
+    public static function make_search_media_url_str($search_text)
+    {
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, self::SEARCH_TEXT => $search_text));
+    }
 
     /**
      * @inheritDoc
@@ -252,7 +275,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 $is_in_favorites = $this->plugin->is_channel_in_order($fav_id, $media_url->{PARAM_CHANNEL_ID});
                 $opt_type = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->change_tv_favorites($opt_type, $media_url->{PARAM_CHANNEL_ID});
-                return Action_Factory::invalidate_epfs_folders($plugin_cookies);
+                return $this->invalidate_rows_folders($user_input, $plugin_cookies);
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 // Only the action map and the info panel depend on this flag -
@@ -292,6 +315,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
             case ACTION_ITEM_DELETE:
                 hd_debug_print('MediaURL: ' . $media_url);
+                if ($media_url->{PARAM_GROUP_ID} === self::SEARCH_GROUP_ID) {
+                    // the search row is not a group that can be hidden
+                    break;
+                }
+
                 if ($is_sel_channel) {
                     hd_debug_print('Hide channel: ' . $media_url->{PARAM_CHANNEL_ID});
                     $this->plugin->set_channel_visible($media_url->{PARAM_CHANNEL_ID}, false);
@@ -304,7 +332,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                     $this->plugin->set_groups_visible($media_url->{PARAM_GROUP_ID}, false);
                 }
 
-                return Action_Factory::invalidate_epfs_folders($plugin_cookies);
+                return $this->invalidate_rows_folders($user_input, $plugin_cookies);
 
             case ACTION_EPG_CACHE_ENGINE:
                 $menu_items = array();
@@ -346,7 +374,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
             case ACTION_EDIT_CHANNEL_APPLY:
                 $this->plugin->do_edit_channel_apply($user_input, $media_url->{PARAM_CHANNEL_ID});
-                return Action_Factory::invalidate_epfs_folders($plugin_cookies);
+                return $this->invalidate_rows_folders($user_input, $plugin_cookies);
+
+            case ACTION_NEW_SEARCH:
+                return Action_Factory::close_dialog_and_run(
+                    $this->do_search($user_input->{ACTION_NEW_SEARCH}, self::is_search_folder($user_input)));
 
             case ACTION_ADD_MONEY_DLG:
                 return $this->plugin->do_show_add_money();
@@ -488,6 +520,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
             return $this->get_empty_rows_pane();
         }
 
+        $search_text = safe_get_value($media_url, self::SEARCH_TEXT);
+        if ($search_text !== null) {
+            return $this->get_search_rows_pane($search_text);
+        }
+
         $collector = new Rows_Array_Collector();
         if (!$this->produce_rows($collector)) {
             hd_debug_print('no category rows');
@@ -496,6 +533,140 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
         return $this->create_row_pane($collector->get_rows(), $collector->get_headers(),
             $this->min_row_index_for_y2());
+    }
+
+    /**
+     * Runs the search typed into the search dialog and opens its result as a
+     * folder of its own, one row of the channels found.
+     *
+     * Searches do not nest: a search started from a search folder closes it
+     * and opens the new result in its place.
+     *
+     * @param string $search_text
+     * @param bool $from_search_folder
+     * @return array|null
+     */
+    protected function do_search($search_text, $from_search_folder)
+    {
+        $search_text = trim($search_text);
+        if ($search_text === '') {
+            return null;
+        }
+
+        $this->plugin->set_parameter(PARAM_LAST_TV_SEARCH, $search_text);
+
+        $found = $this->plugin->search_channels($search_text);
+        if (empty($found)) {
+            return $this->plugin->show_search_not_found($this);
+        }
+
+        $this->search_results = array($search_text => $found);
+
+        $open_action = Action_Factory::open_folder(self::make_search_media_url_str($search_text),
+            TR::t('search__1', $search_text));
+
+        return $from_search_folder ? Action_Factory::close_and_run($open_action) : $open_action;
+    }
+
+    /**
+     * The pane of a search folder: one row of the channels whose name contains
+     * $search_text. Each channel keeps the group it was found in, so playing,
+     * favorites and the channel menu behave as they do in that group's row.
+     *
+     * @param string $search_text
+     * @return array
+     */
+    protected function get_search_rows_pane($search_text)
+    {
+        hd_debug_print(null, true);
+
+        $this->update_new_ui_settings();
+
+        if (isset($this->search_results[$search_text])) {
+            $found = $this->search_results[$search_text];
+        } else {
+            $found = $this->plugin->search_channels($search_text);
+        }
+        $this->search_results = null;
+
+        if (empty($found)) {
+            $defs[] = GComps_Factory::label_v2(GComp_Geom::place_center(), null,
+                TR::t('tv_screen_not_found'), 1, "#AFAFA0FF", 60);
+
+            $rows[] = Rows_Factory::vgap_row(50);
+            $rows[] = Rows_Factory::gcomps_row('single_row', $defs, null, 1920, 500);
+
+            return Rows_Factory::pane($rows);
+        }
+
+        $fav_map = array_flip($this->plugin->get_channels_order($this->plugin->get_fav_id()));
+        $fav_stickers = $this->get_fav_stickers();
+
+        $items = array();
+        foreach ($found as $channel_row) {
+            $channel_id = $channel_row[COLUMN_CHANNEL_ID];
+            $items[] = Rows_Factory::add_regular_item(
+                PARAM_GROUP_ID . ':' . $channel_row[COLUMN_GROUP_ID] . ';' . PARAM_CHANNEL_ID . ':' . $channel_id,
+                $this->plugin->get_channel_picon($channel_row, false),
+                $channel_row[COLUMN_SHOW_TITLE],
+                isset($fav_map[$channel_id]) ? $fav_stickers : null
+            );
+        }
+
+        $text = str_replace('|', '¦', $search_text);
+        if ($this->plugin->get_bool_setting(PARAM_NEWUI_SHOW_CHANNEL_COUNT, false)) {
+            $text .= ' (' . count($items) . ')';
+        }
+        $title = TR::t('search__1', $text);
+
+        $collector = new Rows_Array_Collector();
+        $this->emit_group_rows($collector, $items,
+            self::SEARCH_GROUP_ID,
+            $title,
+            $title,
+            User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER),
+            TitleRowsParams::fav_caption_color
+        );
+        $rows = $collector->get_rows();
+
+        hd_debug_print('added search result: ' . count($items) . ' channels', true);
+
+        // 0 as in globaltv: rows before this index are laid out as the top
+        // rows of the main pane and keep their active height, which would
+        // drop the inactive height of the fake row above
+        return $this->create_row_pane($rows, $collector->get_headers(), 1);
+    }
+
+    /**
+     * Invalidates the NewUI folder after a channel changed, and the search
+     * folder too when the change was made from one: it is a folder of its own
+     * and would keep showing the channel as it was.
+     *
+     * @param object $user_input
+     * @param object $plugin_cookies
+     * @return array
+     */
+    protected function invalidate_rows_folders($user_input, $plugin_cookies)
+    {
+        $post_action = null;
+        if (self::is_search_folder($user_input)) {
+            $post_action = Action_Factory::invalidate_folders(array($user_input->parent_media_url));
+        }
+
+        return Action_Factory::invalidate_epfs_folders($plugin_cookies, $post_action);
+    }
+
+    /**
+     * Whether $user_input came from a search folder rather than the NewUI one.
+     *
+     * @param object $user_input
+     * @return bool
+     */
+    protected static function is_search_folder($user_input)
+    {
+        $parent_url = safe_get_value($user_input, 'parent_media_url');
+
+        return !empty($parent_url) && isset(MediaURL::decode($parent_url)->{self::SEARCH_TEXT});
     }
 
     /**
@@ -1578,11 +1749,23 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 $action = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, $action, $caption, PaneParams::fav_button_blue);
             }
+
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($this->plugin->new_search($this),
+                TR::t('search'), 'search.png');
+        } else if (safe_get_value($media_url, COLUMN_GROUP_ID) === self::SEARCH_GROUP_ID) {
+            // popup menu for the row of a search folder: nothing to edit there
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($this->plugin->new_search($this),
+                TR::t('new_search'), 'search.png');
         } else {
             // popup menu for left side list
             hd_debug_print('in menu side', true);
 
             $this->plugin->playlist_menu_items($this, $menu_items, false);
+
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($this->plugin->new_search($this),
+                TR::t('search'), 'search.png');
+
+            $menu_items[] = Control_Factory::menu_separator();
 
             $group_id = safe_get_value($media_url, COLUMN_GROUP_ID);
             if ($group_id !== null) {

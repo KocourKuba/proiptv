@@ -3690,38 +3690,72 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return null;
         }
 
-        hd_debug_print("Do search channel name : '$search_text'", true);
         $this->set_parameter(PARAM_LAST_TV_SEARCH, $search_text);
 
-        $show_adult = $this->get_bool_setting(PARAM_SHOW_ADULT);
-        $groups_order = $this->get_groups_by_order($show_adult);
-
-        $defs = array();
-        $q_result = false;
-        foreach ($groups_order as $group_row) {
-            $channels_rows = $this->get_channels_by_order($group_row[COLUMN_GROUP_ID], $show_adult);
-            foreach ($channels_rows as $channel_row) {
-                $ch_title = $channel_row[COLUMN_TITLE];
-                $s = mb_stripos($ch_title, $search_text, 0, "UTF-8");
-                if ($s !== false) {
-                    $ch_id = $channel_row[COLUMN_CHANNEL_ID];
-                    $q_result = true;
-                    hd_debug_print("found channel: '$ch_title', id: $ch_id in group: '{$group_row[COLUMN_GROUP_ID]}'", true);
-                    $add_params[COLUMN_CHANNEL_ID] = $ch_id;
-                    Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_JUMP_TO_CHANNEL_IN_GROUP,
-                        $ch_title, $add_params, Control_Factory::DLG_CONTROLS_WIDTH);
-                }
-            }
+        $found = $this->search_channels($search_text);
+        if (empty($found)) {
+            return $this->show_search_not_found($handler);
         }
 
-        if ($q_result === false) {
-            Control_Factory::add_multiline_label($defs, '', TR::t('tv_screen_not_found'), 6);
-            Control_Factory::add_vgap($defs, 20);
-            Control_Factory::add_custom_close_dialog_and_apply_button($defs, ACTION_SHOW_SEARCH_DLG,
-                TR::t('new_search'), Control_Factory::DLG_BUTTON_WIDTH, $this->new_search($handler));
+        $defs = array();
+        foreach ($found as $channel_row) {
+            $add_params[COLUMN_CHANNEL_ID] = $channel_row[COLUMN_CHANNEL_ID];
+            Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_JUMP_TO_CHANNEL_IN_GROUP,
+                $channel_row[COLUMN_SHOW_TITLE], $add_params, Control_Factory::DLG_CONTROLS_WIDTH);
         }
 
         return Action_Factory::show_dialog($defs, TR::t('search'));
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @return array
+     */
+    public function show_search_not_found($handler)
+    {
+        $defs = array();
+        Control_Factory::add_multiline_label($defs, '', TR::t('tv_screen_not_found'), 6);
+        Control_Factory::add_vgap($defs, 20);
+        Control_Factory::add_custom_close_dialog_and_apply_button($defs, ACTION_SHOW_SEARCH_DLG,
+            TR::t('new_search'), Control_Factory::DLG_BUTTON_WIDTH, $this->new_search($handler));
+
+        return Action_Factory::show_dialog($defs, TR::t('search'));
+    }
+
+    /**
+     * Visible channels whose name contains $search_text, in group and channel
+     * order. Both the name the user gave the channel and the playlist name are
+     * matched. A channel that sits in several groups is listed once, under the
+     * first of them.
+     *
+     * @param string $search_text
+     * @return array channel rows ({@see Dune_Default_Sqlite_Engine::ICON_ITEM_COLUMNS})
+     *               with the group they were found in under COLUMN_GROUP_ID
+     */
+    public function search_channels($search_text)
+    {
+        hd_debug_print("Search channel name: '$search_text'", true);
+
+        $show_adult = $this->get_bool_setting(PARAM_SHOW_ADULT);
+        $found = array();
+        foreach ($this->get_groups_by_order($show_adult) as $group_row) {
+            $group_id = $group_row[COLUMN_GROUP_ID];
+            foreach ($this->get_channels_by_order($group_id, $show_adult, false, true) as $channel_row) {
+                $channel_id = $channel_row[COLUMN_CHANNEL_ID];
+                if (isset($found[$channel_id])) continue;
+
+                if (mb_stripos($channel_row[COLUMN_SHOW_TITLE], $search_text, 0, 'UTF-8') === false
+                    && mb_stripos($channel_row[COLUMN_TITLE], $search_text, 0, 'UTF-8') === false) {
+                    continue;
+                }
+
+                hd_debug_print("found channel: '{$channel_row[COLUMN_SHOW_TITLE]}', id: $channel_id in group: '$group_id'", true);
+                $channel_row[COLUMN_GROUP_ID] = $group_id;
+                $found[$channel_id] = $channel_row;
+            }
+        }
+
+        return array_values($found);
     }
 
     /**
