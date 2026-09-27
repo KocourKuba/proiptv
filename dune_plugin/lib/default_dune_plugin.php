@@ -4214,7 +4214,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
             $zip->close();
 
-            $url = base64_decode('aHR0cDovL2lwdHYuZXNhbGVjcm0ubmV0L3VwbG9hZC8', true) . $zip_file_name;
+            $url = base64_decode('aHR0cHM6Ly9pcHR2LmVzYWxlY3JtLmNvbS91cGxvYWQv', true) . $zip_file_name;
             $handle = fopen($zip_file, 'rb');
             if (is_resource($handle)) {
                 $curl_wrapper = Curl_Wrapper::getInstance();
