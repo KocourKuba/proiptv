@@ -372,7 +372,7 @@ class vod_standard extends Abstract_Vod
 
         /** @var array $output */
         exec($cmd, $output);
-        hd_debug_print('external player exec result code' . HD::ArrayToStr($output));
+        hd_debug_print('external player exec result code' . array_to_str($output));
         return null;
     }
 

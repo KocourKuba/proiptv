@@ -124,14 +124,14 @@ class Starnet_Plugin extends Default_Dune_Plugin
         Starnet_Epfs_Handler::init($this, $plugin_cookies);
 
         $this->init_screen_view_parameters();
-        if (self::$plugin_info['debug']) {
+        if (HD::get_manifest_info_value('debug')) {
             $plugin_cookies->{PARAM_COOKIE_ENABLE_DEBUG} = SwitchOnOff::on;
         }
 
         hd_print_separator();
-        hd_print('Plugin name:             ' . self::$plugin_info['app_caption']);
-        hd_print('Plugin version:          ' . self::$plugin_info['app_version']);
-        hd_print('Plugin date:             ' . self::$plugin_info['app_release_date']);
+        hd_print('Plugin name:             ' . HD::get_manifest_info_value('app_caption'));
+        hd_print('Plugin version:          ' . HD::get_manifest_info_value('app_version'));
+        hd_print('Plugin date:             ' . HD::get_manifest_info_value('app_release_date'));
         hd_print('LocalTime:               ' . format_datetime('Y-m-d H:i', time()));
         hd_print('TimeZone:                ' . getTimeZone());
         hd_print('NewUI support:           ' . SwitchOnOff::to_def(HD::rows_api_support()));

@@ -59,29 +59,12 @@ class HD
      */
     private static $plugin_user_agent;
 
-    ///////////////////////////////////////////////////////////////////////
-
     /**
-     * @param int $size
-     * @return string
+     * @var string
      */
-    public static function get_filesize_str($size)
-    {
-        if ($size < 1024) {
-            $size_num = $size;
-            $size_suf = "B";
-        } else if ($size < 1048576) { // 1M
-            $size_num = round($size / 1024, 2);
-            $size_suf = "KiB";
-        } else if ($size < 1073741824) { // 1G
-            $size_num = round($size / 1048576, 2);
-            $size_suf = "MiB";
-        } else {
-            $size_num = round($size / 1073741824, 2);
-            $size_suf = "GiB";
-        }
-        return "$size_num $size_suf";
-    }
+    private static $plugin_manifest_info;
+
+    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @return array
@@ -145,15 +128,6 @@ class HD
     }
 
     /**
-     * @param string $path
-     * @return string
-     */
-    public static function get_file_size($path)
-    {
-        return format_size(filesize($path));
-    }
-
-    /**
      * @param mixed $opts
      * @param int $ident
      * @return void
@@ -176,13 +150,13 @@ class HD
 
     ///////////////////////////////////////////////////////////////////////
 
-    /**
-     * @return int
-     */
-    public static function http_local_port()
+    public static function get_manifest_info_value($name)
     {
-        $port = getenv('HD_HTTP_LOCAL_PORT');
-        return $port ? (int)$port : 80;
+        if (empty(self::$plugin_manifest_info)) {
+            self::$plugin_manifest_info = get_plugin_manifest_info();
+        }
+
+        return isset(self::$plugin_manifest_info[$name]) ? self::$plugin_manifest_info[$name] : '';
     }
 
     /**
@@ -223,8 +197,9 @@ class HD
                 }
             }
 
-            if (!empty($extra_useragent))
-                $extra_useragent .= ")";
+            if (!empty($extra_useragent)) {
+                $extra_useragent .= '; ' . HD::get_manifest_info_value('app_caption') . ' ' . HD::get_manifest_info_value('app_version') . ')';
+            }
         }
 
         self::$default_user_agent .= $extra_useragent;
@@ -240,6 +215,21 @@ class HD
     {
         self::$plugin_user_agent = $user_agent;
     }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @return string
+     */
+    public static function get_dune_user_agent()
+    {
+        if (empty(self::$default_user_agent))
+            self::http_init();
+
+        return (empty(self::$plugin_user_agent) || self::$default_user_agent === self::$plugin_user_agent) ? self::$default_user_agent : self::$plugin_user_agent;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @param string $path
@@ -265,57 +255,6 @@ class HD
             return $arr;
         }
         return $size[0] . ' (' . $size[1] . ')';
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @return string
-     */
-    public static function get_dune_user_agent()
-    {
-        if (empty(self::$default_user_agent))
-            self::http_init();
-
-        return (empty(self::$plugin_user_agent) || self::$default_user_agent === self::$plugin_user_agent) ? self::$default_user_agent : self::$plugin_user_agent;
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @param string $op_name
-     * @param string $params
-     * @return array
-     */
-    public static function make_json_rpc_request($op_name, $params)
-    {
-        static $request_id = 0;
-
-        return array
-        (
-            'jsonrpc' => '2.0',
-            'id' => ++$request_id,
-            'method' => $op_name,
-            'params' => $params
-        );
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    /**
-     * @param array $arrayItems
-     * @return string
-     */
-    public static function ArrayToStr($arrayItems)
-    {
-        $array = array();
-        foreach ($arrayItems as $item) {
-            if (!empty($item)) {
-                $array[] = $item;
-            }
-        }
-
-        return implode(', ', $array);
     }
 
     /**

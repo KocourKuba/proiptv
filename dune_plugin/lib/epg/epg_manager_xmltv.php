@@ -241,7 +241,7 @@ class Epg_Manager_Xmltv
                     }
 
                     foreach ($positions as $pos) {
-                        fseek($handle, $pos['start']);
+                        fseek32($handle, $pos['start']);
                         $length = $pos['end'] - $pos['start'];
                         if ($length <= 0) continue;
 
@@ -918,7 +918,7 @@ class Epg_Manager_Xmltv
             $use_regex = false;
             $since_sample = 0;
             while ($block_pos < $file_size) {
-                fseek($file, $block_pos);
+                fseek32($file, $block_pos);
                 $block = fread($file, self::INDEX_BLOCK_SIZE);
                 if ($block === false || $block === '') break;
 
@@ -1882,7 +1882,7 @@ class Epg_Manager_Xmltv
 
         $unpack_time = $perf->getReportItemCurrent(Perf_Collector::TIME);
         hd_debug_print("Cached file:   $cached_file");
-        hd_debug_print("$action        $size bytes");
+        hd_debug_print("$action        " . format_size($size));
         hd_debug_print("Time:          $unpack_time secs");
         hd_debug_print('Storage space: ' . HD::get_storage_size(self::$cache_dir));
         hd_print_separator();
@@ -1957,11 +1957,7 @@ class Epg_Manager_Xmltv
      */
     protected static function check_active_plugin_folder()
     {
-        $port = getenv('HD_HTTP_LOCAL_PORT');
-        if (empty($port)) {
-            $port = 80;
-        }
-
+        $port = http_local_port();
         $status = json_decode(shell_exec('wget -q -O - "http://127.0.0.1:' . $port . '/cgi-bin/do?cmd=ui_state&result_syntax=json"'));
 
         $navigator_newui_top = safe_get_value($status->ui_state->screen, 'navigator_top_item_id');

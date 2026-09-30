@@ -56,7 +56,7 @@ class vod_mirkino extends vod_standard
             $vod_url = $this->provider->replace_macros($this->provider->getRawApiCommand(API_COMMAND_GET_VOD));
 
             $this->jfc = new jellyfin_api();
-            $this->jfc->init($this->plugin, $vod_url, Default_Dune_Plugin::$plugin_info['app_version']);
+            $this->jfc->init($this->plugin, $vod_url, HD::get_manifest_info_value('app_version'));
 
             $access_info = array(
                 MACRO_LOGIN => $this->provider->GetProviderParameter(MACRO_LOGIN),

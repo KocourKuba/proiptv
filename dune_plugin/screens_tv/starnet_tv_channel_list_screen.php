@@ -274,7 +274,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                     $zoom = safe_get_value($channel_row, COLUMN_ZOOM, DuneVideoZoomPresets::not_set);
                     $epg_shift = format_duration_minutes((int)safe_get_value($channel_row, COLUMN_EPG_SHIFT, 0));
 
-                    $epg_str = HD::ArrayToStr(array_values(Default_Dune_Plugin::make_epg_ids($channel_row)));
+                    $epg_str = array_to_str(array_values(Default_Dune_Plugin::make_epg_ids($channel_row)));
                     if ($zoom === DuneVideoZoomPresets::not_set || $zoom === null) {
                         $detailed_info = TR::t('tv_screen_channel_info__5', $title, $archive, $channel_id, $epg_str, $epg_shift);
                     } else {

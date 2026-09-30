@@ -35,11 +35,6 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     const EPG_PROGRESS_WIDTH = 900;
 
     /**
-     * @var array
-     */
-    public static $plugin_info;
-
-    /**
      * @var Screen[]
      */
     private $screens;
@@ -60,8 +55,6 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     public function __construct()
     {
         HD::load_firmware_features();
-
-        self::$plugin_info = get_plugin_manifest_info();
     }
 
     /**
@@ -137,7 +130,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
      */
     public function is_background_image_default()
     {
-        return ($this->get_background_image() === self::$plugin_info['app_background']);
+        return $this->get_background_image() === HD::get_manifest_info_value('app_background');
     }
 
     /**
@@ -146,7 +139,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
      */
     public function set_background_image($path)
     {
-        if (is_null($path) || $path === self::$plugin_info['app_background'] || !file_exists($path)) {
+        if (is_null($path) || $path === HD::get_manifest_info_value('app_background') || !file_exists($path)) {
             $this->set_setting(PARAM_PLUGIN_BACKGROUND, '');
         } else {
             $this->set_setting(PARAM_PLUGIN_BACKGROUND, $path);
@@ -158,17 +151,18 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
      */
     public function get_background_image()
     {
+        $default_background_image = HD::get_manifest_info_value('app_background');
         if (!isset($this->sql_playlist_settings)) {
-            $background = self::$plugin_info['app_background'];
+            $background = $default_background_image;
         } else {
             $background = $this->get_setting(PARAM_PLUGIN_BACKGROUND, '');
             $cached_img_path = get_cached_image_path();
-            if ($background === self::$plugin_info['app_background']) {
+            if ($background === $default_background_image) {
                 $this->set_setting(PARAM_PLUGIN_BACKGROUND, '');
             } else if (strncmp($background, $cached_img_path, strlen($cached_img_path)) === 0) {
                 $this->set_setting(PARAM_PLUGIN_BACKGROUND, basename($background));
             } else if (empty($background) || !file_exists(get_cached_image_path($background))) {
-                $background = self::$plugin_info['app_background'];
+                $background = $default_background_image;
             } else {
                 $background = get_cached_image($background);
             }
@@ -185,7 +179,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     {
         Control_Factory::add_vgap($defs, -10);
         Control_Factory::add_label($defs, self::AUTHOR_LOGO,
-            ' v.' . self::$plugin_info['app_version'] . ' [' . self::$plugin_info['app_release_date'] . ']',
+            ' v.' . HD::get_manifest_info_value('app_version') . ' [' . HD::get_manifest_info_value('app_release_date') . ']',
             14);
     }
 

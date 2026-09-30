@@ -95,7 +95,7 @@ class vod_glanz extends vod_standard
                 safe_get_value($item, 'director'),        // director_str,
                 '',         // scenario_str,
                 safe_get_value($item, 'actors'),          // actors_str,
-                HD::ArrayToStr($genres),                         // genres_str,
+                array_to_str($genres),                         // genres_str,
                 '',           // rate_imdb,
                 '',        // rate_kinopoisk,
                 '',           // rate_mpaa,

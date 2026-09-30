@@ -101,11 +101,11 @@ class vod_sharaclub extends vod_standard
                 safe_get_value($movie_info, 'director'), // director_str,
                 '',                       // scenario_str,
                 safe_get_value($movie_info, 'cast'), // actors_str,
-                HD::ArrayToStr(safe_get_value($movie_info, 'genre', array())),   // genres_str,
+                array_to_str(safe_get_value($movie_info, 'genre', array())),   // genres_str,
                 safe_get_value($movie_info, 'rating'), // rate_imdb,
                 '',                      // rate_kinopoisk,
                 '',
-                HD::ArrayToStr(safe_get_value($movie_info, 'country', array())), // country,
+                array_to_str(safe_get_value($movie_info, 'country', array())), // country,
                 '',
                 array(), // details
                 $age_limit // rate details
@@ -388,8 +388,8 @@ class vod_sharaclub extends vod_standard
 
         $name = safe_get_value($movieData, 'name');
         $info = safe_get_value($movieData, 'info');
-        $genres = HD::ArrayToStr(safe_get_value($info, 'genre', array()));
-        $country = HD::ArrayToStr(safe_get_value($info, 'country', array()));
+        $genres = array_to_str(safe_get_value($info, 'genre', array()));
+        $country = array_to_str(safe_get_value($info, 'country', array()));
         $movie_info = TR::t('vod_screen_movie_info__5',
             $name,
             safe_get_value($info, 'year'),

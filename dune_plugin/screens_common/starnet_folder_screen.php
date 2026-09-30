@@ -355,7 +355,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
 
                     $caption = $k;
                     $filepath = $v[PARAM_FILEPATH];
-                    $size = HD::get_filesize_str($v[self::PARAM_SIZE]);
+                    $size = format_size($v[self::PARAM_SIZE]);
                     $icon_file = self::get_file_icon($filepath);
                     $path_parts = pathinfo($caption);
                     $info = TR::t('folder_screen_select_file__2', $caption, $size);

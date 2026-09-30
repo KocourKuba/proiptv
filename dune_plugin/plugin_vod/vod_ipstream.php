@@ -98,14 +98,14 @@ class vod_ipstream extends vod_standard
                 safe_get_value($movie_info, 'poster'),// poster_url,
                 $duration,                                   // length_min,
                 safe_get_value($movie_info, 'year'),  // year,
-                HD::ArrayToStr(safe_get_value($movie_info, 'director', array())), // director_str,
+                array_to_str(safe_get_value($movie_info, 'director', array())), // director_str,
                 '',                        // scenario_str,
-                HD::ArrayToStr(safe_get_value($movie_info, 'cast', array())),     // actors_str,
-                HD::ArrayToStr(safe_get_value($movie_info, 'genre', array())),    // genres_str,
+                array_to_str(safe_get_value($movie_info, 'cast', array())),     // actors_str,
+                array_to_str(safe_get_value($movie_info, 'genre', array())),    // genres_str,
                 safe_get_value($movie_info, 'rating'), // rate_imdb,
                 '',                              // rate_kinopoisk,
                 '',                                 // rate_mpaa,
-                HD::ArrayToStr(safe_get_value($movie_info, 'country', array())),   // country,
+                array_to_str(safe_get_value($movie_info, 'country', array())),   // country,
                 '',
                 array(), // details
                 $age_limit // rate details
@@ -380,8 +380,8 @@ class vod_ipstream extends vod_standard
         }
 
         $movie_info = safe_get_value($movieData, 'info', array());
-        $genres = HD::ArrayToStr(safe_get_value($movie_info, 'genre', array()));
-        $country = HD::ArrayToStr(safe_get_value($movie_info, 'country', array()));
+        $genres = array_to_str(safe_get_value($movie_info, 'genre', array()));
+        $country = array_to_str(safe_get_value($movie_info, 'country', array()));
 
         $movie = new Short_Movie(
             $id,

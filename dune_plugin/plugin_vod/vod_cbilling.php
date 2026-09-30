@@ -109,7 +109,7 @@ class vod_cbilling extends vod_standard
             safe_get_value($movieData, 'director'),     // director,
             '',                                    // scenario,
             safe_get_value($movieData, 'actors'),       // actors,
-            HD::ArrayToStr($genresArray),                      // genres,
+            array_to_str($genresArray),                      // genres,
             safe_get_value($movieData, 'rating'),       // rate_imdb,
             '',                                   // rate_kinopoisk,
             safe_get_value($movieData, 'age'),          // rate_mpaa,

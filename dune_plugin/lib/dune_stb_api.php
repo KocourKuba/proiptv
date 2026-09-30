@@ -952,6 +952,15 @@ function get_mac_address()
 }
 
 /**
+ * @return int
+ */
+function http_local_port()
+{
+    $port = getenv('HD_HTTP_LOCAL_PORT');
+    return $port ? (int)$port : 80;
+}
+
+/**
  * get timezone string system date, for example +0200
  * @return string
  */
@@ -1150,6 +1159,10 @@ function format_size($bytes)
         return '0 B';
     }
 
+    if ($bytes < 0) {
+        $bytes = (($bytes + PHP_INT_MAX) + PHP_INT_MAX + 2);
+    }
+
     $si_prefix = array('B', 'KB', 'MB', 'GB', 'TB');
     $base = 1024;
     $class = min((int)log($bytes, $base), count($si_prefix) - 1);
@@ -1165,6 +1178,27 @@ function format_size($bytes)
 function format_kbits($bytes, $duration)
 {
     return (int)round($bytes * 8 / $duration / 1000);
+}
+
+function fseek32($fp, $pos, $flag = SEEK_SET, $first = 0)
+{
+    // set to 0 pos initially, one-time
+    if ($first) {
+        fseek($fp, 0);
+    }
+
+    // get pos float value
+    $pos = floatval($pos);
+
+    // within limits, use normal fseek
+    if ($pos <= PHP_INT_MAX) {
+        fseek($fp, $pos, $flag);
+    } else {
+        // out of limits, use recursive fseek
+        fseek($fp, PHP_INT_MAX, $flag);
+        $pos -= PHP_INT_MAX;
+        fseek32($fp, $pos, $flag);
+    }
 }
 
 /**
@@ -3829,6 +3863,22 @@ function array_unshift_assoc(&$arr, $key, $val)
     $arr = array_reverse($arr, true);
     $arr[$key] = $val;
     return array_reverse($arr, true);
+}
+
+/**
+ * @param array $arrayItems
+ * @return string
+ */
+function array_to_str($arrayItems)
+{
+    $array = array();
+    foreach ($arrayItems as $item) {
+        if (!empty($item)) {
+            $array[] = $item;
+        }
+    }
+
+    return implode(', ', $array);
 }
 
 /**

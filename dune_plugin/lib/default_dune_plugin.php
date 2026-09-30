@@ -668,7 +668,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // 3. Check previously downloaded web release version
         // 4. Check preinstalled version
         // 5. Houston we have a problem
-        if (self::$plugin_info['debug']) {
+        if (HD::get_manifest_info_value('debug')) {
             $tmp_file = get_install_path('providers_debug.json');
             if (file_exists($tmp_file)) {
                 hd_debug_print("Load debug providers configuration: $tmp_file");
@@ -677,14 +677,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         if (empty($jsonArray)) {
-            $name = 'providers_' . self::$plugin_info['app_base_version'] . '.json';
+            $name = 'providers_' . HD::get_manifest_info_value('app_base_version') . '.json';
             $tmp_file = get_data_path($name);
             $serial = get_serial_number();
             if (empty($serial)) {
                 hd_debug_print('Unable to get DUNE serial.');
                 $serial = 'XXXX';
             }
-            $ver = self::$plugin_info['app_version'];
+            $ver = HD::get_manifest_info_value('app_version');
             $model = get_product_id();
             $firmware = get_raw_firmware_version();
             $config_url = sprintf('%s?ver=%s&model=%s&firmware=%s&serial=%s', self::CONFIG_URL, $ver, $model, $firmware, $serial);
@@ -800,7 +800,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $parser_file = get_install_path('lib/desc_parser.php');
-        if (!self::$plugin_info['debug']) {
+        if (!HD::get_manifest_info_value('debug')) {
             $installed_rev = self::get_desc_parser_revision(file_get_contents($parser_file));
             $cached_file = get_data_path('desc_parser.php');
             $url = sprintf(self::DESC_PARSER_URL, self::DESC_PARSER_API);
@@ -2721,7 +2721,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("play movie in the external player: $cmd");
         /** @var array $output */
         exec($cmd, $output);
-        hd_debug_print('external player exec result code' . HD::ArrayToStr($output));
+        hd_debug_print('external player exec result code' . array_to_str($output));
         return null;
     }
 
@@ -3164,7 +3164,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        $app_title = self::$plugin_info['app_caption'];
+        $app_title = HD::get_manifest_info_value('app_caption');
         if (!empty($title)) {
             $app_title .= " • $title";
         }
@@ -4160,7 +4160,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             hd_debug_print('Unable to get DUNE serial.');
             $serial = 'XX-XX-XX-XX-XX';
         }
-        $ver = self::$plugin_info['app_version'];
+        $ver = HD::get_manifest_info_value('app_version');
         $ver = str_replace('.', '_', $ver);
         $timestamp = format_datetime('Ymd_His', time());
         $model = get_product_id();
@@ -4271,7 +4271,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Backup path: $folder_path");
         if ($complete) {
             $timestamp = format_datetime('Y-m-d_H-i', time());
-            $zip_file_name = 'proiptv_backup_' . self::$plugin_info['app_version'] . "_$timestamp.zip";
+            $zip_file_name = 'proiptv_backup_' . HD::get_manifest_info_value('app_version') . "_$timestamp.zip";
         } else {
             $zip_file_name = 'proiptv_backup.zip';
         }

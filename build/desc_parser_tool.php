@@ -291,7 +291,7 @@ function detect_matcher($rules, $raw_descr, $icon)
  */
 function text_length($text)
 {
-    return function_exists('mb_strlen') ? mb_strlen($text, 'UTF-8') : preg_match_all('/./us', $text, $m);
+    return function_exists('mb_strlen') ? mb_strlen($text, 'UTF-8') : preg_match_all('/./us', $text);
 }
 
 /**
