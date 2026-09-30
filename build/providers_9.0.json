@@ -84,7 +84,7 @@
       }
     },
     "proiptv": {
-      "presets_url": "https://epg.esalecrm.net/epg_presets.json"
+      "presets_url": "https://epg.esalecrm.com/epg_presets.json"
     },
     "shuratv": {
       "json_source": "http://epg.propg.net/{EPG_ID}/epg2/{YEAR}-{MONTH}-{DAY}",
