@@ -376,6 +376,7 @@ const PARAM_MOVIE_ID = 'movie_id';
 const PARAM_NAME = 'name';
 const PARAM_NEWUI_CHANNEL_POSITION = 'channel_position';
 const PARAM_NEWUI_ICONS_IN_ROW = 'icons_in_row';
+const PARAM_NEWUI_SEARCH_BY_GROUPS = 'search_by_groups';
 const PARAM_NEWUI_SHOW_CHANNEL_CAPTION = 'show_channel_caption';
 const PARAM_NEWUI_SHOW_CHANNEL_COUNT = 'show_channel_count';
 const PARAM_NEWUI_SHOW_CONTINUES = 'show_continues';

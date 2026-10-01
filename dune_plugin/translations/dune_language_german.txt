@@ -392,6 +392,7 @@ setup_reboot_required = Um fortzufahren, muss das Plugin neu gestartet werden
 setup_restore_done = Einstellungen wiederhergestellt.
 setup_restore_patch = Die Systempalette wurde geändert!\nPalette auf die Standardwerte zurücksetzen?
 setup_restore_settings = Einstellungen zurücksetzen
+setup_search_by_groups = Suchergebnisse nach Gruppen aufteilen
 setup_settings_full_remote = Fernbedienung in voller Größe
 setup_settings_patch_palette = Patch-Palette
 setup_settings_protection = Einstellungsschutz

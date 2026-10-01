@@ -392,6 +392,7 @@ setup_reboot_required = 需要重启插件以继续
 setup_restore_done = 设置已恢复
 setup_restore_patch = 系统调色板已被修改!\n是否将调色板恢复为默认值？
 setup_restore_settings = 恢复设置
+setup_search_by_groups = 按分组拆分搜索结果
 setup_settings_full_remote = 全尺寸遥控器
 setup_settings_patch_palette = 调色板修复
 setup_settings_protection = 设置保护

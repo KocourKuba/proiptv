@@ -392,6 +392,7 @@ setup_reboot_required = Для применения внесенных изме�
 setup_restore_done = Резервная копия восстановлена.
 setup_restore_patch = Системная палитра была изменена!\nВернуть значения по умолчанию?
 setup_restore_settings = Восстановить из резервной копии
+setup_search_by_groups = Разбивать результаты поиска по группам
 setup_settings_full_remote = Полноразмерный пульт
 setup_settings_patch_palette = Исправление палитры
 setup_settings_protection = Защита настроек

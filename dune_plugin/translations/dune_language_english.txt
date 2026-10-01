@@ -392,6 +392,7 @@ setup_reboot_required = To continue need to reboot plugin
 setup_restore_done = Settings restored.
 setup_restore_patch = System palette was changed!\nRestore palette to default values?
 setup_restore_settings = Restore settings
+setup_search_by_groups = Split search results by groups
 setup_settings_full_remote = Full size remote
 setup_settings_patch_palette = Patch palette
 setup_settings_protection = Settings protection

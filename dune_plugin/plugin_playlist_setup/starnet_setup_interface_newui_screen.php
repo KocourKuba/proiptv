@@ -102,6 +102,12 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen
         Control_Factory::add_image_button($defs, $this, PARAM_NEWUI_SHOW_CONTINUES,
             TR::t('setup_show_continues'), SwitchOnOff::translate($continues), SwitchOnOff::to_image($continues));
 
+        //////////////////////////////////////
+        // Search results split by groups
+        $search_by_groups = $this->plugin->get_setting(PARAM_NEWUI_SEARCH_BY_GROUPS, SwitchOnOff::on);
+        Control_Factory::add_image_button($defs, $this, PARAM_NEWUI_SEARCH_BY_GROUPS,
+            TR::t('setup_search_by_groups'), SwitchOnOff::translate($search_by_groups), SwitchOnOff::to_image($search_by_groups));
+
         return $defs;
     }
 
@@ -133,6 +139,11 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen
             case PARAM_NEWUI_SHOW_CHANNEL_COUNT:
                 $this->plugin->toggle_setting($control_id, false);
                 $this->force_parent_reload = true;
+                break;
+
+            case PARAM_NEWUI_SEARCH_BY_GROUPS:
+                // only read when a search folder opens, nothing to reload
+                $this->plugin->toggle_setting($control_id, true);
                 break;
 
             case PARAM_NEWUI_SHOW_CHANNEL_CAPTION:

@@ -315,10 +315,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
             case ACTION_ITEM_DELETE:
                 hd_debug_print('MediaURL: ' . $media_url);
-                if ($media_url->{PARAM_GROUP_ID} === self::SEARCH_GROUP_ID) {
-                    // the search row is not a group that can be hidden
-                    break;
-                }
+                if (self::is_search_group_id($media_url->{PARAM_GROUP_ID})) break;
 
                 if ($is_sel_channel) {
                     hd_debug_print('Hide channel: ' . $media_url->{PARAM_CHANNEL_ID});
@@ -555,7 +552,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
         $this->plugin->set_parameter(PARAM_LAST_TV_SEARCH, $search_text);
 
-        $found = $this->plugin->search_channels($search_text);
+        $found = $this->plugin->search_channels($search_text, $this->plugin->get_bool_setting(PARAM_NEWUI_SEARCH_BY_GROUPS));
         if (empty($found)) {
             return $this->plugin->show_search_not_found($this);
         }
@@ -585,7 +582,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         if (isset($this->search_results[$search_text])) {
             $found = $this->search_results[$search_text];
         } else {
-            $found = $this->plugin->search_channels($search_text);
+            $found = $this->plugin->search_channels($search_text, $this->plugin->get_bool_setting(PARAM_NEWUI_SEARCH_BY_GROUPS));
         }
         $this->search_results = null;
 
@@ -602,39 +599,84 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         $fav_map = array_flip($this->plugin->get_channels_order($this->plugin->get_fav_id()));
         $fav_stickers = $this->get_fav_stickers();
 
-        $items = array();
+        // one row for the whole result, or one per group the channels were
+        // found in; search_channels() returns them in group order already
+        $split = $this->plugin->get_bool_setting(PARAM_NEWUI_SEARCH_BY_GROUPS);
+        $groups = array();
         foreach ($found as $channel_row) {
             $channel_id = $channel_row[COLUMN_CHANNEL_ID];
-            $items[] = Rows_Factory::add_regular_item(
-                PARAM_GROUP_ID . ':' . $channel_row[COLUMN_GROUP_ID] . ';' . PARAM_CHANNEL_ID . ':' . $channel_id,
+            $group_id = $channel_row[COLUMN_GROUP_ID];
+            $groups[$split ? $group_id : ''][] = Rows_Factory::add_regular_item(
+                PARAM_GROUP_ID . ':' . $group_id . ';' . PARAM_CHANNEL_ID . ':' . $channel_id,
                 $this->plugin->get_channel_picon($channel_row, false),
                 $channel_row[COLUMN_SHOW_TITLE],
                 isset($fav_map[$channel_id]) ? $fav_stickers : null
             );
         }
 
-        $text = str_replace('|', '¦', $search_text);
-        if ($this->plugin->get_bool_setting(PARAM_NEWUI_SHOW_CHANNEL_COUNT, false)) {
-            $text .= ' (' . count($items) . ')';
+        // the search rows are always clusters with a header, whatever the
+        // layout of the main pane: the header is what the icons line up with
+        $this->show_continues = false;
+
+        $show_count = $this->plugin->get_bool_setting(PARAM_NEWUI_SHOW_CHANNEL_COUNT, false);
+        $action = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
+        $rows = array();
+        $headers = array();
+        $regular_row = null;
+        $row_ndx = 0;
+        foreach ($groups as $group_id => $items) {
+            $text = str_replace('|', '¦', $split ? (string)$group_id : $search_text);
+            if ($show_count) {
+                $text .= ' (' . count($items) . ')';
+            }
+            $title = $split ? $text : TR::t('search__1', $text);
+
+            $row_id = self::SEARCH_GROUP_ID . $row_ndx++;
+            $collector = new Rows_Array_Collector();
+            $this->emit_group_rows($collector, $items, $row_id, $title, $title, $action,
+                $split ? null : TitleRowsParams::fav_caption_color);
+            $group_rows = $collector->get_rows();
+
+            unset($group_rows[0][PluginRow::options]);
+            $gap_row = Rows_Factory::vgap_row(1, 100);
+            $gap_row[PluginRow::options] = PLUGIN_ROW_OPT_FIRST_IN_CLUSTER;
+            $gap_row[PluginRow::header_id] = $row_id;
+            $gap_row[PluginRow::id] = 'vgap:' . $row_id;
+            $rows[] = $gap_row;
+            foreach ($group_rows as $row) {
+                $rows[] = $row;
+            }
+            $rows[] = Rows_Factory::vgap_row(1, 20);
+
+            foreach ($collector->get_headers() as $header) {
+                $headers[] = $header;
+            }
+
+            if ($regular_row === null) {
+                $regular_row = $group_rows[1];
+            }
         }
-        $title = TR::t('search__1', $text);
+        $rows[] = Rows_Factory::vgap_row(79, 60);
 
-        $collector = new Rows_Array_Collector();
-        $this->emit_group_rows($collector, $items,
-            self::SEARCH_GROUP_ID,
-            $title,
-            $title,
-            User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER),
-            TitleRowsParams::fav_caption_color
-        );
-        $rows = $collector->get_rows();
+        hd_debug_print('added search result: ' . count($found) . ' channels in ' . count($groups) . ' rows', true);
 
-        hd_debug_print('added search result: ' . count($items) . ' channels', true);
+        $pane = $this->create_row_pane($rows, $headers, 0);
+        $template = &$pane[PluginRowsPane::regular_item_params_templates]['common'];
+        $template[PluginRegularItemParams::def][PluginRegularItemVariableParams::height] = $regular_row[PluginRow::height];
+        $template[PluginRegularItemParams::sel][PluginRegularItemVariableParams::height] = $regular_row[PluginRow::height];
+        $template[PluginRegularItemParams::inactive][PluginRegularItemVariableParams::height] = $regular_row[PluginRow::inactive_height];
+        unset($template);
 
-        // 0 as in globaltv: rows before this index are laid out as the top
-        // rows of the main pane and keep their active height, which would
-        // drop the inactive height of the fake row above
-        return $this->create_row_pane($rows, $collector->get_headers(), 1);
+        $pane[PluginRowsPane::screen_y2] = 600;
+        // older firmware has no header params
+        if (defined('PluginRowsPane::header_font_size')) {
+            $pane[PluginRowsPane::header_font_size] = 33;
+            $pane[PluginRowsPane::header_min_font_size] = 20;
+            $pane[PluginRowsPane::max_header_width] = 410;
+            $pane[PluginRowsPane::min_header_width] = 410;
+        }
+
+        return $pane;
     }
 
     /**
@@ -654,6 +696,18 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         }
 
         return Action_Factory::invalidate_epfs_folders($plugin_cookies, $post_action);
+    }
+
+    /**
+     * Whether $group_id is the id of a search row: a search folder has one
+     * row, or one per group, with ids SEARCH_GROUP_ID followed by the row index.
+     *
+     * @param string|null $group_id
+     * @return bool
+     */
+    protected static function is_search_group_id($group_id)
+    {
+        return is_string($group_id) && strncmp($group_id, self::SEARCH_GROUP_ID, strlen(self::SEARCH_GROUP_ID)) === 0;
     }
 
     /**
@@ -1750,12 +1804,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, $action, $caption, PaneParams::fav_button_blue);
             }
 
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($this->plugin->new_search($this),
-                TR::t('search'), 'search.png');
-        } else if (safe_get_value($media_url, COLUMN_GROUP_ID) === self::SEARCH_GROUP_ID) {
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($this->plugin->new_search($this), TR::t('search'), 'search.png');
+        } else if (self::is_search_group_id(safe_get_value($media_url, COLUMN_GROUP_ID))) {
             // popup menu for the row of a search folder: nothing to edit there
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($this->plugin->new_search($this),
-                TR::t('new_search'), 'search.png');
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext($this->plugin->new_search($this), TR::t('new_search'), 'search.png');
         } else {
             // popup menu for left side list
             hd_debug_print('in menu side', true);

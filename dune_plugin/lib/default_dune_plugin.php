@@ -3726,13 +3726,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * Visible channels whose name contains $search_text, in group and channel
      * order. Both the name the user gave the channel and the playlist name are
      * matched. A channel that sits in several groups is listed once, under the
-     * first of them.
+     * first of them, or under each of them when $every_group is set.
      *
      * @param string $search_text
+     * @param bool $every_group
      * @return array channel rows ({@see Dune_Default_Sqlite_Engine::ICON_ITEM_COLUMNS})
      *               with the group they were found in under COLUMN_GROUP_ID
      */
-    public function search_channels($search_text)
+    public function search_channels($search_text, $every_group = false)
     {
         hd_debug_print("Search channel name: '$search_text'", true);
 
@@ -3742,7 +3743,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $group_id = $group_row[COLUMN_GROUP_ID];
             foreach ($this->get_channels_by_order($group_id, $show_adult, false, true) as $channel_row) {
                 $channel_id = $channel_row[COLUMN_CHANNEL_ID];
-                if (isset($found[$channel_id])) continue;
+                $key = $every_group ? $group_id . "\n" . $channel_id : $channel_id;
+                if (isset($found[$key])) continue;
 
                 if (mb_stripos($channel_row[COLUMN_SHOW_TITLE], $search_text, 0, 'UTF-8') === false
                     && mb_stripos($channel_row[COLUMN_TITLE], $search_text, 0, 'UTF-8') === false) {
@@ -3751,7 +3753,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                 hd_debug_print("found channel: '{$channel_row[COLUMN_SHOW_TITLE]}', id: $channel_id in group: '$group_id'", true);
                 $channel_row[COLUMN_GROUP_ID] = $group_id;
-                $found[$channel_id] = $channel_row;
+                $found[$key] = $channel_row;
             }
         }
 
