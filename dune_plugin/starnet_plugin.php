@@ -128,6 +128,8 @@ class Starnet_Plugin extends Default_Dune_Plugin
             $plugin_cookies->{PARAM_COOKIE_ENABLE_DEBUG} = SwitchOnOff::on;
         }
 
+        $native_indexer = Epg_Manager_Xmltv::can_use_helper();
+
         hd_print_separator();
         hd_print('Plugin name:             ' . HD::get_manifest_info_value('app_caption'));
         hd_print('Plugin version:          ' . HD::get_manifest_info_value('app_version'));
@@ -137,6 +139,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_print('NewUI support:           ' . SwitchOnOff::to_def(HD::rows_api_support()));
         hd_print('NewUI enabled:           ' . SwitchOnOff::to_def(Starnet_Epfs_Handler::$enabled));
         hd_print('Ext EPG support:         ' . SwitchOnOff::to_def(is_ext_epg_supported()));
+        hd_print('Native XMLTV indexer:    ' . SwitchOnOff::to_def($native_indexer) . ($native_indexer ? '' : ' (' . Epg_Manager_Xmltv::get_helper_reason() . ')'));
         hd_print('Debug log enabled:       ' . safe_get_value($plugin_cookies,PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off));
 
         print_sysinfo();

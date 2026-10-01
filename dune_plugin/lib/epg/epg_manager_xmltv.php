@@ -56,6 +56,24 @@ class Epg_Manager_Xmltv
     const INDEX_BLOCK_SIZE = 65536;
 
     /**
+     * Native command line indexer in bin/ (built by arm_indexer/build.sh). It is the normal way
+     * the index is built - it does the same work several times faster than php and, unlike php,
+     * can address a source larger than 2Gb. The php implementation stays as the fallback for
+     * everything the binary does not fit.
+     */
+    const INDEX_HELPER = 'xmltv_indexer';
+
+    /**
+     * Abi the shipped helper is built for.
+     */
+    const INDEX_HELPER_ABI = 'armeabi-v7a';
+
+    /**
+     * Firmware revision the helper is used from. Older firmware keeps the php path.
+     */
+    const INDEX_HELPER_MIN_REV = 22;
+
+    /**
      * Cache time in days used in XMLTV_CACHE_AUTO mode when the server does not provide an ETag
      */
     const AUTO_CACHE_FALLBACK_DAYS = 1;
@@ -131,6 +149,12 @@ class Epg_Manager_Xmltv
      * @var array
      */
     protected static $delayed_epg = array();
+
+    /**
+     * Why can_use_helper() said no, empty when the native indexer is in use
+     * @var string
+     */
+    protected static $helper_skip_reason = '';
 
     /**
      * @param Hashed_Array<string, array> $sources
@@ -241,11 +265,15 @@ class Epg_Manager_Xmltv
                     }
 
                     foreach ($positions as $pos) {
-                        fseek32($handle, $pos['start']);
-                        $length = $pos['end'] - $pos['start'];
+                        // offsets past PHP_INT_MAX come back from sqlite as strings, so the
+                        // arithmetic is done in float to keep them intact
+                        $length = (float)$pos['end'] - (float)$pos['start'];
                         if ($length <= 0) continue;
 
-                        $xml_str = "<tv>" . fread($handle, $pos['end'] - $pos['start']) . "</tv>";
+                        $block = self::read_cached_range($handle, $cached_file, $pos['start'], $length);
+                        if ($block === false) continue;
+
+                        $xml_str = "<tv>" . $block . "</tv>";
 
                         $xml_node = new DOMDocument();
                         if ($xml_node->loadXML($xml_str, LIBXML_NOWARNING | LIBXML_NOERROR) === false) {
@@ -575,11 +603,26 @@ class Epg_Manager_Xmltv
             $entries_valid = ($indexed[self::TABLE_ENTRIES] !== -1);
         }
 
+        // Drop the passes whose index is already there. $new_index_flag starts as everything the
+        // caller asked for and the checks below only ever add to it, so without this it could never
+        // reach 0 and every call rebuilt the index from scratch - including the channels pass, which
+        // reads the whole file. The picons-only path (delay_load_picons, which asks for
+        // INDEXING_CHANNELS alone) paid that on every playlist load.
+        if ($channels_valid) {
+            $new_index_flag &= ~INDEXING_CHANNELS;
+        }
+
+        if ($entries_valid) {
+            $new_index_flag &= ~INDEXING_ENTRIES;
+        }
+
         if (!$entries_valid && ($index_flag & INDEXING_ENTRIES) !== 0) {
             $new_index_flag |= INDEXING_ENTRIES;
             hd_debug_print("Xmltv entries '$hash' not valid. Indexing flags: $new_index_flag");
         }
 
+        // not gated on what the caller asked for: the entries index is matched to channels through
+        // the aliases in epg_channels, so it is of no use without them
         if (!$channels_valid) {
             $new_index_flag |= INDEXING_CHANNELS;
             hd_debug_print("Xmltv channels '$hash' not valid. Indexing flags: $new_index_flag");
@@ -722,6 +765,50 @@ class Epg_Manager_Xmltv
             return;
         }
 
+        /// The native indexer builds every table in one go, so it replaces both passes below.
+        /// It only gets skipped where it does not fit - see can_use_helper() - and a run that
+        /// fails falls through to php rather than leaving the index half built.
+        if (($new_flag & (INDEXING_CHANNELS | INDEXING_ENTRIES)) !== 0 && self::can_use_helper()) {
+            self::lock_index($url_hash, INDEXING_CHANNELS | INDEXING_ENTRIES);
+            $perf->setLabel('start_helper');
+
+            $indexed = self::index_with_helper($cached_file, $db, $url_hash);
+
+            if ($indexed) {
+                fclose($file);
+                $perf->setLabel('end_helper');
+                $report = $perf->getFullReport('start_helper', 'end_helper');
+
+                // the helper records its own per-pass timings in epg_stat, this is the total
+                $db = self::open_sqlite_db($url_hash, true);
+                if ($db !== false) {
+                    $channels = (int)$db->query_value(sprintf(Sql_Wrapper::SELECT_COUNT_DISTINCT, COLUMN_CHANNEL_ID, self::TABLE_CHANNELS));
+                    $picons = (int)$db->query_value(sprintf(Sql_Wrapper::SELECT_COUNT, self::TABLE_PICONS));
+                    $total_epg = (int)$db->query_value(sprintf(Sql_Wrapper::SELECT_COUNT_DISTINCT, COLUMN_CHANNEL_ID, self::TABLE_ENTRIES));
+                    $total_blocks = (int)$db->query_value(sprintf(Sql_Wrapper::SELECT_COUNT, self::TABLE_ENTRIES));
+                    hd_debug_print("Total channels id's: $channels");
+                    hd_debug_print("Total known picons:  $picons");
+                    hd_debug_print("Total unique epg id's indexed: $total_epg, total blocks: $total_blocks");
+                }
+
+                hd_debug_print("Indexing with " . self::INDEX_HELPER . ": {$report[Perf_Collector::TIME]} secs");
+                hd_debug_print('Storage space:       ' . HD::get_storage_size(self::$cache_dir));
+                hd_print_separator();
+
+                self::unlock_index($url_hash, INDEXING_CHANNELS | INDEXING_ENTRIES);
+                return;
+            }
+
+            // reopen what index_with_helper() closed and carry on with php
+            self::unlock_index($url_hash, INDEXING_CHANNELS | INDEXING_ENTRIES);
+            $db = self::open_sqlite_db($url_hash, false);
+            if ($db === false) {
+                fclose($file);
+                hd_debug_print("reindex_xmltv: Can't reopen db: $url_hash");
+                return;
+            }
+        }
+
         /// Reindex channels and picons
         if ($new_flag & INDEXING_CHANNELS) {
             hd_debug_print('Start index channels and picons...');
@@ -759,14 +846,22 @@ class Epg_Manager_Xmltv
             }
             $db->exec(Sql_Wrapper::BEGIN_TRANSACTION);
             $indexed_channels = 0;
-            // The elements are cut out of a forward-only buffer and handed over in batches. The
-            // previous implementation seeked back and forth over every element (once to find
-            // </channel>, once to read it back) and built a DOMDocument per channel.
+            // The elements are cut out of a forward-only buffer and handed over in batches, so no
+            // element is read twice and one libxml parser serves a whole batch.
+            //
+            // The whole file is scanned. XMLTV declares <!ELEMENT tv (channel*, programme*)> and
+            // an earlier version of this stopped at the first <programme> on the strength of it,
+            // but real sources do not keep to it: one of the test sources emits 2810 of its 6581
+            // channels about 1.1Gb in, behind millions of <programme> elements, and those channels
+            // were silently never indexed. The scan costs one strpos() per block over data that is
+            // mostly programmes, which is cheap next to reading the file in the first place.
+            //
+            // Reads stay sequential, so this also works on a file larger than the 2Gb an offset
+            // can address on this php - unlike the entries pass below.
             $buffer = '';
             $pending = array();
             $eof = false;
-            $done = false;
-            while (!$done) {
+            while (true) {
                 if (!$eof) {
                     $chunk = fread($file, self::CHANNELS_BLOCK_SIZE);
                     if ($chunk === false || $chunk === '') {
@@ -777,44 +872,53 @@ class Epg_Manager_Xmltv
                     }
                 }
 
-                // cut out every <channel id ...> ... </channel> the buffer already holds
+                // cut out every complete <channel ...> ... </channel> the buffer already holds
                 $consumed = 0;
-                while (($start = strpos($buffer, '<channel id', $consumed)) !== false) {
-                    $end = strpos($buffer, '</channel>', $start + 11);
-                    if ($end === false) break;
-                    $pending[] = substr($buffer, $start, $end + 10 - $start);
+                $pending_at = false;
+                while (($at = strpos($buffer, '<channel', $consumed)) !== false) {
+                    if (!isset($buffer[$at + 8])) {
+                        // the tag name itself is cut by the read boundary, wait for more
+                        $pending_at = $at;
+                        break;
+                    }
+
+                    // '<channels>' and '<channel-something' are other elements. The attributes are
+                    // not required to start with id= - index_channels_batch() reads the id off the
+                    // parsed element, so any order works.
+                    $after = $buffer[$at + 8];
+                    if ($after !== ' ' && $after !== "\t" && $after !== "\r" && $after !== "\n" && $after !== '>') {
+                        $consumed = $at + 8;
+                        continue;
+                    }
+
+                    $end = strpos($buffer, '</channel>', $at + 8);
+                    if ($end === false) {
+                        $pending_at = $at;
+                        break;
+                    }
+
+                    $pending[] = substr($buffer, $at, $end + 10 - $at);
                     $consumed = $end + 10;
                 }
 
-                if ($start === false) {
-                    // XMLTV declares <!ELEMENT tv (channel*, programme*)> - every <channel> comes
-                    // before the first <programme>, so once programmes start there is nothing left
-                    // to index here. Without this the loop walks the whole file (hundreds of Mb of
-                    // <programme> data) only to find nothing. Bail out only after at least one
-                    // channel was seen, so a source using an unusual order is still handled.
-                    if (($indexed_channels !== 0 || !empty($pending))
-                        && strpos($buffer, '<programme', $consumed) !== false) {
-                        $done = true;
-                    }
+                if ($pending_at === false) {
                     // keep a short tail so an open tag split across two reads is still matched
-                    $keep = strlen($buffer) - 11;
+                    $keep = strlen($buffer) - 8;
                     $buffer = ($keep > $consumed) ? substr($buffer, $keep) : substr($buffer, $consumed);
-                } else if (strlen($buffer) - $start > self::MAX_CHANNEL_ELEMENT_SIZE) {
+                } else if (strlen($buffer) - $pending_at > self::MAX_CHANNEL_ELEMENT_SIZE) {
                     // unterminated <channel> - drop it instead of buffering the rest of the file
                     hd_debug_print('Unterminated <channel> element, skipped');
-                    $buffer = substr($buffer, $start + 11);
+                    $buffer = substr($buffer, $pending_at + 8);
                 } else {
-                    $buffer = substr($buffer, $start);
+                    $buffer = substr($buffer, $pending_at);
                 }
 
-                if ($eof) {
-                    $done = true;
-                }
-
-                if (!empty($pending) && ($done || count($pending) >= self::CHANNELS_BATCH_SIZE)) {
+                if (!empty($pending) && ($eof || count($pending) >= self::CHANNELS_BATCH_SIZE)) {
                     $indexed_channels += self::index_channels_batch($pending, $picon_stmt, $alias_stmt);
                     $pending = array();
                 }
+
+                if ($eof) break;
             }
             if ($db->exec(Sql_Wrapper::COMMIT_TRANSACTION) === false) {
                 fclose($file);
@@ -852,6 +956,29 @@ class Epg_Manager_Xmltv
 
             hd_debug_print("Indexing positions for: '$cached_file' by '$url'", true);
             $perf->setLabel('start_reindex_entries');
+
+            // fstat() reports the size in a 32-bit signed int on this php, so a file over 2Gb comes
+            // back negative - which used to make the scan below exit before its first iteration and
+            // index nothing at all, silently. Reinterpret the value, then decide who indexes it: the
+            // rows hold byte offsets that get_day_epg_items() seeks to, and this build cannot
+            // position a stream past PHP_INT_MAX.
+            $stat = fstat($file);
+            $file_size = (float)$stat['size'];
+            if ($file_size < 0) {
+                $file_size = (float)sprintf('%u', $stat['size']);
+            }
+
+            $scan_limit = $file_size;
+            if ($scan_limit > PHP_INT_MAX) {
+                // Only reached when the native indexer was not used - it handles the whole file,
+                // and reindex_xmltv() has already returned by this point when it ran. Here the
+                // rows can only cover what php can seek to.
+                $scan_limit = (float)PHP_INT_MAX;
+                $msg = sprintf('XMLTV file is %.0f bytes, only the first %d can be indexed by php',
+                    $file_size, PHP_INT_MAX);
+                hd_debug_print($msg);
+                Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $msg);
+            }
 
             $query = sprintf(Sql_Wrapper::DROP_TABLE_IF_EXISTS, self::TABLE_ENTRIES);
             $query .= self::CREATE_ENTRIES_TABLE;
@@ -908,8 +1035,7 @@ class Epg_Manager_Xmltv
             // through to the general path, which re-learns the offset, so a source that does not
             // keep its attributes in a fixed order still indexes correctly, only without the
             // shortcut.
-            $stat = fstat($file);
-            $file_size = $stat['size'];
+            //
             $block_pos = 0;
             $attr_offset = 0;
             $probe = null;
@@ -917,13 +1043,13 @@ class Epg_Manager_Xmltv
             $probe_end = 0;
             $use_regex = false;
             $since_sample = 0;
-            while ($block_pos < $file_size) {
-                fseek32($file, $block_pos);
+            while ($block_pos < $scan_limit) {
+                if (fseek32($file, $block_pos) !== 0) break;
                 $block = fread($file, self::INDEX_BLOCK_SIZE);
                 if ($block === false || $block === '') break;
 
                 $block_len = strlen($block);
-                $last_block = ($block_pos + $block_len >= $file_size);
+                $last_block = ($block_pos + $block_len >= $scan_limit);
 
                 // Positions at or after $limit are left to the next block: the open tag starting
                 // there may be cut in half by the block boundary.
@@ -1052,10 +1178,11 @@ class Epg_Manager_Xmltv
                 }
 
                 if ($last_block) {
-                    // close the trailing block at </tv>
-                    $end_tv = strpos($block, '</tv>');
-                    if ($end_tv !== false && $prev_channel !== null) {
-                        $tag_end_pos = $block_pos + $end_tv;
+                    // close the trailing block at </tv>, or at the end of what was scanned when
+                    // the file has no closing tag or was cut off at the addressable limit
+                    if ($prev_channel !== null) {
+                        $end_tv = strpos($block, '</tv>');
+                        $tag_end_pos = ($end_tv !== false) ? $block_pos + $end_tv : $block_pos + $block_len;
                         $stm->execute();
                     }
                     break;
@@ -1504,6 +1631,181 @@ class Epg_Manager_Xmltv
         }
 
         return $ext;
+    }
+
+    /**
+     * Path of the native indexer, or null when it is not installed for this platform.
+     *
+     * It is an ordinary command line tool built for the device (see arm_indexer). The only
+     * thing it does that this php cannot is address a file past 2Gb: php is built with 32-bit
+     * integers here, so fseek() simply fails beyond PHP_INT_MAX. Everything keeps working without
+     * it, just capped at that point.
+     *
+     * @return string|null
+     */
+    protected static function get_index_helper()
+    {
+        static $helper = false;
+
+        if ($helper === false) {
+            $helper = null;
+            $path = get_install_path('bin/' . self::INDEX_HELPER);
+            if (file_exists($path)) {
+                if (!is_executable($path)) {
+                    @chmod($path, 0755);
+                }
+                if (is_executable($path)) {
+                    $helper = $path;
+                    hd_debug_print("Native xmltv indexer: $helper", true);
+                } else {
+                    hd_debug_print("Native xmltv indexer is not executable: $path");
+                }
+            }
+        }
+
+        return $helper;
+    }
+
+    /**
+     * Is the native indexer the one that should build the index on this box?
+     *
+     * It is preferred wherever it fits, and the php implementation is the fallback for the cases
+     * it does not cover:
+     *  - a cpu abi other than the one the binary is built for (includes the windows dev machine),
+     *  - firmware older than r22,
+     *  - the limited apk, which is not allowed to run bundled binaries,
+     *  - the binary simply not being installed.
+     *
+     * @return bool
+     */
+    public static function can_use_helper()
+    {
+        static $can = null;
+
+        if ($can === null) {
+            $reason = '';
+            if (is_limited_apk()) {
+                $reason = 'limited apk';
+            } else if (get_cpu_abi() !== self::INDEX_HELPER_ABI) {
+                $reason = 'cpu abi is ' . get_cpu_abi() . ', helper is ' . self::INDEX_HELPER_ABI;
+            } else {
+                // only consult the firmware when it was actually detected, parsing 'Not detected'
+                // produces nothing useful
+                if (get_raw_firmware_version() !== 'Not detected') {
+                    $rev = (int)safe_get_value(get_parsed_firmware_ver(), 'rev_number', 0);
+                    if ($rev !== 0 && $rev < self::INDEX_HELPER_MIN_REV) {
+                        $reason = "firmware r$rev is older than r" . self::INDEX_HELPER_MIN_REV;
+                    }
+                }
+            }
+
+            if ($reason === '' && self::get_index_helper() === null) {
+                $reason = 'bin/' . self::INDEX_HELPER . ' is not installed';
+            }
+
+            $can = ($reason === '');
+            self::$helper_skip_reason = $reason;
+            hd_debug_print($can
+                ? 'Indexing with bin/' . self::INDEX_HELPER
+                : 'Indexing with php, ' . self::INDEX_HELPER . ' not used: ' . $reason);
+        }
+
+        return $can;
+    }
+
+    /**
+     * Why the native indexer is not used, empty when it is. Only meaningful once
+     * can_use_helper() has been called.
+     *
+     * @return string
+     */
+    public static function get_helper_reason()
+    {
+        return self::$helper_skip_reason;
+    }
+
+    /**
+     * Hand the whole index over to the native helper.
+     *
+     * The helper rebuilds epg_channels, epg_picons and epg_entries itself, so the php connection is
+     * closed first and reopened by the caller afterwards. Returns false when the helper is absent
+     * or did not produce an index, and leaves the database untouched in that case so the caller can
+     * fall back to indexing as much as it can reach.
+     *
+     * @param string $cached_file
+     * @param Sql_Wrapper $db
+     * @param string $url_hash
+     * @return bool
+     */
+    protected static function index_with_helper($cached_file, $db, $url_hash)
+    {
+        $helper = self::get_index_helper();
+        if ($helper === null) {
+            return false;
+        }
+
+        $db_path = $db->get_db_path();
+        $cmd = sprintf('%s index %s %s 2>&1',
+            escapeshellarg($helper), escapeshellarg($cached_file), escapeshellarg($db_path));
+        hd_debug_print("exec: $cmd", true);
+
+        // the helper writes the same database, so nothing of ours may be holding it open
+        $db->close();
+        unset(self::$epg_db[$url_hash]);
+
+        $out = trim((string)shell_exec($cmd));
+        hd_debug_print(self::INDEX_HELPER . ": $out");
+
+        /** @var array $m */
+        if (!preg_match('/\bentries=(\d+)/', $out, $m) || (int)$m[1] === 0) {
+            hd_debug_print(self::INDEX_HELPER . ' produced no index, falling back to php');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Read one indexed block out of the cached xmltv file.
+     *
+     * Blocks that start inside the first 2Gb are read through the already open handle. Past that
+     * this php cannot seek at all, so the bytes are fetched with the native helper - the index may
+     * well contain such offsets, because the helper is what wrote them.
+     *
+     * @param resource $handle
+     * @param string $cached_file
+     * @param int|string $start
+     * @param float $length
+     * @return string|false
+     */
+    protected static function read_cached_range($handle, $cached_file, $start, $length)
+    {
+        $end = (float)$start + $length;
+        if ($end <= PHP_INT_MAX) {
+            if (fseek32($handle, (int)$start) !== 0) {
+                hd_debug_print("Can't seek to $start in $cached_file");
+                return false;
+            }
+            return fread($handle, (int)$length);
+        }
+
+        $helper = self::get_index_helper();
+        if ($helper === null) {
+            hd_debug_print("Block at $start is past the addressable limit and "
+                . self::INDEX_HELPER . ' is not installed');
+            return false;
+        }
+
+        $cmd = sprintf('%s range %s %s %s',
+            escapeshellarg($helper),
+            escapeshellarg($cached_file),
+            sprintf('%.0f', (float)$start),
+            sprintf('%.0f', $length));
+
+        hd_debug_print("Read block over the 2Gb mark: $cmd", true);
+        $block = shell_exec($cmd);
+
+        return ($block === null || $block === '') ? false : $block;
     }
 
     /**

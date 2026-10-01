@@ -756,6 +756,35 @@ function get_platform_info()
 }
 
 /**
+ * Android abi name of the running userland, so a bundled native binary can be matched against it.
+ *
+ * Derived from php_uname() rather than getprop, which keeps it cheap and works off-device too.
+ * The boxes report armv7l (Dune4K) or armv8l (Dune8K) - an ARMv8 core with a 32-bit userland -
+ * and both take an armeabi-v7a binary. A 64-bit userland reports aarch64 and is a different abi.
+ *
+ * @return string
+ */
+function get_cpu_abi()
+{
+    static $abi = null;
+
+    if (is_null($abi)) {
+        $machine = php_uname('m');
+        /** @var array $m */
+        if (preg_match('/^armv(\d+)/i', $machine, $m)) {
+            $abi = ((int)$m[1] >= 7) ? 'armeabi-v7a' : 'armeabi';
+        } else if (strcasecmp($machine, 'aarch64') === 0 || strcasecmp($machine, 'arm64') === 0) {
+            $abi = 'arm64-v8a';
+        } else {
+            $abi = strtolower($machine);
+        }
+        hd_debug_print("cpu abi: $abi (machine: $machine)", true);
+    }
+
+    return $abi;
+}
+
+/**
  * @return string
  */
 function get_platform_curl()
@@ -1192,13 +1221,14 @@ function fseek32($fp, $pos, $flag = SEEK_SET, $first = 0)
 
     // within limits, use normal fseek
     if ($pos <= PHP_INT_MAX) {
-        fseek($fp, $pos, $flag);
-    } else {
-        // out of limits, use recursive fseek
-        fseek($fp, PHP_INT_MAX, $flag);
-        $pos -= PHP_INT_MAX;
-        fseek32($fp, $pos, $flag);
+        return fseek($fp, (int)$pos, $flag);
     }
+
+    // Out of limits. This php is built with 32-bit integers and a 32-bit file offset, so the
+    // stream cannot be positioned here at all: splitting the seek into PHP_INT_MAX-sized SEEK_CUR
+    // steps fails as soon as the resulting position would pass 2Gb. Report the failure instead of
+    // leaving the handle somewhere else - a caller that reads on regardless gets wrong data.
+    return -1;
 }
 
 /**

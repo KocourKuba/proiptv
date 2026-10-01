@@ -1,0 +1,3 @@
+# intermediate build tree: the sqlite amalgamation copy, object output and the host validation
+# binary. The shipped artifact is installed into dune_plugin/bin/xmltv_index by build.sh.
+build/
