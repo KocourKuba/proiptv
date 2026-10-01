@@ -183,6 +183,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_PLUGIN_INFO:
                 return $this->plugin->get_plugin_info_dlg($this);
 
+            case ACTION_PLUGIN_INFO_GITHUB:
+                return $this->plugin->get_plugin_info_dlg($this, true);
+
             case ACTION_DONATE_DLG: // show donate QR codes
                 return $this->plugin->do_donate_dialog();
 

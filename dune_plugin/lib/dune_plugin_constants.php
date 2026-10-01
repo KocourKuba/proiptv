@@ -93,6 +93,7 @@ const ACTION_PL_TYPE_DLG_APPLY = 'pl_type_dlg_apply';
 const ACTION_PLAY_FOLDER = 'play_folder';
 const ACTION_PLAY_ITEM = 'play_item';
 const ACTION_PLUGIN_INFO = 'plugin_info';
+const ACTION_PLUGIN_INFO_GITHUB = 'plugin_info_github';
 const ACTION_PLUGIN_SETTINGS = 'plugin_settings';
 const ACTION_QUALITY = 'quality';
 const ACTION_REFRESH_SCREEN = 'refresh_screen';

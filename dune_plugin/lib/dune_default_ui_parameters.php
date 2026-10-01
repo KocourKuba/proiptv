@@ -253,26 +253,42 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
     /**
      * @param User_Input_Handler $handler
+     * @param bool $from_github show changelog downloaded from github instead of installed one
      * @return array
      */
-    public function get_plugin_info_dlg($handler)
+    public function get_plugin_info_dlg($handler, $from_github = false)
     {
-        static $history_txt;
+        static $history_txt = array();
 
-        $lang = strtolower(TR::get_current_language());
-        if (empty($history_txt)) {
-            $doc = Curl_Wrapper::getInstance()->download_content(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md",
-                0, Curl_Wrapper::CACHE_RESPONSE);
-            if ($doc === false) {
-                hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
+        $key = $from_github ? 'github' : 'local';
+        if (empty($history_txt[$key])) {
+            $lang = strtolower(TR::get_current_language());
+            $doc = false;
+            if ($from_github) {
+                $doc = Curl_Wrapper::getInstance()->download_content(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md",
+                    0, Curl_Wrapper::CACHE_RESPONSE);
+                if ($doc === false) {
+                    $doc = Curl_Wrapper::getInstance()->download_content(self::CHANGELOG_URL_PREFIX . "changelog.english.md",
+                        0, Curl_Wrapper::CACHE_RESPONSE);
+                }
+                if ($doc === false) {
+                    hd_debug_print("Failed to get actual changelog.$lang.md from github");
+                }
+            } else {
                 $path = get_install_path("changelog.$lang.md");
                 if (!file_exists($path)) {
                     $path = get_install_path('changelog.english.md');
                 }
-                $doc = file_get_contents($path);
+                if (file_exists($path)) {
+                    $doc = file_get_contents($path);
+                }
             }
 
-            $history_txt = str_replace(array('###', "\r"), '', $doc);
+            if ($doc === false) {
+                return Action_Factory::show_error(false, TR::t('err_load_changelog'));
+            }
+
+            $history_txt[$key] = str_replace(array('###', "\r"), '', $doc);
         }
 
         $defs = array();
@@ -285,7 +301,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             }
         }
 
-        Control_Factory::add_multiline_label($defs, null, $history_txt, 14);
+        Control_Factory::add_multiline_label($defs, null, $history_txt[$key], 14);
         Control_Factory::add_vgap($defs, 20);
 
         $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
@@ -298,6 +314,11 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         Control_Factory::add_smart_label($defs, $text);
         Control_Factory::add_vgap($defs, -80);
 
+        if ($from_github) {
+            Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_PLUGIN_INFO, TR::t('setup_changelog_installed'));
+        } else {
+            Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_PLUGIN_INFO_GITHUB, TR::t('setup_changelog_github'));
+        }
         Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_DONATE_DLG, TR::t('setup_donate_title'));
         Control_Factory::add_ok_button($defs, true);
         Control_Factory::add_vgap($defs, 10);
