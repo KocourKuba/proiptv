@@ -1651,9 +1651,6 @@ class Epg_Manager_Xmltv
             $helper = null;
             $path = get_install_path('bin/' . self::INDEX_HELPER);
             if (file_exists($path)) {
-                if (!is_executable($path)) {
-                    @chmod($path, 0755);
-                }
                 if (is_executable($path)) {
                     $helper = $path;
                     hd_debug_print("Native xmltv indexer: $helper", true);

@@ -252,23 +252,6 @@ class vod_mirkino extends vod_standard
         hd_debug_print(null, true);
 
         $collections = safe_get_value($this->jfc->getUserViews(), 'Items', array());
-        /*
-        $exist_filters = array(
-            'source' => array(
-                'title' => TR::load('category'),
-                'values' => array()),
-            'genre' => array(
-                'title' => TR::load('genre'),
-                'values' => array(-1 => TR::t('no'))),
-            'years' => array(
-                'title' => TR::load('year'),
-                'values' => array(-1 => TR::t('no'))),
-        );
-
-        $genres = array();
-        $years = array();
-        */
-
         $this->category_index = array();
         foreach ($collections as $collection) {
             if (safe_get_value($collection, 'Type') != "CollectionFolder") continue;
@@ -292,33 +275,9 @@ class vod_mirkino extends vod_standard
             $name = safe_get_value($collection, 'Name', 'no name');
             $icon = $this->jfc->getItemImageUrl($id, 'Primary', 400, 0, 'Jpg');
             $this->category_index[$id] = new Vod_Category($sid, $name . " ($movie_count)", null, $icon);
-            /*
-            // Not supported yet!!!
-            $exist_filters['source']['values'][$id] = $name;
-            $query_params = array('ParentId' => $id, 'recursive' => 'true');
-            $jsonData = $this->jfc->getFilters($query_params);
-
-            foreach (safe_get_value($jsonData, 'Genres', array()) as $filter) {
-                $genres[$filter] = $filter;
-            }
-
-            foreach (safe_get_value($jsonData, 'Years', array()) as $filter) {
-                $years[$filter] = $filter;
-            }
-            */
         }
 
-        /*
-        ksort($genres);
-        krsort($years);
-
-        $exist_filters['genre']['values'] += $genres;
-        $exist_filters['years']['values'] += $years;
-
-        $this->set_filter_types($exist_filters);
-        */
         hd_debug_print('Categories read: ' . count($this->category_index));
-        //hd_debug_print('Filters count: ' . count($exist_filters));
 
         return true;
     }
