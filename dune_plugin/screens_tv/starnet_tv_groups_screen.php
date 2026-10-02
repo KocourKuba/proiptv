@@ -71,10 +71,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
             );
         }
 
-        if (!is_limited_apk()) {
-            // this key used to fire event from background xmltv indexing script
-            $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
-        }
+        // this key used to fire event from background xmltv indexing script
+        $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
 
         if (!$this->plugin->is_plugin_inited()) {
             $this->plugin->init_plugin();
@@ -117,12 +115,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $error_msg);
                 }
 
-                if (!is_limited_apk()) {
-                    return null;
-                }
-                $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
-                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map(), 1000);
-                return Action_Factory::composite($actions);
+                return null;
 
             case EVENT_INDEXING_DONE:
                 return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);

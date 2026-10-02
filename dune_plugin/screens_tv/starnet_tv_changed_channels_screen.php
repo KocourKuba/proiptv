@@ -66,7 +66,6 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
 
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
         $actions[GUI_EVENT_KEY_CLEAR] = $remove;
 
@@ -74,10 +73,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         $actions[GUI_EVENT_KEY_D_BLUE] = $remove;
 
 
-        if (!is_limited_apk()) {
-            // this key used to fire event from background xmltv indexing script
-            $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
-        }
+        // this key used to fire event from background xmltv indexing script
+        $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
 
         $this->plugin->add_shortcuts_handlers($this, $actions);
 
@@ -120,13 +117,6 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
 
                 Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
                 return $post_action;
-
-            case GUI_EVENT_TIMER:
-                if (!is_limited_apk()) break;
-
-                $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
-                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map(), 1000);
-                return Action_Factory::composite($actions);
 
             case EVENT_INDEXING_DONE:
                 return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);

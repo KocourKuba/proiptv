@@ -74,10 +74,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_CLEAR_CACHE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
-        if (!is_limited_apk()) {
-            // this key used to fire event from background xmltv indexing script
-            $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
-        }
+        // this key used to fire event from background xmltv indexing script
+        $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
         return $actions;
     }
 
@@ -134,10 +132,6 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::composite($actions);
 
             case GUI_EVENT_TIMER:
-                if (is_limited_apk()) {
-                    $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
-                }
-
                 if (isset($plugin_cookies->ticker)) {
                     $actions[] = Action_Factory::change_behaviour($this->do_get_action_map(), self::REFRESH_TIMER);
                 }

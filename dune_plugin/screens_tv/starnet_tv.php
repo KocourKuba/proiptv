@@ -68,9 +68,9 @@ class Starnet_Tv implements User_Input_Handler
 
         $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+        // this key used to fire event from background xmltv indexing script
+        $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
         if (!is_limited_apk() && $this->plugin->get_bool_parameter(PARAM_SLEEP_TIMER_ENABLED)) {
-            // this key used to fire event from background xmltv indexing script
-            $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
             $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER_CLEAR);
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER_ADD);
             $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER);
@@ -114,10 +114,6 @@ class Starnet_Tv implements User_Input_Handler
         $browser_active = isset($user_input->playback_browser_activated) && (int)$user_input->playback_browser_activated === 1;
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
-                if (is_limited_apk()) {
-                    return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies, Action_Factory::change_behaviour($this->do_get_action_map(), 1000));
-                }
-
                 $sleep_timer = Sleep_Timer::get_sleep_timer();
                 hd_debug_print("Sleep time remaining: $sleep_timer seconds", true);
 

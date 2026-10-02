@@ -1255,6 +1255,25 @@ function send_ir_code($key)
 }
 
 /**
+ * Send IR code through the firmware http command server.
+ * Unlike /proc/ir/button it also works on ATV (limited apk), where the event still reaches the plugin.
+ *
+ * @param string $key
+ * @return bool
+ */
+function send_ir_code_http($key)
+{
+    if (!isset(DuneIrControl::$key_codes[$key])) {
+        hd_debug_print("Code of key '$key' not found in base!");
+        return false;
+    }
+
+    $url = 'http://127.0.0.1:' . http_local_port() . '/cgi-bin/do?cmd=ir_code&ir_code=' . DuneIrControl::$key_codes[$key];
+    $status = shell_exec('wget -q -O - "' . $url . '"');
+    return strpos($status, '"command_status" value="ok"') !== false;
+}
+
+/**
  * @param string $key
  * @return string
  */

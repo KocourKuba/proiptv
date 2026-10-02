@@ -485,13 +485,11 @@ class Epg_Manager_Xmltv
             Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $ex->getMessage());
         }
 
-        if (is_limited_apk()) {
-            return;
-        }
-
         if (self::check_active_plugin_folder()) {
             hd_print('Rise finishing event: ' . DuneIrControl::$key_codes[EVENT_INDEXING_DONE]);
-            shell_exec('echo ' . DuneIrControl::$key_codes[EVENT_INDEXING_DONE] . ' > /proc/ir/button');
+            if (!send_ir_code_http(EVENT_INDEXING_DONE)) {
+                hd_print('Failed to send finishing event');
+            }
         } else {
             hd_print('Plugin not active. Do not notify them');
         }

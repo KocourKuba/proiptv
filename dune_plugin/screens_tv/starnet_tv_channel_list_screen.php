@@ -83,10 +83,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_D_BLUE] = $add_to_favorite;
         $actions[GUI_EVENT_KEY_DUNE] = $add_to_favorite;
 
-        if (!is_limited_apk()) {
-            // this key used to fire event from background xmltv indexing script
-            $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
-        }
+        // this key used to fire event from background xmltv indexing script
+        $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
 
         $this->plugin->add_shortcuts_handlers($this, $actions);
 
@@ -127,11 +125,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $error_msg);
                 }
 
-                if (!is_limited_apk()) break;
-
-                $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
-                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map($parent_media_url), 1000);
-                return Action_Factory::composite($actions);
+                break;
 
             case EVENT_INDEXING_DONE:
                 return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);

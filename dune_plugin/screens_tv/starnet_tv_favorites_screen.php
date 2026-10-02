@@ -67,13 +67,10 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
         $actions[GUI_EVENT_KEY_SUBTITLE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_SUBTITLE);
-        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
 
-        if (!is_limited_apk()) {
-            // this key used to fire event from background xmltv indexing script
-            $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
-        }
+        // this key used to fire event from background xmltv indexing script
+        $actions[EVENT_INDEXING_DONE] = User_Input_Handler_Registry::create_action($this, EVENT_INDEXING_DONE);
 
         $fav_id = $this->plugin->get_fav_id();
         if ($this->plugin->get_order_count($fav_id)) {
@@ -123,13 +120,6 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
                     hd_debug_print('Force parent reload', true);
                     $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_INVALIDATE);
                 }
-                return Action_Factory::composite($actions);
-
-            case GUI_EVENT_TIMER:
-                if (!is_limited_apk()) break;
-
-                $actions[] = $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
-                $actions[] = Action_Factory::change_behaviour($this->do_get_action_map(), 1000);
                 return Action_Factory::composite($actions);
 
             case EVENT_INDEXING_DONE:
