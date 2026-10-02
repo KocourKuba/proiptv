@@ -82,11 +82,18 @@ ProcessURL()
 
 echo "Started: `date`" >$LOG_FILE
 
-#export LD_LIBRARY_PATH="$FS_PREFIX/firmware/lib:$LD_LIBRARY_PATH"
+# Bundled build by default, the '-f <path>' option selects another one
+# (the plugin passes the firmware's own ffmpeg on r25 and newer).
 FFMPEG_PATH="$plugin_root/bin/ffmpeg-7.1.3"
 
 if [ "$#" -gt 0 ]; then
   while [ "$#" -gt 0 ]; do
+    if [ "$1" = "-f" ]; then
+      FFMPEG_PATH="$2"
+      echo "ffmpeg: $FFMPEG_PATH" >>$LOG_FILE
+      shift 2
+      continue
+    fi
     if [ "$1" = "-d" ]; then
       SAMPLE_SEC="$2"
       echo "sample duration: $SAMPLE_SEC" >>$LOG_FILE

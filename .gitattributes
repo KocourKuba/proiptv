@@ -21,6 +21,7 @@ epg				text eol=lf
 .gitignore      export-ignore
 
 *.php diff=php
+*.php text eol=crlf
 
 *.txt text eol=lf
 *.tpl html eol=lf

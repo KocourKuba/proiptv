@@ -4791,10 +4791,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         );
 
         hd_debug_print("Get media info for: $stream_url");
+        $ffmpeg = self::get_ffmpeg_path();
+        hd_debug_print("Using ffmpeg: $ffmpeg");
         /** @var array $pipes */
         $process = proc_open(
-            sprintf('%s -d %d %s',
-                get_install_path('bin/media_check.sh'), $sample_duration, escapeshellarg($stream_url)),
+            sprintf('%s -f %s -d %d %s',
+                get_install_path('bin/media_check.sh'), escapeshellarg($ffmpeg), $sample_duration, escapeshellarg($stream_url)),
             $descriptors,
             $pipes);
 
@@ -4830,6 +4832,27 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         return $out;
+    }
+
+    /**
+     * ffmpeg used by bin/media_check.sh
+     *
+     * Firmware r25 and newer ships its own ffmpeg 7.1 (null muxer, https), so the bundled
+     * build is only needed on older firmware. The path is absolute because a command passed
+     * to the shell does not get FS_PREFIX added the way php file functions do.
+     *
+     * @return string
+     */
+    protected static function get_ffmpeg_path()
+    {
+        if (is_r25_or_higher()) {
+            $system_ffmpeg = getenv('FS_PREFIX') . '/firmware/bin/ffmpeg';
+            if (file_exists($system_ffmpeg)) {
+                return $system_ffmpeg;
+            }
+        }
+
+        return get_install_path('bin/ffmpeg-7.1.3');
     }
 
     /**

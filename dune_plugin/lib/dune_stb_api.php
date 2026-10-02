@@ -2314,6 +2314,14 @@ function is_r24_or_higher()
 /**
  * @return bool
  */
+function is_r25_or_higher()
+{
+    return safe_get_value(get_parsed_firmware_ver(), 'rev_number', 0) > 24;
+}
+
+/**
+ * @return bool
+ */
 function is_ext_epg_supported()
 {
     $apk_subst = getenv('FS_PREFIX');
