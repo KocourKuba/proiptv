@@ -7,10 +7,9 @@ basedir=$(cd "$thisdir/.." && pwd)
 plugin_name=$(basename "$basedir")
 
 dirpath="$FS_PREFIX/tmp/tv_app_suppliers"
+filepath="$dirpath/$plugin_name"
 
 [ -e "$dirpath" ] || mkdir "$dirpath"
-
-touch "$FS_PREFIX/tmp/plugins/$plugin_name/update_epfs_if_needed_flag"
 
 cat << EOF > "$filepath"
 {
@@ -19,3 +18,5 @@ cat << EOF > "$filepath"
   "tv_app" : "{\"type\":\"plugin\",\"plugin_name\":\"$plugin_name\",\"update_url\":\"https://iptv.esalecrm.com/update/update_proiptv.xml\"}"
 }
 EOF
+
+touch "$FS_PREFIX/tmp/plugins/$plugin_name/update_epfs_if_needed_flag"
