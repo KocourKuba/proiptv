@@ -2552,6 +2552,7 @@ function print_sysinfo()
         'Dune FW' => get_raw_firmware_version(),
         'Dune Serial' => get_serial_number(),
         'Dune Platform' => "{$platform['platform']} ({$platform['type']})",
+        'Dune CPU ABI' => get_cpu_abi(),
         'Dune MAC Addr' => get_mac_address(),
         'Dune IP Addr' => get_ip_address(),
         'Dune DNS servers' => $dns,
