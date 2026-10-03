@@ -15,7 +15,7 @@ cat << EOF > "$filepath"
 {
   "plugin" : "$plugin_name",
   "caption" : "ProIPTV",
-  "tv_app" : "{\"type\":\"plugin\",\"plugin_name\":\"$plugin_name\",\"update_url\":\"https://iptv.esalecrm.com/update/update_proiptv.xml\"}"
+  "tv_app" : "{\"type\":\"plugin\",\"plugin_name\":\"$plugin_name\",\"update_url\":\"https://iptv.proiptv.info/update/update_proiptv.xml\"}"
 }
 EOF
 

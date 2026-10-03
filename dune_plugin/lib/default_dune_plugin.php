@@ -41,14 +41,14 @@ require_once 'lib/smb_tree.php';
 
 class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlugin
 {
-    const CONFIG_URL = 'http://iptv.esalecrm.com/config/providers';
+    const CONFIG_URL = 'http://iptv.proiptv.info/config/providers';
     // EPG description parser published on the server, %d is DESC_PARSER_API.
     // Not .php: the server would execute it instead of returning the source
-    const DESC_PARSER_URL = 'http://iptv.esalecrm.com/config/desc_parser_%d.txt';
+    const DESC_PARSER_URL = 'http://iptv.proiptv.info/config/desc_parser_%d.txt';
     // must match Desc_Parser::API, the plugin never loads a parser of another level
     const DESC_PARSER_API = 1;
     const DESC_PARSER_END = '// end of Desc_Parser';
-    const ARCHIVE_URL_PREFIX = 'http://iptv.esalecrm.com/res';
+    const ARCHIVE_URL_PREFIX = 'http://iptv.proiptv.info/res';
     const ARCHIVE_ID = 'common';
     const PARSE_CONFIG = "%s_parse_config.json";
     const MEDIA_INFO_LOG_LINES = 20;
@@ -4257,7 +4257,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
             $zip->close();
 
-            $url = base64_decode('aHR0cHM6Ly9pcHR2LmVzYWxlY3JtLmNvbS91cGxvYWQv', true) . $zip_file_name;
+            $url = base64_decode('aHR0cHM6Ly9pcHR2LnByb2lwdHYuaW5mby91cGxvYWQv', true) . $zip_file_name;
             $handle = fopen($zip_file, 'rb');
             if (is_resource($handle)) {
                 $curl_wrapper = Curl_Wrapper::getInstance();
