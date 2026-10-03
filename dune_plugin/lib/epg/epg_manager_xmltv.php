@@ -843,7 +843,6 @@ class Epg_Manager_Xmltv
                 return;
             }
             $db->exec(Sql_Wrapper::BEGIN_TRANSACTION);
-            $indexed_channels = 0;
             // The elements are cut out of a forward-only buffer and handed over in batches, so no
             // element is read twice and one libxml parser serves a whole batch.
             //
@@ -912,7 +911,7 @@ class Epg_Manager_Xmltv
                 }
 
                 if (!empty($pending) && ($eof || count($pending) >= self::CHANNELS_BATCH_SIZE)) {
-                    $indexed_channels += self::index_channels_batch($pending, $picon_stmt, $alias_stmt);
+                    self::index_channels_batch($pending, $picon_stmt, $alias_stmt);
                     $pending = array();
                 }
 

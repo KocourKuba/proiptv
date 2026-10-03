@@ -143,7 +143,7 @@ class Dune_Default_Sqlite_Engine
     /**
      * @var object
      */
-    protected $plugin_cookies;
+    public $plugin_cookies;
 
     /**
      * @return Sql_Wrapper|null
@@ -168,14 +168,6 @@ class Dune_Default_Sqlite_Engine
     public function set_sql_vod($sql_vod)
     {
         $this->sql_vod = $sql_vod;
-    }
-
-    /**
-     * @return object
-     */
-    public function get_plugin_cookies()
-    {
-        return $this->plugin_cookies;
     }
 
     /**

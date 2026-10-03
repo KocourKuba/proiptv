@@ -350,10 +350,9 @@ function pad($text, $width)
  */
 function render_table($header, $rows, $max_width)
 {
-    $widths = array();
-    foreach ($header as $i => $title) {
-        $widths[$i] = text_length($title);
-    }
+    $widths = array_map(function ($title) {
+        return text_length($title);
+    }, $header);
 
     $wrapped = array();
     foreach ($rows as $row) {

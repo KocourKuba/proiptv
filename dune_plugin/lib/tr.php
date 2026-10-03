@@ -174,30 +174,46 @@ class TR
      */
     public static function get_system_language_string_value($string_key)
     {
-        # Returns a string constant in the system language by key
+        # Returns a string constant in the system language by key,
+        # in english if the firmware translation of the system language has no such key
 
-        $lang = self::get_current_language();
         static $lang_map = null;
         if ($lang_map === null) {
-            $lang_file = "/firmware/translations/dune_language_$lang.txt";
-            $lang_txt = file_get_contents($lang_file);
-            if (empty($lang_txt)) {
-                hd_debug_print("Error loading language file $lang_file");
-                $lang_txt = '';
-            } else {
-                hd_debug_print("Loaded language file $lang_file, size: " . strlen($lang_txt));
-            }
-            $lang_map = self::parse_translations($lang_txt);
+            $lang_map = self::load_system_translations(self::get_current_language());
         }
 
-        if (isset($lang_map[$string_key])) {
+        static $english_map = null;
+        if (!isset($lang_map[$string_key]) && $english_map === null) {
+            $english_map = self::load_system_translations('english');
+        }
+
+        $value = isset($lang_map[$string_key]) ? $lang_map[$string_key] : safe_get_value($english_map, $string_key);
+        if ($value !== null) {
             $args = func_get_args();
             array_shift($args);
-            return vsprintf($lang_map[$string_key], $args);
+            return vsprintf($value, $args);
         }
 
         hd_debug_print("Not found value for key '$string_key'!");
         return '';
+    }
+
+    /**
+     * @param string $lang
+     * @return array
+     */
+    protected static function load_system_translations($lang)
+    {
+        $lang_file = "/firmware/translations/dune_language_$lang.txt";
+        $lang_txt = file_get_contents($lang_file);
+        if (empty($lang_txt)) {
+            hd_debug_print("Error loading language file $lang_file");
+            $lang_txt = '';
+        } else {
+            hd_debug_print("Loaded language file $lang_file, size: " . strlen($lang_txt));
+        }
+
+        return self::parse_translations($lang_txt);
     }
 
     /**

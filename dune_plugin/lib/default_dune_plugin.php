@@ -138,6 +138,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     protected $active_provider;
 
+    /**
+     * extended epg of the last get_day_epg call, program start => ext params
+     * @var array
+     */
+    protected $day_ext_epg = array();
+
+    /**
+     * last stream requested by the player: channel_id, archive_tm, start
+     * @var array
+     */
+    protected $tv_playback = array();
+
     private $internet_status = -2;
     private $opexec_id = -1;
 
@@ -288,6 +300,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $this->set_parameter(PARAM_LAST_PLAYLIST, $this->get_active_playlist_id());
 
+        $this->tv_playback = array(
+            PARAM_CHANNEL_ID => (string)$channel_id,
+            PARAM_ARCHIVE_TM => (int)$archive_tm_sec,
+            'start' => time(),
+        );
+
         hd_debug_print("Playback URL: $url", true);
         return $url;
     }
@@ -303,6 +321,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
         $day_epg = array();
+        $this->day_ext_epg = array();
         $this->last_epg_source = '';
         try {
             if (is_null($this->iptv)) {
@@ -424,6 +443,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 }
 
                 $day_epg[] = $day_epg_item;
+                // xmltv tags (credits, images) are kept for the fields the description parser did not find
+                $this->day_ext_epg[$tm_start] = $ext_params + $item;
 
                 if ($show_ext_epg && !in_array_id($channel_id, Epg_Manager_Xmltv::get_delayed_epg())) {
                     $ext_epg[$tm_start] = $ext_params;
@@ -652,6 +673,26 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $info[PluginTvEpgProgram::ext_id] = $channel_id;
         return $info;
+    }
+
+    /**
+     * Extended epg of the programs returned by the last get_day_epg call
+     *
+     * @return array program start => ext params
+     */
+    public function get_day_ext_epg()
+    {
+        return $this->day_ext_epg;
+    }
+
+    /**
+     * Last stream requested by the player
+     *
+     * @return array channel_id, archive_tm (-1 for live), start (time of request)
+     */
+    public function get_tv_playback()
+    {
+        return $this->tv_playback;
     }
 
     /**

@@ -104,22 +104,6 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
         Control_Factory::add_image_button($defs, $this, PARAM_SHOW_VOD_ICON,
             TR::t('setup_show_vod_icon'), SwitchOnOff::translate($show_vod_icon), SwitchOnOff::to_image($show_vod_icon));
 
-        //////////////////////////////////////
-        // epg font size
-        $epg_font_size = $this->plugin->get_parameter(PARAM_EPG_FONT_SIZE, SwitchOnOff::off);
-        hd_debug_print(PARAM_EPG_FONT_SIZE . ": $epg_font_size", true);
-        $font_ops_translated = array(SwitchOnOff::on => TR::t('setup_small'), SwitchOnOff::off => TR::t('setup_normal'));
-        Control_Factory::add_image_button($defs, $this, PARAM_EPG_FONT_SIZE,
-            TR::t('setup_epg_font'), SwitchOnOff::translate_from($font_ops_translated, $epg_font_size), SwitchOnOff::to_image($epg_font_size));
-
-        //////////////////////////////////////
-        // group/channel font size
-        $group_font_size = $this->plugin->get_parameter(PARAM_GROUP_FONT_SIZE, SwitchOnOff::off);
-        hd_debug_print(PARAM_GROUP_FONT_SIZE . ": $group_font_size", true);
-        $font_ops_translated = array(SwitchOnOff::on => TR::t('setup_small'), SwitchOnOff::off => TR::t('setup_normal'));
-        Control_Factory::add_image_button($defs, $this, PARAM_GROUP_FONT_SIZE,
-            TR::t('setup_group_font'), SwitchOnOff::translate_from($font_ops_translated, $group_font_size), SwitchOnOff::to_image($group_font_size));
-
         return $defs;
     }
 
@@ -143,8 +127,6 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
             case PARAM_AUTO_RESUME:
             case PARAM_PLAYLIST_FIRST:
             case PARAM_ASK_EXIT:
-            case PARAM_EPG_FONT_SIZE:
-            case PARAM_GROUP_FONT_SIZE:
                 $this->plugin->toggle_parameter($control_id, false);
                 break;
 

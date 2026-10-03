@@ -31,6 +31,7 @@ require_once 'lib/user_input_handler_registry.php';
 require_once 'lib/epg/default_epg_item.php';
 require_once 'lib/m3u/KnownCatchupSourceTags.php';
 require_once 'lib/vod/vod_standard.php';
+require_once 'screens_tv/starnet_tv_epg_info.php';
 
 class Starnet_Tv implements User_Input_Handler
 {
@@ -46,6 +47,11 @@ class Starnet_Tv implements User_Input_Handler
      */
     protected $playback_url_is_stream_url;
 
+    /**
+     * @var Starnet_Tv_Epg_Info
+     */
+    protected $epg_info;
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -57,6 +63,18 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin = $plugin;
         $this->playback_url_is_stream_url = false;
+        $this->epg_info = new Starnet_Tv_Epg_Info($plugin);
+        $plugin->create_screen($this->epg_info);
+    }
+
+    /**
+     * Restore the playback key map and timer, used after closing a dialog
+     *
+     * @return array
+     */
+    public function get_playback_behaviour()
+    {
+        return Action_Factory::change_behaviour($this->do_get_action_map(), 1000);
     }
 
     /**
@@ -74,6 +92,10 @@ class Starnet_Tv implements User_Input_Handler
             $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER_CLEAR);
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER_ADD);
             $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER);
+        }
+
+        if ($this->plugin->get_bool_parameter(PARAM_EPG_INFO_WINDOW)) {
+            $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, ACTION_SHOW_EPG_INFO);
         }
 
         return $actions;
@@ -135,6 +157,14 @@ class Starnet_Tv implements User_Input_Handler
                     return Action_Factory::invalidate_all_folders($plugin_cookies);
                 }
                 break;
+
+            case ACTION_SHOW_EPG_INFO:
+                if ($browser_active) {
+                    return Action_Factory::run_default(GUI_EVENT_KEY_INFO);
+                }
+
+                $action = $this->epg_info->show($user_input);
+                return $action === null ? Action_Factory::run_default(GUI_EVENT_KEY_INFO) : $action;
 
             case ACTION_SLEEP_TIMER:
                 if ($browser_active) {

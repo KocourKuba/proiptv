@@ -396,6 +396,26 @@ class Action_Factory
     }
 
     /**
+     * Change components of the GComps screen shown
+     *
+     * @param array $change_defs # ChangeGCompDef list
+     * @param array|null $post_action
+     * @param int $num_steps # steps of the transition animation, 0 - default
+     * @return array
+     */
+    public static function change_gcomps($change_defs, $post_action = null, $num_steps = 0)
+    {
+        return array(
+            GuiAction::handler_string_id => CHANGE_GCOMPS_ACTION_ID,
+            GuiAction::data => array(
+                ChangeGCompsActionData::change_defs => $change_defs,
+                ChangeGCompsActionData::num_steps => $num_steps,
+                ChangeGCompsActionData::post_action => $post_action,
+            )
+        );
+    }
+
+    /**
      * @param array $items
      * @param array $checked_ids
      * @param string $id

@@ -34,6 +34,7 @@ require_once 'starnet_epfs_handler.php';
 
 require_once 'plugin_setup/starnet_setup_plugin_screen.php';
 require_once 'plugin_setup/starnet_setup_plugin_interface_screen.php';
+require_once 'plugin_setup/starnet_setup_epg_interface_screen.php';
 require_once 'plugin_setup/starnet_setup_download_screen.php';
 require_once 'plugin_setup/starnet_setup_sleep_timer_screen.php';
 require_once 'plugin_setup/starnet_setup_folders_screen.php';
@@ -75,7 +76,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
     {
         parent::__construct();
 
-        $this->set_plugin_cookies($plugin_cookies);
+        $this->plugin_cookies = $plugin_cookies;
 
         if (is_r22_or_higher()) {
             ini_set('memory_limit', safe_get_value($plugin_cookies,PARAM_COOKIE_MEMORY_LIMIT, '256M'));
@@ -95,6 +96,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         // plugin setup screens
         $this->create_screen(new Starnet_Setup_Plugin_Screen($this));
         $this->create_screen(new Starnet_Setup_Plugin_Interface_Screen($this));
+        $this->create_screen(new Starnet_Setup_Epg_Interface_Screen($this));
         $this->create_screen(new Starnet_Setup_Folders_Screen($this));
         $this->create_screen(new Starnet_Setup_Download_Screen($this));
         $this->create_screen(new Starnet_Setup_Sleep_Timer_Screen($this));

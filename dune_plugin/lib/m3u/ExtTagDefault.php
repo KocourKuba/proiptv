@@ -36,7 +36,7 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
     /**
      * @var array $tag_values
      */
-    protected $tag_values;
+    protected $tag_values = array();
 
     /**
      * @var array $attributes

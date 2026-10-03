@@ -16,6 +16,7 @@
 /**/*.token
 /**/*.refresh_token
 /mnt*.cmd
+/php_r25
 /update_config.cmd
 /format_serialize.php
 /test*

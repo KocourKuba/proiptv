@@ -769,7 +769,7 @@ function get_cpu_abi()
     static $abi = null;
 
     if (is_null($abi)) {
-        $machine = php_uname('m');
+        $machine = php_uname();
         /** @var array $m */
         if (preg_match('/^armv(\d+)/i', $machine, $m)) {
             $abi = ((int)$m[1] >= 7) ? 'armeabi-v7a' : 'armeabi';
@@ -3986,7 +3986,7 @@ function array_search_id($needle, $haystack)
         return array_search((string)$needle, $haystack, true);
     }
 
-    if (is_string($needle) && (string)(int)$needle === $needle) {
+    if ((string)(int)$needle === $needle) {
         return array_search((int)$needle, $haystack, true);
     }
 

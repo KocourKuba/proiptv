@@ -255,7 +255,7 @@ class GComps_Factory
 
     /**
      * @param array $geom # GCompGeometryDef
-     * @param array $margins # GCompMarginsDef
+     * @param array|null $margins # GCompMarginsDef
      * @param string $scroll_pane_id
      * @param bool $vertical
      * @return array
@@ -358,7 +358,7 @@ class GComps_Factory
     /**
      * @param string $id
      * @param array $geom # GCompGeometryDef
-     * @param array $margins # GCompMarginsDef
+     * @param array|null $margins # GCompMarginsDef
      * @param array $children # GComponentDefList
      * @param array|null $view_position # GCompViewPositionDef
      * @return array
@@ -584,7 +584,7 @@ class GComps_Factory
 
     /**
      * @param string $id
-     * @param array $geom # GCompGeometryDef
+     * @param array|null $geom # GCompGeometryDef
      * @param array|null $props # MY_Properties
      * @param array|null $view_position # GCompViewPositionDef
      * @param bool $selected

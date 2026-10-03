@@ -236,7 +236,7 @@ class Entry extends Json_Serializer
         if (isset($this->tags[$name])) {
             // repeated tag (i.e. several #EXTVLCOPT lines): keep all values and attributes
             $this->tags[$name]->addAttributes($tag->getAttributes());
-            foreach ((array)$tag->getTagValues() as $value) {
+            foreach ($tag->getTagValues() as $value) {
                 $this->tags[$name]->addTagValue($value);
             }
         } else {
