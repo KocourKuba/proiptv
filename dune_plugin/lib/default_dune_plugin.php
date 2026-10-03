@@ -608,6 +608,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return;
         }
 
+        // screens call init_plugin() directly when a fresh php process is started without
+        // passing the entry handler - without the providers config epg_json_presets stays null.
+        // Both are no-op if already loaded.
+        $this->init_providers_config();
+        $this->init_desc_parser();
+
         $this->active_provider = null;
         self::$iptv_m3u_parser = new M3uParser();
         $this->init_parameters();
