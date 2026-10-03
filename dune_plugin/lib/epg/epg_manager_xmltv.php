@@ -64,11 +64,6 @@ class Epg_Manager_Xmltv
     const INDEX_HELPER = 'xmltv_indexer';
 
     /**
-     * Abi the shipped helper is built for.
-     */
-    const INDEX_HELPER_ABI = 'armeabi-v7a';
-
-    /**
      * Firmware revision the helper is used from. Older firmware keeps the php path.
      */
     const INDEX_HELPER_MIN_REV = 22;
@@ -1637,33 +1632,18 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * Path of the native indexer, or null when it is not installed for this platform.
+     * Path of the native indexer. It is always shipped in bin/.
      *
      * It is an ordinary command line tool built for the device (see arm_indexer). The only
      * thing it does that this php cannot is address a file past 2Gb: php is built with 32-bit
      * integers here, so fseek() simply fails beyond PHP_INT_MAX. Everything keeps working without
      * it, just capped at that point.
      *
-     * @return string|null
+     * @return string
      */
     protected static function get_index_helper()
     {
-        static $helper = false;
-
-        if ($helper === false) {
-            $helper = null;
-            $path = get_install_path('bin/' . self::INDEX_HELPER);
-            if (file_exists($path)) {
-                if (is_executable($path)) {
-                    $helper = $path;
-                    hd_debug_print("Native xmltv indexer: $helper", true);
-                } else {
-                    hd_debug_print("Native xmltv indexer is not executable: $path");
-                }
-            }
-        }
-
-        return $helper;
+        return get_install_path('bin/' . self::INDEX_HELPER);
     }
 
     /**
@@ -1671,10 +1651,8 @@ class Epg_Manager_Xmltv
      *
      * It is preferred wherever it fits, and the php implementation is the fallback for the cases
      * it does not cover:
-     *  - a cpu abi other than the one the binary is built for (includes the windows dev machine),
      *  - firmware older than r22,
-     *  - the limited apk, which is not allowed to run bundled binaries,
-     *  - the binary simply not being installed.
+     *  - the limited apk, which is not allowed to run bundled binaries.
      *
      * @return bool
      */
@@ -1686,8 +1664,6 @@ class Epg_Manager_Xmltv
             $reason = '';
             if (is_limited_apk()) {
                 $reason = 'limited apk';
-            } else if (get_cpu_abi() !== self::INDEX_HELPER_ABI) {
-                $reason = 'cpu abi is ' . get_cpu_abi() . ', helper is ' . self::INDEX_HELPER_ABI;
             } else {
                 // only consult the firmware when it was actually detected, parsing 'Not detected'
                 // produces nothing useful
@@ -1697,10 +1673,6 @@ class Epg_Manager_Xmltv
                         $reason = "firmware r$rev is older than r" . self::INDEX_HELPER_MIN_REV;
                     }
                 }
-            }
-
-            if ($reason === '' && self::get_index_helper() === null) {
-                $reason = 'bin/' . self::INDEX_HELPER . ' is not installed';
             }
 
             $can = ($reason === '');
@@ -1728,8 +1700,8 @@ class Epg_Manager_Xmltv
      * Hand the whole index over to the native helper.
      *
      * The helper rebuilds epg_channels, epg_picons and epg_entries itself, so the php connection is
-     * closed first and reopened by the caller afterwards. Returns false when the helper is absent
-     * or did not produce an index, and leaves the database untouched in that case so the caller can
+     * closed first and reopened by the caller afterwards. Returns false when the helper did not
+     * produce an index, and leaves the database untouched in that case so the caller can
      * fall back to indexing as much as it can reach.
      *
      * @param string $cached_file
@@ -1740,10 +1712,6 @@ class Epg_Manager_Xmltv
     protected static function index_with_helper($cached_file, $db, $url_hash)
     {
         $helper = self::get_index_helper();
-        if ($helper === null) {
-            return false;
-        }
-
         $db_path = $db->get_db_path();
         $cmd = sprintf('%s index %s %s 2>&1',
             escapeshellarg($helper), escapeshellarg($cached_file), escapeshellarg($db_path));
@@ -1790,12 +1758,6 @@ class Epg_Manager_Xmltv
         }
 
         $helper = self::get_index_helper();
-        if ($helper === null) {
-            hd_debug_print("Block at $start is past the addressable limit and "
-                . self::INDEX_HELPER . ' is not installed');
-            return false;
-        }
-
         $cmd = sprintf('%s range %s %s %s',
             escapeshellarg($helper),
             escapeshellarg($cached_file),

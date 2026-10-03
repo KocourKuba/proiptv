@@ -756,35 +756,6 @@ function get_platform_info()
 }
 
 /**
- * Android abi name of the running userland, so a bundled native binary can be matched against it.
- *
- * Derived from php_uname() rather than getprop, which keeps it cheap and works off-device too.
- * The boxes report armv7l (Dune4K) or armv8l (Dune8K) - an ARMv8 core with a 32-bit userland -
- * and both take an armeabi-v7a binary. A 64-bit userland reports aarch64 and is a different abi.
- *
- * @return string
- */
-function get_cpu_abi()
-{
-    static $abi = null;
-
-    if (is_null($abi)) {
-        $machine = php_uname('m');
-        /** @var array $m */
-        if (preg_match('/^armv(\d+)/i', $machine, $m)) {
-            $abi = ((int)$m[1] >= 7) ? 'armeabi-v7a' : 'armeabi';
-        } else if (strcasecmp($machine, 'aarch64') === 0 || strcasecmp($machine, 'arm64') === 0) {
-            $abi = 'arm64-v8a';
-        } else {
-            $abi = strtolower($machine);
-        }
-        hd_debug_print("cpu abi: $abi (machine: $machine)", true);
-    }
-
-    return $abi;
-}
-
-/**
  * @return string
  */
 function get_platform_curl()
@@ -2552,7 +2523,6 @@ function print_sysinfo()
         'Dune FW' => get_raw_firmware_version(),
         'Dune Serial' => get_serial_number(),
         'Dune Platform' => "{$platform['platform']} ({$platform['type']})",
-        'Dune CPU ABI' => get_cpu_abi(),
         'Dune MAC Addr' => get_mac_address(),
         'Dune IP Addr' => get_ip_address(),
         'Dune DNS servers' => $dns,
