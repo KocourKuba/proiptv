@@ -547,11 +547,9 @@ static void index_channel_element(chan_ctx *c, const char *el, size_t el_len)
         sqlite3_reset(c->alias);
 
         /*
-         * One alias per <display-name>, including the empty ones: the php loop binds
-         * to_lower($tag->nodeValue) with no emptiness check, so '<display-name></display-name>'
-         * does add an alias of '' (sources do contain those), and leaving it out made the index
-         * differ. A self-closing <display-name/> is an empty element too and has no closing tag
-         * to search for.
+         * One alias per non-empty <display-name>. Sources do contain '<display-name></display-name>'
+         * and the php loop skips an alias that lowers to '', so this must too. A self-closing
+         * <display-name/> is an empty element as well and has no closing tag to search for.
          */
         p = el + tag_end_off;
         left = el_len - tag_end_off;
@@ -575,16 +573,14 @@ static void index_channel_element(chan_ctx *c, const char *el, size_t el_len)
                 advance = (size_t)(dn_close - p) + 15;
             }
 
-            if (text_len == 0) {
-                buf_clear(&c->lowered);
-                sqlite3_bind_text(c->alias, 1, "", 0, SQLITE_STATIC);
-                sqlite3_bind_text(c->alias, 2, channel_id, -1, SQLITE_TRANSIENT);
-                sqlite3_bind_text(c->alias, 3, picon_hash, -1, SQLITE_TRANSIENT);
-                sqlite3_step(c->alias);
-                sqlite3_reset(c->alias);
-            } else if (xml_decode(text, text_len, &c->decoded)) {
+            if (text_len != 0 && xml_decode(text, text_len, &c->decoded)) {
                 to_lower_utf8(c->decoded.p ? c->decoded.p : "", c->decoded.len, &c->lowered);
-                sqlite3_bind_text(c->alias, 1, c->lowered.p ? c->lowered.p : "", (int)c->lowered.len, SQLITE_TRANSIENT);
+            } else {
+                buf_clear(&c->lowered);
+            }
+
+            if (c->lowered.len != 0) {
+                sqlite3_bind_text(c->alias, 1, c->lowered.p, (int)c->lowered.len, SQLITE_TRANSIENT);
                 sqlite3_bind_text(c->alias, 2, channel_id, -1, SQLITE_TRANSIENT);
                 sqlite3_bind_text(c->alias, 3, picon_hash, -1, SQLITE_TRANSIENT);
                 sqlite3_step(c->alias);

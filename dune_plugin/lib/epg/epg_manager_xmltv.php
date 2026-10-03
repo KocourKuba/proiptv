@@ -1827,7 +1827,11 @@ class Epg_Manager_Xmltv
             $alias_stmt->execute();
 
             foreach ($channel->getElementsByTagName('display-name') as $tag) {
-                $alias_stmt->bindValue(':' . COLUMN_ALIAS, to_lower($tag->nodeValue));
+                // sources do contain <display-name></display-name>, an empty alias matches nothing
+                $alias = to_lower($tag->nodeValue);
+                if ($alias === '') continue;
+
+                $alias_stmt->bindValue(':' . COLUMN_ALIAS, $alias);
                 $alias_stmt->bindValue(':' . COLUMN_CHANNEL_ID, $channel_id);
                 $alias_stmt->bindValue(':' . COLUMN_PICON_HASH, $picon_hash);
                 $alias_stmt->execute();
