@@ -616,7 +616,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->json_epg_manager = new Epg_Manager_Json($this);
 
         $this->reset_playlist_db();
+        $this->upgrade_epg_cache_dirs();
         $this->init_epg_cache_dir();
+        $this->init_json_cache_dir();
 
         $this->load_epg_json_servers();
         $this->update_all_json_source($this->epg_json_presets);
@@ -2816,7 +2818,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * Set new cache dir or init default and set Epg_Manager cache path
+     * Set new XMLTV cache dir or init default and set Epg_Manager_Xmltv cache path
      * Cache dir can be only local, no network path
      *
      * @param string|null $new_cache_dir
@@ -2830,7 +2832,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             // just init current settings
             if (empty($cur_cache_dir)) {
                 // set to default
-                $new_cache_dir = get_slash_trailed_path(get_data_path(EPG_CACHE_SUBDIR));
+                $new_cache_dir = get_slash_trailed_path(get_data_path(XMLTV_EPG_CACHE_SUBDIR));
                 $this->set_parameter(PARAM_EPG_CACHE_PATH, $new_cache_dir);
             } else {
                 $new_cache_dir = $cur_cache_dir;
@@ -2838,13 +2840,68 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         } else if ($new_cache_dir !== $cur_cache_dir) {
             // set to new value
             Epg_Manager_Xmltv::clear_epg_files();
-            Epg_Manager_Json::clear_epg_files();
             $this->set_parameter(PARAM_EPG_CACHE_PATH, $new_cache_dir);
         }
 
         Epg_Manager_Xmltv::set_cache_dir($new_cache_dir);
+        return $new_cache_dir;
+    }
+
+    /**
+     * Set new JSON cache dir or init default and set Epg_Manager_Json cache path
+     * Cache dir can be only local, no network path
+     *
+     * @param string|null $new_cache_dir
+     * @return string slash trailed path
+     */
+    public function init_json_cache_dir($new_cache_dir = null)
+    {
+        $new_cache_dir = get_slash_trailed_path(str_replace('//', '/', $new_cache_dir));
+        $cur_cache_dir = $this->get_parameter(PARAM_EPG_JSON_CACHE_PATH);
+        if (empty($new_cache_dir)) {
+            // just init current settings
+            if (empty($cur_cache_dir)) {
+                // set to default
+                $new_cache_dir = get_slash_trailed_path(get_data_path(JSON_EPG_CACHE_SUBDIR));
+                $this->set_parameter(PARAM_EPG_JSON_CACHE_PATH, $new_cache_dir);
+            } else {
+                $new_cache_dir = $cur_cache_dir;
+            }
+        } else if ($new_cache_dir !== $cur_cache_dir) {
+            // set to new value
+            Epg_Manager_Json::clear_epg_files();
+            $this->set_parameter(PARAM_EPG_JSON_CACHE_PATH, $new_cache_dir);
+        }
+
         Epg_Manager_Json::set_cache_dir($new_cache_dir);
         return $new_cache_dir;
+    }
+
+    /**
+     * Older versions kept XMLTV and JSON cache in one folder (epg_cache by default).
+     * Clear the shared cache and split it into separate XMLTV and JSON folders.
+     * A custom XMLTV folder is kept, the default one is moved to xmltv_epg_cache.
+     *
+     * @return void
+     */
+    protected function upgrade_epg_cache_dirs()
+    {
+        $old_cache_dir = $this->get_parameter(PARAM_EPG_CACHE_PATH);
+        if (empty($old_cache_dir) || $this->get_parameter(PARAM_EPG_JSON_CACHE_PATH) !== '') {
+            // fresh install or already upgraded
+            return;
+        }
+
+        hd_debug_print("Upgrade shared EPG cache folder: $old_cache_dir");
+        Epg_Manager_Xmltv::set_cache_dir($old_cache_dir);
+        Epg_Manager_Xmltv::clear_epg_files();
+
+        if ($old_cache_dir === get_slash_trailed_path(get_data_path(EPG_CACHE_SUBDIR_OLD))) {
+            delete_directory($old_cache_dir);
+            $this->set_parameter(PARAM_EPG_CACHE_PATH, get_slash_trailed_path(get_data_path(XMLTV_EPG_CACHE_SUBDIR)));
+        }
+
+        $this->set_parameter(PARAM_EPG_JSON_CACHE_PATH, get_slash_trailed_path(get_data_path(JSON_EPG_CACHE_SUBDIR)));
     }
 
     /**

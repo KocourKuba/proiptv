@@ -299,6 +299,7 @@ const PARAM_CURL_DOWNLOAD_TIMEOUT = 'curl_download_timeout';
 const PARAM_CURL_FILE_CACHE_TIME = 'curl_file_cache';
 const PARAM_DAY_EPG = 'day_epg';
 const PARAM_EPG_CACHE_PATH = 'xmltv_cache_path';
+const PARAM_EPG_JSON_CACHE_PATH = 'json_cache_path';
 const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_EPG_INFO_WINDOW = 'epg_info_window';
 const PARAM_FIX_PALETTE = 'fix_palette';
@@ -528,7 +529,7 @@ const DIRECT_PLAYLIST_ID = 'custom';
 const ENGINE_COMBINED = 'combined';
 const ENGINE_JSON = 'json';
 const ENGINE_XMLTV = 'xmltv';
-const EPG_CACHE_SUBDIR = 'epg_cache';
+const EPG_CACHE_SUBDIR_OLD = 'epg_cache';
 const EPG_FAKE_EPG = 1;
 const EPG_JSON_AUTH = 'json_auth';
 const EPG_JSON_DISABLED = 'disabled';
@@ -548,8 +549,10 @@ const EPG_JSON_PRESETS_URL = 'presets_url';
 const EPG_JSON_SERVER = 'epg_server';
 const EPG_JSON_SOURCE = 'json_source';
 const HISTORY_SUBDIR = 'history';
+const JSON_EPG_CACHE_SUBDIR = 'json_epg_cache';
 const XMLTV_CACHE_AUTO = 'auto';
 const XMLTV_CACHE_MANUAL = 'manual';
+const XMLTV_EPG_CACHE_SUBDIR = 'xmltv_epg_cache';
 
 # Media types patterns
 const AUDIO_PATTERN = 'mp3|ac3|wma|ogg|ogm|m4a|aif|iff|mid|mpa|ra|wav|flac|ape|vorbis|aac|a52';

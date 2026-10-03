@@ -36,10 +36,13 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
     const CONTROL_COPY_TO_DATA = 'copy_to_data';
     const CONTROL_COPY_TO_PLUGIN = 'copy_to_plugin';
     const CONTROL_CHANGE_XMLTV_CACHE_PATH = 'change_xmltv_cache_path';
+    const CONTROL_CHANGE_JSON_CACHE_PATH = 'change_json_cache_path';
     const ACTION_HISTORY_RESET_DEFAULT = 'reset_history_default';
     const ACTION_EPG_RESET_DEFAULT = 'reset_epg_default';
+    const ACTION_JSON_RESET_DEFAULT = 'reset_json_default';
     const ACTION_HISTORY_FOLDER_SELECTED = 'history_folder_selected';
     const ACTION_EPG_FOLDER_SELECTED = 'epg_folder_selected';
+    const ACTION_JSON_FOLDER_SELECTED = 'json_folder_selected';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -83,11 +86,18 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
             TR::t('setup_copy_to_plugin'), TR::t('apply'), $refresh_icon);
 
         //////////////////////////////////////
-        // EPG cache dir
+        // XMLTV cache dir
         $cache_dir = $this->plugin->get_parameter(PARAM_EPG_CACHE_PATH);
-        $free_size = TR::t('setup_epg_storage_info__1', HD::get_storage_size($cache_dir));
-        $cache_dir = string_ellipsis($cache_dir);
-        Control_Factory::add_image_button($defs, $this, self::CONTROL_CHANGE_XMLTV_CACHE_PATH, $free_size, $cache_dir, get_image_path('folder.png'));
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_CHANGE_XMLTV_CACHE_PATH,
+            TR::t('setup_epg_xmltv_cache_caption'), string_ellipsis($cache_dir), $folder_icon);
+        Control_Factory::add_label($defs, '', TR::t('setup_storage_space__1', HD::get_storage_size($cache_dir)));
+
+        //////////////////////////////////////
+        // JSON cache dir
+        $cache_dir = $this->plugin->get_parameter(PARAM_EPG_JSON_CACHE_PATH);
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_CHANGE_JSON_CACHE_PATH,
+            TR::t('setup_epg_json_cache_caption'), string_ellipsis($cache_dir), $folder_icon);
+        Control_Factory::add_label($defs, '', TR::t('setup_storage_space__1', HD::get_storage_size($cache_dir)));
 
         return $defs;
     }
@@ -190,7 +200,13 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
 
             case self::ACTION_EPG_RESET_DEFAULT:
                 hd_debug_print(self::ACTION_EPG_RESET_DEFAULT);
-                $default_path = $this->plugin->init_epg_cache_dir(get_data_path(EPG_CACHE_SUBDIR));
+                $default_path = self::normalize_cache_dir(get_data_path(XMLTV_EPG_CACHE_SUBDIR));
+                if ($this->plugin->get_parameter(PARAM_EPG_JSON_CACHE_PATH) === $default_path) {
+                    $post_action = self::same_cache_folder_dialog();
+                    break;
+                }
+
+                $default_path = $this->plugin->init_epg_cache_dir($default_path);
                 $actions[] = Action_Factory::show_title_dialog(
                     TR::t('folder_screen_selected_folder__1', ''),
                     $default_path,
@@ -202,10 +218,65 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
             case self::ACTION_EPG_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 hd_debug_print(self::ACTION_EPG_FOLDER_SELECTED . ": " . $data->{PARAM_FILEPATH}, true);
-                $new_path = get_slash_trailed_path($data->{PARAM_FILEPATH});
+                $new_path = self::normalize_cache_dir($data->{PARAM_FILEPATH});
                 if ($this->plugin->get_parameter(PARAM_EPG_CACHE_PATH) === $new_path) break;
 
+                if ($this->plugin->get_parameter(PARAM_EPG_JSON_CACHE_PATH) === $new_path) {
+                    $post_action = self::same_cache_folder_dialog();
+                    break;
+                }
+
                 $new_path = $this->plugin->init_epg_cache_dir($new_path);
+                $this->force_parent_reload = true;
+
+                $actions[] = Action_Factory::show_title_dialog(
+                    TR::t('folder_screen_selected_folder__1', $data->{PARAM_CAPTION}),
+                    $new_path,
+                    null,
+                    Control_Factory::SCR_CONTROLS_WIDTH);
+                $actions[] = User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
+                return Action_Factory::composite($actions);
+
+            case self::CONTROL_CHANGE_JSON_CACHE_PATH:
+                $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
+                    array(
+                        PARAM_END_ACTION => ACTION_RELOAD,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => self::ACTION_JSON_FOLDER_SELECTED,
+                        Starnet_Folder_Screen::PARAM_RESET_ACTION => self::ACTION_JSON_RESET_DEFAULT,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => false,
+                    )
+                );
+                return Action_Factory::open_folder($media_url, TR::t('setup_epg_json_cache_caption'));
+
+            case self::ACTION_JSON_RESET_DEFAULT:
+                hd_debug_print(self::ACTION_JSON_RESET_DEFAULT);
+                $default_path = self::normalize_cache_dir(get_data_path(JSON_EPG_CACHE_SUBDIR));
+                if ($this->plugin->get_parameter(PARAM_EPG_CACHE_PATH) === $default_path) {
+                    $post_action = self::same_cache_folder_dialog();
+                    break;
+                }
+
+                $default_path = $this->plugin->init_json_cache_dir($default_path);
+                $actions[] = Action_Factory::show_title_dialog(
+                    TR::t('folder_screen_selected_folder__1', ''),
+                    $default_path,
+                    null,
+                    Control_Factory::SCR_CONTROLS_WIDTH);
+                $actions[] = User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
+                return Action_Factory::composite($actions);
+
+            case self::ACTION_JSON_FOLDER_SELECTED:
+                $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+                hd_debug_print(self::ACTION_JSON_FOLDER_SELECTED . ": " . $data->{PARAM_FILEPATH}, true);
+                $new_path = self::normalize_cache_dir($data->{PARAM_FILEPATH});
+                if ($this->plugin->get_parameter(PARAM_EPG_JSON_CACHE_PATH) === $new_path) break;
+
+                if ($this->plugin->get_parameter(PARAM_EPG_CACHE_PATH) === $new_path) {
+                    $post_action = self::same_cache_folder_dialog();
+                    break;
+                }
+
+                $new_path = $this->plugin->init_json_cache_dir($new_path);
                 $this->force_parent_reload = true;
 
                 $actions[] = Action_Factory::show_title_dialog(
@@ -221,5 +292,26 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs(), $post_action);
+    }
+
+    /**
+     * Cache path in the same form as stored by init_epg_cache_dir/init_json_cache_dir
+     *
+     * @param string $path
+     * @return string
+     */
+    private static function normalize_cache_dir($path)
+    {
+        return get_slash_trailed_path(str_replace('//', '/', $path));
+    }
+
+    /**
+     * XMLTV and JSON caches are cleared independently, they must not share a folder
+     *
+     * @return array
+     */
+    private static function same_cache_folder_dialog()
+    {
+        return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_same_cache_folder'));
     }
 }
