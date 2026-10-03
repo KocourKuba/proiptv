@@ -769,7 +769,7 @@ function get_cpu_abi()
     static $abi = null;
 
     if (is_null($abi)) {
-        $machine = php_uname();
+        $machine = php_uname('m');
         /** @var array $m */
         if (preg_match('/^armv(\d+)/i', $machine, $m)) {
             $abi = ((int)$m[1] >= 7) ? 'armeabi-v7a' : 'armeabi';

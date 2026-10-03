@@ -131,6 +131,12 @@ class Epg_Manager_Xmltv
     protected static $epg_db = array();
 
     /**
+     * inode of the file each cached wrapper was opened on
+     * @var int[]
+     */
+    protected static $epg_db_inode = array();
+
+    /**
      * @var Hashed_Array
      */
     protected static $xmltv_sources;
@@ -2017,13 +2023,18 @@ class Epg_Manager_Xmltv
     protected static function open_sqlite_db($db_name, $readonly)
     {
         $db_file = self::$cache_dir . $db_name . ".db";
+        // the background indexer replaces the file, a cached wrapper would keep reading the deleted one
+        clearstatcache();
+        $inode = file_exists($db_file) ? fileinode($db_file) : false;
         // in read-only database can't be created
-        if ($readonly && !file_exists($db_file)) {
+        if ($readonly && $inode === false) {
             return false;
         }
 
         // if database not exist or requested mode is read-write create new database
-        if (!isset(self::$epg_db[$db_name]) || (!$readonly && self::$epg_db[$db_name]->is_readonly())) {
+        if (!isset(self::$epg_db[$db_name])
+            || (!$readonly && self::$epg_db[$db_name]->is_readonly())
+            || self::$epg_db_inode[$db_name] !== $inode) {
             hd_debug_print("Open new wrapper for: '$db_file'", true);
             if (isset(self::$epg_db[$db_name])) {
                 self::$epg_db[$db_name]->close();
@@ -2035,6 +2046,8 @@ class Epg_Manager_Xmltv
                 return false;
             }
             self::$epg_db[$db_name] = $db;
+            clearstatcache();
+            self::$epg_db_inode[$db_name] = file_exists($db_file) ? fileinode($db_file) : false;
         }
 
         return self::$epg_db[$db_name];
