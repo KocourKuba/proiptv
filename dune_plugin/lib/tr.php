@@ -79,7 +79,7 @@ class TR
     {
         static $lang_file = '';
         if (empty($lang_file)) {
-            $lang_file = self::get_translation_filename(self::get_current_language());
+            $lang_file = self::get_translation_filename(get_system_language());
             if (empty($lang_file)) {
                 hd_debug_print("Error loading language file $lang_file");
                 $lang_file = 'x';
@@ -95,7 +95,7 @@ class TR
             } else {
                 hd_debug_print("Loaded language file $lang_file, size: " . strlen($lang_txt));
             }
-            $lang_map = self::parse_translations($lang_txt);
+            $lang_map = parse_translations($lang_txt);
         }
 
         if (isset($lang_map[$string_key])) {
@@ -150,101 +150,6 @@ class TR
         }
 
         return '';
-    }
-
-    /**
-     * @return string
-     */
-    public static function get_current_language()
-    {
-        $lang = 'english';
-        if (file_exists('/config/settings.properties')) {
-            $sys_settings = parse_ini_file('/config/settings.properties', false, INI_SCANNER_RAW);
-            if ($sys_settings !== false && !empty($sys_settings['interface_language'])) {
-                $lang = $sys_settings['interface_language'];
-            }
-        }
-
-        return $lang;
-    }
-
-    /**
-     * @param string $string_key
-     * @return string
-     */
-    public static function get_system_language_string_value($string_key)
-    {
-        # Returns a string constant in the system language by key,
-        # in english if the firmware translation of the system language has no such key
-
-        static $lang_map = null;
-        if ($lang_map === null) {
-            $lang_map = self::load_system_translations(self::get_current_language());
-        }
-
-        static $english_map = null;
-        if (!isset($lang_map[$string_key]) && $english_map === null) {
-            $english_map = self::load_system_translations('english');
-        }
-
-        $value = isset($lang_map[$string_key]) ? $lang_map[$string_key] : safe_get_value($english_map, $string_key);
-        if ($value !== null) {
-            $args = func_get_args();
-            array_shift($args);
-            return vsprintf($value, $args);
-        }
-
-        hd_debug_print("Not found value for key '$string_key'!");
-        return '';
-    }
-
-    /**
-     * @param string $lang
-     * @return array
-     */
-    protected static function load_system_translations($lang)
-    {
-        $lang_file = "/firmware/translations/dune_language_$lang.txt";
-        $lang_txt = file_get_contents($lang_file);
-        if (empty($lang_txt)) {
-            hd_debug_print("Error loading language file $lang_file");
-            $lang_txt = '';
-        } else {
-            hd_debug_print("Loaded language file $lang_file, size: " . strlen($lang_txt));
-        }
-
-        return self::parse_translations($lang_txt);
-    }
-
-    /**
-     * Split a 'key = value' translation file into a lookup map.
-     *
-     * Replaces a per-lookup "/^$key\s*=(.*)$/m" scan of the whole file: that cost ~19 us per
-     * lookup on the target runtime against ~0.4 us here, compiled a fresh pattern for every key,
-     * and broke on any key carrying a regex metacharacter. As before, the first line that
-     * declares a key wins and values are trimmed.
-     *
-     * @param string $lang_txt
-     * @return array
-     */
-    protected static function parse_translations($lang_txt)
-    {
-        $map = array();
-        if ($lang_txt === '') {
-            return $map;
-        }
-
-        foreach (explode("\n", $lang_txt) as $line) {
-            $pos = strpos($line, '=');
-            if ($pos === false) continue;
-
-            $key = rtrim(substr($line, 0, $pos));
-            if ($key === '' || isset($map[$key])) continue;
-
-            $map[$key] = trim(substr($line, $pos + 1));
-        }
-
-        return $map;
     }
 
     /**

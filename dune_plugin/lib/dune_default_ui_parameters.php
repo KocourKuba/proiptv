@@ -50,11 +50,12 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     protected $last_epg_source = '';
 
     /**
+     * Starnet_Plugin calls parent::__construct(), the firmware features are now loaded on demand
+     *
      * @return void
      */
     public function __construct()
     {
-        HD::load_firmware_features();
     }
 
     /**
@@ -262,7 +263,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
         $key = $from_github ? 'github' : 'local';
         if (empty($history_txt[$key])) {
-            $lang = strtolower(TR::get_current_language());
+            $lang = strtolower(get_system_language());
             $doc = false;
             if ($from_github) {
                 $doc = Curl_Wrapper::getInstance()->download_content(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md",

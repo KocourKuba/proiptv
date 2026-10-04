@@ -276,7 +276,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                     case self::ACTION_UNINSTALL:
                         Default_Archive::clear_cache();
-                        if (!HD::color_palette_check()) break;
+                        if (!is_color_palette_patched()) break;
 
                         return Action_Factory::show_confirmation_dialog(
                             TR::t('setup_settings_patch_palette'),

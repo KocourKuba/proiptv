@@ -83,7 +83,7 @@ class Starnet_Epfs_Handler
      */
     public static function init(Default_Dune_Plugin $plugin, $plugin_cookies)
     {
-        $newui_support = HD::rows_api_support();
+        $newui_support = is_rows_api_supported();
         $newui_enabled = get_cookie_bool_param($plugin_cookies, PARAM_COOKIE_ENABLE_NEWUI);
         self::$enabled = $newui_support && $newui_enabled;
         self::$epf_id = HD::get_manifest_info_value('app_name');

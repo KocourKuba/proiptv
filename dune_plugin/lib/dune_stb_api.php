@@ -1282,6 +1282,88 @@ function get_player_state_assoc()
 }
 
 /**
+ * One value of the player state, read at once with all the others: use get_player_state_assoc() for several values
+ *
+ * @param string $key PLAYER_STATE, PLAYBACK_STATE, PLAYBACK_POSITION, ...
+ * @param mixed $default
+ * @return mixed
+ */
+function get_player_state_value($key, $default = null)
+{
+    return safe_get_value(get_player_state_assoc(), $key, $default);
+}
+
+/**
+ * Nothing is played, the navigator is shown
+ *
+ * @return bool
+ */
+function is_player_navigator()
+{
+    return get_player_state_value(PLAYER_STATE) === PLAYER_STATE_NAVIGATOR;
+}
+
+/**
+ * @return bool
+ */
+function is_playback_playing()
+{
+    return get_player_state_value(PLAYBACK_STATE) === PLAYBACK_PLAYING;
+}
+
+/**
+ * Video and audio of the stream being played as the player reports them
+ *
+ * @return array width, height, bitrate (bit/s), codec and lang of the played audio track, teletext,
+ *               tracks - codec and lang of each audio track
+ */
+function get_player_stream_info()
+{
+    $player_state = get_player_state_assoc();
+    if (!is_array($player_state)) {
+        $player_state = array();
+    }
+
+    $info = array(
+        'width' => (int)safe_get_value($player_state, 'playback_video_width', 0),
+        'height' => (int)safe_get_value($player_state, 'playback_video_height', 0),
+        'bitrate' => (int)safe_get_value($player_state, 'playback_current_bitrate', 0),
+        'codec' => '',
+        'lang' => '',
+        'teletext' => (bool)safe_get_value($player_state, 'teletext_available'),
+        'tracks' => array(),
+    );
+
+    $track = safe_get_value($player_state, 'audio_track');
+    if ($track !== null) {
+        $info['codec'] = trim(safe_get_value($player_state, "audio_track.$track.codec", ''));
+        $info['lang'] = trim(safe_get_value($player_state, "audio_track.$track.lang", ''));
+    }
+
+    foreach (get_audio_tracks_description() as $track_desc) {
+        $info['tracks'][] = array('codec' => safe_get_value($track_desc, 'codec', ''), 'lang' => safe_get_value($track_desc, 'lang', ''));
+    }
+
+    return $info;
+}
+
+/**
+ * Play the url by the external player of the Android system
+ *
+ * @param string $url
+ * @return void
+ */
+function start_external_player($url)
+{
+    $cmd = 'am start -a android.intent.action.VIEW -t "video/*" -d ' . escapeshellarg($url) . ' 2>&1';
+    hd_debug_print("play by the external player: $cmd");
+
+    /** @var array $output */
+    exec($cmd, $output);
+    hd_debug_print('external player exec result code' . array_to_str($output));
+}
+
+/**
  * @return array|false
  */
 function get_resume_state_assoc()
@@ -2343,6 +2425,214 @@ function is_choose_file_supported()
 }
 
 /**
+ * Features of the firmware listed in /tmp/firmware_features.txt, read once
+ *
+ * @return array feature => true
+ */
+function get_firmware_features()
+{
+    static $features = null;
+    if ($features === null) {
+        $features = array();
+        $lines = readlines(getenv('FS_PREFIX') . '/tmp/firmware_features.txt');
+        if (is_array($lines)) {
+            foreach ($lines as $feature) {
+                $features[$feature] = true;
+            }
+        }
+    }
+
+    return $features;
+}
+
+/**
+ * @param string $feature
+ * @return bool
+ */
+function has_firmware_feature($feature)
+{
+    $features = get_firmware_features();
+    return isset($features[$feature]);
+}
+
+/**
+ * NewUI rows folders
+ *
+ * @return bool
+ */
+function is_rows_api_supported()
+{
+    return class_exists('PluginRowsFolderView');
+}
+
+/**
+ * @return bool
+ */
+function is_list_config_supported()
+{
+    return class_exists('EditListConfigActionData') && defined('EDIT_LIST_CONFIG_OPT_REMOVE_UNCHECKED');
+}
+
+/**
+ * @return bool
+ */
+function is_lcfg_v2_supported()
+{
+    return is_list_config_supported() && has_firmware_feature('lcfg_v2');
+}
+
+/**
+ * ffmpeg for bin/media_check.sh
+ *
+ * Firmware r25 and newer ships its own ffmpeg 7.1 (null muxer, https), so the bundled
+ * build is only needed on older firmware. The path is absolute because a command passed
+ * to the shell does not get FS_PREFIX added the way php file functions do.
+ *
+ * @return string
+ */
+function get_ffmpeg_path()
+{
+    if (is_r25_or_higher()) {
+        $system_ffmpeg = getenv('FS_PREFIX') . '/firmware/bin/ffmpeg';
+        if (file_exists($system_ffmpeg)) {
+            return $system_ffmpeg;
+        }
+    }
+
+    return get_install_path('bin/ffmpeg-7.1.3');
+}
+
+/**
+ * Language of the system interface
+ *
+ * @return string
+ */
+function get_system_language()
+{
+    $lang = get_shell_setting('interface_language');
+    return empty($lang) ? 'english' : $lang;
+}
+
+/**
+ * Split a 'key = value' translation file into a lookup map.
+ *
+ * Replaces a per-lookup "/^$key\s*=(.*)$/m" scan of the whole file: that cost ~19 us per
+ * lookup on the target runtime against ~0.4 us here, compiled a fresh pattern for every key,
+ * and broke on any key carrying a regex metacharacter. As before, the first line that
+ * declares a key wins and values are trimmed.
+ *
+ * @param string $lang_txt
+ * @return array
+ */
+function parse_translations($lang_txt)
+{
+    $map = array();
+    if ($lang_txt === '') {
+        return $map;
+    }
+
+    foreach (explode("\n", $lang_txt) as $line) {
+        $pos = strpos($line, '=');
+        if ($pos === false) continue;
+
+        $key = rtrim(substr($line, 0, $pos));
+        if ($key === '' || isset($map[$key])) continue;
+
+        $map[$key] = trim(substr($line, $pos + 1));
+    }
+
+    return $map;
+}
+
+/**
+ * @param string $lang
+ * @return array
+ */
+function load_system_translations($lang)
+{
+    $lang_file = "/firmware/translations/dune_language_$lang.txt";
+    $lang_txt = file_get_contents($lang_file);
+    if (empty($lang_txt)) {
+        hd_debug_print("Error loading language file $lang_file");
+        $lang_txt = '';
+    } else {
+        hd_debug_print("Loaded language file $lang_file, size: " . strlen($lang_txt));
+    }
+
+    return parse_translations($lang_txt);
+}
+
+/**
+ * String of the firmware translation in the system language by key, formatted by the additional arguments.
+ * In english if the translation of the system language has no such key
+ *
+ * @param string $string_key
+ * @return string empty if the key is unknown
+ */
+function get_system_translation($string_key)
+{
+    static $lang_map = null;
+    if ($lang_map === null) {
+        $lang_map = load_system_translations(get_system_language());
+    }
+
+    static $english_map = null;
+    if (!isset($lang_map[$string_key]) && $english_map === null) {
+        $english_map = load_system_translations('english');
+    }
+
+    $value = isset($lang_map[$string_key]) ? $lang_map[$string_key] : safe_get_value($english_map, $string_key);
+    if ($value !== null) {
+        $args = func_get_args();
+        array_shift($args);
+        return vsprintf($value, $args);
+    }
+
+    hd_debug_print("Not found value for key '$string_key'!");
+    return '';
+}
+
+/**
+ * String of the firmware translation, the screens of the firmware use the same words
+ *
+ * @param string $key
+ * @param string $default used when the firmware has no such key
+ * @return string
+ */
+function sys_tr($key, $default)
+{
+    // the value is passed to vsprintf, a '__1' key needs its argument
+    $value = (substr($key, -3) === '__1') ? get_system_translation($key, '%s') : get_system_translation($key);
+    return (!is_string($value) || $value === '') ? $default : $value;
+}
+
+/**
+ * Firmware 'Label: %s' string without the value, e.g. 'Bitrate:'
+ *
+ * @param string $key
+ * @param string $default
+ * @return string
+ */
+function sys_tr_label($key, $default)
+{
+    return trim(str_replace('%s', '', sys_tr($key, $default)));
+}
+
+/**
+ * Value part of a firmware 'Label: value' string, e.g. 'N/A' of 'Bitrate: N/A'
+ *
+ * @param string $key
+ * @param string $default
+ * @return string
+ */
+function sys_tr_value($key, $default)
+{
+    $value = sys_tr($key, $default);
+    $pos = strpos($value, ': ');
+    return $pos === false ? $value : substr($value, $pos + 2);
+}
+
+/**
  * @param string $path
  * @return string
  */
@@ -2374,6 +2664,37 @@ function get_active_skin_path()
 function get_skin_config_path()
 {
     return getenv('FS_PREFIX') . "/flashdata/dune_skin/dune_skin_config.xml";
+}
+
+/**
+ * The palette of the active skin has the default system colors (patched), or the skin has no config
+ *
+ * @return bool
+ */
+function is_color_palette_patched()
+{
+    global $dune_default_colors_values;
+
+    $skin_config = get_active_skin_path() . '/dune_skin_config.xml';
+    if (!file_exists($skin_config)) {
+        hd_debug_print("'$skin_config' does not exist");
+        return true;
+    }
+
+    $result = 1;
+    $dom = new DomDocument();
+    $dom->load($skin_config);
+    $color = $dom->getElementsByTagName('color');
+    /** @var DOMElement $item */
+    foreach ($color as $item) {
+        $color_index = $item->getAttribute('index');
+        $color_value = $item->getAttribute('value');
+        if ($color_index !== '' && $color_value !== '' && isset($dune_default_colors_values[$color_index])) {
+            $result &= ($color_value === $dune_default_colors_values[$color_index]);
+        }
+    }
+
+    return (bool)$result;
 }
 
 /**
@@ -3993,8 +4314,7 @@ function compress_file($source, $dest)
  */
 function is_dual_system()
 {
-    $ffs = readlines("/tmp/firmware_features.txt");
-    return in_array('dual_system', $ffs);
+    return has_firmware_feature('dual_system');
 }
 
 /**
@@ -4002,8 +4322,7 @@ function is_dual_system()
  */
 function is_whale_tv()
 {
-    $ffs = readlines("/tmp/firmware_features.txt");
-    return in_array('whale_tv', $ffs);
+    return has_firmware_feature('whale_tv');
 }
 
 /**

@@ -239,7 +239,7 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
 
         // closed over the playback the screen only hides and stays in the folder stack, the firmware shows it again
         // when the playback is stopped. Nothing is drawn then and the timer that fires at once closes it
-        if (self::is_navigator()) {
+        if (is_player_navigator()) {
             return array(
                 PluginFolderView::multiple_views_supported => false,
                 PluginFolderView::archive => null,
@@ -298,17 +298,7 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
     public function get_timer()
     {
         // without the playback a zero delay fires at once, the timer handler closes the screen
-        return Action_Factory::timer(self::is_navigator() ? 0 : 1000);
-    }
-
-    /**
-     * No playback, the screen is shown again after the playback under it is stopped
-     *
-     * @return bool
-     */
-    protected static function is_navigator()
-    {
-        return safe_get_value(get_player_state_assoc(), PLAYER_STATE) === PLAYER_STATE_NAVIGATOR;
+        return Action_Factory::timer(is_player_navigator() ? 0 : 1000);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -558,7 +548,7 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
         }
 
         $playback = $this->plugin->get_tv_playback();
-        $position = (int)safe_get_value(get_player_state_assoc(), PLAYBACK_POSITION, 0);
+        $position = (int)get_player_state_value(PLAYBACK_POSITION, 0);
         if ($position <= 0) {
             $position = time() - $playback['start'];
         }
@@ -662,48 +652,30 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
      */
     protected function get_stream_state()
     {
-        $player_state = get_player_state_assoc();
-        if (!is_array($player_state)) {
-            $player_state = array();
+        $player = get_player_stream_info();
+        if (!$this->is_stream_check_used() || $this->check_stream !== $this->get_played_stream() || empty($this->check_info)) {
+            return $player;
         }
 
+        // the teletext is known only to the player
         $state = array('width' => 0, 'height' => 0, 'codec' => '', 'lang' => '', 'bitrate' => 0, 'tracks' => array(),
-            'teletext' => (bool)safe_get_value($player_state, 'teletext_available'));
-
-        if ($this->is_stream_check_used() && $this->check_stream === $this->get_played_stream() && !empty($this->check_info)) {
-            foreach ($this->check_info as $stream) {
-                if ($stream['type'] === 'audio') {
-                    $state['tracks'][] = array('codec' => $stream['codec'], 'lang' => $stream['lang']);
-                }
-
-                // only the streams ffmpeg selected, it selects them like the player
-                if (!$stream['mapped']) continue;
-
-                $state['bitrate'] += $stream['kbps'] * 1000;
-                if ($stream['type'] === 'video') {
-                    $state['width'] = safe_get_value($stream, 'width', 0);
-                    $state['height'] = safe_get_value($stream, 'height', 0);
-                } else if ($state['codec'] === '') {
-                    $state['codec'] = $stream['codec'];
-                    $state['lang'] = $stream['lang'];
-                }
+            'teletext' => $player['teletext']);
+        foreach ($this->check_info as $stream) {
+            if ($stream['type'] === 'audio') {
+                $state['tracks'][] = array('codec' => $stream['codec'], 'lang' => $stream['lang']);
             }
 
-            return $state;
-        }
+            // only the streams ffmpeg selected, it selects them like the player
+            if (!$stream['mapped']) continue;
 
-        $state['width'] = (int)safe_get_value($player_state, 'playback_video_width', 0);
-        $state['height'] = (int)safe_get_value($player_state, 'playback_video_height', 0);
-        $state['bitrate'] = (int)safe_get_value($player_state, 'playback_current_bitrate', 0);
-
-        $track = safe_get_value($player_state, 'audio_track');
-        if ($track !== null) {
-            $state['codec'] = trim(safe_get_value($player_state, "audio_track.$track.codec", ''));
-            $state['lang'] = trim(safe_get_value($player_state, "audio_track.$track.lang", ''));
-        }
-
-        foreach (get_audio_tracks_description() as $track) {
-            $state['tracks'][] = array('codec' => safe_get_value($track, 'codec', ''), 'lang' => safe_get_value($track, 'lang', ''));
+            $state['bitrate'] += $stream['kbps'] * 1000;
+            if ($stream['type'] === 'video') {
+                $state['width'] = safe_get_value($stream, 'width', 0);
+                $state['height'] = safe_get_value($stream, 'height', 0);
+            } else if ($state['codec'] === '') {
+                $state['codec'] = $stream['codec'];
+                $state['lang'] = $stream['lang'];
+            }
         }
 
         return $state;
@@ -844,7 +816,7 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
 
         $bitrate = $stream['bitrate'];
         if ($bitrate > 0) {
-            $text = sprintf('%.1f %s', $bitrate / 1000000, self::sys_tr('formatting_bitrate_megabits', 'Mbit/s'));
+            $text = sprintf('%.1f %s', $bitrate / 1000000, sys_tr('formatting_bitrate_megabits', 'Mbit/s'));
             $info[] = array(self::text(null, $text, self::COLOR_SILVER), mb_strlen($text, 'UTF-8') * self::STREAM_CHAR_WIDTH);
         }
 
@@ -904,7 +876,7 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
 
         if ($this->program === null) {
             return array(self::text(GComp_Geom::place_top_left(-1, -1, 0, self::BODY_TOP),
-                self::sys_tr('osd_plugin_tv_no_program', 'Program is not available'), self::COLOR_TEXT));
+                sys_tr('osd_plugin_tv_no_program', 'Program is not available'), self::COLOR_TEXT));
         }
 
         $start = $this->program[PluginTvEpgProgram::start_tm_sec];
@@ -918,7 +890,7 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
         } else {
             $date = format_datetime('d.m.Y', $start);
             if ($date === format_datetime('d.m.Y', time())) {
-                $date = self::sys_tr('osd_plugin_tv_today', 'Today');
+                $date = sys_tr('osd_plugin_tv_today', 'Today');
             }
         }
         $time = sprintf('%s  %s-%s', $date, format_datetime('H:i', $start), format_datetime('H:i', $end));
@@ -1052,7 +1024,7 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
             // the first label is for one item, the last for several
             $label_keys = array_keys($labels);
             $label_key = (strpos($value, ',') === false) ? reset($label_keys) : end($label_keys);
-            self::add_labeled_row($rows, $width, self::sys_tr_label($label_key, $labels[$label_key]), $value);
+            self::add_labeled_row($rows, $width, sys_tr_label($label_key, $labels[$label_key]), $value);
         }
 
         $desc = trim($this->program[PluginTvEpgProgram::description]);
@@ -1071,22 +1043,22 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
     protected function get_tech_rows($width)
     {
         $stream = $this->get_stream_state();
-        $na = self::sys_tr_value('osd_bitrate_na', 'N/A');
+        $na = sys_tr_value('osd_bitrate_na', 'N/A');
         $rows = array();
 
-        self::add_labeled_row($rows, $width, self::sys_tr('osd_file_resolution', 'Video resolution:'),
+        self::add_labeled_row($rows, $width, sys_tr('osd_file_resolution', 'Video resolution:'),
             ($stream['width'] > 0 && $stream['height'] > 0) ? "{$stream['width']}x{$stream['height']}" : $na);
 
         $bitrate = $stream['bitrate'];
-        self::add_labeled_row($rows, $width, self::sys_tr_label('osd_bitrate__1', 'Bitrate:'),
-            $bitrate > 0 ? round($bitrate / 1000000, 2) . ' ' . self::sys_tr('formatting_bitrate_megabits', 'Mbit/s') : $na);
+        self::add_labeled_row($rows, $width, sys_tr_label('osd_bitrate__1', 'Bitrate:'),
+            $bitrate > 0 ? round($bitrate / 1000000, 2) . ' ' . sys_tr('formatting_bitrate_megabits', 'Mbit/s') : $na);
 
         // all tracks in one line: #1 AAC RU, #2 AAC EN
         $tracks = array();
         foreach ($stream['tracks'] as $track) {
             $tracks[] = '#' . (count($tracks) + 1) . ' ' . strtoupper(trim($track['codec'] . ' ' . $track['lang']));
         }
-        self::add_labeled_row($rows, $width, rtrim(self::sys_tr('osd_audio_tracks', 'Audio tracks'), ': ') . ':',
+        self::add_labeled_row($rows, $width, rtrim(sys_tr('osd_audio_tracks', 'Audio tracks'), ': ') . ':',
             empty($tracks) ? $na : implode(', ', $tracks));
 
         return $rows;
@@ -1102,32 +1074,32 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
         $items = array();
 
         if ($this->show_tech_info) {
-            $items[] = array(array('select_btn.png'), rtrim(self::sys_tr('osd_epg_label_about_program', 'TV programme'), ': '));
+            $items[] = array(array('select_btn.png'), rtrim(sys_tr('osd_epg_label_about_program', 'TV programme'), ': '));
         } else {
             if ($this->program !== null) {
                 $items[] = array(array('arrow_left_btn.png', 'arrow_right_btn.png'),
-                    self::sys_tr('navigator_action_backward', 'Backward') . ' / ' . self::sys_tr('navigator_action_forward', 'Forward'));
+                    sys_tr('navigator_action_backward', 'Backward') . ' / ' . sys_tr('navigator_action_forward', 'Forward'));
             }
 
             $is_played = $this->is_played_program();
             if ($is_played) {
-                $items[] = array(array('select_btn.png'), self::sys_tr('plugin_default_tv_action_add_info', 'Tech. info'));
+                $items[] = array(array('select_btn.png'), sys_tr('plugin_default_tv_action_add_info', 'Tech. info'));
             }
 
             if ($this->program !== null) {
                 if ($this->can_replay($this->program)) {
                     $items[] = array(array('enter_btn.png'),
-                        self::sys_tr('play_from_the_beginning_button', 'Play from the beginning'), self::COLOR_ARCHIVE);
+                        sys_tr('play_from_the_beginning_button', 'Play from the beginning'), self::COLOR_ARCHIVE);
                 }
 
                 $is_future = $this->program[PluginTvEpgProgram::start_tm_sec] > time();
                 if (!$is_future && ($this->is_archive_playback() || !$is_played)) {
                     $items[] = array(array('play_btn.png'),
-                        rtrim(self::sys_tr('osd_epg_current_program', 'Current program'), ': '));
+                        rtrim(sys_tr('osd_epg_current_program', 'Current program'), ': '));
                 }
 
                 $items[] = array(array('arrow_up_btn.png', 'arrow_down_btn.png', 'page_minus_btn.png', 'page_plus_btn.png'),
-                    self::sys_tr('controls_button_scroll', 'Scroll'));
+                    sys_tr('controls_button_scroll', 'Scroll'));
             }
         }
 
@@ -1228,48 +1200,6 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
         }
 
         return GComps_Factory::get_image_def(GComp_Geom::geom($width, $height), null, $path);
-    }
-
-    /**
-     * String from the firmware translation of the system language, the EPG of the firmware uses the same words
-     *
-     * @param string $key
-     * @param string $default used when the firmware has no such key
-     * @return string
-     */
-    protected static function sys_tr($key, $default)
-    {
-        // the value is passed to vsprintf, a '__1' key needs its argument
-        $value = (substr($key, -3) === '__1')
-            ? TR::get_system_language_string_value($key, '%s')
-            : TR::get_system_language_string_value($key);
-        return (!is_string($value) || $value === '') ? $default : $value;
-    }
-
-    /**
-     * Firmware 'Label: %s' string without the value, e.g. 'Bitrate:'
-     *
-     * @param string $key
-     * @param string $default
-     * @return string
-     */
-    protected static function sys_tr_label($key, $default)
-    {
-        return trim(str_replace('%s', '', self::sys_tr($key, $default)));
-    }
-
-    /**
-     * Value part of a firmware 'Label: value' string, e.g. 'N/A' of 'Bitrate: N/A'
-     *
-     * @param string $key
-     * @param string $default
-     * @return string
-     */
-    protected static function sys_tr_value($key, $default)
-    {
-        $value = self::sys_tr($key, $default);
-        $pos = strpos($value, ': ');
-        return $pos === false ? $value : substr($value, $pos + 2);
     }
 
     /**

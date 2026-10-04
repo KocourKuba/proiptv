@@ -138,7 +138,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_print('Plugin date:             ' . HD::get_manifest_info_value('app_release_date'));
         hd_print('LocalTime:               ' . format_datetime('Y-m-d H:i', time()));
         hd_print('TimeZone:                ' . getTimeZone());
-        hd_print('NewUI support:           ' . SwitchOnOff::to_def(HD::rows_api_support()));
+        hd_print('NewUI support:           ' . SwitchOnOff::to_def(is_rows_api_supported()));
         hd_print('NewUI enabled:           ' . SwitchOnOff::to_def(Starnet_Epfs_Handler::$enabled));
         hd_print('Ext EPG support:         ' . SwitchOnOff::to_def(is_ext_epg_supported()));
         hd_print('Native XMLTV indexer:    ' . SwitchOnOff::to_def($native_indexer) . ($native_indexer ? '' : ' (' . Epg_Manager_Xmltv::get_helper_reason() . ')'));

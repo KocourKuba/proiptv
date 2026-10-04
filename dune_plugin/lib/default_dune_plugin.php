@@ -534,8 +534,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 break;
         }
 
-        $player_state = get_player_state_assoc();
-        if (safe_get_value($player_state, PLAYBACK_STATE) === PLAYBACK_PLAYING) {
+        if (is_playback_playing()) {
             return Action_Factory::invalidate_folders(array(), null, true);
         }
 
@@ -2766,12 +2765,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             throw new Exception('Unknown channel');
         }
 
-        $url = $this->generate_stream_url($channel_row, $archive_ts, true);
-        $cmd = 'am start -d "' . $url . '" -t "video/*" -a android.intent.action.VIEW 2>&1';
-        hd_debug_print("play movie in the external player: $cmd");
-        /** @var array $output */
-        exec($cmd, $output);
-        hd_debug_print('external player exec result code' . array_to_str($output));
+        start_external_player($this->generate_stream_url($channel_row, $archive_ts, true));
         return null;
     }
 
@@ -4882,7 +4876,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         );
 
         hd_debug_print("Get media info for: $stream_url");
-        $ffmpeg = self::get_ffmpeg_path();
+        $ffmpeg = get_ffmpeg_path();
         hd_debug_print("Using ffmpeg: $ffmpeg");
         /** @var array $pipes */
         $process = proc_open(
@@ -4953,7 +4947,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // the script writes the result file only when ffmpeg is done.
         // a subshell with the rename after the script makes shell_exec wait for ffmpeg, the plain command does not
         $cmd = sprintf('sh %s -f %s -d %d -o %s %s >/dev/null 2>&1 &',
-            escapeshellarg(get_install_path('bin/media_check.sh')), escapeshellarg(self::get_ffmpeg_path()),
+            escapeshellarg(get_install_path('bin/media_check.sh')), escapeshellarg(get_ffmpeg_path()),
             $this->get_parameter(PARAM_MEDIA_INFO_SAMPLE, 5), escapeshellarg($result_file), escapeshellarg($stream_url));
         hd_debug_print("Start streams check: $cmd", true);
         shell_exec($cmd);
@@ -4976,27 +4970,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $out = self::parse_streams_info(file_get_contents($result_file));
         safe_unlink($result_file);
         return $out;
-    }
-
-    /**
-     * ffmpeg used by bin/media_check.sh
-     *
-     * Firmware r25 and newer ships its own ffmpeg 7.1 (null muxer, https), so the bundled
-     * build is only needed on older firmware. The path is absolute because a command passed
-     * to the shell does not get FS_PREFIX added the way php file functions do.
-     *
-     * @return string
-     */
-    protected static function get_ffmpeg_path()
-    {
-        if (is_r25_or_higher()) {
-            $system_ffmpeg = getenv('FS_PREFIX') . '/firmware/bin/ffmpeg';
-            if (file_exists($system_ffmpeg)) {
-                return $system_ffmpeg;
-            }
-        }
-
-        return get_install_path('bin/ffmpeg-7.1.3');
     }
 
     /**

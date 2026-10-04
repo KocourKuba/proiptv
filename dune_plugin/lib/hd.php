@@ -30,26 +30,6 @@ require_once 'dune_plugin_constants.php';
 class HD
 {
     /**
-     * @var array
-     */
-    private static $ff_set;
-
-    /**
-     * @var bool
-     */
-    private static $with_rows_api;
-
-    /**
-     * @var bool
-     */
-    private static $with_list_config;
-
-    /**
-     * @var bool
-     */
-    private static $ext_epg_support;
-
-    /**
      * @var string
      */
     private static $default_user_agent;
@@ -65,67 +45,6 @@ class HD
     private static $plugin_manifest_info;
 
     ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @return array
-     */
-    public static function load_firmware_features()
-    {
-        $path = getenv('FS_PREFIX') . '/tmp/firmware_features.txt';
-
-        if (!isset(self::$ff_set)) {
-            self::$ff_set = array();
-            if (is_file($path)) {
-                foreach(readlines($path) as $ff) {
-                    self::$ff_set[$ff] = true;
-                }
-            }
-        }
-
-        return self::$ff_set;
-    }
-
-    /**
-     * @return bool
-     */
-    public static function rows_api_support()
-    {
-        if (!isset(self::$with_rows_api))
-            self::$with_rows_api = class_exists('PluginRowsFolderView');
-
-        return self::$with_rows_api;
-    }
-
-    /**
-     * @return bool
-     */
-    public static function list_config_support()
-    {
-        if (!isset(self::$with_list_config))
-        {
-            self::$with_list_config = class_exists('EditListConfigActionData') && defined('EDIT_LIST_CONFIG_OPT_REMOVE_UNCHECKED');
-        }
-        return self::$with_list_config;
-    }
-
-    /**
-     * @return bool
-     */
-    public static function with_lcfg_v2()
-    {
-        return self::list_config_support() && isset(self::$ff_set['lcfg_v2']);
-    }
-
-    /**
-     * @return bool
-     */
-    public static function ext_epg_support()
-    {
-        if (!isset(self::$ext_epg_support))
-            self::$ext_epg_support = defined('PluginTvInfo::ext_epg_enabled');
-
-        return self::$ext_epg_support;
-    }
 
     /**
      * @param mixed $opts
@@ -415,39 +334,6 @@ class HD
     {
         $file_path = $persistent ? get_data_path($filename) : get_temp_path($filename);
         safe_unlink($file_path);
-    }
-
-    /**
-     * Return true if palette is patched or not exist
-     *
-     * @return bool
-     */
-    public static function color_palette_check()
-    {
-        global $dune_default_colors_values;
-
-        $skin_path = get_active_skin_path();
-        $skin_config = "$skin_path/dune_skin_config.xml";
-
-        if (!file_exists($skin_config)) {
-            hd_debug_print("'$skin_config' does not exist");
-            return true;
-        }
-
-        $result = 1;
-        $dom = new DomDocument();
-        $dom->load($skin_config);
-        $color = $dom->getElementsByTagName('color');
-        /** @var DOMElement $item */
-        foreach ($color as $item) {
-            $color_index = $item->getAttribute('index');
-            $color_value = $item->getAttribute('value');
-            if ($color_index !== '' && $color_value !== '' && isset($dune_default_colors_values[$color_index])) {
-                $result &= ($color_value === $dune_default_colors_values[$color_index]);
-            }
-        }
-
-        return (bool)$result;
     }
 
     /**
