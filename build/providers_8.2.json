@@ -1479,7 +1479,6 @@
       "type": "login",
       "logo": "https://iptv.proiptv.info/res/logo_rutv.png",
       "provider_url": "https://rutv.vip/",
-      "api_url": "http://pl.ru-tv.site",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/(?:video\\.m3u8|mpegts)\\?token=(?<token>.+)$/",
         "epg_presets": [
@@ -1488,20 +1487,29 @@
             "alias": "rutv"
           }
         ],
+        "servers": {
+          "myrutv.ru": "Russia",
+          "ru-tv.site": "Europe",
+          "ru-tv.vip": "USA"
+        },
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "{API}/{LOGIN}/{PASSWORD}/tv.m3u"
+            "url": "http://pl.{SERVER_ID}/{LOGIN}/{PASSWORD}/tv.m3u"
           }
         },
         "playlists_vod": {
           "default": {
             "name": "Default",
-            "url": "{API}/{LOGIN}/{PASSWORD}/vod.m3u"
+            "url": "http://pl.{SERVER_ID}/{LOGIN}/{PASSWORD}/vod.m3u"
           },
-          "With Adult": {
-            "name": "Default",
-            "url": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
+          "Adult": {
+            "name": "With Adult",
+            "url": "http://pl.{SERVER_ID}/{LOGIN}/{PASSWORD}/vodall.m3u"
+          },
+          "Serials": {
+            "name": "Serials",
+            "url": "http://pl.{SERVER_ID}/{LOGIN}/{PASSWORD}/series.m3u"
           }
         },
         "vod_parser": "/^(?<title>[^\\/]+)\\s\\((?:(?<country>.+)\\s)?(?<year>\\d+)\\)$/",
