@@ -268,7 +268,6 @@ plugin_vod_type_m3u = M3U
 provider_info = 链接到IPTV服务商
 provider_playlist = 服务商播放列表
 provider_url = 提供者网址:
-provider_vod_playlist = 供应商点播播放列表
 quality = 画质
 recurring__1 = 自动续订: %s
 refresh = 刷新

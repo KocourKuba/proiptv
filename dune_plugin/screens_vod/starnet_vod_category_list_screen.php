@@ -33,6 +33,8 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'vod_category_list';
 
+    const ACTION_VOD_PLAYLIST_SELECTED = 'vod_playlist_selected';
+
     /**
      * @inheritDoc
      */
@@ -72,6 +74,17 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         $group_id = safe_get_value($selected_media_url, COLUMN_GROUP_ID);
 
         switch ($user_input->control_id) {
+            case self::ACTION_VOD_PLAYLIST_SELECTED:
+                $provider = $this->plugin->get_active_provider();
+                if (is_null($provider) || !isset($user_input->{LIST_IDX})
+                    || $user_input->{LIST_IDX} === $provider->GetPlaylistVodId()) {
+                    break;
+                }
+
+                hd_debug_print("select vod playlist: {$user_input->{LIST_IDX}}");
+                $provider->SetProviderParameter(PARAM_PLAYLIST_VOD_ID, $user_input->{LIST_IDX});
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+
             case ACTION_RELOAD:
                 hd_debug_print('reload categories');
                 if ($this->plugin->init_vod_class(true)) {
@@ -299,6 +312,25 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_RELOAD, $title, 'refresh.png');
 
         $menu_items[] = Control_Factory::menu_separator();
+
+        // provider m3u vod playlists to switch between, the current one is checked
+        $provider = $this->plugin->get_active_provider();
+        $vod_playlists = is_null($provider) || !Default_Dune_Plugin::is_provider_m3u_vod($provider)
+            ? null : $provider->GetPlaylistsVod();
+        if (count($vod_playlists) > 1) {
+            $current = $provider->GetPlaylistVodId();
+            foreach ($vod_playlists as $key => $playlist) {
+                $name = $key === PARAM_DEFAULT_CONFIG_PLAYLIST_ID ? TR::t('by_default') : safe_get_value($playlist, COLUMN_NAME, $key);
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                    self::ACTION_VOD_PLAYLIST_SELECTED,
+                    $name,
+                    (string)$key === $current ? 'check.png' : null,
+                    array(LIST_IDX => (string)$key)
+                );
+            }
+
+            $menu_items[] = Control_Factory::menu_separator();
+        }
 
         $clear_action = Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
             $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);

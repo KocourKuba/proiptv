@@ -268,7 +268,6 @@ plugin_vod_type_m3u = M3U
 provider_info = Link to IPTV provider
 provider_playlist = Provider playlist
 provider_url = Provider URL:
-provider_vod_playlist = Provider VOD playlist
 quality = Quality
 recurring__1 = Auto recurring: %s
 refresh = Refresh

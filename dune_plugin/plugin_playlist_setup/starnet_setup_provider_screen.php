@@ -243,17 +243,6 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                     TR::t('setup_use_vod'), SwitchOnOff::translate($use_vod), SwitchOnOff::to_image($use_vod));
             }
 
-            if (count($vod_playlists) > 1) {
-                $pl_vod_idx = $provider->GetPlaylistVodId();
-                $pl_vod_names = extract_column($vod_playlists, COLUMN_NAME);
-                if (isset($pl_vod_names['default'])) {
-                    $pl_vod_names['default'] = TR::t('by_default');
-                }
-
-                Control_Factory::add_combobox($defs, $this, PARAM_PLAYLIST_VOD_ID, TR::t('provider_vod_playlist'),
-                    $pl_vod_idx, $pl_vod_names, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
-            }
-
             $fav_id = $this->plugin->get_setting(PARAM_USE_COMMON_FAV, SwitchOnOff::off);
             Control_Factory::add_image_button($defs, $this, PARAM_USE_COMMON_FAV,
                 TR::t('setup_use_common_fav'), SwitchOnOff::translate($fav_id), SwitchOnOff::to_image($fav_id));
@@ -366,7 +355,6 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                 break;
 
             case PARAM_PLAYLIST_IPTV_ID:
-            case PARAM_PLAYLIST_VOD_ID:
             case PARAM_CUSTOM_PLAYLIST_IPTV:
             case PARAM_SQUARE_ICON:
             case PARAM_SELECTED_MIRROR:
