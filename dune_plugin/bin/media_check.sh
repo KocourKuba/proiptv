@@ -100,8 +100,20 @@ if [ "$#" -gt 0 ]; then
       shift 2
       continue
     fi
+    # '-o <file>' writes the output to the file instead of stdout, the file appears only when ffmpeg is done
+    if [ "$1" = "-o" ]; then
+      OUT_FILE="$2"
+      echo "output file: $OUT_FILE" >>$LOG_FILE
+      shift 2
+      continue
+    fi
     echo "processing param URL: $1" >>$LOG_FILE
-    ProcessURL "$1"
+    if [ -n "$OUT_FILE" ]; then
+      ProcessURL "$1" >"$OUT_FILE.part"
+      mv -f "$OUT_FILE.part" "$OUT_FILE"
+    else
+      ProcessURL "$1"
+    fi
     shift
   done
 else

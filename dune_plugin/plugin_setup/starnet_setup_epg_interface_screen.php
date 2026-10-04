@@ -72,6 +72,19 @@ class Starnet_Setup_Epg_Interface_Screen extends Abstract_Controls_Screen
             TR::t('setup_epg_info_window'), SwitchOnOff::translate($epg_info_window), SwitchOnOff::to_image($epg_info_window));
 
         //////////////////////////////////////
+        // stream info of the epg info window: from the player or measured by ffmpeg, the ATV boxes have no ffmpeg
+        if (!is_limited_apk()) {
+            $stream_check = $this->plugin->get_parameter(PARAM_EPG_INFO_STREAM_CHECK, SwitchOnOff::off);
+            hd_debug_print(PARAM_EPG_INFO_STREAM_CHECK . ": $stream_check", true);
+            $stream_ops_translated = array(
+                SwitchOnOff::on => TR::t('setup_epg_info_stream_ffmpeg'),
+                SwitchOnOff::off => TR::t('setup_epg_info_stream_player')
+            );
+            Control_Factory::add_image_button($defs, $this, PARAM_EPG_INFO_STREAM_CHECK, TR::t('setup_epg_info_stream'),
+                SwitchOnOff::translate_from($stream_ops_translated, $stream_check), SwitchOnOff::to_image($stream_check));
+        }
+
+        //////////////////////////////////////
         // group/channel font size
         $group_font_size = $this->plugin->get_parameter(PARAM_GROUP_FONT_SIZE, SwitchOnOff::off);
         hd_debug_print(PARAM_GROUP_FONT_SIZE . ": $group_font_size", true);
@@ -99,6 +112,7 @@ class Starnet_Setup_Epg_Interface_Screen extends Abstract_Controls_Screen
 
             case PARAM_EPG_FONT_SIZE:
             case PARAM_GROUP_FONT_SIZE:
+            case PARAM_EPG_INFO_STREAM_CHECK:
                 $this->plugin->toggle_parameter($control_id, false);
                 break;
         }

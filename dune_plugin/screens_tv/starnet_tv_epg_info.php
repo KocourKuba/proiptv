@@ -93,6 +93,11 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
 
     const FUTURE_EPG_DAYS = 7;
 
+    // the stream check of a channel is used again within this time, every check opens one more connection to the stream
+    const STREAM_CHECK_CACHE_SEC = 300;
+    // bin/media_check.sh stops ffmpeg after the sample time + 15 sec, a check without a result after that is lost
+    const STREAM_CHECK_TIMEOUT_SEC = 20;
+
     // colors are RGBA
     const COLOR_TEXT = '#FFFFE0FF';
     const COLOR_VALUE = '#AFAFA0FF';
@@ -150,6 +155,30 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
     protected $show_tech_info = false;
 
     /**
+     * stream of the last stream check by ffmpeg: channel id and archive start of the playback (-1 for live)
+     * @var string|null
+     */
+    protected $check_stream;
+
+    /**
+     * start time of the running stream check, 0 - no check is running
+     * @var int
+     */
+    protected $check_started = 0;
+
+    /**
+     * time of the result of the last stream check
+     * @var int
+     */
+    protected $check_time = 0;
+
+    /**
+     * 'info' of the last stream check, see Default_Dune_Plugin::parse_streams_info()
+     * @var array
+     */
+    protected $check_info = array();
+
+    /**
      * firmware translation keys of the people labels (one person, several persons) => english default
      * @var array
      */
@@ -185,6 +214,8 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
         if (!$this->init_channel((string)$user_input->plugin_tv_channel_id, $group_id, $is_favorite)) {
             return null;
         }
+
+        $this->update_stream_check();
 
         return Action_Factory::open_folder(
             MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, PARAM_CHANNEL_ID => $this->channel_id)));
@@ -310,8 +341,11 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
                 }
 
                 // clock and playback position, the played program may have changed meanwhile
-                return $this->change_panes(array(self::PANE_HEADER, self::PANE_STREAM, self::PANE_HELP),
-                    Action_Factory::change_behaviour($this->do_get_action_map(), 1000));
+                $panes = array(self::PANE_HEADER, self::PANE_STREAM, self::PANE_HELP);
+                if ($this->update_stream_check() && $this->show_tech_info) {
+                    $panes[] = self::PANE_PROGRAM;
+                }
+                return $this->change_panes($panes, Action_Factory::change_behaviour($this->do_get_action_map(), 1000));
 
             case GUI_EVENT_KEY_SELECT:
                 // tech info belongs to the played program only
@@ -550,6 +584,132 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
     }
 
     /**
+     * The stream info of the live or archive playback is measured by bin/media_check.sh (ffmpeg)
+     * when it is selected in the setup, the ATV boxes have no ffmpeg and take it from the player
+     *
+     * @return bool
+     */
+    protected function is_stream_check_used()
+    {
+        return !is_limited_apk() && $this->plugin->get_bool_parameter(PARAM_EPG_INFO_STREAM_CHECK, false);
+    }
+
+    /**
+     * Id of the played stream for the stream check: an archive playback started at another time is another stream
+     *
+     * @return string
+     */
+    protected function get_played_stream()
+    {
+        $playback = $this->plugin->get_tv_playback();
+        return $this->channel_id . '|' . ($this->is_archive_playback() ? $playback[PARAM_ARCHIVE_TM] : -1);
+    }
+
+    /**
+     * Take the result of the running stream check, start a check for the channel when there is no recent one.
+     * The check runs in the background for the sample time of the media info, the timer polls for its result.
+     *
+     * @return bool a new result is taken
+     */
+    protected function update_stream_check()
+    {
+        if (!$this->is_stream_check_used()) {
+            return false;
+        }
+
+        if ($this->check_started !== 0) {
+            $result = $this->plugin->get_streams_check();
+            if ($result !== null) {
+                $this->check_started = 0;
+                $this->check_time = time();
+                $this->check_info = safe_get_value($result, 'info', array());
+                hd_debug_print("Stream check of $this->check_stream: " . json_encode($this->check_info), true);
+                return $this->check_stream === $this->get_played_stream();
+            }
+
+            $timeout = (int)$this->plugin->get_parameter(PARAM_MEDIA_INFO_SAMPLE, 5) + self::STREAM_CHECK_TIMEOUT_SEC;
+            if (time() - $this->check_started < $timeout) {
+                return false;
+            }
+
+            hd_debug_print("Stream check of $this->check_stream has no result");
+            $this->check_started = 0;
+        }
+
+        $stream = $this->get_played_stream();
+        if ($this->check_stream === $stream && time() - $this->check_time < self::STREAM_CHECK_CACHE_SEC) {
+            return false;
+        }
+
+        $this->check_stream = $stream;
+        $this->check_time = 0;
+        $this->check_info = array();
+        // the archive is checked from the moment being played
+        $archive_ts = $this->is_archive_playback() ? $this->get_playback_ts() : -1;
+        if ($this->plugin->start_streams_check($this->channel_id, $archive_ts)) {
+            $this->check_started = time();
+        }
+
+        return false;
+    }
+
+    /**
+     * Video and audio of the played stream: from the stream check when it is used and has a result,
+     * otherwise (also while the check is running) from the player
+     *
+     * @return array width, height, codec and lang of the played audio, bitrate (bit/s), teletext,
+     *               tracks - codec and lang of each audio track
+     */
+    protected function get_stream_state()
+    {
+        $player_state = get_player_state_assoc();
+        if (!is_array($player_state)) {
+            $player_state = array();
+        }
+
+        $state = array('width' => 0, 'height' => 0, 'codec' => '', 'lang' => '', 'bitrate' => 0, 'tracks' => array(),
+            'teletext' => (bool)safe_get_value($player_state, 'teletext_available'));
+
+        if ($this->is_stream_check_used() && $this->check_stream === $this->get_played_stream() && !empty($this->check_info)) {
+            foreach ($this->check_info as $stream) {
+                if ($stream['type'] === 'audio') {
+                    $state['tracks'][] = array('codec' => $stream['codec'], 'lang' => $stream['lang']);
+                }
+
+                // only the streams ffmpeg selected, it selects them like the player
+                if (!$stream['mapped']) continue;
+
+                $state['bitrate'] += $stream['kbps'] * 1000;
+                if ($stream['type'] === 'video') {
+                    $state['width'] = safe_get_value($stream, 'width', 0);
+                    $state['height'] = safe_get_value($stream, 'height', 0);
+                } else if ($state['codec'] === '') {
+                    $state['codec'] = $stream['codec'];
+                    $state['lang'] = $stream['lang'];
+                }
+            }
+
+            return $state;
+        }
+
+        $state['width'] = (int)safe_get_value($player_state, 'playback_video_width', 0);
+        $state['height'] = (int)safe_get_value($player_state, 'playback_video_height', 0);
+        $state['bitrate'] = (int)safe_get_value($player_state, 'playback_current_bitrate', 0);
+
+        $track = safe_get_value($player_state, 'audio_track');
+        if ($track !== null) {
+            $state['codec'] = trim(safe_get_value($player_state, "audio_track.$track.codec", ''));
+            $state['lang'] = trim(safe_get_value($player_state, "audio_track.$track.lang", ''));
+        }
+
+        foreach (get_audio_tracks_description() as $track) {
+            $state['tracks'][] = array('codec' => safe_get_value($track, 'codec', ''), 'lang' => safe_get_value($track, 'lang', ''));
+        }
+
+        return $state;
+    }
+
+    /**
      * @param array $program
      * @return bool
      */
@@ -649,16 +809,13 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
             return array();
         }
 
-        $player_state = get_player_state_assoc();
-        if (!is_array($player_state)) {
-            $player_state = array();
-        }
+        $stream = $this->get_stream_state();
 
         // the info items follow each other, $x follows their width to start the playback bar after them
         $info = array();
         $x = 20;
 
-        $rows = (int)safe_get_value($player_state, 'playback_video_height', 0);
+        $rows = $stream['height'];
         if ($rows > 0) {
             foreach (array(240, 360, 480, 540, 576, 720, 1080, 2160) as $def) {
                 if ($rows <= $def || $def === 2160) {
@@ -668,27 +825,24 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
             }
         }
 
-        $track = safe_get_value($player_state, 'audio_track');
-        if ($track !== null) {
-            $codec = trim(safe_get_value($player_state, "audio_track.$track.codec", ''));
-            if ($codec !== '') {
-                $logo = self::get_audio_codec_icon($codec);
-                $info[] = ($logo === null)
-                    ? array(self::text(null, strtoupper($codec), self::COLOR_SILVER), mb_strlen($codec, 'UTF-8') * self::STREAM_CHAR_WIDTH)
-                    : array(self::image($logo, 88, 50), 88);
-            }
-
-            $lang = strtoupper(trim(safe_get_value($player_state, "audio_track.$track.lang", '')));
-            if ($lang !== '') {
-                $info[] = array(self::text(null, $lang, self::COLOR_TEXT), mb_strlen($lang, 'UTF-8') * self::STREAM_CHAR_WIDTH);
-            }
+        $codec = $stream['codec'];
+        if ($codec !== '') {
+            $logo = self::get_audio_codec_icon($codec);
+            $info[] = ($logo === null)
+                ? array(self::text(null, strtoupper($codec), self::COLOR_SILVER), mb_strlen($codec, 'UTF-8') * self::STREAM_CHAR_WIDTH)
+                : array(self::image($logo, 88, 50), 88);
         }
 
-        if (safe_get_value($player_state, 'teletext_available')) {
+        $lang = strtoupper($stream['lang']);
+        if ($lang !== '') {
+            $info[] = array(self::text(null, $lang, self::COLOR_TEXT), mb_strlen($lang, 'UTF-8') * self::STREAM_CHAR_WIDTH);
+        }
+
+        if ($stream['teletext']) {
             $info[] = array(self::image('teletext.png', 64, 50), 64);
         }
 
-        $bitrate = (int)safe_get_value($player_state, 'playback_current_bitrate', 0);
+        $bitrate = $stream['bitrate'];
         if ($bitrate > 0) {
             $text = sprintf('%.1f %s', $bitrate / 1000000, self::sys_tr('formatting_bitrate_megabits', 'Mbit/s'));
             $info[] = array(self::text(null, $text, self::COLOR_SILVER), mb_strlen($text, 'UTF-8') * self::STREAM_CHAR_WIDTH);
@@ -916,28 +1070,21 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
      */
     protected function get_tech_rows($width)
     {
-        $player_state = get_player_state_assoc();
-        if (!is_array($player_state)) {
-            $player_state = array();
-        }
-
+        $stream = $this->get_stream_state();
         $na = self::sys_tr_value('osd_bitrate_na', 'N/A');
         $rows = array();
 
-        $video_width = (int)safe_get_value($player_state, 'playback_video_width', 0);
-        $video_height = (int)safe_get_value($player_state, 'playback_video_height', 0);
         self::add_labeled_row($rows, $width, self::sys_tr('osd_file_resolution', 'Video resolution:'),
-            ($video_width > 0 && $video_height > 0) ? "{$video_width}x$video_height" : $na);
+            ($stream['width'] > 0 && $stream['height'] > 0) ? "{$stream['width']}x{$stream['height']}" : $na);
 
-        $bitrate = (int)safe_get_value($player_state, 'playback_current_bitrate', 0);
+        $bitrate = $stream['bitrate'];
         self::add_labeled_row($rows, $width, self::sys_tr_label('osd_bitrate__1', 'Bitrate:'),
             $bitrate > 0 ? round($bitrate / 1000000, 2) . ' ' . self::sys_tr('formatting_bitrate_megabits', 'Mbit/s') : $na);
 
         // all tracks in one line: #1 AAC RU, #2 AAC EN
         $tracks = array();
-        foreach (get_audio_tracks_description() as $track) {
-            $tracks[] = '#' . (count($tracks) + 1) . ' '
-                . strtoupper(trim(safe_get_value($track, 'codec', '') . ' ' . safe_get_value($track, 'lang', '')));
+        foreach ($stream['tracks'] as $track) {
+            $tracks[] = '#' . (count($tracks) + 1) . ' ' . strtoupper(trim($track['codec'] . ' ' . $track['lang']));
         }
         self::add_labeled_row($rows, $width, rtrim(self::sys_tr('osd_audio_tracks', 'Audio tracks'), ': ') . ':',
             empty($tracks) ? $na : implode(', ', $tracks));

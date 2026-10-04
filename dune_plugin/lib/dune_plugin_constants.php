@@ -302,6 +302,7 @@ const PARAM_EPG_CACHE_PATH = 'xmltv_cache_path';
 const PARAM_EPG_JSON_CACHE_PATH = 'json_cache_path';
 const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_EPG_INFO_WINDOW = 'epg_info_window';
+const PARAM_EPG_INFO_STREAM_CHECK = 'epg_info_stream_check';
 const PARAM_FIX_PALETTE = 'fix_palette';
 const PARAM_FULL_SIZE_REMOTE = 'use_full_size_remote';
 const PARAM_GROUP_FONT_SIZE = 'group_font_size';

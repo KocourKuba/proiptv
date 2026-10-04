@@ -52,6 +52,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     const ARCHIVE_ID = 'common';
     const PARSE_CONFIG = "%s_parse_config.json";
     const MEDIA_INFO_LOG_LINES = 20;
+    const STREAMS_CHECK_FILE = 'streams_check.log';
 
     /**
      * @var Starnet_Tv
@@ -4885,6 +4886,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param int|null $sample_duration how many seconds of the stream are read to measure the bitrate,
      *                                  null takes the PARAM_MEDIA_INFO_SAMPLE setting
      * @return array 'streams' - description of each detected stream, with its measured bitrate
+     *               'info' - the video and audio streams as type, codec, lang, width, height, mapped, kbps
      *               'log' - ffmpeg messages, filled only when no stream was detected
      */
     protected function get_streams_info($stream_url, $sample_duration = null)
@@ -4944,6 +4946,59 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * Start bin/media_check.sh in the background for the live or archive stream of the channel,
+     * the result is taken by get_streams_check()
+     *
+     * @param string $channel_id
+     * @param int $archive_ts -1 for live
+     * @return bool
+     */
+    public function start_streams_check($channel_id, $archive_ts = -1)
+    {
+        $channel_row = $this->get_channel_info($channel_id, false);
+        if (empty($channel_row)) {
+            return false;
+        }
+
+        try {
+            $stream_url = $this->generate_stream_url($channel_row, $archive_ts, true);
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
+            return false;
+        }
+
+        $result_file = get_temp_path(self::STREAMS_CHECK_FILE);
+        safe_unlink($result_file);
+
+        // the script writes the result file only when ffmpeg is done.
+        // a subshell with the rename after the script makes shell_exec wait for ffmpeg, the plain command does not
+        $cmd = sprintf('sh %s -f %s -d %d -o %s %s >/dev/null 2>&1 &',
+            escapeshellarg(get_install_path('bin/media_check.sh')), escapeshellarg(self::get_ffmpeg_path()),
+            $this->get_parameter(PARAM_MEDIA_INFO_SAMPLE, 5), escapeshellarg($result_file), escapeshellarg($stream_url));
+        hd_debug_print("Start streams check: $cmd", true);
+        shell_exec($cmd);
+
+        return true;
+    }
+
+    /**
+     * Result of the check started by start_streams_check()
+     *
+     * @return array|null null while the check is running, see parse_streams_info()
+     */
+    public function get_streams_check()
+    {
+        $result_file = get_temp_path(self::STREAMS_CHECK_FILE);
+        if (!file_exists($result_file)) {
+            return null;
+        }
+
+        $out = self::parse_streams_info(file_get_contents($result_file));
+        safe_unlink($result_file);
+        return $out;
+    }
+
+    /**
      * ffmpeg used by bin/media_check.sh
      *
      * Firmware r25 and newer ships its own ffmpeg 7.1 (null muxer, https), so the bundled
@@ -4976,6 +5031,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $output = str_replace("\r", "\n", $output);
 
         $streams = array();  // input stream index => description
+        $types = array();    // input stream index => type, codec, lang, width, height
         $mapping = array();  // output stream index => input stream index
         $muxed = array();    // output stream index => bytes muxed
         $duration = 0.0;     // how many seconds of the stream were really read
@@ -4990,6 +5046,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $in_header = false;
                 } else if (preg_match('/^Stream #\d+:(\d+)\D/', $line, $m)) {
                     $streams[(int)$m[1]] = substr($line, 7);
+                    // Stream #0:1[0x101](rus): Audio: aac (LC) ..., Stream #0:0[0x100]: Video: h264 (High) ..., 1920x1080 ...
+                    if (preg_match('/^Stream #\d+:\d+[^:]*?(?:\((\w+)\))?: (Video|Audio): (\w+)/', $line, $t)) {
+                        $type = array('type' => strtolower($t[2]), 'codec' => $t[3], 'lang' => $t[1]);
+                        if ($type['type'] === 'video' && preg_match('/, (\d+)x(\d+)/', $line, $s)) {
+                            $type['width'] = (int)$s[1];
+                            $type['height'] = (int)$s[2];
+                        }
+                        $types[(int)$m[1]] = $type;
+                    }
                 }
                 continue;
             }
@@ -5024,6 +5089,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $description = $count ? $replaced : $description . $rate;
             }
             $out['streams'][] = $description;
+
+            // the same as structured data, 'mapped' marks the streams ffmpeg selected like the player does
+            if (isset($types[$idx])) {
+                $type = $types[$idx];
+                $type['mapped'] = in_array($idx, $mapping, true);
+                $type['kbps'] = ($duration > 0 && isset($measured[$idx])) ? format_kbits($measured[$idx], $duration) : 0;
+                $out['info'][] = $type;
+            }
         }
 
         hd_debug_print("Detected streams: " . count($streams) . ", measured: " . count($measured)
