@@ -34,6 +34,12 @@ class ChannelInfo
     public $info = array();
 
     /**
+     * known epg ids in lower case mapped to the original epg id
+     * @var array
+     */
+    public $lower_ids = array();
+
+    /**
      * contains timestamp of the last update
      * @var int
      */
@@ -352,6 +358,16 @@ class Epg_Manager_Json
                 self::$all_channels_info[$channels_info_url]->valid = true;
                 self::$all_channels_info[$channels_info_url]->info = $ch_data;
                 self::$all_channels_info[$channels_info_url]->expired = time() + 4 * 3600;
+
+                // aliases list does not repeat an epg id in lower case,
+                // so a channel name equal to the epg id is found only by this map
+                if (!empty($ch_data[COLUMN_EPG_ID])) {
+                    $lower_ids = array();
+                    foreach ($ch_data[COLUMN_EPG_ID] as $id) {
+                        $lower_ids[to_lower($id)] = $id;
+                    }
+                    self::$all_channels_info[$channels_info_url]->lower_ids = $lower_ids;
+                }
             }
         }
 
@@ -415,19 +431,21 @@ class Epg_Manager_Json
             return $epg_id;
         }
 
-        if (empty($channels_info[COLUMN_EPG_ALIASES])) {
-            return '';
-        }
-
-        // this epg id is not known, try to find it in aliases (lower case)
+        // this epg id is not known, try to find it in known ids and aliases (lower case)
         // channel info array contains alias as key and mapped epg id as value
         hd_debug_print("EPG ID '$epg_id' not found in known list", true);
-        foreach (array(COLUMN_TVG_NAME, COLUMN_NAME) as $col) {
+        $lower_ids = self::$all_channels_info[self::get_channels_info_url($config_preset)]->lower_ids;
+        foreach (array(COLUMN_EPG_ID, COLUMN_TVG_NAME, COLUMN_NAME) as $col) {
             if (empty($epg_ids[$col])) continue;
 
-            $alias = $epg_ids[$col];
+            $alias = to_lower($epg_ids[$col]);
             hd_debug_print("Searching alias: '$alias'", true);
-            if (array_key_exists($alias, $channels_info[COLUMN_EPG_ALIASES])) {
+            if (isset($lower_ids[$alias])) {
+                hd_debug_print("Mapped EPG ID: '$lower_ids[$alias]'", true);
+                return $lower_ids[$alias];
+            }
+
+            if (isset($channels_info[COLUMN_EPG_ALIASES]) && array_key_exists($alias, $channels_info[COLUMN_EPG_ALIASES])) {
                 $epg_id_subst = $channels_info[COLUMN_EPG_ALIASES][$alias];
                 hd_debug_print("Mapped EPG ID: '$epg_id_subst'", true);
                 return $epg_id_subst;
