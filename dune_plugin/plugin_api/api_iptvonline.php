@@ -38,70 +38,17 @@ class api_iptvonline extends api_default
      */
     public function request_provider_token($force = false)
     {
-        hd_debug_print(null, true);
-        hd_debug_print('force request provider token: ' . var_export($force, true));
+        $login_pairs = array(
+            'login' => $this->GetProviderParameter(MACRO_LOGIN),
+            'password' => $this->GetProviderParameter(MACRO_PASSWORD),
+        );
+        $common_pairs = array(
+            'client_id' => "TestAndroidAppV0",
+            'client_secret' => "kshdiouehruyiwuresuygr736t4763b7637", // dummy
+            'device_id' => get_serial_number(),
+        );
 
-        $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
-        $expired = empty($token);
-
-        if (!$force) {
-            if (!$expired) {
-                hd_debug_print('request not required', true);
-                return true;
-            }
-
-            Dune_Last_Error::get_last_error(LAST_ERROR_REQUEST, false);
-            if (!empty($error)) {
-                hd_debug_print('Previous token request failed!');
-                return false;
-            }
-        }
-
-        Dune_Last_Error::clear_last_error(LAST_ERROR_REQUEST);
-
-        $refresh_token = $this->plugin->get_cookie(PARAM_REFRESH_TOKEN);
-        $can_refresh = $expired && !empty($refresh_token);
-        if ($can_refresh) {
-            hd_debug_print('need to refresh token', true);
-            $cmd = API_COMMAND_REFRESH_TOKEN;
-            $pairs['grant_type'] = 'refresh_token';
-            $pairs['refresh_token'] = $refresh_token;
-        } else {
-            hd_debug_print('need to request token', true);
-            $cmd = API_COMMAND_REQUEST_TOKEN;
-            $pairs['login'] = $this->GetProviderParameter(MACRO_LOGIN);
-            $pairs['password'] = $this->GetProviderParameter(MACRO_PASSWORD);
-        }
-
-        $pairs['client_id'] = "TestAndroidAppV0";
-        $pairs['client_secret'] = "kshdiouehruyiwuresuygr736t4763b7637"; // dummy
-        $pairs['device_id'] = get_serial_number();
-
-        $curl_opt[CURLOPT_POST] = true;
-        $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
-        $curl_opt[CURLOPT_POSTFIELDS] = $pairs;
-
-        $data = $this->execApiCommandResponse($cmd, $curl_opt, Curl_Wrapper::RET_ARRAY);
-        $access_token = safe_get_value($data, 'access_token');
-        $refresh_token = safe_get_value($data, 'refresh_token');
-        if (!empty($access_token) && !empty($refresh_token)) {
-            hd_debug_print('token requested', true);
-            $this->plugin->set_cookie(PARAM_TOKEN, $access_token, safe_get_value($data, 'expires_time', time() + 86400));
-            $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $refresh_token, PHP_INT_MAX);
-            return true;
-        }
-
-        $error = safe_get_value($data, 'error');
-        if ($can_refresh && !empty($error)) {
-            // refresh token failed. Need to make complete auth
-            $this->plugin->remove_cookie(PARAM_TOKEN);
-            $this->plugin->remove_cookie(PARAM_REFRESH_TOKEN);
-            return $this->request_provider_token(true);
-        }
-
-        hd_debug_print('token not received: ' . json_format_unescaped($data), true);
-        Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token') . "\n" . json_format_unescaped($data));
-        return false;
+        return $this->request_oauth_token($force, $login_pairs, $common_pairs, CONTENT_TYPE_JSON, 86400);
     }
 
     /**
@@ -119,7 +66,7 @@ class api_iptvonline extends api_default
         if (is_null($file)) {
             $response = is_string($execResult) ? json_decode($execResult, true) : $execResult;
         } else {
-            $response = json_decode(file_get_contents($file), true);
+            $response = parse_json_file($file);
         }
         if ($response === false || $response === null) {
             hd_debug_print("Can't decode response on request: " . $command, true);
@@ -175,17 +122,15 @@ class api_iptvonline extends api_default
     /**
      * @inheritDoc
      */
-    public function GetInfoUI($handler)
+    protected function add_account_info_defs(&$defs, $handler)
     {
         $this->request_provider_info();
 
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
-
         if (empty($this->account_info)) {
-            hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('warn_msg3'), null, -10);
-        } else if (!isset($this->account_info['status']) || $this->account_info['status'] !== 200) {
+            return false;
+        }
+
+        if (!isset($this->account_info['status']) || $this->account_info['status'] !== 200) {
             Control_Factory::add_label($defs, TR::t('error'), $this->account_info['message'], -10);
         } else {
             $data = safe_get_value($this->account_info, 'data', array());
@@ -217,9 +162,7 @@ class api_iptvonline extends api_default
             }
         }
 
-        Control_Factory::add_vgap($defs, 20);
-
-        return Action_Factory::show_dialog($defs, TR::t('subscription'));
+        return true;
     }
 
     /**

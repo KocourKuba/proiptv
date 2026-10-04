@@ -56,18 +56,10 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
     }
 
     /**
-     * @inheritDoc
-     */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
-    {
-        return $this->do_get_control_defs($media_url);
-    }
-
-    /**
      * @param MediaURL $media_url
      * @return array
      */
-    protected function do_get_control_defs($media_url)
+    protected function do_get_control_defs($media_url = null, &$plugin_cookies = null)
     {
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
@@ -206,18 +198,10 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                         }
 
                         $tmp_file = get_temp_path(Hashed_Array::hash($uri));
-                        $curl_wrapper = Curl_Wrapper::getInstance();
-                        $res = $curl_wrapper->download_file($uri, $tmp_file);
-                        if (!$res) {
-                            $logfile = "Error code: " . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc();
-                            throw new Exception(TR::load('err_load_playlist') . " '$uri'\n$logfile");
-                        }
+                        HD::fetch_playlist($uri, $tmp_file, false);
                     }
 
-                    $contents = file_get_contents($tmp_file, false, null, 0, 1024);
-                    if (!M3uParser::is_valid_m3u($contents)) {
-                        throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n" . substr($contents, 0, 512));
-                    }
+                    HD::check_m3u_file($tmp_file, $uri);
 
                     $detect_id = safe_get_value($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
                     $pl_type = safe_get_value($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);

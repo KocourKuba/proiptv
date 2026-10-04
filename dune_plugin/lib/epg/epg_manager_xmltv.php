@@ -451,7 +451,7 @@ class Epg_Manager_Xmltv
                 throw new Exception('Config file for indexing not exist');
             }
 
-            $config = json_decode(file_get_contents($config_file), true);
+            $config = parse_json_file($config_file);
             if (!LogSeverity::$is_debug) {
                 safe_unlink($config_file);
             }
@@ -1468,14 +1468,8 @@ class Epg_Manager_Xmltv
      */
     public static function get_all_xmltv_channels($params)
     {
-        $db = self::open_sqlite_db($params[PARAM_HASH], true);
-        if ($db === false) {
-            hd_debug_print("Problem with open SQLite db: '{$params[PARAM_HASH]}.db'! Possible database not exist");
-            return array();
-        }
-
-        if (!self::is_all_indexes_valid($params[PARAM_HASH], array(self::TABLE_CHANNELS, self::TABLE_ENTRIES))) {
-            hd_debug_print("EPG for {$params[PARAM_URI]} not indexed!");
+        $db = self::open_indexed_db($params);
+        if ($db === null) {
             return array();
         }
 
@@ -1491,14 +1485,8 @@ class Epg_Manager_Xmltv
      */
     public static function get_all_xmltv_aliases($params)
     {
-        $db = self::open_sqlite_db($params[PARAM_HASH], true);
-        if ($db === false) {
-            hd_debug_print("Problem with open SQLite db: '{$params[PARAM_HASH]}.db'! Possible database not exist");
-            return array();
-        }
-
-        if (!self::is_all_indexes_valid($params[PARAM_HASH], array(self::TABLE_CHANNELS, self::TABLE_ENTRIES))) {
-            hd_debug_print("EPG for {$params[PARAM_URI]} not indexed!");
+        $db = self::open_indexed_db($params);
+        if ($db === null) {
             return array();
         }
 
@@ -1515,14 +1503,8 @@ class Epg_Manager_Xmltv
      */
     public static function get_all_xmltv_ids($params)
     {
-        $db = self::open_sqlite_db($params[PARAM_HASH], true);
-        if ($db === false) {
-            hd_debug_print("Problem with open SQLite db: '{$params[PARAM_HASH]}.db'! Possible database not exist");
-            return array();
-        }
-
-        if (!self::is_all_indexes_valid($params[PARAM_HASH], array(self::TABLE_CHANNELS, self::TABLE_ENTRIES))) {
-            hd_debug_print("EPG for {$params[PARAM_URI]} not indexed!");
+        $db = self::open_indexed_db($params);
+        if ($db === null) {
             return array();
         }
 
@@ -1539,6 +1521,28 @@ class Epg_Manager_Xmltv
 
     ///////////////////////////////////////////////////////////////////////////////
     /// protected static methods
+
+    /**
+     * Read only database of the source, when its channels and programs are indexed
+     *
+     * @param array $params
+     * @return Sql_Wrapper|null
+     */
+    protected static function open_indexed_db($params)
+    {
+        $db = self::open_sqlite_db($params[PARAM_HASH], true);
+        if ($db === false) {
+            hd_debug_print("Problem with open SQLite db: '{$params[PARAM_HASH]}.db'! Possible database not exist");
+            return null;
+        }
+
+        if (!self::is_all_indexes_valid($params[PARAM_HASH], array(self::TABLE_CHANNELS, self::TABLE_ENTRIES))) {
+            hd_debug_print("EPG for {$params[PARAM_URI]} not indexed!");
+            return null;
+        }
+
+        return $db;
+    }
 
     /**
      * Set and create cache dir

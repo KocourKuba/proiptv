@@ -326,9 +326,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
      * @return array
      */
     private function show_old_player($title) {
-        $qr_code = get_temp_path('link_to_old.jpg');
-        $url = 'http://api.qrserver.com/v1/create-qr-code/?size=450x450&format=png&data=' . urlencode(base64_decode(self::OLD_LINK));
-        Curl_Wrapper::getInstance()->download_file($url, $qr_code);
+        $qr_code = HD::get_qr_code(base64_decode(self::OLD_LINK), 'link_to_old.png');
 
         $defs = array();
         Control_Factory::add_label($defs, TR::t('required_firmware'), TR::t('err_required_firmware'));
@@ -336,8 +334,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
         Control_Factory::add_label($defs, "Dune Firmware:", get_raw_firmware_version());
         Control_Factory::add_label($defs, TR::t('download_link'), "");
         Control_Factory::add_vgap($defs, 20);
-        Control_Factory::add_smart_label($defs, "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
-        Control_Factory::add_vgap($defs, 450);
+        if ($qr_code !== null) {
+            HD::add_qr_code_defs($defs, $qr_code);
+        }
         return Action_Factory::show_dialog($defs, $title);
     }
 

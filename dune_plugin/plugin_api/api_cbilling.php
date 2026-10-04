@@ -45,57 +45,40 @@ class api_cbilling extends api_default
     /**
      * @inheritDoc
      */
-    public function request_provider_info($force = false)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print('force request_provider_info: ' . var_export($force, true), true);
-
-        if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
-            $this->account_info = array();
-        } else if (empty($this->account_info) || $force) {
-            $this->account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO);
-            hd_debug_print('request_provider_info: ' . json_format_unescaped($this->account_info), true);
-        }
-    }
+    protected $keep_error_account_info = true;
 
     /**
      * @inheritDoc
      */
-    public function GetInfoUI($handler)
+    protected function add_account_info_defs(&$defs, $handler)
     {
         $this->request_provider_info();
 
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
-
         $data = safe_get_value($this->account_info, 'data', array());
         if (empty($data)) {
-            hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('error'), TR::t('warn_msg3'), -10);
-        } else {
-            if (isset($data['end_date'])) {
-                Control_Factory::add_label($defs, TR::t('end_date'), $data['end_date'], -15);
-            }
-            if (isset($data['devices_num'])) {
-                Control_Factory::add_label($defs, TR::t('devices'), $data['devices_num'], -15);
-            }
-            if (isset($data['server'])) {
-                Control_Factory::add_label($defs, TR::t('server'), $data['server'], -15);
-            }
-            if (isset($data['ssl'])) {
-                Control_Factory::add_label($defs, TR::t('ssl'), $data['ssl'] ? TR::t('yes') : TR::t('no'), -15);
-            }
-            if (isset($data['disable_adult'])) {
-                Control_Factory::add_label($defs, TR::t('disable_adult'), $data['disable_adult'] ? TR::t('yes') : TR::t('no'), -15);
-            }
-            if (isset($data['vod'])) {
-                Control_Factory::add_label($defs, TR::t('plugin_vod__1', ':'), $data['vod'] ? TR::t('yes') : TR::t('no'), -15);
-            }
+            return false;
         }
 
-        Control_Factory::add_vgap($defs, 20);
+        if (isset($data['end_date'])) {
+            Control_Factory::add_label($defs, TR::t('end_date'), $data['end_date'], -15);
+        }
+        if (isset($data['devices_num'])) {
+            Control_Factory::add_label($defs, TR::t('devices'), $data['devices_num'], -15);
+        }
+        if (isset($data['server'])) {
+            Control_Factory::add_label($defs, TR::t('server'), $data['server'], -15);
+        }
+        if (isset($data['ssl'])) {
+            Control_Factory::add_label($defs, TR::t('ssl'), $data['ssl'] ? TR::t('yes') : TR::t('no'), -15);
+        }
+        if (isset($data['disable_adult'])) {
+            Control_Factory::add_label($defs, TR::t('disable_adult'), $data['disable_adult'] ? TR::t('yes') : TR::t('no'), -15);
+        }
+        if (isset($data['vod'])) {
+            Control_Factory::add_label($defs, TR::t('plugin_vod__1', ':'), $data['vod'] ? TR::t('yes') : TR::t('no'), -15);
+        }
 
-        return Action_Factory::show_dialog($defs, TR::t('subscription'));
+        return true;
     }
 
     /**
@@ -105,15 +88,7 @@ class api_cbilling extends api_default
     {
         hd_debug_print(null, true);
 
-        if (empty($this->servers)) {
-            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS);
-            hd_debug_print('GetServers: ' . json_format_unescaped($response), true);
-            foreach (safe_get_value($response, 'data', array()) as $server) {
-                if (isset($server['name'])) {
-                    $this->servers[$server['name']] = safe_get_value($server, 'country', 'unknown');
-                }
-            }
-        }
+        $this->load_servers('data', 'name', 'country');
 
         $cur_server = $this->GetProviderParameter(MACRO_SERVER_ID);
         if (empty($cur_server)) {

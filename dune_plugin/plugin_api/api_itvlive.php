@@ -55,39 +55,33 @@ class api_itvlive extends api_default
     /**
      * @inheritDoc
      */
-    public function GetInfoUI($handler)
+    protected function add_account_info_defs(&$defs, $handler)
     {
         $this->request_provider_info();
 
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
-
         if (empty($this->account_info)) {
-            hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('error'), TR::t('warn_msg3'), -10);
-        } else {
-            $info = safe_get_value($this->account_info, 'user_info');
-            if (isset($info['login'])) {
-                Control_Factory::add_label($defs, TR::t('login'), $info['login'], -15);
-            }
-            if (isset($info['cash'])) {
-                Control_Factory::add_label($defs, TR::t('balance'), $info['cash'], -15);
-            }
+            return false;
+        }
 
-            $packages = '';
-            foreach (safe_get_value($this->account_info, 'package_info', array()) as $package) {
-                if (isset($package['name'])) {
-                    $packages .= $package['name'] . PHP_EOL;
-                }
-            }
+        $info = safe_get_value($this->account_info, 'user_info');
+        if (isset($info['login'])) {
+            Control_Factory::add_label($defs, TR::t('login'), $info['login'], -15);
+        }
+        if (isset($info['cash'])) {
+            Control_Factory::add_label($defs, TR::t('balance'), $info['cash'], -15);
+        }
 
-            if (!empty($packages)) {
-                Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
+        $packages = '';
+        foreach (safe_get_value($this->account_info, 'package_info', array()) as $package) {
+            if (isset($package['name'])) {
+                $packages .= $package['name'] . PHP_EOL;
             }
         }
 
-        Control_Factory::add_vgap($defs, 20);
+        if (!empty($packages)) {
+            Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
+        }
 
-        return Action_Factory::show_dialog($defs, TR::t('subscription'));
+        return true;
     }
 }

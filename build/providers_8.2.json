@@ -1502,14 +1502,6 @@
           "default": {
             "name": "Default",
             "url": "http://pl.{SERVER_ID}/{LOGIN}/{PASSWORD}/vod.m3u"
-          },
-          "Adult": {
-            "name": "With Adult",
-            "url": "http://pl.{SERVER_ID}/{LOGIN}/{PASSWORD}/vodall.m3u"
-          },
-          "Serials": {
-            "name": "Serials",
-            "url": "http://pl.{SERVER_ID}/{LOGIN}/{PASSWORD}/series.m3u"
           }
         },
         "vod_parser": "/^(?<title>[^\\/]+)\\s\\((?:(?<country>.+)\\s)?(?<year>\\d+)\\)$/",

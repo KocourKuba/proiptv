@@ -78,17 +78,15 @@ class api_vidok extends api_default
     /**
      * @inheritDoc
      */
-    public function GetInfoUI($handler)
+    protected function add_account_info_defs(&$defs, $handler)
     {
         $this->request_provider_info();
 
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
-
         if (empty($this->account_info)) {
-            hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('error'), TR::t('warn_msg3'), -10);
-        } else if (isset($this->account_info['error'], $this->account_info['error']['message'])) {
+            return false;
+        }
+
+        if (isset($this->account_info['error'], $this->account_info['error']['message'])) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('error'), $this->account_info['error']['message'], -10);
         } else {
@@ -120,11 +118,8 @@ class api_vidok extends api_default
             }
         }
 
-        Control_Factory::add_vgap($defs, 20);
-
-        return Action_Factory::show_dialog($defs, TR::t('subscription'));
+        return true;
     }
-
 
     /**
      * @inheritDoc
@@ -133,15 +128,7 @@ class api_vidok extends api_default
     {
         hd_debug_print(null, true);
 
-        if (empty($this->servers)) {
-            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS);
-            hd_debug_print('GetServers: ' . json_format_unescaped($response), true);
-            foreach (safe_get_value($response, 'servers', array()) as $server) {
-                if (isset($server['id'])) {
-                    $this->servers[(int)$server['id']] = safe_get_value($server, 'name', 'unknown');
-                }
-            }
-        }
+        $this->load_servers('servers', 'id', 'name', true);
 
         if (isset($this->account_info['account']['settings']['server_id'])) {
             $this->SetProviderParameter(MACRO_SERVER_ID, (int)$this->account_info['account']['settings']['server_id']);

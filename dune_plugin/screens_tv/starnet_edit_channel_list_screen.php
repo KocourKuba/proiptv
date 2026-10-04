@@ -23,22 +23,17 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'lib/abstract_preloaded_regular_screen.php';
-require_once 'lib/user_input_handler_registry.php';
+require_once 'lib/abstract_edit_order_screen.php';
 
-class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
+class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
 {
     const ID = 'edit_channel_list';
 
     const PARAM_EDIT_LIST = 'edit_list';
     const PARAM_EDIT_CHANNELS = 'edit_channels';
-    const PAGE_SIZE = 11; // see list_1x11_info
 
     const ACTION_CUSTOM_DELETE = 'custom_delete';
     const ACTION_CUSTOM_STRING_DLG_APPLY = 'apply_custom_string_dlg';
-
-    protected $selected_items = array();
-    protected $toggle_move = 0;
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -59,24 +54,10 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
+        $actions = array();
+        // the channels of 'all channels' have no own order
         if ($media_url->group_id !== TV_ALL_CHANNELS_GROUP_ID) {
-            switch($this->toggle_move) {
-                case 0:
-                    $actions[GUI_EVENT_KEY_LEFT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP);
-                    $actions[GUI_EVENT_KEY_RIGHT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN);
-                    $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('move_step'));
-                    break;
-                case 1:
-                    $actions[GUI_EVENT_KEY_LEFT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_PAGE_UP);
-                    $actions[GUI_EVENT_KEY_RIGHT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_PAGE_DOWN);
-                    $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('move_page'));
-                    break;
-                case 2:
-                    $actions[GUI_EVENT_KEY_LEFT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP);
-                    $actions[GUI_EVENT_KEY_RIGHT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM);
-                    $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('move_edge'));
-                    break;
-            }
+            $this->add_move_actions($actions);
         }
 
         $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_RENAME_CHANNEL, TR::t('rename'));
@@ -104,46 +85,17 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
         $parent_group = $parent_media_url->{PARAM_GROUP_ID};
         $parent_group_for_item = $selected_media_url->{PARAM_GROUP_ID};
 
-        if (empty($this->selected_items)) {
-            $selected_items[] = $selected_channel;
-        } else {
-            // flipped once: in_array() per entry over the selection is
-            // O(entries * selected), and "select all" makes the two equal
-            $selected_map = array_flip($this->selected_items);
-            $new_selected = array();
-            foreach($channels_order as $item) {
-                if (isset($selected_map[$item])) {
-                    $new_selected[] = $item;
-                }
-            }
-            $selected_items = $this->selected_items = $new_selected;
-        }
+        $selected_items = $this->get_items_to_move($channels_order, $selected_channel);
         $sel_ndx_top = array_search_id(reset($selected_items), $channels_order);
         $sel_ndx = safe_get_value($user_input, 'sel_ndx', 0);
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                $target_action = null;
-                $this->selected_items = array();
-                if ($this->force_parent_reload && isset($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_END_ACTION})) {
-                    $this->force_parent_reload = false;
-                    $source_window = safe_get_value($parent_media_url, PARAM_SOURCE_WINDOW_ID);
-                    $end_action = safe_get_value($parent_media_url, PARAM_END_ACTION);
-                    hd_debug_print("Force parent reload: $source_window action: $end_action", true);
-                    $target_action = User_Input_Handler_Registry::create_screen_action($source_window, $end_action);
-                }
-
-                hd_debug_print($target_action, true);
-                return Action_Factory::close_and_run($target_action);
+                return $this->close_edit_screen($parent_media_url);
 
             case GUI_EVENT_KEY_ENTER:
-                $pos = array_search_id($selected_channel, $this->selected_items);
-                if ($pos !== false) {
-                    array_splice($this->selected_items, $pos, 1);
-                } else {
-                    $this->selected_items[] = $selected_channel;
-                }
+                $this->toggle_selected_item($selected_channel);
                 break;
 
             case ACTION_RENAME_CHANNEL:
@@ -155,69 +107,21 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case ACTION_ITEM_TOGGLE_MOVE:
-                if (++$this->toggle_move > 2) {
-                    $this->toggle_move = 0;
-                }
-                $actions = $this->do_get_action_map($selected_media_url);
-                return Action_Factory::change_behaviour($actions);
+                $this->toggle_move_step();
+                return Action_Factory::change_behaviour($this->do_get_action_map($selected_media_url));
 
             case ACTION_ITEM_UP:
-                $this->force_parent_reload = true;
-                if (--$sel_ndx_top < 0) {
-                    break;
-                }
-
-                $channels_order = array_diff($channels_order, $selected_items);
-                $sel_ndx = $this->update_channel_order($parent_group_for_item, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
-                break;
-
             case ACTION_ITEM_DOWN:
-                $this->force_parent_reload = true;
-                $channels_order = array_diff($channels_order, $selected_items);
-                if (++$sel_ndx_top > count($channels_order)) {
-                    break;
-                }
-
-                $sel_ndx = $this->update_channel_order($parent_group_for_item, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
-                break;
-
             case ACTION_ITEM_PAGE_UP:
-                $this->force_parent_reload = true;
-                if ($sel_ndx_top == 0) {
-                    break;
-                }
-
-                $sel_ndx_top -= self::PAGE_SIZE;
-                if ($sel_ndx_top < 0) {
-                    $sel_ndx_top = 0;
-                }
-
-                $channels_order = array_diff($channels_order, $selected_items);
-                $sel_ndx = $this->update_channel_order($parent_group_for_item, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
-                break;
-
             case ACTION_ITEM_PAGE_DOWN:
-                $this->force_parent_reload = true;
-                $sel_ndx_top += self::PAGE_SIZE;
-                $channels_order = array_diff($channels_order, $selected_items);
-                $max = count($channels_order);
-                if ($sel_ndx_top > $max) {
-                    $sel_ndx_top = $max;
-                }
-
-                $sel_ndx = $this->update_channel_order($parent_group_for_item, $sel_ndx_top, $selected_channel, $selected_items, $channels_order);
-                break;
-
             case ACTION_ITEM_TOP:
-                $this->force_parent_reload = true;
-                $channels_order = array_diff($channels_order, $selected_items);
-                $sel_ndx = $this->update_channel_order($parent_group_for_item, 0, $selected_channel, $selected_items, $channels_order);
-                break;
-
             case ACTION_ITEM_BOTTOM:
                 $this->force_parent_reload = true;
                 $channels_order = array_diff($channels_order, $selected_items);
-                $sel_ndx = $this->update_channel_order($parent_group_for_item, count($channels_order), $selected_channel, $selected_items, $channels_order);
+                $pos = self::get_move_position($user_input->control_id, $sel_ndx_top, count($channels_order));
+                if ($pos !== null) {
+                    $sel_ndx = $this->update_channel_order($parent_group_for_item, $pos, $selected_channel, $selected_items, $channels_order);
+                }
                 break;
 
             case ACTION_ITEM_DELETE:
@@ -382,14 +286,9 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
     /**
      * @inheritDoc
      */
-    public function get_folder_views()
-    {
-        hd_debug_print(null, true);
-
-        return array(
-            $this->plugin->get_screen_view(VIEW_LIST_1X11_INFO),
-        );
-    }
+    protected $folder_view_ids = array(
+        VIEW_LIST_1X11_INFO,
+    );
 
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// Protected methods

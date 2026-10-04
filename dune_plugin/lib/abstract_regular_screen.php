@@ -34,6 +34,12 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
     protected $view_idx_local = true;
 
     /**
+     * views of the screen in the order they are switched, see Default_Dune_Plugin::get_screen_view()
+     * @var string[]
+     */
+    protected $folder_view_ids = array();
+
+    /**
      * @param string $parent_id
      * @param array $add_params
      * @return string
@@ -101,7 +107,17 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
     /**
      * @return array[]
      */
-    abstract public function get_folder_views();
+    public function get_folder_views()
+    {
+        hd_debug_print(null, true);
+
+        $views = array();
+        foreach ($this->folder_view_ids as $view_id) {
+            $views[] = $this->plugin->get_screen_view($view_id);
+        }
+
+        return $views;
+    }
 
     /**
      * @inheritDoc

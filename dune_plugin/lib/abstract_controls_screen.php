@@ -38,7 +38,22 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
      * @param object $plugin_cookies
      * @return array
      */
-    abstract public function get_control_defs(MediaURL $media_url, &$plugin_cookies);
+    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
+    {
+        return $this->do_get_control_defs($media_url, $plugin_cookies);
+    }
+
+    /**
+     * Controls of the screen, also rebuilt by the screen itself after a change of a control
+     *
+     * @param MediaURL|null $media_url
+     * @param object|null $plugin_cookies
+     * @return array
+     */
+    protected function do_get_control_defs($media_url = null, &$plugin_cookies = null)
+    {
+        return array();
+    }
 
     /**
      * Get MediaURL string representation (json encoded)

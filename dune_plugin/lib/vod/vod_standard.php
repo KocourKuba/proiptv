@@ -737,18 +737,96 @@ class vod_standard extends Abstract_Vod
     {
         $filter_params = array();
         foreach (explode(',', $query_id) as $pair) {
+            // country:USA, genre:action, year:2024
             /** @var array $m */
-            if (preg_match("/^([^:]+):(.+)$/", $pair, $m)) {
-                $filter = $this->get_filter_type($m[1]);
-                if ($filter !== null && !empty($filter['values'])) {
-                    $item_key = array_search($m[2], $filter['values']);
-                    if ($item_key !== false && $item_key !== -1) {
-                        $filter_params[$m[1]] = $item_key;
-                    }
+            if (!preg_match("/^([^:]+):(.+)$/", $pair, $m)) continue;
+
+            $filter = $this->get_filter_type($m[1]);
+            if ($filter === null) continue;
+
+            if (isset($filter['text'])) {
+                // the value is typed in
+                $filter_params[$m[1]] = $m[2];
+            } else if (!empty($filter['values'])) {
+                $item_key = array_search($m[2], $filter['values']);
+                if ($item_key !== false && $item_key !== -1) {
+                    $filter_params[$m[1]] = $item_key;
                 }
             }
         }
         return $filter_params;
+    }
+
+    /**
+     * Short movies of the 'data' list of a provider response: id, name, poster, year, country, rating
+     * and genres as a list of titles. Entries without name are skipped
+     *
+     * @param array $json
+     * @return Short_Movie[]
+     */
+    protected function make_data_short_movies($json)
+    {
+        $movies = array();
+        foreach (safe_get_value($json, 'data', array()) as $entry) {
+            $name = safe_get_value($entry, 'name');
+            if (empty($name)) continue;
+
+            $genres = array();
+            foreach (safe_get_value($entry, 'genres', array()) as $genre) {
+                $genres[] = safe_get_value($genre, 'title');
+            }
+
+            $movie = new Short_Movie(
+                safe_get_value($entry, 'id'),
+                $name,
+                safe_get_value($entry, 'poster'),
+                TR::t('vod_screen_movie_info__5',
+                    $name,
+                    safe_get_value($entry, 'year'),
+                    safe_get_value($entry, 'country'),
+                    implode(', ', $genres),
+                    safe_get_value($entry, 'rating'))
+            );
+            $this->plugin->vod->set_cached_short_movie($movie);
+            $movies[] = $movie;
+        }
+
+        return $movies;
+    }
+
+    /**
+     * Filter parameters as the 'features_hash' of the provider: key-value pairs joined by '_',
+     * a single year becomes a range. The 'source' parameter is not a feature, it selects the query.
+     *
+     * @param array $filter_params see get_filter_params()
+     * @param string $query_id API_ACTION_MOVIE or the selected source
+     * @return string
+     */
+    protected function make_features_hash($filter_params, &$query_id)
+    {
+        $param_str = '';
+        $query_id = API_ACTION_MOVIE;
+        foreach ($filter_params as $key => $value) {
+            if ($key === 'source') {
+                $query_id = $value;
+                continue;
+            }
+
+            if ($key === 'year' && !empty($value)) {
+                $values = explode('-', $value);
+                if (count($values) === 1) {
+                    $value = "$value-$value";
+                }
+            }
+
+            if (!empty($param_str)) {
+                $param_str .= "_";
+            }
+
+            $param_str .= "$key-$value";
+        }
+
+        return $param_str;
     }
 
     /**

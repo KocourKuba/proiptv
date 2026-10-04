@@ -102,17 +102,12 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
                 $provider = Default_Dune_Plugin::$providers->get($selected_id);
                 if (is_null($provider)) break;
 
-                $qr_code = get_temp_path($provider->getId()) . ".jpg";
-                if (!file_exists($qr_code)) {
-                    $url = "http://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode($provider->getProviderUrl());
-                    $res = Curl_Wrapper::getInstance()->download_file($url, $qr_code);
-                    if (!$res) break;
-                }
+                $qr_code = HD::get_qr_code($provider->getProviderUrl(), $provider->getId() . '.jpg');
+                if ($qr_code === null) break;
 
                 $defs = array();
                 Control_Factory::add_vgap($defs, 20);
-                Control_Factory::add_smart_label($defs, "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
-                Control_Factory::add_vgap($defs, 450);
+                HD::add_qr_code_defs($defs, $qr_code);
                 return Action_Factory::show_dialog($defs, TR::t('provider_info'), Action_Factory::SMALL_DLG_WIDTH);
         }
 
@@ -170,14 +165,9 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
     /**
      * @inheritDoc
      */
-    public function get_folder_views()
-    {
-        hd_debug_print(null, true);
-
-        return array(
-            $this->plugin->get_screen_view(VIEW_LIST_1X11_INFO),
-            $this->plugin->get_screen_view(VIEW_LIST_2X11_SMALL_INFO),
-            $this->plugin->get_screen_view(VIEW_LIST_3X11_NO_INFO),
-        );
-    }
+    protected $folder_view_ids = array(
+        VIEW_LIST_1X11_INFO,
+        VIEW_LIST_2X11_SMALL_INFO,
+        VIEW_LIST_3X11_NO_INFO,
+    );
 }

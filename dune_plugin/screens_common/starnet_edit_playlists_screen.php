@@ -928,25 +928,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $params[PARAM_PLAYLIST_TYPE] = $pl_type;
 
         $tmp_file = get_temp_path($playlist_id);
-        if ($type === PARAM_FILE) {
-            $res = copy($uri, $tmp_file);
-            $errors = error_get_last();
-            $logfile = "Copy error: " . $errors['type'] . "\n" . $errors['message'];
-        } else {
-            $curl_wrapper = Curl_Wrapper::getInstance();
-            $res = $curl_wrapper->download_file($uri, $tmp_file);
-            $logfile = "Error code: " . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc();
-        }
-
-        if (!$res) {
-            throw new Exception(TR::load('err_load_playlist') . " '$uri'\n$logfile");
-        }
-
-        $contents = file_get_contents($tmp_file, false, null, 0, 1024);
-        if (!M3uParser::is_valid_m3u($contents)) {
-            safe_unlink($tmp_file);
-            throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n$contents");
-        }
+        HD::fetch_playlist($uri, $tmp_file, $type === PARAM_FILE);
+        HD::check_m3u_file($tmp_file, $uri, true);
 
         $post_action = User_Input_Handler_Registry::create_action($this, ACTION_INVALIDATE, null, array(PARAM_PLAYLIST_ID => $playlist_id));
         if ($pl_type === CONTROL_PLAYLIST_IPTV && $detect_id === CONTROL_DETECT_ID) {
@@ -1122,14 +1105,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
     /**
      * @inheritDoc
      */
-    public function get_folder_views()
-    {
-        hd_debug_print(null, true);
-
-        return array(
-            $this->plugin->get_screen_view(VIEW_LIST_1X11_INFO),
-            $this->plugin->get_screen_view(VIEW_LIST_2X11_SMALL_INFO),
-            $this->plugin->get_screen_view(VIEW_LIST_3X11_NO_INFO),
-        );
-    }
+    protected $folder_view_ids = array(
+        VIEW_LIST_1X11_INFO,
+        VIEW_LIST_2X11_SMALL_INFO,
+        VIEW_LIST_3X11_NO_INFO,
+    );
 }

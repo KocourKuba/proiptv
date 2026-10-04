@@ -462,16 +462,11 @@ class Starnet_Edit_Json_List_Screen extends Abstract_Preloaded_Regular_Screen
     /**
      * @inheritDoc
      */
-    public function get_folder_views()
-    {
-        hd_debug_print(null, true);
-
-        return array(
-            $this->plugin->get_screen_view(VIEW_LIST_1X11_INFO),
-            $this->plugin->get_screen_view(VIEW_LIST_2X11_SMALL_INFO),
-            $this->plugin->get_screen_view(VIEW_LIST_3X11_NO_INFO),
-        );
-    }
+    protected $folder_view_ids = array(
+        VIEW_LIST_1X11_INFO,
+        VIEW_LIST_2X11_SMALL_INFO,
+        VIEW_LIST_3X11_NO_INFO,
+    );
 
     /**
      * @param string $id

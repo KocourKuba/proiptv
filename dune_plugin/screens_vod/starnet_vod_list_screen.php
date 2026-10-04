@@ -246,17 +246,12 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen
     /**
      * @inheritDoc
      */
-    public function get_folder_views()
-    {
-        hd_debug_print(null, true);
-
-        return array(
-            $this->plugin->get_screen_view(VIEW_LIST_1X12_VOD_INFO_SMALL),
-            $this->plugin->get_screen_view(VIEW_LIST_1X10_VOD_INFO_NORMAL),
-            $this->plugin->get_screen_view(VIEW_ICONS_5X2_MOVIE_CAPTION),
-            $this->plugin->get_screen_view(VIEW_ICONS_5X2_MOVIE_NO_CAPTION),
-        );
-    }
+    protected $folder_view_ids = array(
+        VIEW_LIST_1X12_VOD_INFO_SMALL,
+        VIEW_LIST_1X10_VOD_INFO_NORMAL,
+        VIEW_ICONS_5X2_MOVIE_CAPTION,
+        VIEW_ICONS_5X2_MOVIE_NO_CAPTION,
+    );
 
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// Protected methods

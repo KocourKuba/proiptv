@@ -265,53 +265,12 @@ class vod_iptvonline extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getFilterList: $query_id");
 
-        $pairs = explode(',', $query_id);
-        $filter_params = array();
-        foreach ($pairs as $pair) {
-            // country:USA
-            // genre:action
-            // year:2024
-            /** @var array $m */
-            if (!preg_match("/^([^:]+):(.+)$/", $pair, $m)) continue;
-
-            $filter = $this->get_filter_type($m[1]);
-            if ($filter === null) continue;
-
-            if (isset($filter['text'])) {
-                $filter_params[$m[1]] = $m[2];
-            } else if (!empty($filter['values'])) {
-                $item_idx = array_search($m[2], $filter['values']);
-                if ($item_idx !== false && $item_idx !== -1) {
-                    $filter_params[$m[1]] = $item_idx;
-                }
-            }
-        }
-
+        $filter_params = $this->get_filter_params($query_id);
         if (empty($filter_params)) {
             return false;
         }
 
-        $param_str = '';
-        $query_id = API_ACTION_MOVIE;
-        foreach ($filter_params as $key => $value) {
-            if ($key === 'source') {
-                $query_id = $value;
-                continue;
-            }
-
-            if ($key === 'year' && !empty($value)) {
-                $values = explode('-', $value);
-                if (count($values) === 1) {
-                    $value = "$value-$value";
-                }
-            }
-
-            if (!empty($param_str)) {
-                $param_str .= "_";
-            }
-
-            $param_str .= "$key-$value";
-        }
+        $param_str = $this->make_features_hash($filter_params, $query_id);
 
         $page_id = $query_id . "_" . API_ACTION_FILTER;
         $page_idx = $this->get_current_page_index($page_id, 1);

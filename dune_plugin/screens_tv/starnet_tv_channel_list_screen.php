@@ -119,10 +119,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::composite($actions);
 
             case GUI_EVENT_TIMER:
-                $error_msg = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
-                if (!empty($error_msg)) {
-                    hd_debug_print("Playlist loading error: $error_msg");
-                    return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $error_msg);
+                $error_action = self::get_playlist_error_action();
+                if ($error_action !== null) {
+                    return $error_action;
                 }
 
                 break;
@@ -153,16 +152,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::composite($actions);
 
             case ACTION_PLAY_ITEM:
-                try {
-                    $post_action = $this->plugin->tv_player_exec($selected_media_url);
-                } catch (Exception $ex) {
-                    hd_debug_print("Channel can't played");
-                    print_backtrace_exception($ex);
-                    return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'), TR::t('warn_msg2__1', $ex->getMessage()));
-                }
-
-                Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
-                return $post_action;
+                return $this->play_tv_channel($selected_media_url, $plugin_cookies);
 
             case ACTION_ADD_FAV:
                 $this->force_parent_reload = true;
@@ -200,19 +190,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
                 break;
 
             case ACTION_SHORTCUT:
-                $actions[] = Action_Factory::close_and_run();
-                $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,
-                    ACTION_SHORTCUT,
-                    '',
-                    array(COLUMN_PLAYLIST_ID => $user_input->{COLUMN_PLAYLIST_ID})
-                );
-                return Action_Factory::composite($actions);
+                return self::close_and_run_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_SHORTCUT,
+                    array(COLUMN_PLAYLIST_ID => $user_input->{COLUMN_PLAYLIST_ID}));
 
             case ACTION_RELOAD:
                 hd_debug_print('Action reload', true);
-                $actions[] = Action_Factory::close_and_run();
-                $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD);
-                return Action_Factory::composite($actions);
+                return self::close_and_run_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD);
 
             case ACTION_INVALIDATE:
                 $this->force_parent_reload = true;
@@ -305,28 +288,21 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen
     /**
      * @inheritDoc
      */
-    public function get_folder_views()
-    {
-        hd_debug_print(null, true);
-
-        return array(
-            $this->plugin->get_screen_view(VIEW_ICONS_4X3_CAPTION),
-            $this->plugin->get_screen_view(VIEW_ICONS_4X3_NO_CAPTION),
-            $this->plugin->get_screen_view(VIEW_ICONS_3X3_CAPTION),
-            $this->plugin->get_screen_view(VIEW_ICONS_3X3_NO_CAPTION),
-            $this->plugin->get_screen_view(VIEW_ICONS_5X3_CAPTION),
-            $this->plugin->get_screen_view(VIEW_ICONS_5X3_NO_CAPTION),
-            $this->plugin->get_screen_view(VIEW_ICONS_5X4_CAPTION),
-            $this->plugin->get_screen_view(VIEW_ICONS_5X4_NO_CAPTION),
-
-            $this->plugin->get_screen_view(VIEW_ICONS_7X4_NO_CAPTION),
-            $this->plugin->get_screen_view(VIEW_ICONS_7X4_CAPTION),
-
-            $this->plugin->get_screen_view(VIEW_LIST_1X11_SMALL_INFO),
-            $this->plugin->get_screen_view(VIEW_LIST_2X11_SMALL_INFO),
-            $this->plugin->get_screen_view(VIEW_LIST_3X11_NO_INFO),
-        );
-    }
+    protected $folder_view_ids = array(
+        VIEW_ICONS_4X3_CAPTION,
+        VIEW_ICONS_4X3_NO_CAPTION,
+        VIEW_ICONS_3X3_CAPTION,
+        VIEW_ICONS_3X3_NO_CAPTION,
+        VIEW_ICONS_5X3_CAPTION,
+        VIEW_ICONS_5X3_NO_CAPTION,
+        VIEW_ICONS_5X4_CAPTION,
+        VIEW_ICONS_5X4_NO_CAPTION,
+        VIEW_ICONS_7X4_NO_CAPTION,
+        VIEW_ICONS_7X4_CAPTION,
+        VIEW_LIST_1X11_SMALL_INFO,
+        VIEW_LIST_2X11_SMALL_INFO,
+        VIEW_LIST_3X11_NO_INFO,
+    );
 
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// Protected methods

@@ -29,6 +29,9 @@ require_once 'dune_plugin_constants.php';
 
 class HD
 {
+    // QR code images and the room they take in a dialog
+    const QR_CODE_SIZE = 450;
+
     /**
      * @var string
      */
@@ -334,6 +337,105 @@ class HD
     {
         $file_path = $persistent ? get_data_path($filename) : get_temp_path($filename);
         safe_unlink($file_path);
+    }
+
+    /**
+     * Download the file into the plugin temp folder once, it is taken from there afterwards
+     *
+     * @param string $url
+     * @param string $file_name name in the temp folder
+     * @return string|null path of the file, null if it can not be downloaded
+     */
+    public static function get_temp_download($url, $file_name)
+    {
+        $path = get_temp_path($file_name);
+        if (file_exists($path) || Curl_Wrapper::getInstance()->download_file($url, $path)) {
+            return $path;
+        }
+
+        hd_debug_print("Failed to download $url");
+        return null;
+    }
+
+    /**
+     * QR code image of the text, made by api.qrserver.com and kept in the temp folder
+     *
+     * @param string $data
+     * @param string $file_name name in the temp folder, the extension selects the image format (png or jpg)
+     * @return string|null path of the image
+     */
+    public static function get_qr_code($data, $file_name)
+    {
+        $format = strtolower(pathinfo($file_name, PATHINFO_EXTENSION)) === 'png' ? 'png' : 'jpg';
+        $url = sprintf('http://api.qrserver.com/v1/create-qr-code/?size=%1$dx%1$d&format=%2$s&data=%3$s',
+            self::QR_CODE_SIZE, $format, urlencode($data));
+        return self::get_temp_download($url, $file_name);
+    }
+
+    /**
+     * QR code image for a dialog
+     *
+     * @param array $defs
+     * @param string $image
+     * @return void
+     */
+    public static function add_qr_code_defs(&$defs, $image)
+    {
+        $size = self::QR_CODE_SIZE;
+        Control_Factory::add_smart_label($defs, "<gap width=25/><icon width=$size height=$size>$image</icon>");
+        Control_Factory::add_vgap($defs, $size);
+    }
+
+    /**
+     * Copy the playlist file or download the playlist link
+     *
+     * @param string $uri
+     * @param string $dest
+     * @param bool $is_file
+     * @return void
+     * @throws Exception err_load_playlist with the reason
+     */
+    public static function fetch_playlist($uri, $dest, $is_file)
+    {
+        if ($is_file) {
+            $res = copy($uri, $dest);
+        } else {
+            $res = Curl_Wrapper::getInstance()->download_file($uri, $dest);
+        }
+
+        if ($res) {
+            return;
+        }
+
+        if ($is_file) {
+            $error = error_get_last();
+            $reason = "Copy error: {$error['type']}\n{$error['message']}";
+        } else {
+            $reason = "Error code: " . Curl_Wrapper::get_error_no() . "\n" . Curl_Wrapper::get_error_desc();
+        }
+
+        throw new Exception(TR::load('err_load_playlist') . " '$uri'\n$reason");
+    }
+
+    /**
+     * @param string $path
+     * @param string $uri source of the file, for the message
+     * @param bool $remove_bad remove the file when it is not a playlist
+     * @return void
+     * @throws Exception err_bad_m3u_file with the beginning of the file
+     */
+    public static function check_m3u_file($path, $uri, $remove_bad = false)
+    {
+        $contents = file_get_contents($path, false, null, 0, 1024);
+        if (M3uParser::is_valid_m3u($contents)) {
+            return;
+        }
+
+        if ($remove_bad) {
+            safe_unlink($path);
+        }
+
+        throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n" . substr($contents, 0, 512));
     }
 
     /**

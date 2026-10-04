@@ -186,53 +186,12 @@ class vod_korona extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getFilterList: $query_id");
 
-        $pairs = explode(',', $query_id);
-        $filter_params = array();
-        foreach ($pairs as $pair) {
-            // country:USA
-            // genre:action
-            // year:2024
-            /** @var array $m */
-            if (!preg_match("/^([^:]+):(.+)$/", $pair, $m)) continue;
-
-            $filter = $this->get_filter_type($m[1]);
-            if ($filter === null) continue;
-
-            if (isset($filter['text'])) {
-                $filter_params[$m[1]] = $m[2];
-            } else if (!empty($filter['values'])) {
-                $item_idx = array_search($m[2], $filter['values']);
-                if ($item_idx !== false && $item_idx !== -1) {
-                    $filter_params[$m[1]] = $item_idx;
-                }
-            }
-        }
-
+        $filter_params = $this->get_filter_params($query_id);
         if (empty($filter_params)) {
             return false;
         }
 
-        $param_str = '';
-        $query_id = API_ACTION_MOVIE;
-        foreach ($filter_params as $key => $value) {
-            if ($key === 'source') {
-                $query_id = $value;
-                continue;
-            }
-
-            if ($key === 'year' && !empty($value)) {
-                $values = explode('-', $value);
-                if (count($values) === 1) {
-                    $value = "$value-$value";
-                }
-            }
-
-            if (!empty($param_str)) {
-                $param_str .= "_";
-            }
-
-            $param_str .= "$key-$value";
-        }
+        $this->make_features_hash($filter_params, $query_id);
 
         $page_id = $query_id . "_" . API_ACTION_FILTER;
         return $this->CollectQueryResult($page_id, $this->make_json_request('/filter', false));
@@ -258,29 +217,7 @@ class vod_korona extends vod_standard
             return $movies;
         }
 
-        foreach (safe_get_value($json, 'data', array()) as $entry) {
-            $genresArray = array();
-            foreach (safe_get_value($entry, 'genres', array()) as $genre) {
-                $genresArray[] = safe_get_value($genre, 'title');
-            }
-            $name = safe_get_value($entry, 'name');
-            if (!empty($name)) {
-                $genre_str = implode(', ', $genresArray);
-                $movie = new Short_Movie(
-                    safe_get_value($entry, 'id'),
-                    $name,
-                    safe_get_value($entry, 'poster'),
-                    TR::t('vod_screen_movie_info__5',
-                        $name,
-                        safe_get_value($entry, 'year'),
-                        safe_get_value($entry, 'country'),
-                        $genre_str,
-                        safe_get_value($entry, 'rating'))
-                );
-                $this->plugin->vod->set_cached_short_movie($movie);
-                $movies[] = $movie;
-            }
-        }
+        $movies = $this->make_data_short_movies($json);
 
         hd_debug_print('Movies found: ' . count($movies));
         $this->stop_page_index($query_id);

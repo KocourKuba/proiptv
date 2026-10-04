@@ -180,14 +180,9 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
     /**
      * @inheritDoc
      */
-    public function get_folder_views()
-    {
-        hd_debug_print(null, true);
-
-        return array(
-            $this->plugin->get_screen_view(VIEW_ICONS_5X2_MOVIE_NO_CAPTION),
-            $this->plugin->get_screen_view(VIEW_LIST_1X12_VOD_INFO_SMALL),
-            $this->plugin->get_screen_view(VIEW_LIST_1X10_VOD_INFO_NORMAL),
-        );
-    }
+    protected $folder_view_ids = array(
+        VIEW_ICONS_5X2_MOVIE_NO_CAPTION,
+        VIEW_LIST_1X12_VOD_INFO_SMALL,
+        VIEW_LIST_1X10_VOD_INFO_NORMAL,
+    );
 }

@@ -34,17 +34,9 @@ class Starnet_Setup_Sleep_Timer_Screen extends Abstract_Controls_Screen
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @inheritDoc
-     */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
-    {
-        return $this->do_get_control_defs();
-    }
-
-    /**
      * @return array
      */
-    protected function do_get_control_defs()
+    protected function do_get_control_defs($media_url = null, &$plugin_cookies = null)
     {
         hd_debug_print(null, true);
 

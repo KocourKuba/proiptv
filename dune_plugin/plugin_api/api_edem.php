@@ -148,14 +148,7 @@ class api_edem extends api_default
             TR::t('vportal'), $this->GetProviderParameter(MACRO_VPORTAL), false,
             false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
 
-        Control_Factory::add_vgap($defs, 50);
-
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_EDIT_PROVIDER_DLG_APPLY, TR::t('ok'),
-            array(PARAM_PROVIDER => $this->getId(), CONTROL_EDIT_ITEM => $playlist_id)
-        );
-
-        Control_Factory::add_cancel_button($defs);
-        Control_Factory::add_vgap($defs, 10);
+        $this->add_setup_ui_buttons($defs, $handler, $playlist_id);
 
         return $defs;
     }
@@ -200,15 +193,10 @@ class api_edem extends api_default
 
         $params[MACRO_VPORTAL] = $user_input->{self::CONTROL_VPORTAL};
 
-        if ($is_new) {
-            $this->playlist_id = $this->get_hash($params);
-            if (empty($this->playlist_id)) {
-                return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
-            }
+        $error_action = $this->save_setup_params($params, $is_new);
+        if ($error_action !== null) {
+            return $error_action;
         }
-
-        hd_debug_print("ApplySetupUI compiled account info for '$this->playlist_id': " . json_format_unescaped($params), true);
-        $this->plugin->set_playlist_parameters($this->playlist_id, $params);
 
         // Set default playlist settings for new provider
         $provider_playlist_id = $this->GetPlaylistIptvId();

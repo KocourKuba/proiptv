@@ -219,7 +219,7 @@ class Epg_Manager_Json
                 }
 
                 if ($cache_expired_at > $now) {
-                    $all_epg = json_decode(file_get_contents($epg_cache_file), true);
+                    $all_epg = parse_json_file($epg_cache_file);
                     hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
                 } else {
                     hd_debug_print("EPG cache $epg_cache_file expired " . ($now - $cache_expired_at) . " sec ago.");

@@ -128,6 +128,12 @@ class api_default
     protected $config;
 
     /**
+     * the account info is kept also when the provider returns an error, the info dialog shows it
+     * @var bool
+     */
+    protected $keep_error_account_info = false;
+
+    /**
      * @var array
      */
     protected $account_info;
@@ -471,7 +477,10 @@ class api_default
             $this->account_info = array();
         } else if (empty($this->account_info) || $force) {
             $account_info = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO);
-            if ($account_info === false) {
+            if ($this->keep_error_account_info) {
+                hd_debug_print('request_provider_info: ' . json_format_unescaped($account_info), true);
+                $this->account_info = $account_info;
+            } else if ($account_info === false) {
                 hd_debug_print('Failed to request_provider_info');
             } else if (isset($account_info['error'])) {
                 hd_debug_print("request_provider_info: Server return error: {$account_info['error']}");
@@ -1134,7 +1143,127 @@ class api_default
      */
     public function GetInfoUI($handler)
     {
+        $defs = array();
+        Control_Factory::add_vgap($defs, 20);
+
+        $filled = $this->add_account_info_defs($defs, $handler);
+        if ($filled === null) {
+            return null;
+        }
+
+        if (!$filled) {
+            hd_debug_print("Can't get account status");
+            Control_Factory::add_label($defs, TR::t('error'), TR::t('warn_msg3'), -10);
+        }
+
+        Control_Factory::add_vgap($defs, 20);
+
+        return Action_Factory::show_dialog($defs, TR::t('subscription'));
+    }
+
+    /**
+     * Account info of the subscription dialog
+     *
+     * @param array $defs
+     * @param User_Input_Handler $handler
+     * @return bool|null null - the provider has no account info dialog, false - account info is not received
+     */
+    protected function add_account_info_defs(&$defs, $handler)
+    {
         return null;
+    }
+
+    /**
+     * Servers of the provider from the API_COMMAND_GET_SERVERS response, loaded once
+     *
+     * @param string $list_key list of the servers in the response
+     * @param string $id_key
+     * @param string $name_key
+     * @param bool $int_id
+     * @return void
+     */
+    protected function load_servers($list_key, $id_key, $name_key, $int_id = false)
+    {
+        if (!empty($this->servers)) {
+            return;
+        }
+
+        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS);
+        hd_debug_print('GetServers: ' . json_format_unescaped($response), true);
+        foreach (safe_get_value($response, $list_key, array()) as $server) {
+            if (isset($server[$id_key])) {
+                $id = $int_id ? (int)$server[$id_key] : (string)$server[$id_key];
+                $this->servers[$id] = safe_get_value($server, $name_key, 'unknown');
+            }
+        }
+    }
+
+    /**
+     * OAuth token: refreshed by the refresh token when the access token is expired, requested by the login otherwise.
+     * When the refresh fails the token is requested again by the login.
+     *
+     * @param bool $force
+     * @param array $login_pairs fields of the request by the login
+     * @param array $common_pairs fields added to the both requests
+     * @param string $content_type
+     * @param int $default_ttl lifetime of the access token when the response has no expires_time or expires_in
+     * @return bool
+     */
+    protected function request_oauth_token($force, $login_pairs, $common_pairs, $content_type, $default_ttl)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print('force request provider token: ' . var_export($force, true));
+
+        $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
+        $expired = empty($token);
+
+        if (!$force && !$expired) {
+            hd_debug_print('request or refresh token not required', true);
+            return true;
+        }
+
+        Dune_Last_Error::clear_last_error(LAST_ERROR_REQUEST);
+
+        $refresh_token = $this->plugin->get_cookie(PARAM_REFRESH_TOKEN);
+        $can_refresh = $expired && !empty($refresh_token);
+        if ($can_refresh) {
+            hd_debug_print('need to refresh token', true);
+            $cmd = API_COMMAND_REFRESH_TOKEN;
+            $pairs = array('grant_type' => 'refresh_token', 'refresh_token' => $refresh_token);
+        } else {
+            hd_debug_print('need to request token', true);
+            $cmd = API_COMMAND_REQUEST_TOKEN;
+            $pairs = $login_pairs;
+        }
+
+        $curl_opt[CURLOPT_POST] = true;
+        $curl_opt[CURLOPT_HTTPHEADER][] = $content_type;
+        $curl_opt[CURLOPT_POSTFIELDS] = array_merge($pairs, $common_pairs);
+
+        $data = $this->execApiCommandResponse($cmd, $curl_opt, Curl_Wrapper::RET_ARRAY);
+        $access_token = safe_get_value($data, 'access_token');
+        $refresh_token = safe_get_value($data, 'refresh_token');
+        if (!empty($access_token) && !empty($refresh_token)) {
+            hd_debug_print('token requested: ' . json_format_unescaped($data), true);
+            $expires = isset($data['expires_time'])
+                ? $data['expires_time']
+                : time() + (int)safe_get_value($data, 'expires_in', $default_ttl);
+            $this->plugin->set_cookie(PARAM_TOKEN, $access_token, $expires);
+            $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $refresh_token, PHP_INT_MAX);
+            return true;
+        }
+
+        $error = safe_get_value($data, 'error');
+        if ($can_refresh && !empty($error)) {
+            // refresh token failed. Need to make complete auth
+            $this->plugin->remove_cookie(PARAM_TOKEN);
+            $this->plugin->remove_cookie(PARAM_REFRESH_TOKEN);
+            return $this->request_provider_token(true);
+        }
+
+        hd_debug_print('token not received: ' . json_format_unescaped($data));
+        Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token') . "\n\n" . json_format_unescaped($data));
+        return false;
     }
 
     /**
@@ -1223,6 +1352,21 @@ class api_default
             }
         }
 
+        $this->add_setup_ui_buttons($defs, $handler, $playlist_id);
+
+        return $defs;
+    }
+
+    /**
+     * OK and Cancel buttons of the provider setup dialog
+     *
+     * @param array $defs
+     * @param User_Input_Handler $handler
+     * @param string $playlist_id
+     * @return void
+     */
+    protected function add_setup_ui_buttons(&$defs, $handler, $playlist_id)
+    {
         Control_Factory::add_vgap($defs, 50);
 
         Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_EDIT_PROVIDER_DLG_APPLY, TR::t('ok'),
@@ -1231,8 +1375,28 @@ class api_default
 
         Control_Factory::add_cancel_button($defs);
         Control_Factory::add_vgap($defs, 10);
+    }
 
-        return $defs;
+    /**
+     * Store the parameters of the provider setup dialog, a new entry gets its id from them
+     *
+     * @param array $params
+     * @param bool $is_new
+     * @return array|null error action, null when the parameters are stored
+     */
+    protected function save_setup_params($params, $is_new)
+    {
+        if ($is_new) {
+            $this->playlist_id = $this->get_hash($params);
+            if (empty($this->playlist_id)) {
+                return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
+            }
+        }
+
+        hd_debug_print("ApplySetupUI compiled account info for '$this->playlist_id': " . json_format_unescaped($params), true);
+        $this->plugin->set_playlist_parameters($this->playlist_id, $params);
+
+        return null;
     }
 
     /**
@@ -1280,15 +1444,10 @@ class api_default
                 return null;
         }
 
-        if ($is_new) {
-            $this->playlist_id = $this->get_hash($params);
-            if (empty($this->playlist_id)) {
-                return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
-            }
+        $error_action = $this->save_setup_params($params, $is_new);
+        if ($error_action !== null) {
+            return $error_action;
         }
-
-        hd_debug_print("ApplySetupUI compiled account info for '$this->playlist_id': " . json_format_unescaped($params), true);
-        $this->plugin->set_playlist_parameters($this->playlist_id, $params);
 
         // set config parameters if they not set in the playlist parameters
         hd_debug_print("Set default values for id: '$this->playlist_id'", true);

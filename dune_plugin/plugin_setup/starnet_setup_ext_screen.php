@@ -38,18 +38,10 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @inheritDoc
-     */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
-    {
-        return $this->do_get_control_defs($plugin_cookies);
-    }
-
-    /**
      * @param object $plugin_cookies
      * @return array
      */
-    protected function do_get_control_defs(&$plugin_cookies)
+    protected function do_get_control_defs($media_url = null, &$plugin_cookies = null)
     {
         hd_debug_print(null, true);
 
@@ -208,7 +200,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
                 return Action_Factory::composite($actions);
         }
 
-        return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies), $post_action);
+        return Action_Factory::reset_controls($this->do_get_control_defs(null, $plugin_cookies), $post_action);
     }
 
     /**

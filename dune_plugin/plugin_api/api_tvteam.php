@@ -46,55 +46,49 @@ class api_tvteam extends api_default
     /**
      * @inheritDoc
      */
-    public function GetInfoUI($handler)
+    protected function add_account_info_defs(&$defs, $handler)
     {
         $this->request_provider_info();
-
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
 
         $data = safe_get_value($this->account_info, 'data', array());
         $userData = safe_get_value($data, 'userData', array());
         if (empty($userData)) {
-            hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('error'), TR::t('warn_msg3'), -10);
-        } else {
-            if (isset($userData['userLogin'])) {
-                Control_Factory::add_label($defs, TR::t('login'), $userData['userLogin'], -15);
-            }
-
-            if (isset($userData['userEmail'])) {
-                Control_Factory::add_label($defs, TR::t('name'), $userData['userEmail'], -15);
-            }
-
-            if (isset($userData['userBalance'])) {
-                Control_Factory::add_label($defs, TR::t('balance'), "{$userData['userBalance']}$", -15);
-            }
-
-            if (isset($userData['groupId'])) {
-                $name = safe_get_value($this->servers, $userData['groupId'], 'Not set');
-                Control_Factory::add_label($defs, TR::t('server'), $name, -15);
-            }
-
-            if (isset($userData['showPorno'])) {
-                Control_Factory::add_label($defs, TR::t('disable_adult'), $userData['showPorno'] ? TR::t('no') : TR::t('yes'), -15);
-            }
-
-            $packages = '';
-            foreach (safe_get_value($data, 'userPackagesList', array()) as $package) {
-                $packages .= TR::load('package__1', safe_get_value($package, 'packageName', '')) . PHP_EOL;
-                $packages .= TR::load('start_date__1', safe_get_value($package, 'fromDate', '')) . PHP_EOL;
-                $packages .= TR::load('end_date__1', safe_get_value($package, 'toDate', '')) . PHP_EOL;
-                $packages .= TR::load('money_need__1', safe_get_value($package, 'salePrice', '') . '$') . PHP_EOL;
-            }
-            if (!empty($packages)) {
-                Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
-            }
+            return false;
         }
 
-        Control_Factory::add_vgap($defs, 20);
+        if (isset($userData['userLogin'])) {
+            Control_Factory::add_label($defs, TR::t('login'), $userData['userLogin'], -15);
+        }
 
-        return Action_Factory::show_dialog($defs, TR::t('subscription'));
+        if (isset($userData['userEmail'])) {
+            Control_Factory::add_label($defs, TR::t('name'), $userData['userEmail'], -15);
+        }
+
+        if (isset($userData['userBalance'])) {
+            Control_Factory::add_label($defs, TR::t('balance'), "{$userData['userBalance']}$", -15);
+        }
+
+        if (isset($userData['groupId'])) {
+            $name = safe_get_value($this->servers, $userData['groupId'], 'Not set');
+            Control_Factory::add_label($defs, TR::t('server'), $name, -15);
+        }
+
+        if (isset($userData['showPorno'])) {
+            Control_Factory::add_label($defs, TR::t('disable_adult'), $userData['showPorno'] ? TR::t('no') : TR::t('yes'), -15);
+        }
+
+        $packages = '';
+        foreach (safe_get_value($data, 'userPackagesList', array()) as $package) {
+            $packages .= TR::load('package__1', safe_get_value($package, 'packageName', '')) . PHP_EOL;
+            $packages .= TR::load('start_date__1', safe_get_value($package, 'fromDate', '')) . PHP_EOL;
+            $packages .= TR::load('end_date__1', safe_get_value($package, 'toDate', '')) . PHP_EOL;
+            $packages .= TR::load('money_need__1', safe_get_value($package, 'salePrice', '') . '$') . PHP_EOL;
+        }
+        if (!empty($packages)) {
+            Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
+        }
+
+        return true;
     }
 
     /**

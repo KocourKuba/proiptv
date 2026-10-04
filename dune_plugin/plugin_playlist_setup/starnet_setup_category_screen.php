@@ -37,18 +37,10 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
     protected $force_parent_reload = false;
 
     /**
-     * @inheritDoc
-     */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
-    {
-        return $this->do_get_control_defs();
-    }
-
-    /**
      * interface dialog defs
      * @return array
      */
-    protected function do_get_control_defs()
+    protected function do_get_control_defs($media_url = null, &$plugin_cookies = null)
     {
         hd_debug_print(null, true);
 

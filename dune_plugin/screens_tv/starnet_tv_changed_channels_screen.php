@@ -106,17 +106,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 return Action_Factory::composite($actions);
 
             case ACTION_PLAY_ITEM:
-                try {
-                    $selected_media_url = MediaURL::decode($user_input->selected_media_url);
-                    $post_action = $this->plugin->tv_player_exec($selected_media_url);
-                } catch (Exception $ex) {
-                    hd_debug_print("Channel can't be played, exception info");
-                    print_backtrace_exception($ex);
-                    return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'), TR::t('warn_msg2__1', $ex->getMessage()));
-                }
-
-                Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
-                return $post_action;
+                $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+                return $this->play_tv_channel($selected_media_url, $plugin_cookies);
 
             case EVENT_INDEXING_DONE:
                 return $this->plugin->get_import_xmltv_logs_actions($plugin_cookies);
@@ -151,19 +142,12 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 return null;
 
             case ACTION_SHORTCUT:
-                $actions[] = Action_Factory::close_and_run();
-                $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,
-                    ACTION_SHORTCUT,
-                    '',
-                    array(COLUMN_PLAYLIST_ID => $user_input->{COLUMN_PLAYLIST_ID})
-                );
-                return Action_Factory::composite($actions);
+                return self::close_and_run_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_SHORTCUT,
+                    array(COLUMN_PLAYLIST_ID => $user_input->{COLUMN_PLAYLIST_ID}));
 
             case ACTION_RELOAD:
                 hd_debug_print('Action reload', true);
-                $actions[] = Action_Factory::close_and_run();
-                $actions[] = User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD);
-                return Action_Factory::composite($actions);
+                return self::close_and_run_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD);
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies);
@@ -246,14 +230,9 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
     /**
      * @inheritDoc
      */
-    public function get_folder_views()
-    {
-        hd_debug_print(null, true);
-
-        return array(
-            $this->plugin->get_screen_view(VIEW_LIST_1X11_INFO),
-            $this->plugin->get_screen_view(VIEW_LIST_2X11_SMALL_INFO),
-            $this->plugin->get_screen_view(VIEW_LIST_3X11_NO_INFO),
-        );
-    }
+    protected $folder_view_ids = array(
+        VIEW_LIST_1X11_INFO,
+        VIEW_LIST_2X11_SMALL_INFO,
+        VIEW_LIST_3X11_NO_INFO,
+    );
 }

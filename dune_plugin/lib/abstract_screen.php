@@ -97,4 +97,59 @@ abstract class Abstract_Screen implements Screen, User_Input_Handler
     {
         return null;
     }
+
+    ///////////////////////////////////////////////////////////////////////
+    // common actions of the screens
+
+    /**
+     * Play the TV channel of the selected item
+     *
+     * @param MediaURL $selected_media_url
+     * @param object $plugin_cookies
+     * @return array|null
+     */
+    protected function play_tv_channel($selected_media_url, &$plugin_cookies)
+    {
+        try {
+            $post_action = $this->plugin->tv_player_exec($selected_media_url);
+        } catch (Exception $ex) {
+            hd_debug_print("Channel can't be played");
+            print_backtrace_exception($ex);
+            return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'), TR::t('warn_msg2__1', $ex->getMessage()));
+        }
+
+        Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
+        return $post_action;
+    }
+
+    /**
+     * Close the screen and pass the action to another screen
+     *
+     * @param string $screen_id
+     * @param string $action_id
+     * @param array|null $params
+     * @return array
+     */
+    protected static function close_and_run_screen_action($screen_id, $action_id, $params = null)
+    {
+        $actions[] = Action_Factory::close_and_run();
+        $actions[] = User_Input_Handler_Registry::create_screen_action($screen_id, $action_id, null, $params);
+        return Action_Factory::composite($actions);
+    }
+
+    /**
+     * Error dialog of the last playlist loading error, the error is cleared
+     *
+     * @return array|null
+     */
+    protected static function get_playlist_error_action()
+    {
+        $error_msg = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
+        if (empty($error_msg)) {
+            return null;
+        }
+
+        hd_debug_print("Playlist loading error: $error_msg");
+        return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $error_msg);
+    }
 }

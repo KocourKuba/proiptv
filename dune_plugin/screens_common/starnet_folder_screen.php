@@ -421,15 +421,12 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
     /**
      * @inheritDoc
      */
-    public function get_folder_views()
-    {
-        return array(
-            $this->plugin->get_screen_view(VIEW_LIST_1X11_SMALL_INFO),
-            $this->plugin->get_screen_view(VIEW_LIST_2X11_SMALL_INFO),
-            $this->plugin->get_screen_view(VIEW_ICONS_5X3_CAPTION),
-            $this->plugin->get_screen_view(VIEW_ICONS_4X3_CAPTION),
-        );
-    }
+    protected $folder_view_ids = array(
+        VIEW_LIST_1X11_SMALL_INFO,
+        VIEW_LIST_2X11_SMALL_INFO,
+        VIEW_ICONS_5X3_CAPTION,
+        VIEW_ICONS_4X3_CAPTION,
+    );
 
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// protected methods

@@ -35,18 +35,10 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @inheritDoc
-     */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
-    {
-        return $this->do_get_control_defs($media_url);
-    }
-
-    /**
      * @param MediaURL $media_url
      * @return array
      */
-    protected function do_get_control_defs($media_url)
+    protected function do_get_control_defs($media_url = null, &$plugin_cookies = null)
     {
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);

@@ -90,53 +90,47 @@ class api_tvclub extends api_default
     /**
      * @inheritDoc
      */
-    public function GetInfoUI($handler)
+    protected function add_account_info_defs(&$defs, $handler)
     {
         $this->request_provider_info();
 
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
-
         if (empty($this->account_info)) {
-            hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('error'), TR::t('warn_msg3'), -10);
-        } else {
-            $data = safe_get_value($this->account_info, 'account', array());
-            $info = safe_get_value($data, 'info', array());
-            if (isset($info['login'])) {
-                Control_Factory::add_label($defs, TR::t('login'), $info['login'], -15);
-            }
-            if (isset($info['name'])) {
-                Control_Factory::add_label($defs, TR::t('name'), $info['name'], -15);
-            }
-            if (isset($info['balance'])) {
-                Control_Factory::add_label($defs, TR::t('balance'), $info['balance'], -15);
-            }
+            return false;
+        }
 
-            $opts = safe_get_value($data, 'options');
-            if (isset($opts['archive'])) {
-                Control_Factory::add_label($defs, TR::t('archive_support'), $opts['archive'] ? TR::t('yes') : TR::t('no'), -15);
-            }
+        $data = safe_get_value($this->account_info, 'account', array());
+        $info = safe_get_value($data, 'info', array());
+        if (isset($info['login'])) {
+            Control_Factory::add_label($defs, TR::t('login'), $info['login'], -15);
+        }
+        if (isset($info['name'])) {
+            Control_Factory::add_label($defs, TR::t('name'), $info['name'], -15);
+        }
+        if (isset($info['balance'])) {
+            Control_Factory::add_label($defs, TR::t('balance'), $info['balance'], -15);
+        }
 
-            $settings = safe_get_value($data, 'settings');
-            if (isset($settings['server_id'], $settings['server_name'])) {
-                Control_Factory::add_label($defs, TR::t('server'), "{$settings['server_id']} ({$settings['server_name']})", -15);
-            }
-            if (isset($settings['tz_gmt'], $settings['tz_name'])) {
-                Control_Factory::add_label($defs, TR::t('time_zone'), "{$settings['tz_gmt']} ({$settings['tz_name']})", -15);
-            }
+        $opts = safe_get_value($data, 'options');
+        if (isset($opts['archive'])) {
+            Control_Factory::add_label($defs, TR::t('archive_support'), $opts['archive'] ? TR::t('yes') : TR::t('no'), -15);
+        }
 
-            foreach (safe_get_value($data, 'services', array()) as $service) {
-                if (isset($service['type'], $service['name'], $service['expire'])) {
-                    $date = date('d M Y H:i', $service['expire']);
-                    Control_Factory::add_label($defs, $service['type'], "{$service['name']} ($date)", -15);
-                }
+        $settings = safe_get_value($data, 'settings');
+        if (isset($settings['server_id'], $settings['server_name'])) {
+            Control_Factory::add_label($defs, TR::t('server'), "{$settings['server_id']} ({$settings['server_name']})", -15);
+        }
+        if (isset($settings['tz_gmt'], $settings['tz_name'])) {
+            Control_Factory::add_label($defs, TR::t('time_zone'), "{$settings['tz_gmt']} ({$settings['tz_name']})", -15);
+        }
+
+        foreach (safe_get_value($data, 'services', array()) as $service) {
+            if (isset($service['type'], $service['name'], $service['expire'])) {
+                $date = date('d M Y H:i', $service['expire']);
+                Control_Factory::add_label($defs, $service['type'], "{$service['name']} ($date)", -15);
             }
         }
 
-        Control_Factory::add_vgap($defs, 20);
-
-        return Action_Factory::show_dialog($defs, TR::t('subscription'));
+        return true;
     }
 
     /**
@@ -146,15 +140,7 @@ class api_tvclub extends api_default
     {
         hd_debug_print(null, true);
 
-        if (empty($this->servers)) {
-            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_GET_SERVERS);
-            hd_debug_print('GetServers: ' . json_format_unescaped($response), true);
-            foreach (safe_get_value($response, 'servers', array()) as $server) {
-                if (isset($server['id'])) {
-                    $this->servers[(int)$server['id']] = safe_get_value($server, 'name', 'unknown');
-                }
-            }
-        }
+        $this->load_servers('servers', 'id', 'name', true);
 
         if (isset($this->account_info['account']['settings']['server_id'])) {
             $this->SetProviderParameter(MACRO_SERVER_ID, (int)$this->account_info['account']['settings']['server_id']);

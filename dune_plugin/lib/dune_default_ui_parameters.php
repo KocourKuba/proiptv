@@ -293,13 +293,10 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         }
 
         $defs = array();
-        $qr_code = get_temp_path('tg.jpg');
-        if (!file_exists($qr_code)) {
-            $res = Curl_Wrapper::getInstance()->download_file(self::RESOURCE_URL . "TG.jpg", $qr_code);
-            if ($res) {
-                Control_Factory::add_smart_label($defs, "<gap width=1400/><icon dy=-10 width=100 height=100>$qr_code</icon>");
-                Control_Factory::add_vgap($defs, 15);
-            }
+        $qr_code = HD::get_temp_download(self::RESOURCE_URL . "TG.jpg", 'tg.jpg');
+        if ($qr_code !== null) {
+            Control_Factory::add_smart_label($defs, "<gap width=1400/><icon dy=-10 width=100 height=100>$qr_code</icon>");
+            Control_Factory::add_vgap($defs, 15);
         }
 
         Control_Factory::add_multiline_label($defs, null, $history_txt[$key], 14);
@@ -334,11 +331,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     {
         try {
             hd_debug_print(null, true);
-            $img_ym = get_temp_path('qr_ym.png');
-            $img_pp = get_temp_path('qr_pp.png');
-            $curl_wrapper = Curl_Wrapper::getInstance();
-            $curl_wrapper->download_file(self::RESOURCE_URL . "QR_YM.png", $img_ym);
-            $curl_wrapper->download_file(self::RESOURCE_URL . "QR_PP.png", $img_pp);
+            $img_ym = HD::get_temp_download(self::RESOURCE_URL . "QR_YM.png", 'qr_ym.png');
+            $img_pp = HD::get_temp_download(self::RESOURCE_URL . "QR_PP.png", 'qr_pp.png');
 
             $defs = array();
             Control_Factory::add_vgap($defs, 50);

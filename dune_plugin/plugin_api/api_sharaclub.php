@@ -71,12 +71,9 @@ class api_sharaclub extends api_default
     /**
      * @inheritDoc
      */
-    public function GetInfoUI($handler)
+    protected function add_account_info_defs(&$defs, $handler)
     {
         $this->request_provider_info();
-
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
 
         if ($this->hasApiCommand(API_COMMAND_PAY)) {
             Control_Factory::add_button($defs, $handler, ACTION_ADD_MONEY_DLG,
@@ -84,9 +81,10 @@ class api_sharaclub extends api_default
         }
 
         if (empty($this->account_info)) {
-            hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('warn_msg3'), null, -10);
-        } else if (isset($this->account_info['status']) && (int)$this->account_info['status'] !== 1) {
+            return false;
+        }
+
+        if (isset($this->account_info['status']) && (int)$this->account_info['status'] !== 1) {
             Control_Factory::add_label($defs, TR::t('error'), $this->account_info['status'], -10);
         } else {
             $data = safe_get_value($this->account_info, 'data', array());
@@ -109,9 +107,7 @@ class api_sharaclub extends api_default
             }
         }
 
-        Control_Factory::add_vgap($defs, 20);
-
-        return Action_Factory::show_dialog($defs, TR::t('subscription'));
+        return true;
     }
 
     /**
@@ -129,8 +125,7 @@ class api_sharaclub extends api_default
             Control_Factory::add_vgap($defs, 20);
 
             if (file_exists($img)) {
-                Control_Factory::add_smart_label($defs, "<gap width=25/><icon width=450 height=450>$img</icon>");
-                Control_Factory::add_vgap($defs, 450);
+                HD::add_qr_code_defs($defs, $img);
             } else {
                 Control_Factory::add_smart_label($defs, "<text>" . TR::t('err_incorrect_access_data') . "</text>");
                 Control_Factory::add_vgap($defs, 50);

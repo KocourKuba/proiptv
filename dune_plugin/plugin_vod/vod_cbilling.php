@@ -327,31 +327,7 @@ class vod_cbilling extends vod_standard
      */
     protected function CollectQueryResult($query_id, $json)
     {
-        $movies = array();
-        foreach (safe_get_value($json, 'data', array()) as $entry) {
-            $genresArray = array();
-            foreach (safe_get_value($entry, 'genres', array()) as $genre) {
-                $genresArray[] = safe_get_value($genre, 'title');
-            }
-
-            $name = safe_get_value($entry, 'name');
-            if (!empty($name)) {
-                $genre_str = implode(', ', $genresArray);
-                $movie = new Short_Movie(
-                    safe_get_value($entry, 'id'),
-                    safe_get_value($entry, 'name'),
-                    safe_get_value($entry, 'poster'),
-                    TR::t('vod_screen_movie_info__5',
-                        $name,
-                        safe_get_value($entry, 'year'),
-                        safe_get_value($entry, 'country'),
-                        $genre_str,
-                        safe_get_value($entry, 'rating'))
-                );
-                $this->plugin->vod->set_cached_short_movie($movie);
-                $movies[] = $movie;
-            }
-        }
+        $movies = $this->make_data_short_movies($json);
 
         $cur_page = safe_get_value($json, array('meta', 'current_page'), 1);
         $last_page = safe_get_value($json, array('meta', 'last_page'), 1);
