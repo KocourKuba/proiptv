@@ -33,7 +33,7 @@ For Dune HD ATV devices (Homatics, Boxy, Premier) and Dune HD Whale TV there are
 03. [iEdem](https://iedem.tv/) / [iLook](https://ilook.tv/) / [JinoPro](https://jinopro.net/) / [MeLord](https://melord.net/) / [TVLider](https://tvlider.net/)  / [VipDrive](https://vipdrive.net/)
 04. [Fox](http://info.fox-tv.fun/)
 05. [ITV Live](https://itv.live/)
-06. [Glanz](http://ottg.cc/)
+06. [Glanz](http://ottg.tv/)
 07. [Sharaclub](https://shara.club/)
 08. [Shara TV](https://shara-tv.org/)
 09. [Sharavoz](https://www.sharavoz.tv/)

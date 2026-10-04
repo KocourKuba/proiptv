@@ -3168,39 +3168,25 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->set_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
         }
 
-        switch($engine)
-        {
-            case ENGINE_XMLTV:
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-                    ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', TR::t('setup_epg_cache_xmltv')), 'engine.png');
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-                    ACTION_ITEMS_EDIT, TR::t('setup_edit_xmltv_list'),
-                    'epg.png',
-                    array(CONTROL_ACTION_EDIT => Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST));
-                break;
-            case ENGINE_JSON:
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-                    ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', TR::t('setup_epg_cache_json')), 'engine.png');
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-                    ACTION_ITEMS_EDIT, TR::t('setup_edit_json_list'),
-                    'epg.png',
-                    array(CONTROL_ACTION_EDIT => Starnet_Edit_Json_List_Screen::SCREEN_EDIT_JSON_LIST));
-                break;
-            case ENGINE_COMBINED:
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-                    ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', TR::t('setup_epg_cache_combined')), 'engine.png');
+        $engine_names = array(
+            ENGINE_XMLTV => 'setup_epg_cache_xmltv',
+            ENGINE_JSON => 'setup_epg_cache_json',
+            ENGINE_COMBINED => 'setup_epg_cache_combined',
+        );
 
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-                    ACTION_ITEMS_EDIT, TR::t('setup_edit_json_list'),
-                    'epg.png',
-                    array(CONTROL_ACTION_EDIT => Starnet_Edit_Json_List_Screen::SCREEN_EDIT_JSON_LIST));
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+            ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', TR::t($engine_names[$engine])), 'engine.png');
 
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-                    ACTION_ITEMS_EDIT, TR::t('setup_edit_xmltv_list'),
-                    'epg.png',
-                    array(CONTROL_ACTION_EDIT => Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST));
-                break;
-        }
+        // sources lists are editable regardless of the selected engine
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+            ACTION_ITEMS_EDIT, TR::t('setup_edit_json_list'),
+            'epg.png',
+            array(CONTROL_ACTION_EDIT => Starnet_Edit_Json_List_Screen::SCREEN_EDIT_JSON_LIST));
+
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+            ACTION_ITEMS_EDIT, TR::t('setup_edit_xmltv_list'),
+            'epg.png',
+            array(CONTROL_ACTION_EDIT => Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST));
 
         $menu_items[] = Control_Factory::menu_separator();
     }
