@@ -658,7 +658,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             $locked = Epg_Manager_Xmltv::is_index_locked($key, INDEXING_ALL);
             if ($locked) {
                 $has_locks = true;
-                $title = file_exists($cached_xmltv_file) ? TR::t('edit_list_title_info__1', $title) : TR::t('edit_list_title_info_download__1', $title);
+                $title = self::get_locked_title($title, $key, $item[PARAM_URI], $cached_xmltv_file);
             } else if (file_exists($cached_xmltv_file)) {
                 $check_time_file = filemtime($cached_xmltv_file);
                 $dl_date = format_datetime('Y-m-d H:i', $check_time_file);
@@ -760,6 +760,40 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
     public function get_timer()
     {
         return Action_Factory::timer(100);
+    }
+
+    /**
+     * Title of a locked xmltv source with its current stage: downloading -> unpacking -> indexing.
+     * Curl_Wrapper downloads into tempnam(cache dir, crc32(url) . '_curl_') and moves it to <hash>.xmltv.tmp when done,
+     * then unpack_xmltv() extracts <hash>.xmltv.tmp (renamed to <hash>.xmltv.gz for gzip) into <hash>.xmltv.
+     *
+     * @param string $title
+     * @param string $key
+     * @param string $url
+     * @param string $cached_xmltv_file
+     * @return string
+     */
+    protected static function get_locked_title($title, $key, $url, $cached_xmltv_file)
+    {
+        if (!Epg_Manager_Xmltv::is_index_locked($key, INDEXING_DOWNLOAD)) {
+            return TR::t('edit_list_title_info_index__1', $title);
+        }
+
+        if (file_exists("$cached_xmltv_file.tmp") || file_exists("$cached_xmltv_file.gz")) {
+            return TR::t('edit_list_title_info_unpack__1', $title);
+        }
+
+        // sizes change between timer refreshes
+        clearstatcache();
+        $downloaded = 0;
+        $tmp_files = glob(dirname($cached_xmltv_file) . '/' . hash('crc32', $url) . '_curl_*');
+        if (!empty($tmp_files)) {
+            foreach ($tmp_files as $tmp_file) {
+                $downloaded += (float)sprintf('%u', filesize($tmp_file));
+            }
+        }
+
+        return TR::t('edit_list_title_info_download__2', $title, format_size($downloaded));
     }
 
     /**
