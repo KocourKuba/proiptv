@@ -87,6 +87,11 @@ class vod_standard extends Abstract_Vod
     protected $category_index;
 
     /**
+     * @var string|null base name of the cached m3u playlist and db the categories were built from
+     */
+    protected $vod_cache_base;
+
+    /**
      * @var string
      */
     protected $vod_parser;
@@ -383,7 +388,9 @@ class vod_standard extends Abstract_Vod
     {
         hd_debug_print(null, true);
 
-        if (isset($this->category_index)) {
+        // another provider vod playlist selected - its categories come from another cache
+        if (isset($this->category_index)
+            && ($this->vod_cache_base === null || $this->vod_cache_base === $this->plugin->get_playlist_cache_filepath(false))) {
             return true;
         }
 
@@ -787,6 +794,7 @@ class vod_standard extends Abstract_Vod
         }
 
         $base_name = $this->plugin->get_playlist_cache_filepath(false);
+        $this->vod_cache_base = $base_name;
         $m3u_file = "$base_name.m3u8";
         $db_file = "$base_name.db";
         $db = new Sql_Wrapper($db_file);

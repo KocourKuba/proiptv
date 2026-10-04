@@ -2952,6 +2952,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $base_name = self::get_playlist_cache_path() . $this->make_base_name(IPTV_PLAYLIST);
         } else {
             $base_name = self::get_playlist_cache_path() . $this->make_base_name(VOD_PLAYLIST, null, false);
+            // every provider vod playlist has its own cache, the default one keeps the plain name
+            $provider = $this->get_active_provider();
+            $vod_playlists = is_null($provider) ? null : $provider->GetPlaylistsVod();
+            if (!empty($vod_playlists)) {
+                $vod_idx = $provider->GetPlaylistVodId();
+                if (!empty($vod_idx) && $vod_idx !== PARAM_DEFAULT_CONFIG_PLAYLIST_ID) {
+                    $base_name .= "_$vod_idx";
+                }
+            }
         }
 
         return $base_name;
@@ -3610,9 +3619,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             Control_Factory::format_smart_label($defs, $title, $line);
         }
 
-        if (!empty($streams['streams']) && !empty($streams['bitrate'])) {
-            Control_Factory::format_smart_label($defs, TR::load('bitrate'), $streams['bitrate']);
-        }
         Control_Factory::add_vgap($defs, 15);
         Control_Factory::add_ok_button($defs, true);
 
@@ -4878,8 +4884,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param string $stream_url
      * @param int|null $sample_duration how many seconds of the stream are read to measure the bitrate,
      *                                  null takes the PARAM_MEDIA_INFO_SAMPLE setting
-     * @return array 'streams' - description of each detected stream
-     *               'bitrate' - bitrate of the streams selected for playback
+     * @return array 'streams' - description of each detected stream, with its measured bitrate
      *               'log' - ffmpeg messages, filled only when no stream was detected
      */
     protected function get_streams_info($stream_url, $sample_duration = null)
@@ -4973,7 +4978,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $streams = array();  // input stream index => description
         $mapping = array();  // output stream index => input stream index
         $muxed = array();    // output stream index => bytes muxed
-        $declared = '';      // bitrate declared by the container, if any
         $duration = 0.0;     // how many seconds of the stream were really read
         $in_header = true;   // everything before the 'Stream mapping' block describes the input
 
@@ -4986,8 +4990,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $in_header = false;
                 } else if (preg_match('/^Stream #\d+:(\d+)\D/', $line, $m)) {
                     $streams[(int)$m[1]] = substr($line, 7);
-                } else if (preg_match('/^Duration:.*bitrate:\s*(.+)$/', $line, $m)) {
-                    $declared = trim($m[1]);
                 }
                 continue;
             }
@@ -5024,16 +5026,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $out['streams'][] = $description;
         }
 
-        if ($duration > 0 && !empty($measured)) {
-            $out['bitrate'] = sprintf('%d kb/s (%.1f sec sample)',
-                format_kbits(array_sum($measured), $duration), $duration);
-        } else if (!empty($declared) && stripos($declared, 'N/A') === false) {
-            // nothing was sampled, fall back to what the container declares
-            $out['bitrate'] = $declared;
-        }
-
         hd_debug_print("Detected streams: " . count($streams) . ", measured: " . count($measured)
-            . ", sampled: $duration sec, bitrate: " . safe_get_value($out, 'bitrate', 'unknown'), true);
+            . ", sampled: $duration sec", true);
 
         return $out;
     }
