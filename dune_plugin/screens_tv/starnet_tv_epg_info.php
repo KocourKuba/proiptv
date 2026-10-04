@@ -206,6 +206,22 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
             $this->init_channel((string)$channel_id, null, true);
         }
 
+        // closed over the playback the screen only hides and stays in the folder stack, the firmware shows it again
+        // when the playback is stopped. Nothing is drawn then and the timer that fires at once closes it
+        if (self::is_navigator()) {
+            return array(
+                PluginFolderView::multiple_views_supported => false,
+                PluginFolderView::archive => null,
+                PluginFolderView::view_kind => PLUGIN_FOLDER_VIEW_GCOMPS,
+                PluginFolderView::data => array(
+                    PluginGCompsFolderView::window_def => GComps_Factory::get_window_def(array(), null, null, self::WINDOW_COLOR),
+                    PluginGCompsFolderView::sel_state => null,
+                    PluginGCompsFolderView::actions => $this->get_action_map($media_url, $plugin_cookies),
+                    PluginGCompsFolderView::timer => $this->get_timer(),
+                ),
+            );
+        }
+
         $defs = array(
             // dims the video under the whole screen, the text stays readable on a bright picture
             GComps_Factory::get_rect_def(GComp_Geom::place_top_left(1920, 1080), null, self::COLOR_SHADE),
@@ -250,7 +266,18 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
      */
     public function get_timer()
     {
-        return Action_Factory::timer(1000);
+        // without the playback a zero delay fires at once, the timer handler closes the screen
+        return Action_Factory::timer(self::is_navigator() ? 0 : 1000);
+    }
+
+    /**
+     * No playback, the screen is shown again after the playback under it is stopped
+     *
+     * @return bool
+     */
+    protected static function is_navigator()
+    {
+        return safe_get_value(get_player_state_assoc(), PLAYER_STATE) === PLAYER_STATE_NAVIGATOR;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -268,11 +295,20 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
         $control_id = $user_input->control_id;
         hd_debug_print("control_id: $control_id", true);
 
+        // the playback may be stopped under the screen, the firmware then shows the screen again without the video
+        $is_playing = safe_get_value($user_input, 'play_mode') === 'plugin_tv';
+
         switch ($control_id) {
             case self::ACTION_CLOSE:
-                return Action_Factory::close_and_run($this->plugin->iptv->get_playback_behaviour());
+                return Action_Factory::close_and_run($is_playing ? $this->plugin->iptv->get_playback_behaviour() : null);
 
             case GUI_EVENT_TIMER:
+                // the timer fires once, each tick sets it again. A zero delay does not stop it, it fires at once.
+                // nothing to follow without the playback: leave the screen without setting the timer again
+                if (!$is_playing) {
+                    return Action_Factory::close_and_run();
+                }
+
                 // clock and playback position, the played program may have changed meanwhile
                 return $this->change_panes(array(self::PANE_HEADER, self::PANE_STREAM, self::PANE_HELP),
                     Action_Factory::change_behaviour($this->do_get_action_map(), 1000));
