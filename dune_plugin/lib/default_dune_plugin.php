@@ -3489,26 +3489,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @param string $channel_id
-     * @return array|null
-     */
-    public function do_show_media_info($channel_id)
-    {
-        $channel_row = $this->get_channel_info($channel_id, false);
-        if (empty($channel_row)) {
-            return null;
-        }
-
-        try {
-            return $this->show_streams_info_dialog($this->generate_stream_url($channel_row, -1, true));
-        } catch (Exception $ex) {
-            print_backtrace_exception($ex);
-        }
-
-        return null;
-    }
-
-    /**
      * @param MediaURL $media_url
      * @param object $plugin_cookies
      * @return array|null

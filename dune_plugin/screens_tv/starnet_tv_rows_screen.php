@@ -379,11 +379,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
                 return $this->plugin->do_show_channel_info($this, $media_url->{PARAM_CHANNEL_ID}, false);
 
-            case ACTION_MEDIA_INFO:
-                if (!isset($media_url->{PARAM_CHANNEL_ID})) break;
-
-                return $this->plugin->do_show_media_info($media_url->{PARAM_CHANNEL_ID});
-
             case ACTION_SHORTCUT:
                 if (!isset($user_input->{COLUMN_PLAYLIST_ID}) || $this->plugin->get_active_playlist_id() === $user_input->{COLUMN_PLAYLIST_ID}) {
                     break;
@@ -1771,11 +1766,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
 
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                     GUI_EVENT_KEY_INFO, TR::t('channel_info_dlg'), 'info.png');
-
-                if(!is_limited_apk()) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        ACTION_MEDIA_INFO, TR::t('media_info_dlg'), 'info.png');
-                }
             }
 
             $menu_items[] = Control_Factory::menu_separator();
