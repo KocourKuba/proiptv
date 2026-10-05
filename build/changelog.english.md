@@ -1,4 +1,48 @@
-﻿### Version 8.2.1800
+﻿### Version 9.0.1878
+- Added Sharavoz.Pro support
+- Optimized parsing and indexing of XMLTV sources
+- Optimized M3U playlist parsing
+- Optimized work with SQLite databases
+- Channels that a source lists after the programmes are now found. Some sources split their channel list and put part of it in the middle of the file, and those channels were left without EPG and without an icon.
+- Channels are also found when the channel id is not the first attribute of the tag. Such a source was indexed without any channels at all.
+- XMLTV sources are now indexed by a bundled native indexer (bin/xmltv_indexer), which is faster and is the only way a source larger than 2Gb can be indexed at all. The plugin's own indexer is still used where the native one does not fit the device: firmware older than r22, or the limited apk version.
+- XMLTV sources larger than 2Gb no longer stay completely without EPG. Such a source is now indexed in full, and the EPG of channels placed past the 2Gb mark is read as well. When the native indexer cannot be used, the source is indexed up to the 2Gb the player itself can address and the reason is reported.
+- The channel and icon index is no longer rebuilt at every plugin start when it is already up to date
+- The EPG on the open screen now updates as soon as background indexing of an XMLTV source finishes on every device, including Android TV boxes running the Dune HD app. Before, those boxes found out only by checking every second, and the TV player screen missed the event when the sleep timer was off.
+- Significantly optimized EPFS file generation for NewUI. The file is now written row by row, so memory use no longer grows with the size of the playlist, and generation on large playlists is noticeably faster. Toggling the favorites move mode no longer rebuilds the whole screen.
+- NewUI now shows the channel name you set yourself. A renamed channel was still shown there under its original playlist name.
+- Fixed the missing icon of removed channels in the NewUI "Changed channels" row
+- Fixed the screen layout in NewUI when the "Continue watching" row is shown
+- Channel search in NewUI: "Search" item in the popup menu of the channel and of the left side menu. Found channels open in a separate screen, a new search from there replaces it.
+- Search results in NewUI are split into rows by the groups where the channels are found, a channel that is in several groups is shown in each of them. A single row of all found channels can be set in the NewUI settings ("Split search results by groups").
+- The EPG shift set in the program dialog was applied, but the dialog was not redrawn with the new shift
+- Fixed the list of qualities for series in the Edem and Mirkino media libraries: it showed the data of the last episode instead of the first
+- Speeded up the channel, category and media library lists, and the check of playlist matches against XMLTV and Internet EPG sources
+- Cleaning up program descriptions now also removes advertising and contact lines: links, phone numbers, social network and messenger addresses, advertising marks
+- The rules for parsing and cleaning up program descriptions are now updated from the server without installing a new plugin version. If the server is not reachable, the rules from the installed plugin are used.
+- The file name is checked before restoring settings from a backup. An incorrect file now produces a clear error.
+- Improved error handling of file operations during backup, restore and EPG indexing
+- Fixed errors in network requests (curl): response caching, cache clearing and error handling
+- Fixed errors in regular expressions, speeded up the translation lookup
+- The log verbosity level is now applied immediately at plugin startup
+- The VOD media info dialog now shows the real bitrate of each stream, the same measurement is used by the stream info of the EPG info window. The stream is sampled for a few seconds, the sampling time is set in the extended settings (3-30 sec, 5 sec by default).
+- Fixed a crash of the bundled ffmpeg on streams with video, which left the media info dialog without a bitrate
+- The User-Agent set in the playlist with #EXTVLCOPT:http-user-agent is no longer overridden by the channel's dune_params
+- The list of ProIPTV EPG sources is now loaded from the EPG server (epg_presets.json created by proiptv-epg-converter). If the server is not reachable, ProIPTV sources are not shown.
+- Your own EPG server created by proiptv-epg-converter can be added in the Internet EPG sources list (popup menu - "Add ProIPTV EPG server"). Enter the server address, and its sources appear in the list for selection.
+- Media info for VOD moved to a separate popup menu item, so the VOD info dialog now opens instantly
+- Mir Kino: all qualities of a movie can be played. Only the main version played before, the other qualities did not start.
+- Mir Kino: the original file is played as is, without conversion on the server. The audio track is selected in the player, all tracks of the file are available.
+- Mir Kino: the saved authorization is checked correctly, so the plugin no longer logs in again on every start. If the authorization expires during work, the plugin logs in again automatically.
+- Mir Kino: series open faster, the episodes list is loaded with one request per season
+- XMLTV and Internet EPG Server caches are now kept in separate folders (xmltv_epg_cache and json_epg_cache by default), each set in the plugin folders settings.
+- EPG info window on the INFO key during TV playback, enabled by default and switched off in the new "EPG view settings" window ("EPG window on INFO key"), where the EPG and category/channel font settings moved from the interface settings. It shows the program with its picture, and the genre, ratings, year, country and the people involved, each on its own line. The stream info is taken from the player (resolution, audio codec, language, bitrate), and a bar shows the playback position. LEFT/RIGHT browse the programs of the channel, ENTER plays the shown program from the archive, PLAY returns to the program on air, SELECT shows the technical info of the stream (resolution, bitrate, audio tracks).
+- The stream info of the EPG info window can be measured by ffmpeg instead of being taken from the player ("Stream info in EPG window" in the EPG view settings, "Player" by default). The live or archive stream is sampled in the background for the media info sampling time, and the resolution, audio codec, language, bitrate and audio tracks are replaced as soon as the result is ready. The result is kept for 5 minutes for the same stream. The check opens one more connection to the stream, so a provider that allows a single connection can interrupt the playback. Not available on Android TV boxes running the Dune HD app, there the info is always taken from the player.
+- The "Media info" item is removed from the channel popup menu, the stream info is shown in the EPG info window. The media info of VOD stays in the popup menu of the series.
+- The provider VOD playlist can be switched right in the media library: the popup menu lists all VOD playlists of the provider.
+- The XMLTV sources list shows the stage of a source being processed: "Downloading..." with the size downloaded so far, then "Unpacking..." and "Indexing..."
+
+### Version 8.2.1800
 - Improved EPG search for Internet sources
 - XMLTV sources from the playlist are automatically selected when first added
 - Selected XMLTV sources were not always checked and indexed when the plugin was launched
