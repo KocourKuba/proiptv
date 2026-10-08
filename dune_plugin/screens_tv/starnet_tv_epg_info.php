@@ -647,7 +647,7 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
      * Video and audio of the played stream: from the stream check when it is used and has a result,
      * otherwise (also while the check is running) from the player
      *
-     * @return array width, height, codec and lang of the played audio, bitrate (bit/s), teletext,
+     * @return array width, height, video_codec, codec and lang of the played audio, bitrate (bit/s), teletext,
      *               tracks - codec and lang of each audio track
      */
     protected function get_stream_state()
@@ -658,8 +658,8 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
         }
 
         // the teletext is known only to the player
-        $state = array('width' => 0, 'height' => 0, 'codec' => '', 'lang' => '', 'bitrate' => 0, 'tracks' => array(),
-            'teletext' => $player['teletext']);
+        $state = array('width' => 0, 'height' => 0, 'video_codec' => '', 'codec' => '', 'lang' => '', 'bitrate' => 0,
+            'tracks' => array(), 'teletext' => $player['teletext']);
         foreach ($this->check_info as $stream) {
             if ($stream['type'] === 'audio') {
                 $state['tracks'][] = array('codec' => $stream['codec'], 'lang' => $stream['lang']);
@@ -672,6 +672,7 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
             if ($stream['type'] === 'video') {
                 $state['width'] = safe_get_value($stream, 'width', 0);
                 $state['height'] = safe_get_value($stream, 'height', 0);
+                $state['video_codec'] = $stream['codec'];
             } else if ($state['codec'] === '') {
                 $state['codec'] = $stream['codec'];
                 $state['lang'] = $stream['lang'];
@@ -1036,7 +1037,7 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
     }
 
     /**
-     * Resolution, bitrate and audio tracks of the played stream
+     * Resolution, video codec, bitrate and audio tracks of the played stream
      *
      * @return array
      */
@@ -1048,6 +1049,12 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
 
         self::add_labeled_row($rows, $width, sys_tr('osd_file_resolution', 'Video resolution:'),
             ($stream['width'] > 0 && $stream['height'] > 0) ? "{$stream['width']}x{$stream['height']}" : $na);
+
+        // only the stream check (ffmpeg) knows the video codec
+        if ($this->is_stream_check_used()) {
+            self::add_labeled_row($rows, $width, TR::load('video_codec'),
+                $stream['video_codec'] !== '' ? strtoupper($stream['video_codec']) : $na);
+        }
 
         $bitrate = $stream['bitrate'];
         self::add_labeled_row($rows, $width, sys_tr_label('osd_bitrate__1', 'Bitrate:'),

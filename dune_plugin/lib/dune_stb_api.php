@@ -1314,8 +1314,8 @@ function is_playback_playing()
 /**
  * Video and audio of the stream being played as the player reports them
  *
- * @return array width, height, bitrate (bit/s), codec and lang of the played audio track, teletext,
- *               tracks - codec and lang of each audio track
+ * @return array width, height, video_codec (the player does not report it), bitrate (bit/s),
+ *               codec and lang of the played audio track, teletext, tracks - codec and lang of each audio track
  */
 function get_player_stream_info()
 {
@@ -1327,6 +1327,7 @@ function get_player_stream_info()
     $info = array(
         'width' => (int)safe_get_value($player_state, 'playback_video_width', 0),
         'height' => (int)safe_get_value($player_state, 'playback_video_height', 0),
+        'video_codec' => '',
         'bitrate' => (int)safe_get_value($player_state, 'playback_current_bitrate', 0),
         'codec' => '',
         'lang' => '',

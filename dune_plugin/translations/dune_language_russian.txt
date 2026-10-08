@@ -494,6 +494,7 @@ unpack_time = Распаковка:
 up = Вверх
 url = Ссылка:
 url__1 = Ссылка:|%s
+video_codec = Видеокодек:
 vod_info_dlg = Информация о фильме (INFO)
 vod_screen_age_limit = Возраст:
 vod_screen_air_date__2 = %s||Дата выхода: %s

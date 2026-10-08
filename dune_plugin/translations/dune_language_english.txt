@@ -494,6 +494,7 @@ unpack_time = Unpack time:
 up = Up
 url = URL:
 url__1 = URL:|%s
+video_codec = Video codec:
 vod_info_dlg = VOD info (INFO)
 vod_screen_age_limit = Age limit:
 vod_screen_air_date__2 = %s||Air date: %s

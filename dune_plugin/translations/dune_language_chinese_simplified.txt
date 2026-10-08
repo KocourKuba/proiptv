@@ -494,6 +494,7 @@ unpack_time = 解压用时:
 up = 向上
 url = 网址:
 url__1 = 网址:|%s
+video_codec = 视频编码:
 vod_info_dlg = 点播信息 (INFO)
 vod_screen_age_limit = 年龄分级:
 vod_screen_air_date__2 = %s||首播日期: %s
