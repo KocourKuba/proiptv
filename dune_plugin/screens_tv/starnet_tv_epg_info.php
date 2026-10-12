@@ -38,13 +38,15 @@ require_once 'lib/epfs/gcomp_geom.php';
  *
  * LEFT/RIGHT browse the programs of the channel, UP/DOWN and P+/P- scroll the description,
  * ENTER replays the shown program from the archive, PLAY returns to the live program,
- * SELECT toggles the technical info of the stream.
+ * SELECT (RED on the ATV boxes) toggles the technical info of the stream.
  */
 class Starnet_Tv_Epg_Info extends Abstract_Screen
 {
     const ID = 'tv_epg_info';
 
     const ACTION_CLOSE = 'epg_info_close';
+
+    const RED_BUTTON_IMAGE = 'gui_skin://special_icons/controls_button_red.aai';
 
     // ids of the panels changed while the screen is shown
     const PANE_HEADER = 'epg_header';
@@ -338,6 +340,7 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
                 return $this->change_panes($panes, Action_Factory::change_behaviour($this->do_get_action_map(), 1000));
 
             case GUI_EVENT_KEY_SELECT:
+            case GUI_EVENT_KEY_A_RED:
                 // tech info belongs to the played program only
                 if (!$this->show_tech_info && !$this->is_played_program()) {
                     return null;
@@ -458,7 +461,7 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
             GUI_EVENT_KEY_TOP_MENU => $close,
         );
 
-        $keys = array(GUI_EVENT_TIMER, GUI_EVENT_KEY_SELECT, GUI_EVENT_KEY_LEFT, GUI_EVENT_KEY_RIGHT,
+        $keys = array(GUI_EVENT_TIMER, self::get_tech_info_key(), GUI_EVENT_KEY_LEFT, GUI_EVENT_KEY_RIGHT,
             GUI_EVENT_KEY_UP, GUI_EVENT_KEY_DOWN, GUI_EVENT_KEY_P_PLUS, GUI_EVENT_KEY_P_MINUS,
             GUI_EVENT_KEY_ENTER, GUI_EVENT_KEY_PLAY);
         foreach ($keys as $key) {
@@ -466,6 +469,16 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
         }
 
         return $actions;
+    }
+
+    /**
+     * The ATV boxes toggle the tech info by RED instead of SELECT
+     *
+     * @return string
+     */
+    protected static function get_tech_info_key()
+    {
+        return is_limited_apk() ? GUI_EVENT_KEY_A_RED : GUI_EVENT_KEY_SELECT;
     }
 
     /**
@@ -1079,9 +1092,10 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
     protected function get_help_defs()
     {
         $items = array();
+        $tech_info_btn = self::get_tech_info_key() === GUI_EVENT_KEY_A_RED ? self::RED_BUTTON_IMAGE : 'select_btn.png';
 
         if ($this->show_tech_info) {
-            $items[] = array(array('select_btn.png'), rtrim(sys_tr('osd_epg_label_about_program', 'TV programme'), ': '));
+            $items[] = array(array($tech_info_btn), rtrim(sys_tr('osd_epg_label_about_program', 'TV programme'), ': '));
         } else {
             if ($this->program !== null) {
                 $items[] = array(array('arrow_left_btn.png', 'arrow_right_btn.png'),
@@ -1090,7 +1104,7 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
 
             $is_played = $this->is_played_program();
             if ($is_played) {
-                $items[] = array(array('select_btn.png'), sys_tr('plugin_default_tv_action_add_info', 'Tech. info'));
+                $items[] = array(array($tech_info_btn), sys_tr('plugin_default_tv_action_add_info', 'Tech. info'));
             }
 
             if ($this->program !== null) {
@@ -1117,7 +1131,8 @@ class Starnet_Tv_Epg_Info extends Abstract_Screen
                 $gap = empty($defs) ? 0 : ($idx === 0 ? 40 : 6);
                 $defs[] = GComps_Factory::get_image_def(empty($defs)
                     ? GComp_Geom::place_left_center()
-                    : GComp_Geom::place_next_right_align_center(-1, -1, $gap), null, get_image_path($button));
+                    : GComp_Geom::place_next_right_align_center(-1, -1, $gap), null,
+                    strpos($button, '://') === false ? get_image_path($button) : $button);
             }
 
             $color = isset($item[2]) ? $item[2] : self::COLOR_SILVER;
