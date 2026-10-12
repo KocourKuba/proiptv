@@ -1398,7 +1398,7 @@
             "alias": "rutv"
           }
         ],
-        "servers": {
+        "domains": {
           "myrutv.ru": "Russia",
           "ru-tv.site": "Europe",
           "ru-tv.vip": "USA"
@@ -1406,21 +1406,21 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "http://pl.{SERVER_ID}/{LOGIN}/{PASSWORD}/tv.m3u"
+            "url": "http://pl.{DOMAIN_ID}/{LOGIN}/{PASSWORD}/tv.m3u"
           }
         },
         "playlists_vod": {
           "default": {
             "name": "Default",
-            "url": "http://pl.{SERVER_ID}/{LOGIN}/{PASSWORD}/vod.m3u"
+            "url": "http://pl.{DOMAIN_ID}/{LOGIN}/{PASSWORD}/vod.m3u"
           },
           "Adult": {
             "name": "With Adult",
-            "url": "http://pl.{SERVER_ID}/{LOGIN}/{PASSWORD}/vodall.m3u"
+            "url": "http://pl.{DOMAIN_ID}/{LOGIN}/{PASSWORD}/vodall.m3u"
           },
           "Serials": {
             "name": "Serials",
-            "url": "http://pl.{SERVER_ID}/{LOGIN}/{PASSWORD}/series.m3u"
+            "url": "http://pl.{DOMAIN_ID}/{LOGIN}/{PASSWORD}/series.m3u"
           }
         },
         "vod_parser": "/^(?<title>[^\\/]+)\\s\\((?:(?<country>.+)\\s)?(?<year>\\d+)\\)$/",
@@ -1801,6 +1801,52 @@
           }
         },
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/(?<id>.+)\\?token=.*$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "ttv",
+      "class": "ttv",
+      "vod": "ttv",
+      "name": "Torrent TV",
+      "type": "pin",
+      "logo": "https://iptv.proiptv.info/res/logo_ttv.png",
+      "provider_url": "https://ttvrun.one/",
+      "api_url": "https://api.ttv.run/v3",
+      "api_commands": {
+        "request_token": "{API}/auth.php?username={LOGIN}&password={PASSWORD}&application=android&guid={GUID}&typeresult=json",
+        "account_info": "{API}/userinfo.php?session={SESSION_ID}&typeresult=json",
+        "film_list": "{API}/film_list.php?session={SESSION_ID}&typeresult=json",
+        "film_genres": "{API}/film_genres.php?session={SESSION_ID}&typeresult=json",
+        "film_info": "{API}/film_info.php?session={SESSION_ID}&typeresult=json",
+        "film_alt_http": "{API}/film_alt_http.php?session={SESSION_ID}&typeresult=json"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?:.+)\\/(?<token>.+)\\/(?<id>.+)\\/(?:stream\\.m3u8)$/",
+        "epg_presets": [
+          {
+            "name": "proiptv",
+            "alias": "ttv"
+          }
+        ],
+        "domains": {
+          "tapiptv.com": "tapiptv.com",
+          "api.ttvrun.one": "api.ttvrun.one",
+          "api.ttv.run": "api.ttv.run"
+        },
+        "playlists": {
+          "default": {
+            "name": "Default",
+            "url": "https://tapitv.com/k/{OTTKEY}/1611268/tv.m3u"
+          }
+        },
+        "playlists_vod": {
+          "default": {
+            "name": "Default",
+            "url": "{API}"
+          }
+        },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
