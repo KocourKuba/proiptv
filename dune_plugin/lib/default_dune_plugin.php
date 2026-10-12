@@ -787,8 +787,25 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         foreach ($jsonArray['providers'] as $item) {
             if (!isset($item['id'], $item['enable']) || $item['enable'] === false) continue;
 
+            // The provider relies on the api_<class>.php implementation and cannot work
+            // without it. Don't show such providers in the list.
+            if (!empty($item['class']) && !file_exists(get_install_path("plugin_api/api_{$item['class']}.php"))) {
+                hd_debug_print("api_{$item['class']} is not available. Provider {$item['id']} is skipped");
+                continue;
+            }
+
+            // The provider relies on the vod_<name>.php implementation and VOD cannot work
+            // without it. Disable VOD support for such providers.
+            if (!empty($item['vod']) && !file_exists(get_install_path("plugin_vod/vod_{$item['vod']}.php"))) {
+                hd_debug_print("vod_{$item['vod']} is not available. VOD is disabled for provider {$item['id']}");
+                unset($item['vod']);
+                if (isset($item['config'][CONFIG_PLAYLISTS_VOD])) {
+                    unset($item['config'][CONFIG_PLAYLISTS_VOD]);
+                }
+            }
+
             $api_class = 'api_default';
-            if (isset($item['class']) && class_exists('api_' . $item['class'])) {
+            if (!empty($item['class'])) {
                 $api_class = 'api_' . $item['class'];
             }
 
