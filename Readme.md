@@ -72,7 +72,7 @@ For Dune HD ATV devices (Homatics, Boxy, Premier) and Dune HD Whale TV there are
 42. [Peak TV](https://peaktv.info/)
 43. [Nasharu TV](https://nasharu.tv/)
 44. [Ott Pub](https://ott.pub/)
-45. [Blink TV](https://blinktv.cc/)
+45. [ReflexTV](https://reflextv.ru/)
 46. [Korona](https://korona-tv.top/)
 47. [Pik TV](http://pa.piktv.top/)
 48. [Velestore](http://velestore.su/)
@@ -83,6 +83,8 @@ For Dune HD ATV devices (Homatics, Boxy, Premier) and Dune HD Whale TV there are
 53. [VivaMax](https://t.me/vivamax_portal/)
 54. [Allway TV](https://allway.tv/)
 55. [IPTV Cinema](https://iptvcinema.ru/)
+56. [TV Boom](https://tvboom.vip/)
+57. [Torrent TV](https://ttvrun.one/)
 </details>
 
 ## Donate

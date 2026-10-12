@@ -88,7 +88,6 @@ class api_edem extends api_default
         hd_debug_print("current api template: $string", true);
 
         $macroses = array(
-            MACRO_OTTKEY => '',
             MACRO_VPORTAL => '',
             MACRO_SUBDOMAIN => $this->getConfigValue(CONFIG_SUBDOMAIN),
         );

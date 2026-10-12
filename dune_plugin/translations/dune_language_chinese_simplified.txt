@@ -426,6 +426,7 @@ setup_top_left = 左上角
 setup_top_right = 右上角
 setup_use_common_fav = 使用公共收藏”
 setup_use_vod = 启用 VOD 支持
+setup_vod_credentials = 登录名和密码用于VOD：
 show_epg = 节目EPG
 size__1 = 尺寸:|%s
 sleep_after = 休眠:

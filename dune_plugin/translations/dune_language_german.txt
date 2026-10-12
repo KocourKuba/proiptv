@@ -426,6 +426,7 @@ setup_top_left = Obere linke Ecke
 setup_top_right = Obere rechte Ecke
 setup_use_common_fav = Gemeinsame "Favoriten" verwenden
 setup_use_vod = VOD-Unterstützung aktivieren
+setup_vod_credentials = Login und Passwort werden für VOD verwendet:
 show_epg = Show EPG
 size__1 = Größe:|%s
 sleep_after = Schlafen:

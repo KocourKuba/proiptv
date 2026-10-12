@@ -426,6 +426,7 @@ setup_top_left = Top left corner
 setup_top_right = Top right corner
 setup_use_common_fav = Use common "Favorites"
 setup_use_vod = Enable VOD support
+setup_vod_credentials = Login and password are used for VOD:
 show_epg = Show EPG
 size__1 = Size:|%s
 sleep_after = Sleep:

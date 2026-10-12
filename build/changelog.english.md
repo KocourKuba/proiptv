@@ -1,4 +1,10 @@
-﻿### Version 9.0.1878
+﻿### Version 9.1.1880
+- Added TorrentTV provider support (https://ttvrun.one/)
+- The stream info of the EPG info window now shows the video codec (only the ffmpeg measurement knows it, the player does not report it)
+- On the ATV boxes the technical info in the TV EPG window is toggled by the RED button instead of SELECT
+- RU TV: the playlist server is now selected as a domain
+
+### Version 9.0.1878
 - Added Sharavoz.Pro support
 - Optimized parsing and indexing of XMLTV sources
 - Optimized M3U playlist parsing

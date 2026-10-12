@@ -695,6 +695,7 @@ class api_default
         static $params_macroses = array(
             MACRO_LOGIN => '',
             MACRO_PASSWORD => '',
+            MACRO_OTTKEY => '',
             MACRO_STREAM_ID => '',
             MACRO_API_DOMAIN_ID => '',
             MACRO_PL_DOMAIN_ID => '',

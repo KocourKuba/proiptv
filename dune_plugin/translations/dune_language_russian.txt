@@ -426,6 +426,7 @@ setup_top_left = Верхний левый угол
 setup_top_right = Верхний правый угол
 setup_use_common_fav = Использовать общее "Избранное"
 setup_use_vod = Включить Медиатеку
+setup_vod_credentials = Логин и пароль используются для VOD:
 show_epg = Показать EPG
 size__1 = Размер:|%s
 sleep_after = Отключение:
