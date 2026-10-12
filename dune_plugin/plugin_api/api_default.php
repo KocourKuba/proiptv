@@ -423,8 +423,12 @@ class api_default
             $settings[PARAM_USE_PICONS] = COMBINED_PICONS;
         }
 
-        if (count($this->get_provider_epg_preset_names())) {
+        $epg_presets = $this->get_provider_epg_preset_names();
+        if (!empty($epg_presets)) {
             $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;
+            // enable the first EPG source from the provider config.
+            // The user can change the selected sources manually later.
+            $this->plugin->put_selected_json_source($this->playlist_id, reset($epg_presets));
         }
 
         $detect_stream = $this->getConfigValue(PARAM_DUNE_FORCE_TS);

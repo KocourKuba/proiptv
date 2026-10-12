@@ -794,6 +794,28 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * Select preset in playlist settings db by playlist ID
+     *
+     * @param string $id
+     * @param string $name
+     * @return void
+     */
+    public function put_selected_json_source($id, $name)
+    {
+        if (!empty($id) && !empty($name)) {
+            $db = new Sql_Wrapper(get_data_path("$id.db"));
+            if (!$db->is_valid()) {
+                return;
+            }
+
+            $query = sprintf(self::CREATE_SELECTED_JSON_TABLE, self::SELECTED_JSON_TABLE);
+            $query .= sprintf(Sql_Wrapper::INSERT_OR_IGNORE_INTO,
+                self::SELECTED_JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($name));
+            $db->exec_transaction($query);
+        }
+    }
+
+    /**
      * Remove preset from selected
      *
      * @param string $name
@@ -825,15 +847,19 @@ class Dune_Default_Sqlite_Engine
             hd_debug_print("Recreate new selected json table", true);
             $query .= sprintf(Sql_Wrapper::DROP_TABLE_IF_EXISTS, self::SELECTED_JSON_TABLE);
             $query .= sprintf(self::CREATE_SELECTED_JSON_TABLE, self::SELECTED_JSON_TABLE);
-            foreach ($provider_epg_presets as $name) {
+            if (!empty($provider_epg_presets)) {
                 $query .= sprintf(Sql_Wrapper::INSERT_OR_IGNORE_INTO,
-                    self::SELECTED_JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($name));
+                    self::SELECTED_JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote(reset($provider_epg_presets)));
             }
         }
 
-        // update selected json table removed config presets
-        $query .= sprintf('DELETE FROM %s WHERE %s NOT IN (%s);',
+        // remove stale presets but keep presets from provider config
+        $query .= sprintf('DELETE FROM %s WHERE %s NOT IN (%s)',
             self::SELECTED_JSON_TABLE, COLUMN_NAME, Sql_Wrapper::sql_make_list_from_values($all_presets));
+        if (!empty($provider_epg_presets)) {
+            $query .= sprintf(' AND %s NOT IN (%s)', COLUMN_NAME, Sql_Wrapper::sql_make_list_from_values($provider_epg_presets));
+        }
+        $query .= ';';
 
         $this->safe_sql_playlist_settings(SQL_EXEC, $query);
     }
