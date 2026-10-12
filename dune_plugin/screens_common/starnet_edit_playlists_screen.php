@@ -429,11 +429,33 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $res = $provider->ApplySetupUI($user_input);
 
         if ($res === null) {
-            return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
+            $error_action = Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
+        } else if (is_array($res)) {
+            $error_action = $res;
+        } else {
+            $error_action = null;
         }
 
-        if (is_array($res)) {
-            return $res;
+        if ($error_action !== null) {
+            // failed to add a new provider: remove the entry saved before the check
+            // and return to the list of available providers
+            if (empty($playlist_id)) {
+                $failed_playlist_id = $provider->get_provider_playlist_id();
+                if (!empty($failed_playlist_id)) {
+                    $this->plugin->remove_playlist_data($failed_playlist_id, true);
+                }
+
+                $media_url = MediaURL::encode(array(
+                    PARAM_SCREEN_ID => Starnet_Edit_Providers_List_Screen::ID,
+                    PARAM_SOURCE_WINDOW_ID => static::ID,
+                    PARAM_WINDOW_COUNTER => 1,
+                    PARAM_END_ACTION => ACTION_EDIT_PROVIDER_DLG,
+                ));
+
+                return Action_Factory::open_folder($media_url, TR::t('edit_list_add_provider'), null, null, $error_action);
+            }
+
+            return $error_action;
         }
 
         $sel_idx = array_search_id($res, $this->plugin->get_all_playlists_ids());

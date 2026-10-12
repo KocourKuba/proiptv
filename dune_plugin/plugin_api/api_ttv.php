@@ -147,15 +147,13 @@ class api_ttv extends api_default
             $params[PARAM_NAME] = $user_input->{CONTROL_EDIT_NAME};
         }
 
-        if (empty($user_input->{self::CONTROL_OTT_KEY})
-            || empty($user_input->{self::CONTROL_LOGIN})
-            || empty($user_input->{self::CONTROL_PASSWORD})) {
+        if (empty($user_input->{self::CONTROL_OTT_KEY})) {
             return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
         }
 
         $params[MACRO_OTTKEY] = $user_input->{self::CONTROL_OTT_KEY};
-        $params[MACRO_LOGIN] = $user_input->{self::CONTROL_LOGIN};
-        $params[MACRO_PASSWORD] = $user_input->{self::CONTROL_PASSWORD};
+        $params[MACRO_LOGIN] = safe_get_value($user_input, self::CONTROL_LOGIN, '');
+        $params[MACRO_PASSWORD] = safe_get_value($user_input, self::CONTROL_PASSWORD, '');
 
         $error_action = $this->save_setup_params($params, $is_new);
         if ($error_action !== null) {
@@ -166,11 +164,17 @@ class api_ttv extends api_default
             $this->apply_config_defaults();
         }
 
+        // The login/password pair is optional: without it the VOD section is disabled
+        $has_vod_credentials = !empty($params[MACRO_LOGIN]) && !empty($params[MACRO_PASSWORD]);
+        if (!$has_vod_credentials) {
+            $this->plugin->put_settings($this->playlist_id, array(PARAM_USE_VOD => SwitchOnOff::off));
+        }
+
         $this->plugin->clear_playlist_cache($this->playlist_id);
 
         // the session id is requested for VOD and the account info only
         $this->plugin->remove_cookie(PARAM_SESSION_ID);
-        if (!$this->request_provider_token(true)) {
+        if ($has_vod_credentials && !$this->request_provider_token(true)) {
             hd_debug_print("Can't get provider token");
             return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
         }
