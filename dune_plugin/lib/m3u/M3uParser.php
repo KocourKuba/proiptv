@@ -768,6 +768,7 @@ class M3uParser extends Json_Serializer
     {
         $lower_title = mb_strtolower($group_id, 'UTF-8');
         return (strpos($lower_title, "взрослы") !== false
+            || strpos($lower_title, "эроти") !== false
             || strpos($lower_title, "adult") !== false
             || strpos($lower_title, "18+") !== false
             || strpos($lower_title, "xxx") !== false);
