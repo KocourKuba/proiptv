@@ -35,6 +35,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
 
     const ACTION_CUSTOM_DELETE = 'custom_delete';
     const ACTION_CUSTOM_STRING_DLG_APPLY = 'apply_custom_string_dlg';
+    const ACTION_SHOW_CHANNEL_URL = 'show_channel_url';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -110,6 +111,9 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
 
             case ACTION_PLAY_ITEM:
                 return $this->play_tv_channel($selected_media_url, $plugin_cookies);
+
+            case self::ACTION_SHOW_CHANNEL_URL:
+                return $this->do_show_channel_url_dlg($selected_channel);
 
             case ACTION_CHANNEL_PROTECT:
                 $this->force_parent_reload = true;
@@ -360,6 +364,10 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
         $menu_items[] = Control_Factory::menu_separator();
 
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+            self::ACTION_SHOW_CHANNEL_URL, TR::t('show_channel_url'), 'info.png');
+        $menu_items[] = Control_Factory::menu_separator();
+
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             ACTION_ITEM_DELETE_CHANNELS, TR::t('tv_screen_hide_group_channels'), 'remove.png');
 
         return Action_Factory::show_popup_menu($menu_items);
@@ -386,6 +394,39 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
         Control_Factory::add_vgap($defs, 10);
 
         return Action_Factory::show_dialog($defs, TR::t('edit_list_edit_item'));
+    }
+
+    /**
+     * Dialog with the live url of the channel. The url is shown for
+     * information only, nothing is written back to the channel.
+     *
+     * @param string $selected_channel
+     * @return array|null
+     */
+    protected function do_show_channel_url_dlg($selected_channel)
+    {
+        hd_debug_print(null, true);
+
+        $channel_row = $this->plugin->get_channel_info($selected_channel, false);
+        if (empty($channel_row)) {
+            return null;
+        }
+
+        $defs = array();
+        try {
+            $live_url = htmlspecialchars($this->plugin->generate_stream_url($channel_row, -1, true));
+            Control_Factory::add_text_field($defs, $this, self::ACTION_SHOW_CHANNEL_URL, TR::t('live_url'),
+                $live_url, false, false, false, false, Control_Factory::DLG_MAX_CONTROLS_WIDTH);
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
+            return null;
+        }
+
+        Control_Factory::add_vgap($defs, 50);
+        Control_Factory::add_close_dialog_button($defs, TR::t('close'));
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog($defs, TR::t('show_channel_url'), Action_Factory::MAX_DLG_WIDTH);
     }
 
     /**
