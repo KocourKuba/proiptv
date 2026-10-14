@@ -285,7 +285,7 @@ class Starnet_Tv implements User_Input_Handler
                     PluginTvChannel::number => $channel_row[COLUMN_CH_NUMBER],
 
                     PluginTvChannel::have_archive => $archive > 0,
-                    PluginTvChannel::is_protected => $show_adult ? (empty($pass_sex) ? 0 : $channel_row[COLUMN_ADULT]) : 0,
+                    PluginTvChannel::is_protected => $show_adult ? (empty($pass_sex) ? 0 : ($channel_row[COLUMN_ADULT] || $group_row[COLUMN_ADULT])) : 0,
 
                     PluginTvChannel::past_epg_days => $archive,
                     PluginTvChannel::future_epg_days => 7, // set default future epg range

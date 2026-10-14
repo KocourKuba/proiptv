@@ -1684,7 +1684,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
         return array(
             'defs' => array($pane_def),
             'fanart_url' => empty($fanart_url) ? '' : $fanart_url,
-            'adult' => $channel_row[COLUMN_ADULT],
+            'adult' => $channel_row[COLUMN_ADULT] || $this->plugin->get_group_adult($channel_row[COLUMN_GROUP_ID]),
         );
     }
 

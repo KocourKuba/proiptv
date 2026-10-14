@@ -1504,6 +1504,93 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string $group_id
+     * @return int 1 - group is protected (adult), 0 - not protected
+     */
+    public function get_group_adult($group_id)
+    {
+        $query = sprintf(Sql_Wrapper::SELECT_FROM_WHERE, COLUMN_ADULT,
+            self::get_table_name(GROUPS_INFO), COLUMN_GROUP_ID, Sql_Wrapper::sql_quote($group_id));
+        return (int)$this->safe_sql_playlist(SQL_QUERY_VALUE, $query);
+    }
+
+    /**
+     * Protect or unprotect group(s). The protection is stored in groups_info and in the group
+     * channels, so both the adult filters and the playback protection code see it.
+     * Removing the protection restores the channel flags from the playlist data.
+     *
+     * @param string|array $group_ids
+     * @param bool $adult
+     * @return void
+     */
+    public function set_group_adult($group_ids, $adult)
+    {
+        $where = Sql_Wrapper::sql_make_where_clause($group_ids, COLUMN_GROUP_ID);
+        $adult = (int)(bool)$adult;
+
+        $query = sprintf('UPDATE %s SET %s=%d WHERE %s;', self::get_table_name(GROUPS_INFO),
+            COLUMN_ADULT, $adult, $where);
+
+        $channels_info_table = self::get_table_name(CHANNELS_INFO);
+        if ($adult) {
+            $query .= sprintf('UPDATE %s SET %s=%d WHERE %s;', $channels_info_table,
+                COLUMN_ADULT, TRUE, $where);
+        } else if ($this->is_attached_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
+            // restore the flags the playlist defines for the channels of the unprotected group
+            $id_column = $this->get_id_column();
+            $query .= sprintf('UPDATE %s SET %s=COALESCE((SELECT pl.%s FROM %s pl WHERE pl.%s=%s.%s), %d) WHERE %s;',
+                $channels_info_table, COLUMN_ADULT, COLUMN_ADULT, M3uParser::CHANNELS_TABLE,
+                $id_column, $channels_info_table, COLUMN_CHANNEL_ID, FALSE, $where);
+        } else {
+            $query .= sprintf('UPDATE %s SET %s=%d WHERE %s;', $channels_info_table, COLUMN_ADULT, FALSE, $where);
+        }
+
+        hd_debug_print($query);
+        $this->safe_sql_playlist(SQL_EXEC_TRANSACTION, $query);
+    }
+
+    /**
+     * @param string $channel_id
+     * @return int 1 - channel is protected (adult), 0 - not protected
+     */
+    public function get_channel_adult($channel_id)
+    {
+        $query = sprintf(Sql_Wrapper::SELECT_FROM_WHERE, COLUMN_ADULT,
+            self::get_table_name(CHANNELS_INFO), COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($channel_id));
+        return (int)$this->safe_sql_playlist(SQL_QUERY_VALUE, $query);
+    }
+
+    /**
+     * Protect or unprotect channel(s). Removing the protection restores the
+     * channel flag from the playlist data.
+     *
+     * @param string|array $channel_ids
+     * @param bool $adult
+     * @return void
+     */
+    public function set_channel_adult($channel_ids, $adult)
+    {
+        $where = Sql_Wrapper::sql_make_where_clause($channel_ids, COLUMN_CHANNEL_ID);
+        $adult = (int)(bool)$adult;
+
+        $channels_info_table = self::get_table_name(CHANNELS_INFO);
+        if ($adult) {
+            $query = sprintf('UPDATE %s SET %s=%d WHERE %s;', $channels_info_table, COLUMN_ADULT, TRUE, $where);
+        } else if ($this->is_attached_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
+            // restore the flag the playlist defines for the channel
+            $id_column = $this->get_id_column();
+            $query = sprintf('UPDATE %s SET %s=COALESCE((SELECT pl.%s FROM %s pl WHERE pl.%s=%s.%s), %d) WHERE %s;',
+                $channels_info_table, COLUMN_ADULT, COLUMN_ADULT, M3uParser::CHANNELS_TABLE,
+                $id_column, $channels_info_table, COLUMN_CHANNEL_ID, FALSE, $where);
+        } else {
+            $query = sprintf('UPDATE %s SET %s=%d WHERE %s;', $channels_info_table, COLUMN_ADULT, FALSE, $where);
+        }
+
+        hd_debug_print($query);
+        $this->safe_sql_playlist(SQL_EXEC_TRANSACTION, $query);
+    }
+
+    /**
+     * @param string $group_id
      * @return string|false
      */
     public function get_group_title($group_id)
@@ -1570,8 +1657,8 @@ class Dune_Default_Sqlite_Engine
             $where = sprintf('WHERE %s=%d', COLUMN_ADULT, FALSE);
         }
 
-        $query = sprintf('SELECT %s, %s, %s FROM %s INNER JOIN %s as ord USING (%s) %s ORDER BY ord.ROWID;',
-            COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON,
+        $query = sprintf('SELECT %s, %s, %s, %s FROM %s INNER JOIN %s as ord USING (%s) %s ORDER BY ord.ROWID;',
+            COLUMN_GROUP_ID, COLUMN_TITLE, COLUMN_ICON, COLUMN_ADULT,
             self::get_table_name(GROUPS_INFO), self::get_table_name(GROUPS_ORDER), COLUMN_GROUP_ID, $where);
 
         return $this->safe_sql_playlist(SQL_FETCH_ARRAY, $query);

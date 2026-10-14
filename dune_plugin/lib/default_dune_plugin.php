@@ -286,7 +286,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             // do not store adult channels to history
-            if (!$channel_row[COLUMN_ADULT]) {
+            $is_adult = !empty($channel_row[COLUMN_ADULT]) || $this->get_group_adult($channel_row[COLUMN_GROUP_ID]) !== 0;
+            if (!$is_adult) {
                 $now = $channel_row[COLUMN_ARCHIVE] > 0 ? time() : 0;
                 $this->push_tv_history($channel_id, ($archive_tm_sec !== -1 ? $archive_tm_sec : $now));
             } else if (!empty($pass_sex) && $protect_code !== $pass_sex) {
@@ -1722,6 +1723,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
             $this->safe_sql_playlist(SQL_EXEC_TRANSACTION, $query);
         }
+
+        // Keep the channels of the protected groups protected: the sync above restores
+        // the channel flags from the playlist data, which does not know about the protection.
+        $query = sprintf('UPDATE %s SET %s=%d WHERE %s=%d AND %s IN (SELECT %s FROM %s WHERE %s=%d);',
+            $channel_info_table, COLUMN_ADULT, TRUE, COLUMN_ADULT, FALSE, COLUMN_GROUP_ID,
+            COLUMN_GROUP_ID, $groups_info_table, COLUMN_ADULT, TRUE);
+        $this->safe_sql_playlist(SQL_EXEC, $query);
 
         $query = '';
         if (!empty($new_groups)) {
@@ -3425,7 +3433,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         Control_Factory::format_smart_label($defs, TR::load('group'), $channel_row[COLUMN_GROUP_ID], 120);
         Control_Factory::format_smart_label($defs, TR::load('archive'), $channel_row[COLUMN_ARCHIVE] . ' ' . TR::load('days'));
         Control_Factory::format_smart_label($defs, TR::load('adult'),
-            $channel_row[COLUMN_ADULT] ? TR::load('yes') : TR::load('no'));
+            ($channel_row[COLUMN_ADULT] || $this->get_group_adult($channel_row[COLUMN_GROUP_ID]) !== 0) ? TR::load('yes') : TR::load('no'));
         Control_Factory::format_smart_label($defs, 'EPG IDs:', $epg_ids_str);
 
         if ($channel_row[COLUMN_TIMESHIFT] != 0) {

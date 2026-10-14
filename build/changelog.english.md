@@ -1,8 +1,10 @@
-﻿### Version 9.1.1880
+### Version 9.1.1880
 - Added TorrentTV provider support (https://ttvrun.one/)
+- The provider configuration is now checked at plugin start: a provider whose API implementation file is missing is not shown in the list, and the VOD support is disabled when the VOD implementation file is missing
 - The stream info of the EPG info window now shows the video codec (only the ffmpeg measurement knows it, the player does not report it)
 - On the ATV boxes the technical info in the TV EPG window is toggled by the RED button instead of SELECT
 - RU TV: the playlist server is now selected as a domain
+- The edit categories screen can now protect a category (adult) and remove the protection. Removing the protection requires the parental control code and the adult password of the plugin, when they are set. Reloading the playlist keeps the protection.
 
 ### Version 9.0.1878
 - Added Sharavoz.Pro support

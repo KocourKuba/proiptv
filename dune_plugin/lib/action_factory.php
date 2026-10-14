@@ -162,6 +162,50 @@ class Action_Factory
     }
 
     /**
+     * Ask the parental control dialog of the box to enter the code and run
+     * the post action only after the correct code is entered. The dialog is
+     * not shown when the parental code is not set.
+     *
+     * @param string $id
+     * @param array|null $post_action
+     * @return array
+     */
+    public static function check_restricted($id, $post_action = null)
+    {
+        return array(
+            GuiAction::handler_string_id => CHECK_RESTRICTED_ACTION_ID,
+            GuiAction::caption => null,
+            GuiAction::data => array(
+                CheckRestrictedActionData::id => (string)$id,
+                CheckRestrictedActionData::post_action => $post_action
+            ),
+            GuiAction::params => null
+        );
+    }
+
+    /**
+     * Add the id to the parental control restricted set or remove it from there
+     *
+     * @param string $id
+     * @param bool $restricted
+     * @param array|null $post_action
+     * @return array
+     */
+    public static function set_restricted($id, $restricted, $post_action = null)
+    {
+        return array(
+            GuiAction::handler_string_id => SET_RESTRICTED_ACTION_ID,
+            GuiAction::caption => null,
+            GuiAction::data => array(
+                SetRestrictedActionData::id => (string)$id,
+                SetRestrictedActionData::restricted => (bool)$restricted,
+                SetRestrictedActionData::post_action => $post_action
+            ),
+            GuiAction::params => null
+        );
+    }
+
+    /**
      * @param string $title
      * @param array|string|null $multiline
      * @param array|null $post_action

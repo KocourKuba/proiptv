@@ -31,6 +31,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
 
     const PARAM_EDIT_LIST = 'edit_list';
     const PARAM_EDIT_CHANNELS = 'edit_channels';
+    const PARAM_UNPROTECT_CHANNEL_IDS = 'unprotect_channel_ids';
 
     const ACTION_CUSTOM_DELETE = 'custom_delete';
     const ACTION_CUSTOM_STRING_DLG_APPLY = 'apply_custom_string_dlg';
@@ -105,6 +106,34 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
                 $this->force_parent_reload = true;
                 $this->plugin->set_channel_title($selected_channel, isset($user_input->restore) ? null : $user_input->{CONTROL_EDIT_NAME});
                 break;
+
+            case ACTION_CHANNEL_PROTECT:
+                $this->force_parent_reload = true;
+                $this->plugin->set_channel_adult($selected_items, true);
+                break;
+
+            case ACTION_CHANNEL_UNPROTECT:
+                // removing the protection is gated by the plugin's own adult password,
+                // the parental control of the box is not involved
+                $channel_ids = json_encode($selected_items);
+                $adult_password = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD);
+                if (!empty($adult_password)) {
+                    return $this->do_unprotect_password_dlg($channel_ids);
+                }
+
+                return $this->do_unprotect($selected_items, $parent_media_url, $plugin_cookies, $sel_ndx);
+
+            case ACTION_CHANNEL_UNPROTECT_PASS_APPLY:
+                $channel_ids = json_decode($user_input->{self::PARAM_UNPROTECT_CHANNEL_IDS});
+                if (empty($channel_ids)) {
+                    break;
+                }
+
+                if ($this->plugin->get_parameter(PARAM_ADULT_PASSWORD) !== $user_input->pass) {
+                    return Action_Factory::show_error(false, TR::t('err_bad_pass'));
+                }
+
+                return $this->do_unprotect($channel_ids, $parent_media_url, $plugin_cookies, $sel_ndx);
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $this->toggle_move_step();
@@ -204,7 +233,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
                 return Action_Factory::show_popup_menu($menu_items);
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                return $this->create_popup_menu($parent_group);
+                return $this->create_popup_menu($parent_group, $selected_channel);
 
             case ACTION_EMPTY:
             default:
@@ -295,9 +324,10 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
 
     /**
      * @param string $parent_group
+     * @param string $selected_channel
      * @return array
      */
-    protected function create_popup_menu($parent_group)
+    protected function create_popup_menu($parent_group, $selected_channel)
     {
         if ($parent_group != TV_ALL_CHANNELS_GROUP_ID) {
             if ($this->selected_items) {
@@ -313,6 +343,12 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
                 TR::t('reset_channels_sort'), 'brush.png');
             $menu_items[] = Control_Factory::menu_separator();
         }
+
+        $is_adult = $this->plugin->get_channel_adult($selected_channel) !== 0;
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+            $is_adult ? ACTION_CHANNEL_UNPROTECT : ACTION_CHANNEL_PROTECT,
+            TR::t($is_adult ? 'unprotect_channel' : 'protect_channel'), 'key.png');
+        $menu_items[] = Control_Factory::menu_separator();
 
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             ACTION_ITEM_DELETE_CHANNELS, TR::t('tv_screen_hide_group_channels'), 'remove.png');
@@ -341,6 +377,52 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
         Control_Factory::add_vgap($defs, 10);
 
         return Action_Factory::show_dialog($defs, TR::t('edit_list_edit_item'));
+    }
+
+    /**
+     * Password dialog for removing the protection. Uses the adult password
+     * of the plugin, the parental control of the box is not involved.
+     *
+     * @param string $channel_ids json-encoded ids of the channels
+     * @return array
+     */
+    protected function do_unprotect_password_dlg($channel_ids)
+    {
+        hd_debug_print(null, true);
+
+        $defs = array();
+        Control_Factory::add_vgap($defs, 20);
+
+        Control_Factory::add_text_field($defs, $this, 'pass', TR::t('setup_pass'), '',
+            true, true, false, true, Control_Factory::DLG_CONTROLS_WIDTH, true);
+
+        Control_Factory::add_vgap($defs, 50);
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_CHANNEL_UNPROTECT_PASS_APPLY,
+            TR::t('ok'), array(self::PARAM_UNPROTECT_CHANNEL_IDS => $channel_ids));
+        Control_Factory::add_cancel_button($defs);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog($defs, TR::t('setup_enter_pass'));
+    }
+
+    /**
+     * Removes the protection from the channels and invalidates the folder.
+     *
+     * @param array $channel_ids
+     * @param MediaURL $parent_media_url
+     * @param array $plugin_cookies
+     * @param int $sel_ndx
+     * @return array
+     */
+    protected function do_unprotect($channel_ids, $parent_media_url, $plugin_cookies, $sel_ndx)
+    {
+        hd_debug_print(null, true);
+
+        $this->force_parent_reload = true;
+        $this->plugin->set_channel_adult($channel_ids, false);
+
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
     }
 
     /**
