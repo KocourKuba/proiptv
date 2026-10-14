@@ -279,7 +279,7 @@ class Starnet_Tv implements User_Input_Handler
                 $archive = $channel_row[COLUMN_ARCHIVE];
                 $all_channels[$channel_row[COLUMN_CHANNEL_ID]] = array(
                     PluginTvChannel::id => $channel_row[COLUMN_CHANNEL_ID],
-                    PluginTvChannel::caption => $channel_row[COLUMN_TITLE],
+                    PluginTvChannel::caption => $channel_row[COLUMN_SHOW_TITLE],
                     PluginTvChannel::group_ids => array_keys($group_id_arr),
                     PluginTvChannel::icon_url => $this->plugin->get_channel_picon($channel_row, true),
                     PluginTvChannel::number => $channel_row[COLUMN_CH_NUMBER],
