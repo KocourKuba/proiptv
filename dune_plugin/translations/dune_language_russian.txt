@@ -247,6 +247,7 @@ package_timed__1 = Повременный: %s
 packages = Пакеты:
 password = Пароль:
 pl_domain = Домен плейлиста
+play_channel = Воспроизвести канал (PLAY)
 playlist = Плейлист
 playlist_channel_names = Уникальных имен каналов в плейлисте:
 playlist_epg_id = Уникальных EPG id в плейлисте:

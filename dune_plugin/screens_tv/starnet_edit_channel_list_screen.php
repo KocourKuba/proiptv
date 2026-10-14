@@ -61,6 +61,7 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
             $this->add_move_actions($actions);
         }
 
+        $actions[GUI_EVENT_KEY_PLAY] = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
         $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_RENAME_CHANNEL, TR::t('rename'));
         $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_EDIT, TR::t('restore'));
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('hide'));
@@ -106,6 +107,9 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
                 $this->force_parent_reload = true;
                 $this->plugin->set_channel_title($selected_channel, isset($user_input->restore) ? null : $user_input->{CONTROL_EDIT_NAME});
                 break;
+
+            case ACTION_PLAY_ITEM:
+                return $this->play_tv_channel($selected_media_url, $plugin_cookies);
 
             case ACTION_CHANNEL_PROTECT:
                 $this->force_parent_reload = true;
@@ -192,7 +196,8 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
                     TR::t('tv_screen_hide_string') => "custom_string"
                 );
                 foreach ($items as $key => $val) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE_BY_STRING, $key, null, array('hide' => $val));
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                        ACTION_ITEM_DELETE_BY_STRING, $key, null, array('hide' => $val));
                 }
                 return Action_Factory::show_popup_menu($menu_items);
 
@@ -329,6 +334,10 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
      */
     protected function create_popup_menu($parent_group, $selected_channel)
     {
+        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+            ACTION_PLAY_ITEM, TR::t('play_channel'), 'play.png');
+        $menu_items[] = Control_Factory::menu_separator();
+
         if ($parent_group != TV_ALL_CHANNELS_GROUP_ID) {
             if ($this->selected_items) {
                 $menu_items[] = Control_Factory::menu_separator();
@@ -411,11 +420,11 @@ class Starnet_Edit_Channel_List_Screen extends Abstract_Edit_Order_Screen
      *
      * @param array $channel_ids
      * @param MediaURL $parent_media_url
-     * @param array $plugin_cookies
+     * @param object $plugin_cookies
      * @param int $sel_ndx
      * @return array
      */
-    protected function do_unprotect($channel_ids, $parent_media_url, $plugin_cookies, $sel_ndx)
+    protected function do_unprotect($channel_ids, $parent_media_url, &$plugin_cookies, $sel_ndx)
     {
         hd_debug_print(null, true);
 

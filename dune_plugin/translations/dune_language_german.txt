@@ -247,6 +247,7 @@ package_timed__1 = Zeitlich abgepasst: %s
 packages = Pakete:
 password = Passwort:
 pl_domain = Playlist-Domain
+play_channel = Kanal abspielen (PLAY)
 playlist = Wiedergabeliste
 playlist_channel_names = Eindeutige Kanalnamen der Playlist:
 playlist_epg_id = Eindeutige EPG-IDs der Playlist:

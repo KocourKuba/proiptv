@@ -36,7 +36,7 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
      * @param int $sel_ndx
      * @return array
      */
-    public function invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx = -1)
+    public function invalidate_current_folder($parent_media_url, &$plugin_cookies, $sel_ndx = -1)
     {
         hd_debug_print(null, true);
 

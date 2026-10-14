@@ -247,6 +247,7 @@ package_timed__1 = 限时套餐: %s
 packages = 套餐列表:
 password = 密码:
 pl_domain = 播放列表域名
+play_channel = 播放频道（PLAY）
 playlist = 播放列表
 playlist_channel_names = 播放列表唯一频道名称:
 playlist_epg_id = 播放列表唯一EPG ID:

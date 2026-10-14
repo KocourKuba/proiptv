@@ -247,6 +247,7 @@ package_timed__1 = Timed: %s
 packages = Packages:
 password = Password:
 pl_domain = Playlist Domain
+play_channel = Play channel (PLAY)
 playlist = Playlist
 playlist_channel_names = Playlist unique channel names:
 playlist_epg_id = Playlist unique EPG ids:
