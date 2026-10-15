@@ -29,25 +29,26 @@ require_once 'lib/vod/vod_standard.php';
 /**
  * TorrentTV VOD
  *
- * The server paginates the catalog itself (21 films per page) and supports searching by name,
- * so the page index is the film_list page number. Play URLs (HLS .m3u8) come from film_alt_http
- * together with the season/episode info; film_info gives the description, ratings, genres and crew.
- * The film_info response has no poster, so posters come from the cached Short_Movie entries.
- * Poster paths from film_list are relative to the MDB host media root (mdb.<site domain>/media/):
- * the site hosts serve the SPA shell for /images/* paths and cannot be used for posters.
- * The catalog is never fetched in bulk: film_genres provides the VOD categories shown in the
- * category list and each category is loaded page by page from film_list with the genre param.
+ * The server paginates the catalog itself (21 films per page): film_filter is the paginated
+ * catalog list (page/page_size with an optional genre), so the page index is the film_filter
+ * page number both for the root category and for genre browsing.
+ * Play URLs (HLS .m3u8) come from film_alt_http together with the season/episode info;
+ * film_alt_info gives the description, ratings, genres, crew and the poster.
+ * Search is served by film_alt_search, which ignores page/page_size and returns up to
+ * 50 results, so the search result is a single page.
+ * The catalog is never fetched in bulk: film_alt_genres provides the VOD categories shown
+ * in the category list (the genre ids of all sections are merged into one list).
  * Filters are served by film_filter (type, genre, country, year range) using the genre ids
- * from film_genres and the country list from film_filter_countries.
+ * from film_alt_genres and the country list from film_filter_countries.
  */
 class vod_ttv extends vod_standard
 {
-    const CMD_FILM_LIST = 'film_list';
-    const CMD_FILM_GENRES = 'film_genres';
+    const CMD_FILM_ALT_GENRES = 'film_alt_genres';
     const CMD_FILM_FILTER = 'film_filter';
     const CMD_FILM_FILTER_COUNTRIES = 'film_filter_countries';
-    const CMD_FILM_INFO = 'film_info';
+    const CMD_FILM_ALT_INFO = 'film_alt_info';
     const CMD_FILM_ALT_HTTP = 'film_alt_http';
+    const CMD_FILM_ALT_SEARCH = 'film_alt_search';
     const FILM_PAGE_SIZE = 21;
 
     /**
@@ -101,33 +102,36 @@ class vod_ttv extends vod_standard
     {
         hd_debug_print(null, true);
 
-        $response = $this->make_json_request(self::CMD_FILM_GENRES, array());
+        $response = $this->make_json_request(self::CMD_FILM_ALT_GENRES, array());
         if ($response === false || (int)safe_get_value($response, 'success') !== 1) {
-            hd_debug_print('film_genres request failed', true);
+            hd_debug_print('film_alt_genres request failed', true);
             Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, TR::load('err_load_vod'));
             return false;
         }
 
         $this->category_index = array();
-        $genres = safe_get_value($response, 'data', array());
-        if (!is_array($genres)) {
-            $genres = array();
+        $sections = safe_get_value($response, 'data', array());
+        if (!is_array($sections)) {
+            $sections = array();
         }
 
+        // the sections (film, serial, animation) share the same genre id space,
+        // so they are merged into one list. The 'All genres' entry without a
+        // genre id and the '-1' favorites pseudo genre are skipped.
         $genre_values = array(-1 => TR::t('no'));
-        foreach ($genres as $genre) {
-            $id = (int)safe_get_value($genre, 'id');
-            $name = safe_get_value($genre, 'name');
-            if ($id <= 0 || empty($name)) continue;
+        foreach ($sections as $section) {
+            $genres = safe_get_value($section, 'genres', array());
+            if (!is_array($genres)) continue;
 
-            $caption = $name;
-            $count = (int)safe_get_value($genre, 'count', 0);
-            if ($count > 0) {
-                $caption .= " ($count)";
+            foreach ($genres as $genre) {
+                $query = safe_get_value($genre, 'query', array());
+                $id = (int)safe_get_value($query, 'genre_id');
+                $name = safe_get_value($genre, 'name');
+                if ($id <= 0 || empty($name) || isset($this->category_index[(string)$id])) continue;
+
+                $this->category_index[(string)$id] = new Vod_Category((string)$id, $name);
+                $genre_values[(string)$id] = $name;
             }
-
-            $this->category_index[(string)$id] = new Vod_Category((string)$id, $caption);
-            $genre_values[(string)$id] = $name;
         }
 
         // filter types for the film_filter request
@@ -178,20 +182,23 @@ class vod_ttv extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getMovieList: $query_id");
 
-        // the page index is the 1-based page number of the film_list request
+        // the page index is the 1-based page number of the film_filter request
         $page = $this->get_current_page_index($query_id, 1);
         if ($page < 0) {
             return array();
         }
 
-        $params = array('page' => $page);
+        // film_filter is the paginated catalog: without a genre it serves the
+        // whole catalog (the type defaults to all), with genres_include it
+        // serves the genre browsing page
+        $params = array('page' => $page, 'page_size' => self::FILM_PAGE_SIZE);
         $genre_id = (int)$query_id;
         if ($genre_id > 0) {
-            $params['genre'] = $genre_id;
+            $params['genres_include[]'] = $genre_id;
         }
 
-        $response = $this->make_json_request(self::CMD_FILM_LIST, $params);
-        return $this->CollectQueryResult($query_id, $page, $response);
+        $response = $this->make_json_request(self::CMD_FILM_FILTER, $params);
+        return $this->CollectFilterResult($query_id, $page, $response);
     }
 
     /**
@@ -207,8 +214,8 @@ class vod_ttv extends vod_standard
             return array();
         }
 
-        $response = $this->make_json_request(self::CMD_FILM_LIST, array('page' => $page, 'search' => $keyword), false);
-        return $this->CollectQueryResult($keyword, $page, $response);
+        $response = $this->make_json_request(self::CMD_FILM_ALT_SEARCH, array('q' => $keyword), false);
+        return $this->CollectSearchResult($keyword, $page, $response);
     }
 
     /**
@@ -282,23 +289,18 @@ class vod_ttv extends vod_standard
         }
 
         $film = array();
-        $info_response = $this->make_json_request(self::CMD_FILM_INFO, array('film_id' => $movie_id));
+        $info_response = $this->make_json_request(self::CMD_FILM_ALT_INFO, array('film_id' => $movie_id));
         if ($info_response !== false && (int)safe_get_value($info_response, 'success') === 1) {
-            $film = safe_get_value($info_response, 'film', array());
+            $film = safe_get_value($info_response, 'data', array());
         }
 
-        $info = safe_get_value($film, 'info', array());
-        $rating = safe_get_value($film, 'rating', array());
-
-        $name = safe_get_value($info, 'rus_name');
-        if (empty($name)) {
-            $name = safe_get_value($info, 'name');
-        }
-
-        $poster_url = '';
+        $name = safe_get_value($film, 'name');
+        $poster_url = safe_get_value($film, 'poster');
         $short_movie = $this->plugin->vod->get_cached_short_movie($movie_id);
         if (!is_null($short_movie)) {
-            $poster_url = $short_movie->poster_url;
+            if (empty($poster_url)) {
+                $poster_url = $short_movie->poster_url;
+            }
             if (empty($name)) {
                 $name = $short_movie->name;
             }
@@ -308,15 +310,13 @@ class vod_ttv extends vod_standard
             $name = TR::t('no_title');
         }
 
-        $directors = self::get_persons($film, 'directors');
-        $writers = self::get_persons($film, 'writers');
+        $directors = self::get_person_names($film, array('режисс'));
+        $writers = self::get_person_names($film, array('сценар'));
+        $actors = self::get_actor_names($film);
 
-        $genres = array();
-        $genres_raw = safe_get_value($film, 'genres', array());
-        if (is_array($genres_raw)) {
-            foreach ($genres_raw as $genre) {
-                $genres[] = safe_get_value($genre, 'name');
-            }
+        $genres = safe_get_value($film, 'genres', array());
+        if (!is_array($genres)) {
+            $genres = array();
         }
 
         $quality_names = array();
@@ -335,19 +335,19 @@ class vod_ttv extends vod_standard
         $movie = new Movie($movie_id, $this->plugin);
         $movie->set_data(
             $name,      // caption
-            safe_get_value($info, 'orig_name', ''), // caption_original
+            '',         // caption_original: film_alt_info has no original title
             safe_get_value($film, 'description', ''), // description
             $poster_url,    // poster_url
             (int)round((int)safe_get_value($files[0], 'duration', 0) / 60), // length_min
-            safe_get_value($info, 'year', ''),  // year
+            safe_get_value($film, 'year', ''),  // year
             $directors,     // director
             $writers,       // scenario
-            '',             // actors
+            $actors,        // actors
             implode(', ', $genres),     // genres
-            safe_get_value($rating, array('imdb', 'rating'), ''),  // rate_imdb
-            safe_get_value($rating, array('kp', 'rating'), ''),    // rate_kinopoisk
+            safe_get_value($film, 'imdb_rating', ''),   // rate_imdb
+            safe_get_value($film, 'kp_rating', ''),     // rate_kinopoisk
             '',             // rate_mpaa
-            '',             // country
+            safe_get_value($film, 'country', ''),   // country
             '',             // budget
             $details        // details
         );
@@ -413,9 +413,9 @@ class vod_ttv extends vod_standard
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * Normalizes the film_filter response to the film_list shape so the common
-     * result collector can be reused: data.result[] becomes data.films[] and
-     * the page count is data.pages instead of data.total_pages.
+     * Normalizes the film_filter response to the common movie list shape so the
+     * shared result collector can be reused: data.result[] becomes data.films[]
+     * and the page count is data.pages instead of data.total_pages.
      *
      * @param string $query_id
      * @param int $page
@@ -436,7 +436,7 @@ class vod_ttv extends vod_standard
                 foreach ($result as $film) {
                     if (!is_array($film)) continue;
 
-                    // film_filter calls the poster field 'poster', film_list 'img'
+                    // film_filter calls the poster field 'poster', the collector 'img'
                     $poster = safe_get_value($film, 'poster');
                     if (!empty($poster)) {
                         $film['img'] = $poster;
@@ -455,7 +455,44 @@ class vod_ttv extends vod_standard
     }
 
     /**
-     * Short movies of the film_list page and the pagination control.
+     * Normalizes the film_alt_search response to the common movie list shape so the
+     * shared result collector can be reused. The endpoint ignores page/page_size and
+     * returns up to 50 results, so the search result is a single page.
+     *
+     * @param string $query_id
+     * @param int $page
+     * @param bool|array $response
+     * @return Short_Movie[]
+     */
+    protected function CollectSearchResult($query_id, $page, $response)
+    {
+        if (is_array($response) && (int)safe_get_value($response, 'success') === 1) {
+            $items = safe_get_value($response, 'data', array());
+            if (!is_array($items)) {
+                $items = array();
+            }
+
+            $films = array();
+            foreach ($items as $film) {
+                if (!is_array($film)) continue;
+
+                // film_alt_search calls the poster field 'poster', the collector 'img'
+                $poster = safe_get_value($film, 'poster');
+                if (!empty($poster)) {
+                    $film['img'] = $poster;
+                }
+
+                $films[] = $film;
+            }
+
+            $response['data'] = array('films' => $films, 'total_pages' => 1);
+        }
+
+        return $this->CollectQueryResult($query_id, $page, $response);
+    }
+
+    /**
+     * Short movies of the catalog page and the pagination control.
      *
      * @param string $query_id
      * @param int $page
@@ -467,7 +504,7 @@ class vod_ttv extends vod_standard
         $movies = array();
 
         if ($response === false || (int)safe_get_value($response, 'success') !== 1) {
-            hd_debug_print('bad film_list response', true);
+            hd_debug_print('bad catalog response', true);
             $this->stop_page_index($query_id);
             return $movies;
         }
@@ -594,29 +631,62 @@ class vod_ttv extends vod_standard
     }
 
     /**
-     * The persons list of film_info: an array of {id, name} objects or a plain comma
-     * separated string depending on the film.
+     * Names of the film_alt_info persons of the role matched by a name stem.
+     * The persons structure is a role-keyed object ('Режиссеры' => array of
+     * {id, rus_name, orig_name, photo} objects). The stem is matched against
+     * the role name normalized to lower case with ё folded to е.
      *
      * @param array $film
-     * @param string $key
+     * @param array $stems
      * @return string
      */
-    protected static function get_persons($film, $key)
+    protected static function get_person_names($film, $stems)
     {
-        $persons = safe_get_value($film, array('persons', $key), array());
-        if (is_array($persons)) {
-            $names = array();
-            foreach ($persons as $person) {
-                $name = safe_get_value($person, 'name');
-                if (!empty($name)) {
-                    $names[] = $name;
-                }
-            }
-
-            return implode(', ', $names);
+        $persons = safe_get_value($film, 'persons', array());
+        if (!is_array($persons)) {
+            return '';
         }
 
-        return is_string($persons) ? $persons : '';
+        foreach ($persons as $role => $group) {
+            if (!is_array($group)) continue;
+
+            $role_norm = str_replace('ё', 'е', mb_strtolower((string)$role, 'UTF-8'));
+            foreach ($stems as $stem) {
+                if (strpos($role_norm, $stem) === false) continue;
+
+                $names = array();
+                foreach ($group as $person) {
+                    $name = safe_get_value($person, 'rus_name');
+                    if (empty($name)) {
+                        $name = safe_get_value($person, 'orig_name');
+                    }
+
+                    if (!empty($name)) {
+                        $names[] = $name;
+                    }
+                }
+
+                return implode(', ', $names);
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Top actors of the film_alt_info data: an array of name strings.
+     *
+     * @param array $film
+     * @return string
+     */
+    protected static function get_actor_names($film)
+    {
+        $actors = safe_get_value($film, 'actors', array());
+        if (!is_array($actors)) {
+            return '';
+        }
+
+        return implode(', ', $actors);
     }
 
     /**
@@ -638,6 +708,8 @@ class vod_ttv extends vod_standard
 
     /**
      * Execute a TorrentTV API command with the query params appended to the command template.
+     * The session can be invalidated server side at any time ('incorrect' error); in this
+     * case a new session is requested and the command is retried once.
      *
      * @param string $command
      * @param array $params
@@ -658,6 +730,17 @@ class vod_ttv extends vod_standard
         }
 
         $cache = $cache_response ? Curl_Wrapper::CACHE_RESPONSE : 0;
-        return $this->provider->execApiCommandResponse($command, $curl_opt, Curl_Wrapper::RET_ARRAY, $cache);
+        $response = $this->provider->execApiCommandResponse($command, $curl_opt, Curl_Wrapper::RET_ARRAY, $cache);
+        if (is_array($response)
+            && (int)safe_get_value($response, 'success') !== 1
+            && safe_get_value($response, 'error') === 'incorrect') {
+            hd_debug_print("ttv session rejected for $command, request new session", true);
+            $this->plugin->remove_cookie(PARAM_SESSION_ID);
+            if ($this->provider->request_provider_token(true)) {
+                $response = $this->provider->execApiCommandResponse($command, $curl_opt, Curl_Wrapper::RET_ARRAY, $cache);
+            }
+        }
+
+        return $response;
     }
 }
