@@ -23,8 +23,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'lib/list_utils.php';
-
 class ChannelInfo
 {
     /**
