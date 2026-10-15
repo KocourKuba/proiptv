@@ -541,7 +541,6 @@ warn_msg5 = Техническая информация о фильме соде
 warning = Предупреждение
 xmltv_info_dlg = Информация о XMLTV источнике (INFO)
 xmltv_picons = XMLTV
-year = Год
 year_from = Год от
 year_to = Год до
 yes = Да

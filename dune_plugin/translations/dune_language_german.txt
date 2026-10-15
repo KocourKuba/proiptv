@@ -541,7 +541,6 @@ warn_msg5 = Die technischen Informationen zum Film enthalten falsche oder fehlen
 warning = Warnung
 xmltv_info_dlg = Informationen zur XMLTV-Quelle (INFO)
 xmltv_picons = XMLTV
-year = Jahr
 year_from = Jahr von
 year_to = Jahr zu
 yes = Ja

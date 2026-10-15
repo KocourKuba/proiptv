@@ -541,7 +541,6 @@ warn_msg5 = 影片技术信息存在错误或数据缺失.\n该影片无法播�
 warning = 警告
 xmltv_info_dlg = XMLTV信息 (INFO)
 xmltv_picons = XMLTV图标
-year = 年份
 year_from = 起始年份
 year_to = 结束年份
 yes = 是

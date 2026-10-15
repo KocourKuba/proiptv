@@ -541,7 +541,6 @@ warn_msg5 = The movie technical information contains incorrect or missing data.\
 warning = Warning
 xmltv_info_dlg = XMLTV source info (INFO)
 xmltv_picons = XMLTV
-year = Year
 year_from = Year from
 year_to = Year to
 yes = Yes
