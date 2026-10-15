@@ -1,7 +1,7 @@
 ﻿*.gitattributes text
 .gitignore      text
 
-*.md            text diff=markdown
+*.md            text eol=lf diff=markdown
 *.sh			text eol=lf
 channels		text eol=lf
 epg				text eol=lf
@@ -21,7 +21,7 @@ epg				text eol=lf
 .gitignore      export-ignore
 
 *.php diff=php
-*.php text eol=crlf
+*.php text eol=lf
 
 *.txt text eol=lf
 *.tpl html eol=lf
