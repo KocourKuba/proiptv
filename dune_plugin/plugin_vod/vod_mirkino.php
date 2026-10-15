@@ -52,7 +52,6 @@ class vod_mirkino extends vod_standard
     public function init_vod($provider)
     {
         if (parent::init_vod($provider)) {
-            $this->vod_filters = array('source', 'genre', 'years');
             $vod_url = $this->provider->replace_macros($this->provider->getRawApiCommand(API_COMMAND_GET_VOD));
 
             $this->jfc = new jellyfin_api();
