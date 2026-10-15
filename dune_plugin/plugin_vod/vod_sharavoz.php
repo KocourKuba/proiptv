@@ -171,7 +171,7 @@ class vod_sharavoz extends vod_standard
             self::get_data_variant($info, array('actors', 'cast')), // actors_str,
             self::get_data_variant($info, 'genre'), // genres_str,
             self::get_data_variant($info, 'rating'), // rate_imdb,
-            self::get_data_variant($info, 'rating_count_kinopoisk'), // rate_kinopoisk,
+            '', //self::get_data_variant($info, 'rating_count_kinopoisk'), // rate_kinopoisk,
             '', // rate_mpaa,
             self::get_data_variant($info, 'country'), // country,
             '',
