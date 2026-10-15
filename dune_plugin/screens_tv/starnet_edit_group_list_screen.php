@@ -367,7 +367,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Edit_Order_Screen
      *
      * @param array $group_ids
      * @param MediaURL $parent_media_url
-     * @param array $plugin_cookies
+     * @param object $plugin_cookies
      * @param int $sel_ndx
      * @return array
      */
