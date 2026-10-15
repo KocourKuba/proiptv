@@ -37,13 +37,18 @@ require_once 'lib/vod/vod_standard.php';
  * the site hosts serve the SPA shell for /images/* paths and cannot be used for posters.
  * The catalog is never fetched in bulk: film_genres provides the VOD categories shown in the
  * category list and each category is loaded page by page from film_list with the genre param.
+ * Filters are served by film_filter (type, genre, country, year range) using the genre ids
+ * from film_genres and the country list from film_filter_countries.
  */
 class vod_ttv extends vod_standard
 {
     const CMD_FILM_LIST = 'film_list';
     const CMD_FILM_GENRES = 'film_genres';
+    const CMD_FILM_FILTER = 'film_filter';
+    const CMD_FILM_FILTER_COUNTRIES = 'film_filter_countries';
     const CMD_FILM_INFO = 'film_info';
     const CMD_FILM_ALT_HTTP = 'film_alt_http';
+    const FILM_PAGE_SIZE = 21;
 
     /**
      * The path and exact body size (bytes) the TorrentTV app uses to probe
@@ -81,6 +86,7 @@ class vod_ttv extends vod_standard
     public function init_vod($provider)
     {
         if (parent::init_vod($provider)) {
+            $this->vod_filters = array('type', 'genre', 'country', 'from', 'to');
             $this->poster_domain = $this->resolve_poster_domain();
             return $provider->request_provider_token(true);
         }
@@ -108,6 +114,7 @@ class vod_ttv extends vod_standard
             $genres = array();
         }
 
+        $genre_values = array(-1 => TR::t('no'));
         foreach ($genres as $genre) {
             $id = (int)safe_get_value($genre, 'id');
             $name = safe_get_value($genre, 'name');
@@ -120,7 +127,44 @@ class vod_ttv extends vod_standard
             }
 
             $this->category_index[(string)$id] = new Vod_Category((string)$id, $caption);
+            $genre_values[(string)$id] = $name;
         }
+
+        // filter types for the film_filter request
+        $exist_filters = array(
+            'type' => array(
+                'title' => TR::t('vod_filter_type'),
+                'values' => array(
+                    -1 => TR::t('no'),
+                    'all' => TR::t('vod_filter_type_all'),
+                    'film' => TR::t('vod_filter_type_film'),
+                    'serial' => TR::t('vod_filter_type_serial'),
+                    'animation' => TR::t('vod_filter_type_animation')
+                )
+            ),
+            'genre' => array('title' => TR::t('genre'), 'values' => $genre_values),
+            'from' => array('title' => TR::t('year_from'), 'text' => true),
+            'to' => array('title' => TR::t('year_to'), 'text' => true)
+        );
+
+        // the country list for the filter comes from a dedicated endpoint
+        $countries_response = $this->make_json_request(self::CMD_FILM_FILTER_COUNTRIES, array());
+        if ($countries_response !== false && (int)safe_get_value($countries_response, 'success') === 1) {
+            $countries = safe_get_value($countries_response, 'data', array());
+            if (is_array($countries) && !empty($countries)) {
+                $country_values = array(-1 => TR::t('no'));
+                foreach ($countries as $country) {
+                    $country = (string)$country;
+                    if (!empty($country)) {
+                        $country_values[$country] = $country;
+                    }
+                }
+
+                $exist_filters['country'] = array('title' => TR::t('country'), 'values' => $country_values);
+            }
+        }
+
+        $this->set_filter_types($exist_filters);
 
         hd_debug_print('Categories read: ' . count($this->category_index));
         return true;
@@ -165,6 +209,51 @@ class vod_ttv extends vod_standard
 
         $response = $this->make_json_request(self::CMD_FILM_LIST, array('page' => $page, 'search' => $keyword), false);
         return $this->CollectQueryResult($keyword, $page, $response);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getFilterList($query_id)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("getFilterList: $query_id");
+
+        $filter_params = $this->get_filter_params($query_id);
+        if (empty($filter_params)) {
+            return array();
+        }
+
+        // the page index is the 1-based page number of the film_filter request
+        $page = $this->get_current_page_index($query_id, 1);
+        if ($page < 0) {
+            return array();
+        }
+
+        $params = array('page' => $page, 'page_size' => self::FILM_PAGE_SIZE);
+        if (isset($filter_params['type'])) {
+            $params['type'] = $filter_params['type'];
+        }
+
+        if (isset($filter_params['genre'])) {
+            $params['genres_include[]'] = $filter_params['genre'];
+        }
+
+        if (isset($filter_params['country'])) {
+            $params['countries_include[]'] = $filter_params['country'];
+        }
+
+        foreach (array('from' => 'year_from', 'to' => 'year_to') as $key => $param_name) {
+            if (!isset($filter_params[$key])) continue;
+
+            $year = (int)$filter_params[$key];
+            if ($year >= 1900 && $year <= 2100) {
+                $params[$param_name] = $year;
+            }
+        }
+
+        $response = $this->make_json_request(self::CMD_FILM_FILTER, $params);
+        return $this->CollectFilterResult($query_id, $page, $response);
     }
 
     /**
@@ -322,6 +411,48 @@ class vod_ttv extends vod_standard
     }
 
     ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * Normalizes the film_filter response to the film_list shape so the common
+     * result collector can be reused: data.result[] becomes data.films[] and
+     * the page count is data.pages instead of data.total_pages.
+     *
+     * @param string $query_id
+     * @param int $page
+     * @param bool|array $response
+     * @return Short_Movie[]
+     */
+    protected function CollectFilterResult($query_id, $page, $response)
+    {
+        if (is_array($response) && (int)safe_get_value($response, 'success') === 1) {
+            $data = safe_get_value($response, 'data', array());
+            if (!is_array($data)) {
+                $data = array();
+            }
+
+            $films = array();
+            $result = safe_get_value($data, 'result', array());
+            if (is_array($result)) {
+                foreach ($result as $film) {
+                    if (!is_array($film)) continue;
+
+                    // film_filter calls the poster field 'poster', film_list 'img'
+                    $poster = safe_get_value($film, 'poster');
+                    if (!empty($poster)) {
+                        $film['img'] = $poster;
+                    }
+
+                    $films[] = $film;
+                }
+            }
+
+            $data['films'] = $films;
+            $data['total_pages'] = (int)safe_get_value($data, 'pages', 0);
+            $response['data'] = $data;
+        }
+
+        return $this->CollectQueryResult($query_id, $page, $response);
+    }
 
     /**
      * Short movies of the film_list page and the pagination control.

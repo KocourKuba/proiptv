@@ -1819,6 +1819,8 @@
         "account_info": "{API}/userinfo.php?session={SESSION_ID}&typeresult=json",
         "film_list": "{API}/film_list.php?session={SESSION_ID}&typeresult=json",
         "film_genres": "{API}/film_genres.php?session={SESSION_ID}&typeresult=json",
+        "film_filter": "{API}/film_filter.php?session={SESSION_ID}&typeresult=json",
+        "film_filter_countries": "{API}/film_filter_countries.php?session={SESSION_ID}&typeresult=json",
         "film_info": "{API}/film_info.php?session={SESSION_ID}&typeresult=json",
         "film_alt_http": "{API}/film_alt_http.php?session={SESSION_ID}&typeresult=json"
       },

@@ -563,6 +563,7 @@ class vod_standard extends Abstract_Vod
             hd_debug_print("filter: $name : " . json_format_unescaped($filter), true);
 
             // fill get value from already set user filter
+            $user_value = null;
             if (!empty($user_filter)) {
                 $pairs = explode(',', $user_filter);
                 $prefix = $name . ':';
@@ -586,8 +587,13 @@ class vod_standard extends Abstract_Vod
             if (!empty($filter['values'])) {
                 $idx = -1;
                 if (isset($user_value)) {
-                    // index 0 is a valid value, '?:' would turn it into -1
-                    $idx = array_search($user_value, $filter['values']);
+                    // the compiled filter stores the raw key of the selected value
+                    $idx = array_search($user_value, array_keys($filter['values']));
+                    if ($idx === false) {
+                        // legacy: the filter was saved with the translated display value
+                        $item_key = array_search($user_value, $filter['values']);
+                        $idx = ($item_key === false) ? -1 : array_search($item_key, array_keys($filter['values']));
+                    }
                     if ($idx === false) {
                         $idx = -1;
                     }
@@ -652,7 +658,13 @@ class vod_standard extends Abstract_Vod
             if (isset($filter['text']) && !empty($user_input->{$name})) {
                 $add_text = $user_input->{$name};
             } else if ((int)$user_input->{$name} !== -1) {
-                $add_text = $filter['values'][$user_input->{$name}];
+                // the compiled string stores the raw key of the selected value,
+                // not the translated display value
+                $keys = array_keys($filter['values']);
+                $item_key = $keys[$user_input->{$name}];
+                if ($item_key !== -1) {
+                    $add_text = $item_key;
+                }
             }
 
             if (empty($add_text)) {
@@ -748,9 +760,15 @@ class vod_standard extends Abstract_Vod
                 // the value is typed in
                 $filter_params[$m[1]] = $m[2];
             } else if (!empty($filter['values'])) {
-                $item_key = array_search($m[2], $filter['values']);
-                if ($item_key !== false && $item_key !== -1) {
-                    $filter_params[$m[1]] = $item_key;
+                // the compiled string stores the raw key of the selected value
+                if (isset($filter['values'][$m[2]]) && $m[2] !== '-1') {
+                    $filter_params[$m[1]] = $m[2];
+                } else {
+                    // legacy: the filter was saved with the translated display value
+                    $item_key = array_search($m[2], $filter['values']);
+                    if ($item_key !== false && $item_key !== -1) {
+                        $filter_params[$m[1]] = $item_key;
+                    }
                 }
             }
         }
