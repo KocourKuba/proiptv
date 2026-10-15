@@ -28,8 +28,7 @@
 require_once 'lib/abstract_screen.php';
 require_once 'lib/user_input_handler_registry.php';
 require_once 'lib/epg/ext_epg_program.php';
-require_once 'lib/epfs/gcomps_factory.php';
-require_once 'lib/epfs/gcomp_geom.php';
+require_once 'lib/gcomps_factory.php';
 
 /**
  * EPG info screen opened by the INFO key over TV playback.

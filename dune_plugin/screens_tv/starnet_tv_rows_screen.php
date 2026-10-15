@@ -28,8 +28,7 @@ require_once 'lib/epg/ext_epg_program.php';
 require_once 'lib/epfs/abstract_rows_screen.php';
 require_once 'lib/epfs/rows_factory.php';
 require_once 'lib/epfs/rows_json_writer.php';
-require_once 'lib/epfs/gcomps_factory.php';
-require_once 'lib/epfs/gcomp_geom.php';
+require_once 'lib/gcomps_factory.php';
 require_once 'lib/user_input_handler_registry.php';
 
 class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
