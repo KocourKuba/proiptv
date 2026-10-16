@@ -228,6 +228,7 @@ const COLUMN_PARSED_ID = 'parsed_id';
 const COLUMN_PATH = 'path';
 const COLUMN_PICON_HASH = 'picon_hash';
 const COLUMN_PICON_URL = 'picon_url';
+const COLUMN_PICONS_INFO = 'picons_info';
 const COLUMN_PLAYLIST_ID = 'playlist_id';
 const COLUMN_POSITION = 'position';
 const COLUMN_PROGRAM_TITLE = 'program_title';
@@ -458,6 +459,7 @@ const LIST_IDX = 'list_idx';
 const IS_LIST_SELECTED = 'is_list_selected';
 const PLAYLIST_PICONS = 'playlist_picons';
 const XMLTV_PICONS = 'xmltv_picons';
+const EPG_SERVER_PICONS = 'epg_server_picons';
 const COMBINED_PICONS = 'combined_picons'; // obsolete, only for converting PARAM_USE_PICONS
 const COMBINED_PICONS2 = 'combined_picons2'; // obsolete, only for converting PARAM_USE_PICONS
 

@@ -405,6 +405,78 @@ class Epg_Manager_Json
     }
 
     /**
+     * Resolve the id of the channel known to the source: the id itself or,
+     * when the playlist stores an alias, the mapped id. The id is resolved
+     * the same way as for the EPG, but the source may know the channel
+     * without serving an EPG program for it.
+     *
+     * @param array $epg_ids
+     * @param array $config_preset
+     * @return string
+     */
+    protected static function resolve_channel_id($epg_ids, $config_preset)
+    {
+        if (!self::load_channels_info($config_preset)) {
+            return '';
+        }
+
+        $channels_info = self::get_channels_info($config_preset);
+        $lower_ids = self::$all_channels_info[self::get_channels_info_url($config_preset)]->lower_ids;
+        foreach (array(COLUMN_EPG_ID, COLUMN_TVG_NAME, COLUMN_NAME) as $col) {
+            if (empty($epg_ids[$col])) continue;
+
+            $alias = to_lower($epg_ids[$col]);
+            hd_debug_print("Searching alias: '$alias'", true);
+            if (isset($lower_ids[$alias])) {
+                return $lower_ids[$alias];
+            }
+
+            if (isset($channels_info[COLUMN_EPG_ALIASES]) && array_key_exists($alias, $channels_info[COLUMN_EPG_ALIASES])) {
+                return $channels_info[COLUMN_EPG_ALIASES][$alias];
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Search picon for the channel in the picons_info node of channels_info.
+     * A source may keep a picon for a channel without an EPG program.
+     *
+     * @param array $epg_ids
+     * @param array $config_preset
+     * @return string
+     */
+    public static function get_channel_picon($epg_ids, $config_preset)
+    {
+        if (!self::load_channels_info($config_preset)) {
+            return '';
+        }
+
+        $picons_info = safe_get_value(self::get_channels_info($config_preset), COLUMN_PICONS_INFO);
+        if (empty($picons_info)) {
+            return '';
+        }
+
+        // the id itself or the mapped one, the resolution is the same as for the EPG
+        $channel_id = self::resolve_channel_id($epg_ids, $config_preset);
+        if (!empty($channel_id) && !empty($picons_info[$channel_id])) {
+            return $picons_info[$channel_id];
+        }
+
+        // the source does not know the id, but the picon may still exist for the raw ids
+        foreach (array(COLUMN_EPG_ID, COLUMN_TVG_NAME, COLUMN_NAME) as $col) {
+            if (empty($epg_ids[$col])) continue;
+
+            if (!empty($picons_info[$epg_ids[$col]])) {
+                return $picons_info[$epg_ids[$col]];
+            }
+        }
+
+        return '';
+    }
+
+    /**
      * @param array $epg_ids
      * @param array $config_preset
      * @return string
@@ -432,26 +504,21 @@ class Epg_Manager_Json
         // this epg id is not known, try to find it in known ids and aliases (lower case)
         // channel info array contains alias as key and mapped epg id as value
         hd_debug_print("EPG ID '$epg_id' not found in known list", true);
-        $lower_ids = self::$all_channels_info[self::get_channels_info_url($config_preset)]->lower_ids;
-        foreach (array(COLUMN_EPG_ID, COLUMN_TVG_NAME, COLUMN_NAME) as $col) {
-            if (empty($epg_ids[$col])) continue;
-
-            $alias = to_lower($epg_ids[$col]);
-            hd_debug_print("Searching alias: '$alias'", true);
-            if (isset($lower_ids[$alias])) {
-                hd_debug_print("Mapped EPG ID: '$lower_ids[$alias]'", true);
-                return $lower_ids[$alias];
-            }
-
-            if (isset($channels_info[COLUMN_EPG_ALIASES]) && array_key_exists($alias, $channels_info[COLUMN_EPG_ALIASES])) {
-                $epg_id_subst = $channels_info[COLUMN_EPG_ALIASES][$alias];
-                hd_debug_print("Mapped EPG ID: '$epg_id_subst'", true);
-                return $epg_id_subst;
-            }
+        $mapped_id = self::resolve_channel_id($epg_ids, $config_preset);
+        if (empty($mapped_id)) {
+            hd_debug_print("No EPG id found in known aliases list", true);
+            return '';
         }
 
-        hd_debug_print("No EPG id found in known aliases list", true);
-        return '';
+        // the id is found in aliases but is absent from the epg_id list,
+        // so the source does not serve an EPG program for this channel
+        if (empty($channels_info[COLUMN_EPG_ID]) || !in_array_id($mapped_id, $channels_info[COLUMN_EPG_ID])) {
+            hd_debug_print("EPG ID '$mapped_id' has no EPG program in the source", true);
+            return '';
+        }
+
+        hd_debug_print("Mapped EPG ID: '$mapped_id'", true);
+        return $mapped_id;
     }
 
     ///////////////////////////////////////////////////////////////////////////////

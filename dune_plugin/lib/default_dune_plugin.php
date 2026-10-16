@@ -3023,7 +3023,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * Enabled picons sources (PLAYLIST_PICONS, XMLTV_PICONS) in priority order
+     * Enabled picons sources (PLAYLIST_PICONS, XMLTV_PICONS, EPG_SERVER_PICONS) in priority order
      *
      * @return array
      */
@@ -3031,7 +3031,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         $sources = array();
         foreach (explode(',', $this->get_setting(PARAM_PICONS_SOURCE, PLAYLIST_PICONS)) as $source) {
-            if (($source === PLAYLIST_PICONS || $source === XMLTV_PICONS) && !in_array($source, $sources)) {
+            if (($source === PLAYLIST_PICONS || $source === XMLTV_PICONS || $source === EPG_SERVER_PICONS) && !in_array($source, $sources)) {
                 $sources[] = $source;
             }
         }
@@ -3079,6 +3079,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         foreach ($this->picons_sources as $source) {
             if ($source === PLAYLIST_PICONS) {
                 $icon_url = isset($channel_row[COLUMN_ICON]) ? $channel_row[COLUMN_ICON] : '';
+            } else if ($source === EPG_SERVER_PICONS) {
+                $icon_url = $this->get_epg_server_picon($channel_row);
             } else {
                 $icon_url = $this->get_xmltv_picon($channel_row);
             }
@@ -3123,6 +3125,46 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $xmltv_icon_url = Epg_Manager_Xmltv::get_picon($key, $placeHolders);
             if (!empty($xmltv_icon_url)) {
                 return $xmltv_icon_url;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array $channel_row
+     * @return string|null
+     */
+    protected function get_epg_server_picon($channel_row)
+    {
+        if (empty($this->json_epg_manager)) {
+            return null;
+        }
+
+        $epg_ids = self::make_epg_ids($channel_row);
+        if (empty($epg_ids)) {
+            return null;
+        }
+
+        foreach ($this->get_selected_json_sources() as $id) {
+            $config_preset = $this->get_config_preset($id);
+            if (empty($config_preset)) {
+                continue;
+            }
+
+            if (!empty($config_preset[CONFIG_EPG_ID_MAP])) {
+                if ($config_preset[CONFIG_EPG_ID_MAP] === 'id') {
+                    $epg_ids[COLUMN_EPG_ID] = $channel_row[COLUMN_CHANNEL_ID];
+                } else if (isset($channel_row[$config_preset[CONFIG_EPG_ID_MAP]])) {
+                    $epg_ids[COLUMN_EPG_ID] = $channel_row[$config_preset[CONFIG_EPG_ID_MAP]];
+                }
+            }
+
+            // search the picon the same way as the EPG for the channel, but a picon
+            // may exist even when the source serves no EPG program for the channel
+            $icon_url = Epg_Manager_Json::get_channel_picon($epg_ids, $config_preset);
+            if (!empty($icon_url)) {
+                return $icon_url;
             }
         }
 

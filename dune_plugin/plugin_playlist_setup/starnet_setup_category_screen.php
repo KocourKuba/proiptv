@@ -169,7 +169,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
                 foreach ($picons_sources as $source) {
                     $cfg[$source] = 1;
                 }
-                foreach (array(PLAYLIST_PICONS, XMLTV_PICONS) as $source) {
+                foreach (array(PLAYLIST_PICONS, XMLTV_PICONS, EPG_SERVER_PICONS) as $source) {
                     if (!isset($cfg[$source])) {
                         $cfg[$source] = 0;
                     }
@@ -196,7 +196,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
 
                 $picons_sources = array();
                 foreach ($cfg as $source => $enabled) {
-                    if ($enabled && ($source === PLAYLIST_PICONS || $source === XMLTV_PICONS)) {
+                    if ($enabled && ($source === PLAYLIST_PICONS || $source === XMLTV_PICONS || $source === EPG_SERVER_PICONS)) {
                         $picons_sources[] = $source;
                     }
                 }
@@ -215,6 +215,27 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
                     $active_sources = $this->plugin->get_selected_xmltv_ids();
                     if (empty($active_sources)) {
                         $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_xmltv_sources'));
+                    }
+                }
+
+                if (in_array(EPG_SERVER_PICONS, $picons_sources)) {
+                    $active_sources = $this->plugin->get_selected_json_sources();
+                    if (empty($active_sources)) {
+                        $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_epg_json_sources'));
+                    } else {
+                        // only EPG sources from the proiptv EPG server provide channel icons
+                        $has_proiptv_source = false;
+                        foreach ($active_sources as $id) {
+                            $config_preset = $this->plugin->get_config_preset($id);
+                            if (!empty($config_preset) && Epg_Manager_Json::is_proiptv_epg_preset($config_preset)) {
+                                $has_proiptv_source = true;
+                                break;
+                            }
+                        }
+
+                        if (!$has_proiptv_source) {
+                            $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_proiptv_epg_sources'));
+                        }
                     }
                 }
                 break;
