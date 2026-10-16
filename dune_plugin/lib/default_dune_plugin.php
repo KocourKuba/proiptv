@@ -115,9 +115,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     private $default_channel_icon_newui = DEFAULT_CHANNEL_ICON_PATH;
 
     /**
-     * @var string
+     * enabled picons sources in priority order
+     * @var array
      */
-    private $picons_source = PLAYLIST_PICONS;
+    private $picons_sources = array(PLAYLIST_PICONS);
 
     /**
      * @var bool
@@ -1398,6 +1399,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         //////////////////////////////////////////////////////
         /// Upgrade settings 5.x to database
         $this->upgrade_settings($playlist_id);
+        $this->upgrade_picons_source();
 
         $this->init_screen_view_parameters();
         $this->init_user_agent();
@@ -1526,7 +1528,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->update_ui_settings();
         $this->delay_load_picons = is_delay_load_supported()
             && $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)
-            && $this->picons_source !== PLAYLIST_PICONS;
+            && $this->is_xmltv_picons_enabled();
 
 
         $this->cleanup_stalled_locks();
@@ -1541,11 +1543,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $perf = new Perf_Collector();
         $perf->reset('start');
 
-        if ($this->picons_source !== PLAYLIST_PICONS) {
+        if ($this->is_xmltv_picons_enabled()) {
             Epg_Manager_Xmltv::set_xmltv_sources($this->get_active_sources());
         }
 
-        if ($this->picons_source !== PLAYLIST_PICONS) {
+        if ($this->is_xmltv_picons_enabled()) {
             $all_sources = $this->get_active_sources();
             if ($all_sources->is_empty()) {
                 hd_debug_print('No active XMLTV sources found to collect playlist icons...');
@@ -3015,9 +3017,44 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function update_ui_settings()
     {
-        $this->picons_source = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+        $this->picons_sources = $this->get_picons_sources();
         $this->default_channel_icon_classic = '';
         $this->default_channel_icon_newui = '';
+    }
+
+    /**
+     * Enabled picons sources (PLAYLIST_PICONS, XMLTV_PICONS) in priority order
+     *
+     * @return array
+     */
+    public function get_picons_sources()
+    {
+        $sources = array();
+        foreach (explode(',', $this->get_setting(PARAM_PICONS_SOURCE, PLAYLIST_PICONS)) as $source) {
+            if (($source === PLAYLIST_PICONS || $source === XMLTV_PICONS) && !in_array($source, $sources)) {
+                $sources[] = $source;
+            }
+        }
+
+        return empty($sources) ? array(PLAYLIST_PICONS) : $sources;
+    }
+
+    /**
+     * @param array $sources enabled picons sources in priority order
+     * @return void
+     */
+    public function set_picons_sources($sources)
+    {
+        $this->set_setting(PARAM_PICONS_SOURCE, implode(',', $sources));
+        $this->update_ui_settings();
+    }
+
+    /**
+     * @return bool
+     */
+    public function is_xmltv_picons_enabled()
+    {
+        return in_array(XMLTV_PICONS, $this->picons_sources);
     }
 
     /**
@@ -3038,52 +3075,58 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function get_channel_picon($channel_row, $is_classic)
     {
-        // if selected xmltv or combined mode look into xmltv source
-        // in combined mode search is not performed if already got picon from playlist
-        do {
-            $pl_icon_url = isset($channel_row[COLUMN_ICON]) ? $channel_row[COLUMN_ICON] : '';
-            if ($this->picons_source === PLAYLIST_PICONS) {
-                // playlist icons first in priority
-                return empty($pl_icon_url) ? $this->get_default_channel_icon($is_classic) : $pl_icon_url;
+        // look into the sources in the order set by user, the first found picon wins
+        foreach ($this->picons_sources as $source) {
+            if ($source === PLAYLIST_PICONS) {
+                $icon_url = isset($channel_row[COLUMN_ICON]) ? $channel_row[COLUMN_ICON] : '';
+            } else {
+                $icon_url = $this->get_xmltv_picon($channel_row);
             }
 
-            if (empty($this->xmltv_epg_manager) || ($this->picons_source === COMBINED_PICONS && !empty($pl_icon_url))) {
-                return $pl_icon_url;
+            if (!empty($icon_url)) {
+                return $icon_url;
             }
+        }
 
-            if (!empty($channel_row[COLUMN_TITLE])) {
-                $picon_ids[] = to_lower($channel_row[COLUMN_TITLE]);
-            }
+        return $this->get_default_channel_icon($is_classic);
+    }
 
-            if (!empty($aliases[ATTR_TVG_NAME])) {
-                $picon_ids[] = to_lower($aliases[ATTR_TVG_NAME]);
-            }
+    /**
+     * @param array $channel_row
+     * @return string|null
+     */
+    protected function get_xmltv_picon($channel_row)
+    {
+        if (empty($this->xmltv_epg_manager)) {
+            return null;
+        }
 
-            if (!empty($channel_row[COLUMN_EPG_ID])) {
-                $picon_ids[] = $channel_row[COLUMN_EPG_ID];
-            }
+        $picon_ids = array();
+        if (!empty($channel_row[COLUMN_TITLE])) {
+            $picon_ids[] = to_lower($channel_row[COLUMN_TITLE]);
+        }
 
-            if (!empty($channel_row[COLUMN_CHANNEL_ID])) {
-                $picon_ids[] = $channel_row[COLUMN_CHANNEL_ID];
-            }
+        if (!empty($channel_row[COLUMN_EPG_ID])) {
+            $picon_ids[] = $channel_row[COLUMN_EPG_ID];
+        }
 
-            if (empty($picon_ids)) break;
+        if (!empty($channel_row[COLUMN_CHANNEL_ID])) {
+            $picon_ids[] = $channel_row[COLUMN_CHANNEL_ID];
+        }
 
-            $placeHolders = Sql_Wrapper::sql_make_list_from_values(array_unique($picon_ids));
-            foreach (Epg_Manager_Xmltv::get_sources() as $key => $params) {
-                $xmltv_icon_url = Epg_Manager_Xmltv::get_picon($key, $placeHolders);
-                if (!empty($xmltv_icon_url)) break;
-            }
-        } while (false);
+        if (empty($picon_ids)) {
+            return null;
+        }
 
-        if ($this->picons_source === COMBINED_PICONS2) {
+        $placeHolders = Sql_Wrapper::sql_make_list_from_values(array_unique($picon_ids));
+        foreach (Epg_Manager_Xmltv::get_sources() as $key => $params) {
+            $xmltv_icon_url = Epg_Manager_Xmltv::get_picon($key, $placeHolders);
             if (!empty($xmltv_icon_url)) {
                 return $xmltv_icon_url;
             }
-            $xmltv_icon_url = $pl_icon_url;
         }
 
-        return empty($xmltv_icon_url) ? $this->get_default_channel_icon($is_classic) : $xmltv_icon_url;
+        return null;
     }
 
     /**
@@ -4608,6 +4651,38 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 safe_unlink($token_path);
             }
         }
+    }
+
+    /**
+     * Convert obsolete 'use_picons' setting to 'picons_source' list
+     *
+     * @return void
+     */
+    protected function upgrade_picons_source()
+    {
+        $use_picons = $this->get_setting(PARAM_USE_PICONS, '');
+        if ($use_picons === '') {
+            return;
+        }
+
+        switch ($use_picons) {
+            case XMLTV_PICONS:
+                $sources = array(XMLTV_PICONS);
+                break;
+            case COMBINED_PICONS:
+                $sources = array(PLAYLIST_PICONS, XMLTV_PICONS);
+                break;
+            case COMBINED_PICONS2:
+                $sources = array(XMLTV_PICONS, PLAYLIST_PICONS);
+                break;
+            default:
+                $sources = array(PLAYLIST_PICONS);
+        }
+
+        $picons_source = implode(',', $sources);
+        hd_debug_print("Convert '" . PARAM_USE_PICONS . "' => '$use_picons' to '" . PARAM_PICONS_SOURCE . "' => '$picons_source'");
+        $this->set_setting(PARAM_PICONS_SOURCE, $picons_source);
+        $this->remove_setting(PARAM_USE_PICONS);
     }
 
     /**

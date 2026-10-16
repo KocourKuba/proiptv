@@ -420,7 +420,7 @@ class api_default
         $settings = array();
         $xmltv_picons = $this->getConfigValue(XMLTV_PICONS);
         if ($xmltv_picons) {
-            $settings[PARAM_USE_PICONS] = COMBINED_PICONS;
+            $settings[PARAM_PICONS_SOURCE] = PLAYLIST_PICONS . ',' . XMLTV_PICONS;
         }
 
         $epg_presets = $this->get_provider_epg_preset_names();

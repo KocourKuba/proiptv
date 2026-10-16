@@ -25,12 +25,15 @@
 
 require_once 'lib/abstract_controls_screen.php';
 require_once 'lib/user_input_handler.php';
+require_once 'lib/list_utils.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
 class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
 {
     const ID = 'category_setup';
+
+    const ACTION_APPLY_PICONS_SOURCE = 'apply_picons_source';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -49,20 +52,19 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
         // Plugin name
         $this->plugin->create_setup_header($defs);
 
-        $params = array();
         //////////////////////////////////////
         // picon settings
+        $picons_sources = $this->plugin->get_picons_sources();
+        $captions = array();
+        foreach ($picons_sources as $source) {
+            $captions[] = TR::load($source);
+        }
+        Control_Factory::add_button($defs, $this, PARAM_PICONS_SOURCE, TR::t('setup_channels_picons_source'),
+            implode(' + ', $captions));
 
-        $picons_ops[PLAYLIST_PICONS] = TR::t('playlist_picons');
-        $picons_ops[XMLTV_PICONS] = TR::t('xmltv_picons');
-        $picons_ops[COMBINED_PICONS] = TR::t('combined_picons');
-        $picons_ops[COMBINED_PICONS2] = TR::t('combined_picons2');
-        $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-        Control_Factory::add_combobox($defs, $this, PARAM_USE_PICONS, TR::t('setup_channels_picons_source'),
-            $picons_idx, $picons_ops, Control_Factory::SCR_CONTROLS_WIDTH, $params, true);
         //////////////////////////////////////
         // Delayed picons indexing
-        if ($picons_idx !== PLAYLIST_PICONS && is_delay_load_supported()) {
+        if (in_array(XMLTV_PICONS, $picons_sources) && is_delay_load_supported()) {
             $delay_load = $this->plugin->get_setting(PARAM_PICONS_DELAY_LOAD, SwitchOnOff::off);
             Control_Factory::add_image_button($defs, $this, PARAM_PICONS_DELAY_LOAD,
                 TR::t('setup_channels_delay_picons_load'), SwitchOnOff::translate($delay_load),
@@ -160,19 +162,74 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
                 $this->plugin->update_ui_settings();
                 break;
 
-            case PARAM_USE_PICONS:
-                $this->force_parent_reload = true;
-                $active_sources = $this->plugin->get_selected_xmltv_ids();
-                $val = $user_input->{$control_id};
-                if (empty($active_sources) && $val !== PLAYLIST_PICONS) {
-                    $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_xmltv_sources'));
+            case PARAM_PICONS_SOURCE:
+                // enabled sources first in the current order, disabled ones after them
+                $picons_sources = $this->plugin->get_picons_sources();
+                $cfg = array();
+                foreach ($picons_sources as $source) {
+                    $cfg[$source] = 1;
+                }
+                foreach (array(PLAYLIST_PICONS, XMLTV_PICONS) as $source) {
+                    if (!isset($cfg[$source])) {
+                        $cfg[$source] = 0;
+                    }
                 }
 
-                $this->plugin->set_setting($user_input->control_id, $val);
-                $this->plugin->update_ui_settings();
+                $all_items = array();
+                $all_ids = array();
+                foreach ($cfg as $source => $enabled) {
+                    Action_Factory::add_gui_item($all_items, $all_ids, $source, TR::t($source));
+                }
+
+                $config_id = $this->get_picons_config_id();
+                List_Utils::write_config_file($config_id, $cfg);
+
+                return Action_Factory::edit_list_config($config_id, TR::t('setup_channels_picons_source'),
+                    $all_items, $picons_sources,
+                    null, null, null, null,
+                    User_Input_Handler_Registry::create_action($this, self::ACTION_APPLY_PICONS_SOURCE));
+
+            case self::ACTION_APPLY_PICONS_SOURCE:
+                $config_id = $this->get_picons_config_id();
+                $cfg = List_Utils::read_config_file($config_id);
+                safe_unlink(List_Utils::config_file_path($config_id));
+
+                $picons_sources = array();
+                foreach ($cfg as $source => $enabled) {
+                    if ($enabled && ($source === PLAYLIST_PICONS || $source === XMLTV_PICONS)) {
+                        $picons_sources[] = $source;
+                    }
+                }
+
+                if (empty($picons_sources)) {
+                    // dialog cancelled or nothing selected, keep current settings
+                    break;
+                }
+
+                if ($picons_sources !== $this->plugin->get_picons_sources()) {
+                    $this->force_parent_reload = true;
+                    $this->plugin->set_picons_sources($picons_sources);
+                }
+
+                if (in_array(XMLTV_PICONS, $picons_sources)) {
+                    $active_sources = $this->plugin->get_selected_xmltv_ids();
+                    if (empty($active_sources)) {
+                        $post_action = Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_no_xmltv_sources'));
+                    }
+                }
                 break;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs(), $post_action);
+    }
+
+    /**
+     * List config id for picons sources dialog of the active playlist
+     *
+     * @return string
+     */
+    protected function get_picons_config_id()
+    {
+        return 'proiptv_picons_' . $this->plugin->get_active_playlist_id();
     }
 }
