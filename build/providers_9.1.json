@@ -1732,7 +1732,8 @@
         },
         "epg_presets": [
           {
-            "name": "tvteam"
+            "name": "proiptv",
+            "alias": "skaztv"
           }
         ],
         "playlists": {
@@ -1864,7 +1865,15 @@
         "epg_presets": [
           {
             "name": "proiptv",
+            "alias": "tvboom"
+          },
+          {
+            "name": "proiptv",
             "alias": "gabbarit"
+          },
+          {
+            "name": "proiptv",
+            "alias": "edem"
           }
         ],
         "playlists": {
