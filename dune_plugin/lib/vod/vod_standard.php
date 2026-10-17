@@ -585,22 +585,23 @@ class vod_standard extends Abstract_Vod
             }
 
             if (!empty($filter['values'])) {
-                $idx = -1;
+                // the combobox initial value is the key of the selected value
+                $item_key = -1;
                 if (isset($user_value)) {
-                    // the compiled filter stores the raw key of the selected value
-                    $idx = array_search($user_value, array_keys($filter['values']));
-                    if ($idx === false) {
+                    if (isset($filter['values'][$user_value])) {
+                        // the compiled filter stores the raw key of the selected value
+                        $item_key = $user_value;
+                    } else {
                         // legacy: the filter was saved with the translated display value
                         $item_key = array_search($user_value, $filter['values']);
-                        $idx = ($item_key === false) ? -1 : array_search($item_key, array_keys($filter['values']));
-                    }
-                    if ($idx === false) {
-                        $idx = -1;
+                        if ($item_key === false) {
+                            $item_key = -1;
+                        }
                     }
                 }
 
                 Control_Factory::add_combobox($defs, $parent, $name, $filter['title'],
-                    $idx, $filter['values'], Control_Factory::DLG_CONTROLS_WIDTH, $params);
+                    $item_key, $filter['values'], Control_Factory::DLG_CONTROLS_WIDTH, $params);
                 Control_Factory::add_vgap($defs, 20);
                 $added = true;
             }
@@ -654,20 +655,19 @@ class vod_standard extends Abstract_Vod
             $filter = $this->get_filter_type($name);
             if ($filter === null) continue;
 
+            if (!isset($user_input->{$name})) continue;
+
+            $value = (string)$user_input->{$name};
             $add_text = '';
-            if (isset($filter['text']) && !empty($user_input->{$name})) {
-                $add_text = $user_input->{$name};
-            } else if ((int)$user_input->{$name} !== -1) {
-                // the compiled string stores the raw key of the selected value,
-                // not the translated display value
-                $keys = array_keys($filter['values']);
-                $item_key = $keys[$user_input->{$name}];
-                if ($item_key !== -1) {
-                    $add_text = $item_key;
-                }
+            if (isset($filter['text'])) {
+                $add_text = $value;
+            } else if (!empty($filter['values']) && $value !== '-1' && isset($filter['values'][$value])) {
+                // the combobox returns the key of the selected value, the compiled string
+                // stores this raw key, not the translated display value
+                $add_text = $value;
             }
 
-            if (empty($add_text)) {
+            if ($add_text === '') {
                 continue;
             }
 

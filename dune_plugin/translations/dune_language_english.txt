@@ -39,6 +39,7 @@ days = day's
 days__1 = %s day's
 delete = Delete
 delete_all = Delete All
+delete_clear = Delete (CLEAR)
 delete_from_favorite = From Favorites
 deleted_from_favorite = Removed from Favorites
 detect = Detect

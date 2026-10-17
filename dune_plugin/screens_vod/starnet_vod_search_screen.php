@@ -62,7 +62,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen
             ACTION_SHOW_SEARCH_DLG, null, array(ACTION_SEARCH => ACTION_OPEN_FOLDER));
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
         $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
-        $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
+        $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_CLEAR, TR::t('delete'));
 
         $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
         $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
@@ -123,11 +123,20 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen
                 if (isset($user_input->selected_media_url)
                     && MediaURL::decode($user_input->selected_media_url)->genre_id !== Vod_Category::FLAG_SEARCH) {
 
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE, TR::t('delete'), 'brush.png');
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ITEM_DELETE, TR::t('delete_clear'), 'brush.png');
                     return Action_Factory::show_popup_menu($menu_items);
                 }
 
                 break;
+
+            case GUI_EVENT_KEY_CLEAR:
+                if (!isset($user_input->selected_media_url)) break;
+
+                $media_url = MediaURL::decode($user_input->selected_media_url);
+                if ($media_url->genre_id === Vod_Category::FLAG_SEARCH) break;
+
+                $this->plugin->remove_settings_value(VOD_SEARCH_LIST, $media_url->genre_id);
+                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
 
             case ACTION_ITEMS_EDIT:
                 $selected_media_url = MediaURL::decode($user_input->selected_media_url);

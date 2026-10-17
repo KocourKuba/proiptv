@@ -39,6 +39,7 @@ days = дней
 days__1 = %s дней
 delete = Удалить
 delete_all = Удалить все
+delete_clear = Удалить (CLEAR)
 delete_from_favorite = Из Избранного
 deleted_from_favorite = Удалено из Избранного
 detect = Определить

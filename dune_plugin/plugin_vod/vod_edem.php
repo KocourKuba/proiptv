@@ -237,21 +237,12 @@ class vod_edem extends vod_standard
     {
         hd_debug_print(null, true);
 
-        $pairs = explode(',', $query_id);
         $post_params = array();
-        foreach ($pairs as $pair) {
-            /** @var array $m */
-            if (!preg_match("/^([^:]+):(.+)$/", $pair, $m)) continue;
-            $filter = $this->get_filter_type($m[1]);
-            if ($filter !== null && !empty($filter['values'])) {
-                $item_idx = array_search($m[2], $filter['values']);
-                if ($item_idx !== false && $item_idx !== -1) {
-                    if ($m[1] === 'years') {
-                        $post_params[$m[1]] = (string)$item_idx;
-                    } else {
-                        $post_params[$m[1]] = (int)$item_idx;
-                    }
-                }
+        foreach ($this->get_filter_params($query_id) as $name => $item_key) {
+            if ($name === 'years') {
+                $post_params[$name] = (string)$item_key;
+            } else {
+                $post_params[$name] = (int)$item_key;
             }
         }
 

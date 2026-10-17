@@ -39,6 +39,7 @@ days = Tag(e)
 days__1 = %s Tag(e)
 delete = Entfernen
 delete_all = Alle löschen
+delete_clear = Entfernen (CLEAR)
 delete_from_favorite = From Favorites
 deleted_from_favorite = Aus Favoriten
 detect = Entdecken

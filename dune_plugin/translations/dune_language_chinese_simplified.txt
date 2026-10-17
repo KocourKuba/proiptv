@@ -39,6 +39,7 @@ days = 天
 days__1 = %s 天
 delete = 删除
 delete_all = 全部删除
+delete_clear = 删除 (CLEAR)
 delete_from_favorite = 取消收藏
 deleted_from_favorite = 已取消收藏
 detect = 检测
