@@ -109,6 +109,12 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
             case GUI_EVENT_KEY_POPUP_MENU:
                 return $this->create_popup_menu($group_id);
 
+            case ACTION_ITEMS_CLEAR:
+                if ($group_id !== VOD_HISTORY_GROUP_ID || $this->plugin->get_all_vod_history_count() === 0) break;
+
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
+
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 if ($group_id === VOD_HISTORY_GROUP_ID) {
                     $this->plugin->clear_all_vod_history();
