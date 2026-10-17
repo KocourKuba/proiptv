@@ -1811,7 +1811,7 @@
       "class": "ttv",
       "vod": "ttv",
       "name": "Torrent TV",
-      "type": "pin",
+      "type": "login",
       "logo": "https://iptv.proiptv.info/res/logo_ttv.png",
       "provider_url": "https://ttvrun.one/",
       "api_url": "https://api.ttv.run/v3",
@@ -1841,7 +1841,7 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "https://tapitv.com/k/{OTTKEY}/1611268/tv.m3u"
+            "url": "https://tapitv.com/k/{TOKEN}/1611268/tv.m3u"
           }
         },
         "playlists_vod": {

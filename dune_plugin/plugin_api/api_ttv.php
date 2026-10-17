@@ -31,11 +31,13 @@ require_once 'api_default.php';
  *
  * The api_commands section defines the templates for all API requests: request_token and
  * account_info are used by api_ttv, film_* are used by vod_ttv. {GUID} is replaced by replace_macros().
+ * The account is set up by the login/password pair only: the session id is used by the VOD and the account
+ * info, the playlist token (the {TOKEN} macro of the playlist url) is taken from the account info.
  * The playlists_vod url is a placeholder: the VOD class loads the catalog through the API commands.
  */
 class api_ttv extends api_default
 {
-    const CONTROL_OTT_KEY = 'ottkey';
+    const SESSION_LIFETIME = 604800; // 7 days
 
     /**
      * @var string
@@ -71,137 +73,36 @@ class api_ttv extends api_default
             return;
         }
 
-        if (!$this->request_provider_token(true)) {
+        $this->account_info = null;
+        if (!$this->request_provider_token()) {
             hd_debug_print('Failed to get provider token');
             return;
         }
 
-        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO);
-        if ($response === false) {
-            hd_debug_print('Failed to request provider info');
-            return;
+        // the token request fills the account info only when it requests a new session
+        if (empty($this->account_info)) {
+            $this->request_user_info();
         }
-
-        if ((int)safe_get_value($response, 'success') !== 1) {
-            hd_debug_print('request_provider_info error response: ' . json_format_unescaped($response), true);
-            return;
-        }
-
-        hd_debug_print('request_provider_info: ' . json_format_unescaped($response), true);
-        $this->account_info = $response;
     }
 
     /**
-     * The OTT key is used to obtain the IPTV playlist only. The login and
-     * password are used for the VOD section.
+     * The session of the old credentials must not be used to get the playlist token
      *
-     * @inheritDoc
-     */
-    public function GetSetupUI($name, $playlist_id, $handler)
-    {
-        hd_debug_print(null, true);
-        $defs = array();
-
-        Control_Factory::add_text_field($defs, $handler, CONTROL_EDIT_NAME,
-            TR::t('name'), $name, false,
-            false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
-
-        Control_Factory::add_text_field($defs, $handler, self::CONTROL_OTT_KEY,
-            TR::t('ottkey'), $this->GetProviderParameter(MACRO_OTTKEY), false,
-            false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
-
-        Control_Factory::add_label($defs, null, TR::t('setup_vod_credentials'));
-
-        Control_Factory::add_text_field($defs, $handler, self::CONTROL_LOGIN,
-            TR::t('login'), $this->GetProviderParameter(MACRO_LOGIN), false,
-            false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
-
-        Control_Factory::add_text_field($defs, $handler, self::CONTROL_PASSWORD,
-            TR::t('password'), $this->GetProviderParameter(MACRO_PASSWORD), false,
-            false, false, true, Control_Factory::DLG_CONTROLS_WIDTH);
-
-        $this->add_setup_ui_buttons($defs, $handler, $playlist_id);
-
-        return $defs;
-    }
-
-    /**
      * @inheritDoc
      */
     public function ApplySetupUI($user_input)
     {
         hd_debug_print(null, true);
 
-        $is_new = empty($user_input->{CONTROL_EDIT_ITEM});
-        if ($is_new) {
-            hd_debug_print('Create new provider info', true);
-            $params[PARAM_TYPE] = PARAM_PROVIDER;
-            $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
-        } else {
-            hd_debug_print("load info for existing playlist id: $this->playlist_id", true);
-            $params = $this->plugin->get_playlist_parameters($this->playlist_id);
-            hd_debug_print('provider info: ' . json_format_unescaped($params), true);
-        }
-
-        if (safe_get_value($params, PARAM_NAME) !== $user_input->{CONTROL_EDIT_NAME}) {
-            $params[PARAM_NAME] = $user_input->{CONTROL_EDIT_NAME};
-        }
-
-        if (empty($user_input->{self::CONTROL_OTT_KEY})) {
-            return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
-        }
-
-        $params[MACRO_OTTKEY] = $user_input->{self::CONTROL_OTT_KEY};
-        $params[MACRO_LOGIN] = safe_get_value($user_input, self::CONTROL_LOGIN, '');
-        $params[MACRO_PASSWORD] = safe_get_value($user_input, self::CONTROL_PASSWORD, '');
-
-        $error_action = $this->save_setup_params($params, $is_new);
-        if ($error_action !== null) {
-            return $error_action;
-        }
-
-        if ($is_new) {
-            $this->apply_config_defaults();
-        }
-
-        // The login/password pair is optional: without it the VOD section is disabled
-        $has_vod_credentials = !empty($params[MACRO_LOGIN]) && !empty($params[MACRO_PASSWORD]);
-        if (!$has_vod_credentials) {
-            $this->plugin->put_settings($this->playlist_id, array(PARAM_USE_VOD => SwitchOnOff::off));
-        }
-
-        $this->plugin->clear_playlist_cache($this->playlist_id);
-
-        // the session id is requested for VOD and the account info only
         $this->plugin->remove_cookie(PARAM_SESSION_ID);
-        if ($has_vod_credentials && !$this->request_provider_token(true)) {
-            hd_debug_print("Can't get provider token");
-            return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
-        }
 
-        return $this->playlist_id;
+        return parent::ApplySetupUI($user_input);
     }
 
     /**
-     * @inheritDoc
-     */
-    public function get_hash($info)
-    {
-        $str = safe_get_value($info, MACRO_OTTKEY, '');
-        $str .= safe_get_value($info, MACRO_LOGIN, '');
-        $str .= safe_get_value($info, MACRO_PASSWORD, '');
-        if (empty($str)) {
-            return '';
-        }
-
-        $type = safe_get_value($info, PARAM_TYPE, PARAM_PROVIDER);
-        $name = safe_get_value($info, PARAM_NAME);
-        return $this->getId() . "_" . Hashed_Array::hash($type . $name . $str);
-    }
-
-    /**
-     * The session id is required only for VOD and the account info. The IPTV
-     * playlist is downloaded by the OTT key, so the non-forced request is ignored.
+     * Both the session id and the playlist token are obtained by the login/password pair:
+     * the session id by the auth request, the playlist token from the account info.
+     * The force flag is ignored: a missing or expired session is always requested again.
      *
      * @inheritDoc
      */
@@ -210,41 +111,50 @@ class api_ttv extends api_default
         hd_debug_print(null, true);
         hd_debug_print('force request provider token: ' . var_export($force, true));
 
-        if (!$force) {
-            hd_debug_print('session is not required for IPTV', true);
-            return true;
-        }
-
         $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID, true);
-        if (!empty($session_id)) {
+        $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
+        if (!empty($session_id) && !empty($token)) {
             hd_debug_print('session is still valid', true);
             return true;
         }
 
         Dune_Last_Error::clear_last_error(LAST_ERROR_REQUEST);
 
-        $response = $this->execApiCommandResponse(API_COMMAND_REQUEST_TOKEN, array(), Curl_Wrapper::RET_ARRAY);
-        if ($response === false) {
+        if (empty($session_id)) {
+            $response = $this->execApiCommandResponse(API_COMMAND_REQUEST_TOKEN, array(), Curl_Wrapper::RET_ARRAY);
+            if ($response === false) {
+                Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token'));
+                return false;
+            }
+
+            $error = safe_get_value($response, 'error');
+            if ((int)safe_get_value($response, 'success') !== 1 || !empty($error)) {
+                hd_debug_print('request provider token bad response: ' . json_format_unescaped($response), true);
+                Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, $error);
+                return false;
+            }
+
+            $session_id = safe_get_value($response, 'session');
+            if (empty($session_id)) {
+                hd_debug_print('Empty session in response: ' . json_format_unescaped($response), true);
+                Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token'));
+                return false;
+            }
+
+            $this->plugin->set_cookie(PARAM_SESSION_ID, $session_id, time() + self::SESSION_LIFETIME);
+        }
+
+        if (!$this->request_user_info()) {
             Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token'));
             return false;
         }
 
-        $error = safe_get_value($response, 'error');
-        if ((int)safe_get_value($response, 'success') !== 1 || !empty($error)) {
-            hd_debug_print('request provider token bad response: ' . json_format_unescaped($response), true);
-            Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, $error);
-            return false;
-        }
-
-        $session = safe_get_value($response, 'session');
-        if (empty($session)) {
-            hd_debug_print('Empty session in response: ' . json_format_unescaped($response), true);
+        $token = safe_get_value($this->account_info, 'playlist_token');
+        if (empty($token)) {
+            hd_debug_print('Empty playlist token in account info', true);
             Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token'));
             return false;
         }
-
-        $this->plugin->set_cookie(PARAM_SESSION_ID, $session, time() + 86400 * 7);
-        $this->account_info = null;
 
         return true;
     }
@@ -281,6 +191,35 @@ class api_ttv extends api_default
     }
 
     ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * Request the account info by the current session and store the playlist token from it
+     *
+     * @return bool
+     */
+    protected function request_user_info()
+    {
+        $response = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO);
+        if ($response === false) {
+            hd_debug_print('Failed to request provider info');
+            return false;
+        }
+
+        if ((int)safe_get_value($response, 'success') !== 1) {
+            hd_debug_print('request_provider_info error response: ' . json_format_unescaped($response), true);
+            return false;
+        }
+
+        hd_debug_print('request_provider_info: ' . json_format_unescaped($response), true);
+        $this->account_info = $response;
+
+        $token = safe_get_value($response, 'playlist_token');
+        if (!empty($token)) {
+            $this->plugin->set_cookie(PARAM_TOKEN, $token, time() + self::SESSION_LIFETIME);
+        }
+
+        return true;
+    }
 
     /**
      * Stable GUID of the device for the TorrentTV auth.
