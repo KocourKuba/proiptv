@@ -203,7 +203,7 @@
       "provider_url": "http://1ott.net/",
       "api_url": "http://list.1ott.net",
       "api_commands": {
-        "get_playlist": "{API}/api/{SESSION_ID}/high/{STREAM_ID}",
+        "get_playlist": "{API}/api/{SESSION_ID}/high/chanlistx.m3u8",
         "request_token": "{API}/PinApi/{LOGIN}/{PASSWORD}"
       },
       "config": {
@@ -214,11 +214,6 @@
             "name": "shuratv"
           }
         ],
-        "ext_params": true,
-        "streams": {
-          "unix.m3u8": "HLS",
-          "ottplay.m3u": "MPEG-TS"
-        },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
