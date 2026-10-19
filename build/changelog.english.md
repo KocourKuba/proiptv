@@ -1,10 +1,21 @@
-### Version 9.1.1880
+### Version 9.1.1910
 - Added TorrentTV provider support (https://ttvrun.one/)
 - The provider configuration is now checked at plugin start: a provider whose API implementation file is missing is not shown in the list, and the VOD support is disabled when the VOD implementation file is missing
 - The stream info of the EPG info window now shows the video codec (only the ffmpeg measurement knows it, the player does not report it)
 - On the ATV boxes the technical info in the TV EPG window is toggled by the RED button instead of SELECT
 - RU TV: the playlist server is now selected as a domain
-- The edit categories screen can now protect a category (adult) and remove the protection. Removing the protection requires the parental control code and the adult password of the plugin, when they are set. Reloading the playlist keeps the protection.
+- KLI Media: the playlist server is now selected as a domain (klimedia.su - Russia, klitv.pro - Europe)
+- Kineskop Club is disabled: the provider is no longer shown in the list
+- The edit categories screen can now protect a category (adult) and remove the protection. Removing the protection requires the adult password of the plugin, when it is set. Reloading the playlist keeps the protection.
+- The edit channels screen can now protect a channel (adult) and remove the protection. Removing the protection requires the adult password of the plugin, when it is set.
+- A channel can be played right from the edit channels screen: press PLAY or use the popup menu item 'Play channel (PLAY)'.
+- The popup menu of the edit channels screen now has the 'Show channel url' item, which shows the live channel url in a dialog.
+- The channel list of the TV player now shows the channel name you set yourself. A renamed channel was still shown there under its original playlist name.
+- The channel icons source is now set by a button in the categories settings. The dialog lets you enable the Playlist, XMLTV and EPG server sources and set their order: the icon is taken from the first source in the list that has it. The previous source setting is converted automatically.
+- The EPG server source takes the channel icon from the icon map of the ProIPTV EPG server, searched by the same channel id as the EPG.
+- The plugin no longer asks the ProIPTV EPG server for the program of a channel the server knows only by an alias when the server has no program for it.
+- When the EPG server icons source is enabled, the plugin warns when no EPG source is selected, or when none of the selected EPG sources belongs to the ProIPTV EPG server.
+- The CLEAR button on the History group of the media library clears the whole VOD history (after confirmation).
 
 ### Version 9.0.1878
 - Added Sharavoz.Pro support
