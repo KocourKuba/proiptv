@@ -71,6 +71,16 @@
         "epg_start": "time"
       }
     },
+    "proiptv": {
+      "json_source": "http://epg.proiptv.info/{PROVIDER}/epg/{EPG_ID}.json",
+      "parser": {
+        "epg_root": "epg_data",
+        "epg_name": "name",
+        "epg_desc": "descr",
+        "epg_start": "time",
+        "epg_icon": "icon"
+      }
+    },
     "shuratv": {
       "json_source": "http://epg.propg.net/{EPG_ID}/epg2/{YEAR}-{MONTH}-{DAY}",
       "parser": {
@@ -147,7 +157,7 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm-play"
+            "name": "proiptv"
           }
         ],
         "playlists": {
@@ -956,13 +966,13 @@
       "name": "KLI Media",
       "type": "pin",
       "logo": "https://iptv.proiptv.info/res/logo_klimedia.png",
-      "provider_url": "https://klimedia.space/",
+      "provider_url": "https://klimedia.su/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "https://klimedia.space/playlist/{STREAM_ID}/{PASSWORD}.m3u"
+            "url": "https://klimedia.su/playlist/{STREAM_ID}/{PASSWORD}.m3u"
           }
         },
         "streams": {

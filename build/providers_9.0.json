@@ -1006,7 +1006,7 @@
       "name": "KLI Media",
       "type": "pin",
       "logo": "https://iptv.proiptv.info/res/logo_klimedia.png",
-      "provider_url": "https://klimedia.space/",
+      "provider_url": "https://klimedia.su/",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "epg_presets": [
@@ -1018,8 +1018,12 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "https://klimedia.space/playlist/{STREAM_ID}/{PASSWORD}.m3u"
+            "url": "https://{DOMAIN_ID}/playlist/{STREAM_ID}/{PASSWORD}.m3u"
           }
+        },
+        "domains": {
+          "klimedia.su": "Russia",
+          "klitv.pro": "Europe"
         },
         "streams": {
           "hls": "HLS",
