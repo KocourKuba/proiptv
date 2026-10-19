@@ -32,7 +32,7 @@ require_once "lib/curl_wrapper.php";
       "id": "viplime",
       "name": "VipLime",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_viplime.png",
+      "logo": "http://iptv.proiptv.info/res/logo_viplime.png",
       "api_commands": {
         "playlist": "http://cdntv.online/{QUALITY_ID}/{PASSWORD}/playlist.m3u8"
       },

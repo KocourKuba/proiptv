@@ -40,7 +40,7 @@ Also, have presets for most popular IPTV providers.
 30. [IPStream/iShara](https://www.ipstream.one/)
 31. [OnlineOTT TV](https://www.onlineott-tv.site/)
 32. [TVIZI net](https://tvizi.net/)
-33. [KLI Media](https://klimedia.space/)
+33. [KLI Media](https://klimedia.su/)
 34. [Satq TV](https://satq.tv/)
 35. [RU TV](https://rutv.vip/)
 36. [CRD TV](https://crdtv.net/)

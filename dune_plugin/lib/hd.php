@@ -224,7 +224,7 @@ class HD
 
             $handle = fopen($zip_file, 'rb');
             if (is_resource($handle)) {
-                self::http_put_document(base64_decode("aHR0cDovL2lwdHYuZXNhbGVjcm0ubmV0L3VwbG9hZC8", true) . $zip_file_name,
+                self::http_put_document(base64_decode("aHR0cHM6Ly9pcHR2LnByb2lwdHYuaW5mby91cGxvYWQv", true) . $zip_file_name,
                     $handle, filesize($zip_file));
                 hd_debug_print("Log file sent");
                 $ret = true;

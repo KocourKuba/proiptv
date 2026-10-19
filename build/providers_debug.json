@@ -34,7 +34,7 @@
       }
     },
     "proiptv": {
-      "json_source": "http://epg.esalecrm.net/{PROVIDER}/epg/{EPG_ID}.json",
+      "json_source": "http://epg.proiptv.info/{PROVIDER}/epg/{EPG_ID}.json",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
@@ -152,7 +152,7 @@
       "id": "101film",
       "name": "101film",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_101film.png",
+      "logo": "https://iptv.proiptv.info/res/logo_101film.png",
       "provider_url": "http://101film.org/",
       "api_url": "http://pl.101film.org",
       "api_commands": {
@@ -175,7 +175,7 @@
       "id": "1cent",
       "name": "1cent",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_1cent.png",
+      "logo": "https://iptv.proiptv.info/res/logo_1cent.png",
       "provider_url": "https://1cent.tv/",
       "api_commands": {
         "get_playlist": "http://only4.tv/pl/{PASSWORD}/102/only4tv.m3u8"
@@ -199,11 +199,11 @@
       "id": "1ott",
       "name": "1ott",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_1ott.png",
+      "logo": "https://iptv.proiptv.info/res/logo_1ott.png",
       "provider_url": "http://1ott.net/",
       "api_url": "http://list.1ott.net",
       "api_commands": {
-        "get_playlist": "{API}/api/{SESSION_ID}/high/{STREAM_ID}",
+        "get_playlist": "{API}/api/{SESSION_ID}/high/chanlistx.m3u8",
         "request_token": "{API}/PinApi/{LOGIN}/{PASSWORD}"
       },
       "config": {
@@ -214,11 +214,6 @@
             "name": "shuratv"
           }
         ],
-        "ext_params": true,
-        "streams": {
-          "unix.m3u8": "HLS",
-          "ottplay.m3u": "MPEG-TS"
-        },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -227,7 +222,7 @@
       "id": "1usd",
       "name": "1usd",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_1usd.png",
+      "logo": "https://iptv.proiptv.info/res/logo_1usd.png",
       "provider_url": "http://1usd.tv/",
       "api_commands": {
         "get_playlist": "http://1usd.tv/pl-{PASSWORD}-hls"
@@ -263,7 +258,7 @@
       "id": "2tv",
       "name": "2tv",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_2tv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_2tv.png",
       "provider_url": "http://2tv.biz/",
       "api_url": "https://pptt.fun",
       "api_commands": {
@@ -296,7 +291,7 @@
       "id": "antifriz",
       "name": "Antifriz",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_antifriz.png",
+      "logo": "https://iptv.proiptv.info/res/logo_antifriz.png",
       "provider_url": "https://antifriz.tv/",
       "api_url": "http://protected-api.com",
       "api_commands": {
@@ -320,7 +315,7 @@
       "id": "allwaytv",
       "name": "Allway TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_allwaytv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_allwaytv.png",
       "provider_url": "https://allway.tv/",
       "api_commands": {
         "get_playlist": "http://allway.tv/iptv/users/{PASSWORD}/playlist.m3u"
@@ -347,7 +342,7 @@
       "id": "bcumedia",
       "name": "BCU Media",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_bcumedia.png",
+      "logo": "https://iptv.proiptv.info/res/logo_bcumedia.png",
       "provider_url": "https://bcumedia.pro/",
       "api_commands": {
         "get_playlist": "https://bcumedia.pro/playlist/hls/{PASSWORD}.m3u"
@@ -367,7 +362,7 @@
       "id": "bittv",
       "name": "BitTV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_bittv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_bittv.png",
       "provider_url": "https://bittv.ltd/",
       "api_commands": {
         "get_playlist": "https://bittv.ltd/playlists/{LOGIN}:{PASSWORD}/playlist.m3u"
@@ -388,7 +383,7 @@
       "id": "cbilling",
       "name": "Cbilling",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_cbilling.png",
+      "logo": "https://iptv.proiptv.info/res/logo_cbilling.png",
       "provider_url": "https://cbilling.eu/",
       "api_url": "http://protected-api.com",
       "api_commands": {
@@ -421,7 +416,7 @@
       "id": "crdtv",
       "name": "CRD TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_crdtv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_crdtv.png",
       "provider_url": "https://crdtv.net/",
       "api_commands": {
         "get_playlist": "http://crdtv.net/m/{PASSWORD}/crdtv.m3u"
@@ -432,7 +427,7 @@
       "id": "edem",
       "name": "iEdem/iLook",
       "type": "edem",
-      "logo": "http://iptv.esalecrm.net/res/logo_edem.png",
+      "logo": "https://iptv.proiptv.info/res/logo_edem.png",
       "provider_url": "https://ilook.tv/",
       "api_url": "",
       "api_commands": {
@@ -484,7 +479,7 @@
       "id": "filmax",
       "name": "Filmax-tv",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_filmax.png",
+      "logo": "https://iptv.proiptv.info/res/logo_filmax.png",
       "provider_url": "https://filmax-tv.ru/",
       "api_commands": {
         "get_playlist": "http://{DOMAIN_ID}/playlist/p{SERVER_ID}/hls/{PASSWORD}.m3u"
@@ -518,7 +513,7 @@
       "id": "fox",
       "name": "Fox TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_fox.png",
+      "logo": "https://iptv.proiptv.info/res/logo_fox.png",
       "provider_url": "http://info.fox-tv.fun/",
       "api_url": "http://pl.fox-tv.fun",
       "api_commands": {
@@ -541,7 +536,7 @@
       "id": "glanz",
       "name": "Glanz",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_glanz.png",
+      "logo": "https://iptv.proiptv.info/res/logo_glanz.png",
       "provider_url": "http://ottg.tv/",
       "api_commands": {
         "get_playlist": "{PLAYLIST}",
@@ -581,7 +576,7 @@
       "id": "ipstream",
       "name": "IPStream/iShara",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_ipstream.png",
+      "logo": "https://iptv.proiptv.info/res/logo_ipstream.png",
       "provider_url": "https://www.ipstream.one/",
       "api_commands": {
         "get_playlist": "http://file.ipstr.im/iptv/m3u_plus-{PASSWORD}{STREAM_ID}",
@@ -613,7 +608,7 @@
       "id": "iptv.best",
       "name": "IPTV Best",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptvbest.png",
+      "logo": "https://iptv.proiptv.info/res/logo_iptvbest.png",
       "provider_url": "https://ip-tv.best/",
       "api_commands": {
         "get_playlist": "https://smotrim.uno/pl/{PASSWORD}/playlist.m3u8"
@@ -653,7 +648,7 @@
       "id": "iptvcinema",
       "name": "IPTV Cinema",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptvcinema.png",
+      "logo": "https://iptv.proiptv.info/res/logo_iptvcinema.png",
       "provider_url": "https://iptvcinema.ru/",
       "api_commands": {
         "get_playlist": "https://iptvcinema.ru/{LOGIN}/{PASSWORD}/playlist.{STREAM_ID}"
@@ -672,7 +667,7 @@
       "id": "iptvplay",
       "name": "IPTV Play",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptvplay.png",
+      "logo": "https://iptv.proiptv.info/res/logo_iptvplay.png",
       "provider_url": "https://iptv-play.ru/",
       "api_commands": {
         "get_playlist": "https://iptv-play.ru/billing/?m3u8&token={PASSWORD}"
@@ -692,7 +687,7 @@
       "id": "iptvonline",
       "name": "IPTV Online",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptvonline.png",
+      "logo": "https://iptv.proiptv.info/res/logo_iptvonline.png",
       "provider_url": "https://iptv.online/",
       "api_url": "https://see-tv.eu/api/v4",
       "api_commands": {
@@ -726,7 +721,7 @@
       "id": "itvlive",
       "name": "ITV Live",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_itv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_itv.png",
       "provider_url": "https://itv.live/",
       "api_url": "http://api.itv.live",
       "api_commands": {
@@ -758,7 +753,7 @@
       "id": "kineskop",
       "name": "Kineskop Club",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_kineskop.png",
+      "logo": "https://iptv.proiptv.info/res/logo_kineskop.png",
       "provider_url": "http://kineskop.club/",
       "api_commands": {
         "get_playlist": "http://knkp.in/{LOGIN}/{PASSWORD}/{SERVER_ID}/1"
@@ -785,7 +780,7 @@
       "id": "korona",
       "name": "Korona TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_korona.png",
+      "logo": "https://iptv.proiptv.info/res/logo_korona.png",
       "provider_url": "https://korona-tv.top/",
       "api_url": "http://dev.korona-tv.top/api",
       "api_commands": {
@@ -820,13 +815,19 @@
       "id": "klimedia",
       "name": "KLI Media",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_klimedia.png",
-      "provider_url": "https://klimedia.space/",
+      "logo": "https://iptv.proiptv.info/res/logo_klimedia.png",
+      "provider_url": "https://klimedia.su/",
       "api_commands": {
-        "get_playlist": "https://klimedia.space/playlist/{STREAM_ID}/{PASSWORD}.m3u"
+        "get_playlist": "https://klimedia.su/playlist/{STREAM_ID}/{PASSWORD}.m3u"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
+        "epg_presets": [
+          {
+            "name": "proiptv",
+            "alias": "klimedia"
+          }
+        ],
         "ext_params": true,
         "streams": {
           "hls": "HLS",
@@ -840,7 +841,7 @@
       "id": "lightiptv",
       "name": "Light IPTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_lightiptv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_lightiptv.png",
       "provider_url": "https://ottbill.cc/",
       "api_commands": {
         "get_playlist": "http://lightiptv.cc/playlist/hls/{PASSWORD}.m3u"
@@ -870,7 +871,7 @@
       "id": "mymagic",
       "name": "MyMAGic TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_mymagic.png",
+      "logo": "https://iptv.proiptv.info/res/logo_mymagic.png",
       "provider_url": "http://mymagic.tv/",
       "api_commands": {
         "get_playlist": "http://pl.mymagic.tv/srv/{SERVER_ID}/{QUALITY_ID}/{LOGIN}/{PASSWORD}/tv.m3u"
@@ -903,7 +904,7 @@
       "id": "nasharu",
       "name": "Nasharu TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_nasharu.png",
+      "logo": "https://iptv.proiptv.info/res/logo_nasharu.png",
       "provider_url": "https://nasharu.tv/",
       "api_url": "http://nasharu.tv/iptv",
       "api_commands": {
@@ -926,7 +927,7 @@
       "id": "onlineott",
       "name": "OnlineOTT TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_onlineott.png",
+      "logo": "https://iptv.proiptv.info/res/logo_onlineott.png",
       "provider_url": "https://www.onlineott-tv.site/",
       "api_url": "http://pl.onlineott-tv.site",
       "api_commands": {
@@ -943,7 +944,7 @@
       "id": "ottclub",
       "name": "OTT Club",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_ottclub.png",
+      "logo": "https://iptv.proiptv.info/res/logo_ottclub.png",
       "provider_url": "https://www.ottclub.cc/",
       "icons_template": "http://{DOMAIN}/images/{ID}.png",
       "api_commands": {
@@ -969,7 +970,7 @@
       "id": "ottpub",
       "name": "OTT Pub",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_ottpub.png",
+      "logo": "https://iptv.proiptv.info/res/logo_ottpub.png",
       "provider_url": "https://ott.pub/",
       "api_commands": {
         "get_playlist": "https://cassy.tv/pls/{PASSWORD}/playlist.m3u8",
@@ -1010,7 +1011,7 @@
       "id": "peaktv",
       "name": "Peak TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_peaktv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_peaktv.png",
       "provider_url": "https://peaktv.su/",
       "api_url": "http://peaktv.su",
       "api_commands": {
@@ -1032,7 +1033,7 @@
       "id": "piktv",
       "name": "Pik TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_piktv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_piktv.png",
       "provider_url": "http://pa.piktv.top/",
       "api_url": "http://stb.piktv.top/api",
       "api_commands": {
@@ -1068,7 +1069,7 @@
       "id": "ping",
       "name": "Ping TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_ping.png",
+      "logo": "https://iptv.proiptv.info/res/logo_ping.png",
       "provider_url": "http://ping-tv.com/",
       "api_url": "http://pl.ping-tv.com",
       "api_commands": {
@@ -1091,7 +1092,7 @@
       "id": "reflextv",
       "name": "ReflexTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_reflextv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_reflextv.png",
       "provider_url": "https://reflextv.ru/",
       "api_commands": {
         "get_playlist": "https://reflextv.ru/playlist/{STREAM_ID}/{PASSWORD}.m3u"
@@ -1111,7 +1112,7 @@
       "id": "rutv",
       "name": "RU TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_rutv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_rutv.png",
       "provider_url": "https://rutv.vip/",
       "api_commands": {
         "get_playlist": "http://pl.{DOMAIN_ID}/{LOGIN}/{PASSWORD}/tv.m3u",
@@ -1145,7 +1146,7 @@
       "id": "russkoetv",
       "name": "RusskoeTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_russkoetv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_russkoetv.png",
       "provider_url": "https://russkoetv.shop/",
       "api_commands": {
         "get_playlist": "http://ru-list.com/play/{PASSWORD}.m3u8"
@@ -1165,7 +1166,7 @@
       "id": "satq",
       "name": "Satq TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_satq.png",
+      "logo": "https://iptv.proiptv.info/res/logo_satq.png",
       "provider_url": "https://satq.tv/",
       "api_commands": {
         "get_playlist": "http://{DOMAIN_ID}/{PASSWORD}.m3u"
@@ -1206,7 +1207,7 @@
       "id": "sharatv",
       "name": "SharaTV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_sharatv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_sharatv.png",
       "provider_url": "https://shara-tv.org/",
       "api_commands": {
         "get_playlist": "http://tvfor.pro/g/{LOGIN}:{PASSWORD}/1/playlist.m3u"
@@ -1227,7 +1228,7 @@
       "id": "sharaclub",
       "name": "SharaClub",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_sharaclub.png",
+      "logo": "https://iptv.proiptv.info/res/logo_sharaclub.png",
       "provider_url": "https://shara.club/",
       "api_url": "http://list.sh-tv.pro/api/players.php",
       "api_commands": {
@@ -1258,7 +1259,7 @@
       "id": "sharavoz",
       "name": "Sharavoz",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
+      "logo": "https://iptv.proiptv.info/res/logo_sharavoz.png",
       "provider_url": "https://sharavoz.tv/",
       "api_commands": {
         "get_playlist": "http://{DOMAIN_ID}/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
@@ -1307,7 +1308,7 @@
       "id": "sharavozpro",
       "name": "Sharavoz.Pro",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_sharavozpro.png",
+      "logo": "https://iptv.proiptv.info/res/logo_sharavozpro.png",
       "provider_url": "https://sharavoz.pro/",
       "api_commands": {
         "get_playlist": "https://links-s-pro.cc/{PASSWORD}/navigator.m3u8",
@@ -1338,7 +1339,7 @@
       "id": "shuratv",
       "name": "ShuraTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_shuratv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_shuratv.png",
       "provider_url": "http://shura.tv/b/",
       "api_commands": {
         "get_playlist": "http://shura.tv/b/playlist.php?uid={PASSWORD}&srv=1&type=halva"
@@ -1358,7 +1359,7 @@
       "id": "shurik",
       "name": "ShurikTV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_shuriktv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_shuriktv.png",
       "provider_url": "https://schuriktv.nethouse.ru/",
       "api_url": "https://srv4you.net/api/v1",
       "api_commands": {
@@ -1385,7 +1386,7 @@
       "id": "skaztv",
       "name": "Skaz TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_skaztv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_skaztv.png",
       "provider_url": "http://skaz.tv/",
       "api_commands": {
         "get_playlist": "https://{DOMAIN_ID}/play/{PASSWORD}"
@@ -1411,7 +1412,7 @@
       "id": "smile",
       "name": "Smile",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_smile.png",
+      "logo": "https://iptv.proiptv.info/res/logo_smile.png",
       "provider_url": "http://smile-tv.live/",
       "api_url": "http://pl.smile-tv.live",
       "api_commands": {
@@ -1441,7 +1442,7 @@
       "id": "topiptv",
       "name": "TopIPTV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_topiptv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_topiptv.png",
       "provider_url": "https://topiptv.info/",
       "api_commands": {
         "get_playlist": "https://s.topiptv.link/list.php?login={LOGIN}&password={PASSWORD}&type=m3u"
@@ -1456,7 +1457,7 @@
       "id": "ttv",
       "name": "Torrent TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_ttv.png",
+      "logo": "https://iptv.proiptv.info/res/logo_ttv.png",
       "provider_url": "https://ttvrun.one/",
       "api_url": "https://api.ttv.run/v3",
       "api_commands": {
@@ -1487,7 +1488,7 @@
       "id": "tvboom",
       "name": "TV Boom",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_tvboom.png",
+      "logo": "https://iptv.proiptv.info/res/logo_tvboom.png",
       "provider_url": "https://tvboom.vip/",
       "api_commands": {
         "get_playlist": "https://tvboom.vip/{LOGIN}/{PASSWORD}/hls{SERVER_ID}playlist.m3u8"
@@ -1514,7 +1515,7 @@
       "id": "tvclub",
       "name": "TV Club",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_tvclub.png",
+      "logo": "https://iptv.proiptv.info/res/logo_tvclub.png",
       "provider_url": "https://tvclub.cc/",
       "api_url": "http://api.iptv.so/0.9/json",
       "api_commands": {
@@ -1542,7 +1543,7 @@
       "id": "tvteam",
       "name": "TV Team",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_tvteam.png",
+      "logo": "https://iptv.proiptv.info/res/logo_tvteam.png",
       "provider_url": "https://tv.team/",
       "api_url": "http://{DOMAIN_ID}/api",
       "api_commands": {
@@ -1586,7 +1587,7 @@
       "id": "tvizi",
       "name": "TVIZI Net",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_tvizi.png",
+      "logo": "https://iptv.proiptv.info/res/logo_tvizi.png",
       "provider_url": "https://tvizi.net/",
       "api_url": "https://see-tv.eu/api/v4",
       "api_commands": {
@@ -1620,7 +1621,7 @@
       "id": "uspeh",
       "name": "Uspeh TV",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_uspeh.png",
+      "logo": "https://iptv.proiptv.info/res/logo_uspeh.png",
       "provider_url": "https://uspeh.tv/",
       "api_url": "https://m3u.admuspeh.my",
       "api_commands": {
@@ -1646,7 +1647,7 @@
       "id": "velestore",
       "name": "Velestore",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_velestore.png",
+      "logo": "https://iptv.proiptv.info/res/logo_velestore.png",
       "provider_url": "https://velestore.su/",
       "api_commands": {
         "get_playlist": "http://p.velestore.su/play18/{LOGIN}/{PASSWORD}/playlist.m3u8"
@@ -1667,7 +1668,7 @@
       "id": "vidok",
       "name": "Vidok TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_vidok.png",
+      "logo": "https://iptv.proiptv.info/res/logo_vidok.png",
       "provider_url": "https://vidok.tv/",
       "api_url": "http://sapi.ott.st/v2.4/json",
       "api_commands": {
@@ -1691,7 +1692,7 @@
       "id": "viplime",
       "name": "VipLime",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_viplime.png",
+      "logo": "https://iptv.proiptv.info/res/logo_viplime.png",
       "provider_url": "http://viplime.fun/",
       "api_url": "http://cdntv.online",
       "api_commands": {
@@ -1730,7 +1731,7 @@
       "id": "vivamax",
       "name": "VivaMax",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_vivamax.png",
+      "logo": "https://iptv.proiptv.info/res/logo_vivamax.png",
       "provider_url": "https://t.me/vivamax_portal",
       "api_url": "https://pl.vivamax.pro",
       "api_commands": {
@@ -1761,7 +1762,7 @@
       "id": "yosso",
       "name": "Yosso TV",
       "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_yosso.png",
+      "logo": "https://iptv.proiptv.info/res/logo_yosso.png",
       "provider_url": "https://streaming-elbrus.su/",
       "api_commands": {
         "get_playlist": "https://{SERVER_ID}/p12/{LOGIN}/{PASSWORD}/BLOF/playlist.m3u8",

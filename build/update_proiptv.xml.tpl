@@ -8,7 +8,7 @@
 		<version>0.51</version>
 		<beta>no</beta>
 		<critical>no</critical>
-		<url>http://iptv.esalecrm.net/update/update_proiptv.tar.gz</url>
+		<url>https://iptv.proiptv.info/update/update_proiptv.tar.gz</url>
 		<md5></md5>
 		<size></size>
 		<caption>ProIPTV</caption>

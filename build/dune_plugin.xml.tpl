@@ -208,7 +208,7 @@
     </auto_resume>
     <check_update>
         <schema>2</schema>
-        <url>http://iptv.esalecrm.net/update/update_proiptv.xml</url>
+        <url>https://iptv.proiptv.info/update/update_proiptv.xml</url>
         <timeout>0</timeout>
         <required>no</required>
         <auto>false</auto>

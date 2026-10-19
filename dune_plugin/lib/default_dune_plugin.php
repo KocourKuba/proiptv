@@ -44,9 +44,9 @@ class Default_Dune_Plugin implements DunePlugin
     const SANDWICH_BASE = 'gui_skin://special_icons/sandwich_base.aai';
     const SANDWICH_MASK = 'cut_icon://{name=sandwich_mask}';
     const SANDWICH_COVER = 'cut_icon://{name=sandwich_cover}';
-    const RESOURCE_URL = 'http://iptv.esalecrm.net/res/';
-    const CONFIG_URL = 'http://iptv.esalecrm.net/config/providers';
-    const ARCHIVE_URL_PREFIX = 'http://iptv.esalecrm.net/res';
+    const RESOURCE_URL = 'http://iptv.proiptv.info/res/';
+    const CONFIG_URL = 'http://iptv.proiptv.info/config/providers';
+    const ARCHIVE_URL_PREFIX = 'http://iptv.proiptv.info/res';
     const CHANGELOG_URL_PREFIX = 'https://raw.githubusercontent.com/KocourKuba/proiptv/master/build/';
     const ARCHIVE_ID = 'common';
     const PARSE_CONFIG = "%s_parse_config.json";
