@@ -88,6 +88,16 @@ class Curl_Wrapper
      */
     private $is_post = false;
 
+    /**
+     * @var int
+     */
+    private $connect_timeout = 60;
+
+    /**
+     * @var int
+     */
+    private $download_timeout = 120;
+
     public function __construct()
     {
         create_path(get_data_path());
@@ -262,6 +272,22 @@ class Curl_Wrapper
     public function set_post_data($data)
     {
         $this->post_data = $data;
+    }
+
+    /**
+     * @param int $timeout connection timeout in seconds
+     */
+    public function set_connect_timeout($timeout)
+    {
+        $this->connect_timeout = $timeout;
+    }
+
+    /**
+     * @param int $timeout maximum time in seconds for the whole operation
+     */
+    public function set_download_timeout($timeout)
+    {
+        $this->download_timeout = $timeout;
     }
 
     /**
@@ -457,8 +483,8 @@ class Curl_Wrapper
         $config_data[] = "--show-error";
         $config_data[] = "--fail";
         $config_data[] = "--dump-header " . $this->headers_path;
-        $config_data[] = "--connect-timeout 60";
-        $config_data[] = "--max-time 90";
+        $config_data[] = "--connect-timeout $this->connect_timeout";
+        $config_data[] = "--max-time $this->download_timeout";
         $config_data[] = "--location";
         $config_data[] = "--max-redirs 5";
         $config_data[] = "--compressed";

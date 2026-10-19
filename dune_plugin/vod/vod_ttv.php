@@ -541,19 +541,22 @@ class vod_ttv extends vod_standard
 
     /**
      * Reachability check of the image host: GET /ok.jpg and require exactly CHECK_SIZE bytes.
-     * Curl_Wrapper has long timeouts, so the curl is called directly with the short ones.
+     * Short timeouts are used so the unreachable hosts do not delay the VOD initialization.
      *
      * @param string $host
      * @return bool
      */
     protected function is_host_reachable($host)
     {
-        $cmd = get_platform_curl() . " -s -k --connect-timeout 3 --max-time 5 -o /dev/null -w '%{http_code} %{size_download}' "
-            . escapeshellarg($host . self::CHECK_PATH);
-        $result = trim((string)shell_exec($cmd));
-        hd_debug_print("probe $host: $result", true);
+        $curl_wrapper = new Curl_Wrapper();
+        $curl_wrapper->set_url($host . self::CHECK_PATH);
+        $curl_wrapper->set_connect_timeout(3);
+        $curl_wrapper->set_download_timeout(5);
 
-        return $result === "200 " . self::CHECK_SIZE;
+        $content = $curl_wrapper->download_content();
+        hd_debug_print("probe $host: " . ($content === false ? 'failed' : strlen($content)), true);
+
+        return $content !== false && strlen($content) === self::CHECK_SIZE;
     }
 
     /**
