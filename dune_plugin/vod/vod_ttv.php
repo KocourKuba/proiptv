@@ -124,7 +124,7 @@ class vod_ttv extends vod_standard
                     $cat = new Vod_Category((string)$id, $genre->name);
                     $category_list[] = $cat;
                     $category_index[$cat->get_id()] = $cat;
-                    $genre_values[$id] = $genre->name;
+                    $genre_values[$id] = self::make_filter_caption($genre->name);
                 }
             }
         }
@@ -152,7 +152,7 @@ class vod_ttv extends vod_standard
             foreach ($countries->data as $country) {
                 $country = (string)$country;
                 if (!empty($country)) {
-                    $country_values[$country] = $country;
+                    $country_values[$country] = self::make_filter_caption($country);
                 }
             }
 
@@ -356,7 +356,7 @@ class vod_ttv extends vod_standard
 
         $is_serial = false;
         foreach ($files as $file) {
-            if (isset($file->season) && $file->season !== false && $file->season !== '') {
+            if (isset($file->season) && (int)$file->season > 0) {
                 $is_serial = true;
                 break;
             }
@@ -510,9 +510,10 @@ class vod_ttv extends vod_standard
     }
 
     /**
-     * Select the first reachable poster host: /ok.jpg must download with exactly CHECK_SIZE bytes.
+     * Select the first reachable poster host: /ok.jpg must have exactly CHECK_SIZE bytes.
      * Plain http is tried first: the posters are fetched by the firmware UI image loader,
-     * which has no TLS trust store for these hosts. The result is cached for a day.
+     * which has no TLS trust store for these hosts. A found host is cached for a day,
+     * the fallback for an hour, so unreachable hosts are not probed on every VOD initialization.
      *
      * @return string
      */
@@ -523,7 +524,6 @@ class vod_ttv extends vod_standard
             return $poster_domain;
         }
 
-        $poster_domain = 'http://mdb.' . $this->image_domains[0];
         foreach (array('http', 'https') as $scheme) {
             foreach ($this->image_domains as $domain) {
                 if ($this->is_host_reachable("$scheme://mdb.$domain")) {
@@ -535,12 +535,14 @@ class vod_ttv extends vod_standard
             }
         }
 
+        $poster_domain = 'http://mdb.' . $this->image_domains[0];
         hd_debug_print("ttv poster hosts are not reachable, use default");
+        HD::set_cookie(self::POSTER_DOMAIN_FILE, $poster_domain, time() + 3600);
         return $poster_domain;
     }
 
     /**
-     * Reachability check of the image host: GET /ok.jpg and require exactly CHECK_SIZE bytes.
+     * Reachability check of the image host: HEAD /ok.jpg and require Content-Length of exactly CHECK_SIZE bytes.
      * Short timeouts are used so the unreachable hosts do not delay the VOD initialization.
      *
      * @param string $host
@@ -550,13 +552,36 @@ class vod_ttv extends vod_standard
     {
         $curl_wrapper = new Curl_Wrapper();
         $curl_wrapper->set_url($host . self::CHECK_PATH);
+        $curl_wrapper->set_head();
         $curl_wrapper->set_connect_timeout(3);
         $curl_wrapper->set_download_timeout(5);
 
-        $content = $curl_wrapper->download_content();
-        hd_debug_print("probe $host: " . ($content === false ? 'failed' : strlen($content)), true);
+        if ($curl_wrapper->download_content() === false) {
+            hd_debug_print("probe $host: failed", true);
+            return false;
+        }
 
-        return $content !== false && strlen($content) === self::CHECK_SIZE;
+        // the headers of all redirects are parsed, the last one is the final response
+        $size = '';
+        foreach ($curl_wrapper->get_response_headers() as $name => $value) {
+            if (strcasecmp($name, 'Content-Length') === 0) {
+                $size = $value;
+            }
+        }
+
+        hd_debug_print("probe $host: $size", true);
+        return (int)$size === self::CHECK_SIZE;
+    }
+
+    /**
+     * Filter values are stored as 'name:value' pairs separated by ',' so these characters are not allowed in the value
+     *
+     * @param string $caption
+     * @return string
+     */
+    protected static function make_filter_caption($caption)
+    {
+        return trim(str_replace(array(',', ':'), array(';', ' '), $caption));
     }
 
     /**

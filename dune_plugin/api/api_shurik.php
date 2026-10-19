@@ -55,7 +55,8 @@ class api_shurik extends api_default
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        if (!isset($account_info[0])) {
+        // the response is an array on success, an error response is decoded as an object
+        if (!is_array($account_info) || !isset($account_info[0])) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
         } else {
@@ -64,12 +65,34 @@ class api_shurik extends api_default
                 Control_Factory::add_label($defs, TR::t('package'), $account_info->packet, -15);
             }
             if (isset($account_info->expired)) {
-                Control_Factory::add_label($defs, TR::t('end_date'), gmdate("d.m.Y  H:i", substr($account_info->expired, 0, -3)), -15);
+                Control_Factory::add_label($defs, TR::t('end_date'), self::format_expired($account_info->expired), -15);
             }
         }
 
         Control_Factory::add_vgap($defs, 20);
 
         return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1000, null /*$attrs*/);
+    }
+
+    /**
+     * The expiration time is a timestamp in milliseconds, but a timestamp in seconds is accepted too.
+     * Any other value is shown as is.
+     *
+     * @param mixed $expired
+     * @return string
+     */
+    protected static function format_expired($expired)
+    {
+        if (!is_numeric($expired)) {
+            return (string)$expired;
+        }
+
+        // timestamps in milliseconds have 13 digits, in seconds 10 digits
+        $ts = (float)$expired;
+        if ($ts > 100000000000) {
+            $ts /= 1000;
+        }
+
+        return gmdate("d.m.Y  H:i", (int)$ts);
     }
 }

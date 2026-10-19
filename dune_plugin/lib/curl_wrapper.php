@@ -89,6 +89,11 @@ class Curl_Wrapper
     private $is_post = false;
 
     /**
+     * @var bool
+     */
+    private $is_head = false;
+
+    /**
      * @var int
      */
     private $connect_timeout = 60;
@@ -132,6 +137,7 @@ class Curl_Wrapper
         $this->send_headers = array();
         $this->response_headers = array();
         $this->is_post = false;
+        $this->is_head = false;
         $this->post_data = null;
         $this->response_code = 0;
     }
@@ -256,6 +262,16 @@ class Curl_Wrapper
     public function set_post($value = true)
     {
         $this->is_post = $value;
+    }
+
+    /**
+     * Request only the response headers (HEAD request)
+     *
+     * @param bool $value
+     */
+    public function set_head($value = true)
+    {
+        $this->is_head = $value;
     }
 
     /**
@@ -511,7 +527,9 @@ class Curl_Wrapper
             $config_data[] = "--header \"$header\"";
         }
 
-        if ($this->is_post) {
+        if ($this->is_head) {
+            $config_data[] = "--head";
+        } else if ($this->is_post) {
             $config_data[] = "--request POST";
         } else {
             $config_data[] = "--request GET";

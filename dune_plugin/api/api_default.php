@@ -307,6 +307,7 @@ class api_default
             CONFIG_DEVICES => MACRO_DEVICE_ID,
             CONFIG_QUALITIES => MACRO_QUALITY_ID,
             CONFIG_PLAYLISTS => MACRO_PLAYLIST_ID,
+            CONFIG_VOD_PLAYLISTS => MACRO_VOD_PLAYLIST_ID,
         );
 
         foreach ($config_items as $name => $param) {
@@ -471,6 +472,7 @@ class api_default
             MACRO_SERVER_ID,
             MACRO_QUALITY_ID,
             MACRO_PLAYLIST_ID,
+            MACRO_VOD_PLAYLIST_ID,
             MACRO_VPORTAL,
         );
 
@@ -613,6 +615,17 @@ class api_default
         hd_debug_print(null, true);
 
         return $this->getConfigValue(CONFIG_PLAYLISTS);
+    }
+
+    /**
+     * returns list of VOD playlists (playlist id => caption)
+     * @return array|null
+     */
+    public function GetVodPlaylists()
+    {
+        hd_debug_print(null, true);
+
+        return $this->getConfigValue(CONFIG_VOD_PLAYLISTS);
     }
 
     /**
@@ -904,28 +917,6 @@ class api_default
         return $id;
     }
 
-    /**
-     * Add provider specific controls to the extended setup dialog
-     *
-     * @param array $defs
-     * @param User_Input_Handler $handler
-     * @return void
-     */
-    protected function add_ext_setup_controls(&$defs, $handler)
-    {
-    }
-
-    /**
-     * Apply provider specific controls of the extended setup dialog
-     *
-     * @param Object $user_input
-     * @return bool true if credentials changed
-     */
-    protected function apply_ext_setup_controls($user_input)
-    {
-        return false;
-    }
-
     protected function check_control_parameters($user_input, $param, $param_settings)
     {
         return (isset($user_input->{$param})
@@ -1102,7 +1093,17 @@ class api_default
                 Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
-        $this->add_ext_setup_controls($defs, $handler);
+        $vod_playlists = $this->GetVodPlaylists();
+        if (!empty($vod_playlists) && count($vod_playlists) > 1) {
+            $idx = $this->getCredential(MACRO_VOD_PLAYLIST_ID);
+            if (empty($idx)) {
+                $idx = key($vod_playlists);
+            }
+            hd_debug_print("vod playlists ($idx): " . json_encode($vod_playlists), true);
+
+            Control_Factory::add_combobox($defs, $handler, null, CONTROL_VOD_PLAYLIST,
+                TR::t('vod_playlist'), $idx, $vod_playlists, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+        }
 
         if (!empty($defs)) {
             Control_Factory::add_vgap($defs, 50);
@@ -1163,7 +1164,8 @@ class api_default
             $changed = true;
         }
 
-        if ($this->apply_ext_setup_controls($user_input)) {
+        if ($this->check_control_parameters($user_input, CONTROL_VOD_PLAYLIST, MACRO_VOD_PLAYLIST_ID)) {
+            $this->setCredential(MACRO_VOD_PLAYLIST_ID, $user_input->{CONTROL_VOD_PLAYLIST});
             $changed = true;
         }
 

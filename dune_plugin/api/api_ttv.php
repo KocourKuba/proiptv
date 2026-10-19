@@ -40,16 +40,29 @@ class api_ttv extends api_default
     const SESSION_LIFETIME = 604800; // 7 days
 
     /**
+     * @var string
+     */
+    protected $guid;
+
+    /**
      * @inheritDoc
      */
     public function replace_macros($string)
     {
-        $session_id = HD::get_cookie(sprintf(self::SESSION_FILE, $this->get_provider_playlist_id()));
-        $token = HD::get_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()));
-        $string = str_replace(
-            array(MACRO_SESSION_ID, MACRO_TOKEN, MACRO_GUID),
-            array($session_id, $token, $this->get_guid()),
-            $string);
+        // the cookies are read only if the template uses them
+        if (strpos($string, MACRO_SESSION_ID) !== false) {
+            $session_id = HD::get_cookie(sprintf(self::SESSION_FILE, $this->get_provider_playlist_id()));
+            $string = str_replace(MACRO_SESSION_ID, $session_id, $string);
+        }
+
+        if (strpos($string, MACRO_TOKEN) !== false) {
+            $token = HD::get_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()));
+            $string = str_replace(MACRO_TOKEN, $token, $string);
+        }
+
+        if (strpos($string, MACRO_GUID) !== false) {
+            $string = str_replace(MACRO_GUID, $this->get_guid(), $string);
+        }
 
         return parent::replace_macros($string);
     }
@@ -67,8 +80,10 @@ class api_ttv extends api_default
             return null;
         }
 
-        if (empty($this->account_info) || $force) {
-            $this->request_user_info();
+        if ((empty($this->account_info) || $force) && !$this->request_user_info()) {
+            // the session can be invalidated by the server at any time, request a new one
+            hd_debug_print("Account info is not available, request new session", true);
+            $this->request_provider_token(true);
         }
 
         return $this->account_info;
@@ -77,6 +92,7 @@ class api_ttv extends api_default
     /**
      * Both the session id and the playlist token are obtained by the login/password pair:
      * the session id by the auth request, the playlist token from the account info.
+     * If the stored session is rejected by the server, a new session is requested once.
      *
      * @inheritDoc
      */
@@ -99,35 +115,29 @@ class api_ttv extends api_default
 
         HD::set_last_error("rq_last_error", null);
 
-        if (empty($session_id)) {
-            $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
-            hd_debug_print("request provider token response: " . pretty_json_format($response), true);
-            if ($response === false || $response === null) {
-                HD::set_last_error("rq_last_error", TR::load_string('err_cant_get_token'));
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $new_session = empty($session_id);
+            if ($new_session && !$this->request_session($session_file)) {
                 return false;
             }
 
-            if (!isset($response->success) || (int)$response->success !== 1 || !empty($response->error)) {
-                HD::set_last_error("rq_last_error", isset($response->error) ? $response->error : TR::load_string('err_cant_get_token'));
-                return false;
+            if ($this->request_user_info() && !empty($this->account_info->playlist_token)) {
+                return true;
             }
 
-            if (empty($response->session)) {
-                hd_debug_print("Empty session in response", true);
-                HD::set_last_error("rq_last_error", TR::load_string('err_cant_get_token'));
-                return false;
+            if ($new_session) {
+                break;
             }
 
-            HD::set_cookie($session_file, $response->session, time() + self::SESSION_LIFETIME);
+            // the stored session is not accepted anymore, request a new one
+            hd_debug_print("Stored session rejected, request new session", true);
+            HD::clear_cookie($session_file);
+            $session_id = '';
         }
 
-        if (!$this->request_user_info() || empty($this->account_info->playlist_token)) {
-            hd_debug_print("Can't get playlist token from account info", true);
-            HD::set_last_error("rq_last_error", TR::load_string('err_cant_get_token'));
-            return false;
-        }
-
-        return true;
+        hd_debug_print("Can't get playlist token from account info", true);
+        HD::set_last_error("rq_last_error", TR::load_string('err_cant_get_token'));
+        return false;
     }
 
     /**
@@ -224,13 +234,47 @@ class api_ttv extends api_default
      */
     protected function get_guid()
     {
-        $serial = get_serial_number();
-        if (empty($serial)) {
-            $serial = 'PROIPTV';
+        if (empty($this->guid)) {
+            $serial = get_serial_number();
+            if (empty($serial)) {
+                $serial = 'PROIPTV';
+            }
+
+            $hash = md5("torrenttv:$serial");
+            $this->guid = sprintf('%s-%s-%s-%s-%s',
+                substr($hash, 0, 8), substr($hash, 8, 4), substr($hash, 12, 4), substr($hash, 16, 4), substr($hash, 20, 12));
         }
 
-        $hash = md5("torrenttv:$serial");
-        return sprintf('%s-%s-%s-%s-%s',
-            substr($hash, 0, 8), substr($hash, 8, 4), substr($hash, 12, 4), substr($hash, 16, 4), substr($hash, 20, 12));
+        return $this->guid;
+    }
+
+    /**
+     * Request a new session by the login/password pair and store it
+     *
+     * @param string $session_file
+     * @return bool
+     */
+    protected function request_session($session_file)
+    {
+        $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
+        hd_debug_print("request provider token response: " . pretty_json_format($response), true);
+        if ($response === false || $response === null) {
+            HD::set_last_error("rq_last_error", TR::load_string('err_cant_get_token'));
+            return false;
+        }
+
+        if (!isset($response->success) || (int)$response->success !== 1 || !empty($response->error)) {
+            HD::set_last_error("rq_last_error", isset($response->error) ? $response->error : TR::load_string('err_cant_get_token'));
+            return false;
+        }
+
+        if (empty($response->session)) {
+            hd_debug_print("Empty session in response", true);
+            HD::set_last_error("rq_last_error", TR::load_string('err_cant_get_token'));
+            return false;
+        }
+
+        HD::set_cookie($session_file, $response->session, time() + self::SESSION_LIFETIME);
+        return true;
     }
 }
