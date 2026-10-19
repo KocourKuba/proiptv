@@ -56,6 +56,7 @@ Also, have presets for most popular IPTV providers.
 46. [Pik TV](http://pa.piktv.top/)
 47. [Velestore](http://velestore.su/)
 48. [HN Media](https://hnmedia.pro/)
+49. [Torrent TV](https://ttvrun.one/)
 </details>
 
 ## Donate

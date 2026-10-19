@@ -29,7 +29,6 @@ git tag %VERSION%.%BUILD%
 git.exe push --force  --tags  -- "origin" master:master
 
 echo copy to Dropbox
-copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\ >nul
 copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
 copy /Y .\dune_plugin_proiptv.zip .\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
 copy /Y .\build\providers_%VERSION%.json .\providers_%VERSION%.json >nul

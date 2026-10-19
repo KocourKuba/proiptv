@@ -253,6 +253,7 @@ const MACRO_VPORTAL = '{VPORTAL}';
 const MACRO_SCHEME = '{SCHEME}';
 const MACRO_DOMAIN = '{DOMAIN}';
 const MACRO_EXPIRE_DATA = '{EXPIRE_DATA}';
+const MACRO_GUID = '{GUID}';
 const MACRO_ID = '{ID}';
 
 const MACRO_TIMESTAMP = '{TIMESTAMP}';

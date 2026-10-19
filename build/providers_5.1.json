@@ -1405,11 +1405,45 @@
     },
     {
       "enable": true,
+      "id": "ttv",
+      "name": "Torrent TV",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_ttv.png",
+      "provider_url": "https://ttvrun.one/",
+      "api_url": "https://api.ttv.run/v3",
+      "api_commands": {
+        "get_playlist": "https://tapitv.com/k/{TOKEN}/1611268/tv.m3u",
+        "get_vod": "{API}",
+        "request_token": "{API}/auth.php?username={LOGIN}&password={PASSWORD}&application=android&guid={GUID}&typeresult=json",
+        "account_info": "{API}/userinfo.php?session={SESSION_ID}&typeresult=json",
+        "film_alt_genres": "{API}/film_alt_genres.php?session={SESSION_ID}&typeresult=json",
+        "film_filter": "{API}/film_filter.php?session={SESSION_ID}&typeresult=json",
+        "film_filter_countries": "{API}/film_filter_countries.php?session={SESSION_ID}&typeresult=json",
+        "film_alt_info": "{API}/film_alt_info.php?session={SESSION_ID}&typeresult=json",
+        "film_alt_http": "{API}/film_alt_http.php?session={SESSION_ID}&typeresult=json",
+        "film_alt_search": "{API}/film_alt_search.php?session={SESSION_ID}&typeresult=json"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?:.+)\\/(?<token>.+)\\/(?<id>.+)\\/(?:stream\\.m3u8)$/",
+        "epg_presets": [
+          {
+            "name": "proiptv",
+            "alias": "ttv"
+          }
+        ],
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "tvboom",
       "name": "TV Boom",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_tvboom.png",
       "provider_url": "https://tvboom.vip/",
+      "api_commands": {
+        "get_playlist": "https://tvboom.vip/{LOGIN}/{PASSWORD}/hls{SERVER_ID}playlist.m3u8"
+      },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
         "epg_presets": [
@@ -1418,12 +1452,6 @@
             "alias": "gabbarit"
           }
         ],
-        "playlists": {
-          "default": {
-            "name": "Default",
-            "url": "https://tvboom.vip/{LOGIN}/{PASSWORD}/hls{SERVER_ID}playlist.m3u8"
-          }
-        },
         "servers": {
           "/": "Germany",
           "/rucdn/": "Russia 1",
@@ -1657,13 +1685,10 @@
       "logo": "http://iptv.esalecrm.net/res/logo_vivamax.png",
       "provider_url": "https://t.me/vivamax_portal",
       "api_url": "https://pl.vivamax.pro",
+      "api_commands": {
+        "get_playlist": "{API}/{PASSWORD}/playlist.m3u8"
+      },
       "config": {
-        "playlists": {
-          "default": {
-            "name": "Default",
-            "url": "{API}/{PASSWORD}/playlist.m3u8"
-          }
-        },
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>[^\\/]+)\\/(?<id>.+)\\/(?<var1>.+)\\.m3u8\\?token=(?<token>.+)$/",
         "epg_presets": [
           {
