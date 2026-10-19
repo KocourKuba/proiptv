@@ -126,17 +126,17 @@ class api_sharaclub extends api_default
                 return null;
             }
 
+            $defs = array();
             Control_Factory::add_vgap($defs, 20);
 
             if (file_exists($img)) {
-                Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$img</icon>");
-                Control_Factory::add_vgap($defs, 450);
+                HD::add_qr_code_defs($defs, $img, Action_Factory::SMALL_DLG_WIDTH);
             } else {
                 Control_Factory::add_smart_label($defs, "", "<text>" . TR::load_string('err_incorrect_access_data') . "</text>");
                 Control_Factory::add_vgap($defs, 50);
             }
 
-            return Action_Factory::show_dialog(TR::t("add_money"), $defs, true, 600);
+            return Action_Factory::show_dialog(TR::t("add_money"), $defs, true, Action_Factory::SMALL_DLG_WIDTH);
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
         }

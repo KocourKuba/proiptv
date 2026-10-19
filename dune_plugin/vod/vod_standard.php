@@ -239,6 +239,35 @@ class vod_standard extends Abstract_Vod
         return $this->vod_audio;
     }
 
+    /**
+     * Category list modes the user can switch between from the category list popup menu
+     * (mode id => caption). Empty if the VOD has a single category list.
+     *
+     * @return array
+     */
+    public function get_category_modes()
+    {
+        return array();
+    }
+
+    /**
+     * @return string
+     */
+    public function get_category_mode()
+    {
+        return '';
+    }
+
+    /**
+     * Select the category list mode, the categories are rebuilt on the next fetchVodCategories
+     *
+     * @param string $mode
+     * @return void
+     */
+    public function set_category_mode($mode)
+    {
+    }
+
     public function try_reset_pages()
     {
         if ($this->is_entered) {

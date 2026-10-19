@@ -22,6 +22,7 @@ genre = Жанр
 year_from = Год от
 year_to = Год до
 country = Страна
+vod_categories_by__1 = Категории: %s
 vod_filter_type = Тип
 vod_filter_type_all = Все
 vod_filter_type_film = Фильмы

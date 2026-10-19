@@ -32,6 +32,8 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'vod_category_list';
 
+    const ACTION_VOD_CATEGORY_MODE_SELECTED = 'vod_category_mode_selected';
+
     /**
      * @var Vod_Category[]
      */
@@ -49,12 +51,18 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return array(
+        $actions = array(
             GUI_EVENT_KEY_ENTER => Action_Factory::open_folder(),
             GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, TR::t('vod_screen_reload_playlist')),
             GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
             GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
         );
+
+        if (!is_null($this->plugin->vod) && count($this->plugin->vod->get_category_modes()) > 1) {
+            $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+        }
+
+        return $actions;
     }
 
     /**
@@ -73,6 +81,34 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
             case ACTION_RELOAD:
                 hd_debug_print("reload categories");
                 $this->clear_vod();
+                $media_url = MediaURL::decode($user_input->parent_media_url);
+                $range = $this->get_folder_range($media_url, 0, $plugin_cookies);
+                return Action_Factory::update_regular_folder($range, true, -1);
+
+            case GUI_EVENT_KEY_POPUP_MENU:
+                // category list modes of the vod (genres, types, ...), the current one is checked
+                $menu_items = array();
+                $current = $this->plugin->vod->get_category_mode();
+                foreach ($this->plugin->vod->get_category_modes() as $mode => $caption) {
+                    $menu_items[] = $this->plugin->create_menu_item($this,
+                        self::ACTION_VOD_CATEGORY_MODE_SELECTED,
+                        TR::t('vod_categories_by__1', $caption),
+                        (string)$mode === $current ? "check.png" : null,
+                        array(LIST_IDX => (string)$mode)
+                    );
+                }
+
+                return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
+
+            case self::ACTION_VOD_CATEGORY_MODE_SELECTED:
+                if (!isset($user_input->{LIST_IDX})
+                    || $user_input->{LIST_IDX} === $this->plugin->vod->get_category_mode()) {
+                    break;
+                }
+
+                hd_debug_print("select vod category mode: " . $user_input->{LIST_IDX});
+                $this->plugin->vod->set_category_mode($user_input->{LIST_IDX});
+                unset($this->category_list, $this->category_index);
                 $media_url = MediaURL::decode($user_input->parent_media_url);
                 $range = $this->get_folder_range($media_url, 0, $plugin_cookies);
                 return Action_Factory::update_regular_folder($range, true, -1);

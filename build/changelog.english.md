@@ -1,4 +1,4 @@
-﻿### Version 5.1.1040
+﻿### Version 5.1.1042
 - Added TorrentTV provider support (https://ttvrun.one/) with VOD (genres, search, filters, quality selection) and automatic session renewal
 - Added Sharavoz.Pro provider support (https://sharavoz.pro/) with VOD
 - ShurikTV: added subscription info
@@ -7,6 +7,8 @@
 - KLI Media: moved to the new domain klimedia.su, added EPG preset
 - 1OTT: updated playlist, stream type selection removed
 - Fixed playlist loading for TV Boom and VivaMax
+- TV Boom: added EPG presets (tvboom, edem) for the own EPG server
+- Removed support for the Kineskop Club provider
 - Plugin moved to the new domain proiptv.info
 
 ### Version 5.1.1032

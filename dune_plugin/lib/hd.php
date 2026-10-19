@@ -30,6 +30,7 @@ require_once 'dune_plugin_constants.php';
 class HD
 {
     const DUNE_PARAMS_MAGIC = "|||dune_params|||";
+    const QR_CODE_SIZE = 450;
     /**
      * @var bool
      */
@@ -952,6 +953,22 @@ class HD
         } else if (file_exists($error_file)) {
             unlink($error_file);
         }
+    }
+
+    /**
+     * QR code image for a dialog
+     *
+     * @param array $defs
+     * @param string $image
+     * @param int|null $dialog_width centers the image in the dialog of this width, null puts it at the left
+     * @return void
+     */
+    public static function add_qr_code_defs(&$defs, $image, $dialog_width = null)
+    {
+        $size = self::QR_CODE_SIZE;
+        $gap = $dialog_width === null ? 25 : max(0, (int)(($dialog_width - $size) / 2));
+        Control_Factory::add_smart_label($defs, "", "<gap width=$gap/><icon width=$size height=$size>$image</icon>");
+        Control_Factory::add_vgap($defs, $size);
     }
 
     /**

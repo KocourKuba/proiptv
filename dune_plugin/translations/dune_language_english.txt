@@ -21,6 +21,7 @@ genre = Genre
 year_from = Year from
 year_to = Year to
 country = Country
+vod_categories_by__1 = Categories: %s
 vod_filter_type = Type
 vod_filter_type_all = All
 vod_filter_type_film = Films

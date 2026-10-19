@@ -26,6 +26,8 @@
 
 class Action_Factory
 {
+    const SMALL_DLG_WIDTH = 850;
+
     /**
      * @param string|null $media_url_str
      * @param string|null $caption

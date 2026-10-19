@@ -174,6 +174,11 @@ class api_ttv extends api_default
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
+        if ($this->hasApiCommand(API_COMMAND_PAY)) {
+            Control_Factory::add_button($defs, $handler, null,
+                ACTION_ADD_MONEY_DLG, "", TR::t('add_money'), 450, true);
+        }
+
         if (empty($account_info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
@@ -201,7 +206,79 @@ class api_ttv extends api_default
         return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1000);
     }
 
+    /**
+     * The payment_qr response contains the one-time link of the payment page and the link of its QR code image.
+     * The link carries the payment token, so the QR code image is taken from the provider.
+     *
+     * @inheritDoc
+     */
+    public function GetPayUI()
+    {
+        hd_debug_print(null, true);
+
+        try {
+            $response = $this->request_payment_qr();
+            $qr_url = isset($response->qr) ? $response->qr : '';
+
+            $img = get_temp_path('ttv_pay_qr.png');
+            if (file_exists($img)) {
+                unlink($img);
+            }
+
+            $defs = array();
+            Control_Factory::add_vgap($defs, 20);
+
+            $res = false;
+            if (!empty($qr_url)) {
+                list($res,) = Curl_Wrapper::simple_download_file($qr_url, $img);
+            }
+
+            if ($res && file_exists($img)) {
+                HD::add_qr_code_defs($defs, $img, Action_Factory::SMALL_DLG_WIDTH);
+            } else {
+                Control_Factory::add_smart_label($defs, "", "<text>" . TR::load_string('err_incorrect_access_data') . "</text>");
+                Control_Factory::add_vgap($defs, 50);
+            }
+
+            return Action_Factory::show_dialog(TR::t("add_money"), $defs, true, Action_Factory::SMALL_DLG_WIDTH);
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
+        }
+
+        return null;
+    }
+
     ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * Request the payment link, a session rejected by the provider is requested again once
+     *
+     * @return Object|null
+     */
+    protected function request_payment_qr()
+    {
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            if (!$this->request_provider_token($attempt > 0)) {
+                return null;
+            }
+
+            $response = $this->execApiCommand(API_COMMAND_PAY);
+            if ($response === false || $response === null) {
+                return null;
+            }
+
+            if (isset($response->success) && (int)$response->success === 1) {
+                return $response;
+            }
+
+            hd_debug_print("payment_qr error response: " . json_encode($response), true);
+            if (!isset($response->error) || $response->error !== 'incorrect') {
+                return null;
+            }
+        }
+
+        return null;
+    }
 
     /**
      * Request the account info by the current session and store the playlist token from it

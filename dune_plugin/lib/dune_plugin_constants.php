@@ -219,6 +219,7 @@ const PARAM_CACHE = 'cache';
 const PARAM_CACHE_DIR = 'cache_dir';
 const PARAM_PL_TYPE = 'playlist_type';
 const PARAM_VOD_DEFAULT_QUALITY = 'quality';
+const PARAM_VOD_CATEGORY_MODE = 'vod_category_mode';
 const PARAM_FORCE_HTTP = 'force_http';
 const PARAM_REPLACE_ICON = 'replace_playlist_icon';
 const PARAMS_XMLTV = 'xmltv_params';
