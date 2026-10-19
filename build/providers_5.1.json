@@ -1113,12 +1113,29 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_rutv.png",
       "provider_url": "https://rutv.vip/",
-      "api_url": "http://pl.ru-tv.site",
       "api_commands": {
-        "get_playlist": "{API}/{LOGIN}/{PASSWORD}/tv.m3u",
-        "get_vod": "{API}/{LOGIN}/{PASSWORD}/vod.m3u"
+        "get_playlist": "http://pl.{DOMAIN_ID}/{LOGIN}/{PASSWORD}/tv.m3u",
+        "get_vod": "http://pl.{DOMAIN_ID}/{LOGIN}/{PASSWORD}/{VOD_PLAYLIST_ID}.m3u"
       },
       "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/(?:video\\.m3u8|mpegts)\\?token=(?<token>.+)$/",
+        "epg_presets": [
+          {
+            "name": "proiptv",
+            "alias": "rutv"
+          }
+        ],
+        "ext_params": true,
+        "domains": {
+          "ru-tv.site": "Europe",
+          "myrutv.ru": "Russia",
+          "ru-tv.vip": "USA"
+        },
+        "vod_playlists": {
+          "vod": "Default",
+          "vodall": "With Adult",
+          "series": "Serials"
+        },
         "vod_parser": "/^(?<title>[^\\/]+)\\s\\((?:(?<country>.+)\\s)?(?<year>\\d+)\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }

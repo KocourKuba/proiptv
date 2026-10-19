@@ -81,6 +81,7 @@ stream = Тип потока:
 server = Сервер:
 quality = Качество:
 playlist = Плейлист:
+vod_playlist = Плейлист Медиатеки:
 subscription = Подписка
 add_money = Пополнить баланс
 archive_support = Поддержка архивов:

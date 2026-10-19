@@ -81,6 +81,7 @@ stream = Stream-Typ:
 server = Server:
 quality = Qualität:
 playlist = Wiedergabeliste:
+vod_playlist = VOD-Wiedergabeliste:
 subscription = Abonnement
 add_money = Geld hinzufügen
 archive_support = Archivunterstützung:

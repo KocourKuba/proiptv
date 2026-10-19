@@ -81,6 +81,7 @@ stream = Stream type:
 server = Server:
 quality = Quality:
 playlist = Playlist:
+vod_playlist = VOD playlist:
 subscription = Subscription
 add_money = Add money
 archive_support = Archive support:

@@ -904,6 +904,28 @@ class api_default
         return $id;
     }
 
+    /**
+     * Add provider specific controls to the extended setup dialog
+     *
+     * @param array $defs
+     * @param User_Input_Handler $handler
+     * @return void
+     */
+    protected function add_ext_setup_controls(&$defs, $handler)
+    {
+    }
+
+    /**
+     * Apply provider specific controls of the extended setup dialog
+     *
+     * @param Object $user_input
+     * @return bool true if credentials changed
+     */
+    protected function apply_ext_setup_controls($user_input)
+    {
+        return false;
+    }
+
     protected function check_control_parameters($user_input, $param, $param_settings)
     {
         return (isset($user_input->{$param})
@@ -1080,6 +1102,8 @@ class api_default
                 Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
+        $this->add_ext_setup_controls($defs, $handler);
+
         if (!empty($defs)) {
             Control_Factory::add_vgap($defs, 50);
 
@@ -1139,6 +1163,10 @@ class api_default
             $changed = true;
         }
 
+        if ($this->apply_ext_setup_controls($user_input)) {
+            $changed = true;
+        }
+
         hd_debug_print("ApplyExtSetupUI compiled provider info: " . pretty_json_format($this->playlist_info), true);
 
         if ($changed) {
@@ -1146,6 +1174,12 @@ class api_default
             $this->plugin->get_playlists()->set($playlist_id, $this->playlist_info);
             $this->plugin->save_parameters(true);
             $this->plugin->clear_playlist_cache($playlist_id);
+
+            // vod playlist url can depend on the changed parameters too
+            $vod_cache = $this->plugin->get_active_playlist_cache(false);
+            if (file_exists($vod_cache)) {
+                unlink($vod_cache);
+            }
         }
 
         if (!empty($error_message)) {
