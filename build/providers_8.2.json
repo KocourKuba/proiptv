@@ -1014,7 +1014,7 @@
       }
     },
     {
-      "enable": true,
+      "enable": false,
       "id": "kineskop",
       "name": "Kineskop Club",
       "type": "login",

@@ -172,12 +172,6 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8\\?.+$/",
-        "epg_presets": [
-          {
-            "name": "iptvx.one",
-            "alias": "iptvx.one"
-          }
-        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
         "xmltv_sources": [
           "http://only4.tv/epg/epg.xml.gz",
@@ -550,9 +544,6 @@
         "epg_presets": [
           {
             "name": "proiptv"
-          },
-          {
-            "name": "iptvx.one"
           }
         ],
         "ext_params": true,
@@ -681,12 +672,6 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
-        "epg_presets": [
-          {
-            "name": "iptvx.one",
-            "alias": "iptvx.one"
-          }
-        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -759,7 +744,7 @@
       }
     },
     {
-      "enable": true,
+      "enable": false,
       "id": "kineskop",
       "name": "Kineskop Club",
       "type": "login",
@@ -923,12 +908,6 @@
         "get_vod": "{API}/mediateka/{PASSWORD}/m3u8/playlist.m3u8"
       },
       "config": {
-        "epg_presets": [
-          {
-            "name": "iptvx.one",
-            "alias": "iptvx.one"
-          }
-        ],
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8?\\?(?<token>.+)$/",
         "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<year>\\d+)\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -1175,12 +1154,6 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+?token=(?<token>.+)$/",
-        "epg_presets": [
-          {
-            "name": "iptvx.one",
-            "alias": "iptvx.one"
-          }
-        ],
         "url_subst": {
           "regex": "/^(.+\\/\\/).+(\\/[^\\/]+\\/[^\\/]+\\/.+)$/",
           "replace": "$1{SERVER_ID}$2"
@@ -1440,7 +1413,15 @@
         "epg_presets": [
           {
             "name": "proiptv",
+            "alias": "tvboom"
+          },
+          {
+            "name": "proiptv",
             "alias": "gabbarit"
+          },
+          {
+            "name": "proiptv",
+            "alias": "edem"
           }
         ],
         "playlists": {

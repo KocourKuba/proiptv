@@ -910,7 +910,7 @@
       }
     },
     {
-      "enable": true,
+      "enable": false,
       "id": "kineskop",
       "name": "Kineskop Club",
       "type": "login",
@@ -1744,7 +1744,15 @@
         "epg_presets": [
           {
             "name": "proiptv",
+            "alias": "tvboom"
+          },
+          {
+            "name": "proiptv",
             "alias": "gabbarit"
+          },
+          {
+            "name": "proiptv",
+            "alias": "edem"
           }
         ],
         "playlists": {
