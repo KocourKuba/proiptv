@@ -376,6 +376,7 @@ const PARAM_GROUP_ID = 'group_id';
 const PARAM_GROUPS_ICONS = 'groups_icons';
 const PARAM_GROUPS_ORDER = 'groups_order';
 const PARAM_HASH = 'hash';
+const PARAM_HIDE_ALL_IN_PLAYER = 'hide_all_in_player';
 const PARAM_ID_MAPPER = 'id_mapper';
 const PARAM_INDEXING_FLAG = 'index_all';
 const PARAM_INTERNAL_EPG_IDX = 'epg_idx';

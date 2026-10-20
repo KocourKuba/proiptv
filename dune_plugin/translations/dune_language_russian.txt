@@ -381,6 +381,7 @@ setup_ext_epg = Показывать Расширенный EPG
 setup_extended_setup = Дополнительные настройки
 setup_folder_settings = Настройки папок плагина
 setup_group_font = Шрифт Категорий/Каналов
+setup_hide_all_channels_player = Скрывать "Все каналы" в плеере
 setup_history_folder_path = Папка информации о просмотре
 setup_icons_in_row = Количество иконок в ряду
 setup_interface_newui_title = Настройки интерфейса NewUI

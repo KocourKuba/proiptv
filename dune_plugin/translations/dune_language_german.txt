@@ -381,6 +381,7 @@ setup_ext_epg = Erweitertes EPG anzeigen
 setup_extended_setup = Zusätzliche Parameter
 setup_folder_settings = Einstellungen für Plugin-Ordner
 setup_group_font = Gruppen/Kanäle Schriftgröße
+setup_hide_all_channels_player = Kategorie „Alle Kanäle“ im Player ausblenden
 setup_history_folder_path = Infoordner zur Geschichte
 setup_icons_in_row = Symbole in Reihe
 setup_interface_newui_title = NewUI-Schnittstelleneinstellungen

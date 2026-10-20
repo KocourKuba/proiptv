@@ -236,7 +236,8 @@ class Starnet_Tv implements User_Input_Handler
         $buffering = $this->plugin->get_setting(PARAM_BUFFERING_TIME, 1000);
         $archive_delay = $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60);
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD);
-        $show_all = $this->plugin->get_bool_setting(PARAM_SHOW_ALL);
+        $show_all = $this->plugin->get_bool_setting(PARAM_SHOW_ALL)
+            && !$this->plugin->get_bool_setting(PARAM_HIDE_ALL_IN_PLAYER, false);
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
 
         Sleep_Timer::set_show_pos($this->plugin->get_parameter(PARAM_SLEEP_TIMER_POS, 'top_right'));
@@ -311,6 +312,11 @@ class Starnet_Tv implements User_Input_Handler
             $initial_is_favorite = 0;
         }
         $initial_channel_id = isset($media_url->{PARAM_CHANNEL_ID}) ? (string)$media_url->{PARAM_CHANNEL_ID} : null;
+        if (!$show_all && $initial_group_id === TV_ALL_CHANNELS_GROUP_ID && isset($all_channels[$initial_channel_id])) {
+            // 'All channels' is hidden in the player, open the channel in its own group
+            $group_ids = $all_channels[$initial_channel_id][PluginTvChannel::group_ids];
+            $initial_group_id = (string)reset($group_ids);
+        }
         $archive_tm = isset($media_url->{PARAM_ARCHIVE_TM}) ? (int)$media_url->{PARAM_ARCHIVE_TM} : -1;
 
         $show_fav = $this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES);

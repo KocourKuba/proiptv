@@ -381,6 +381,7 @@ setup_ext_epg = Show Extended EPG
 setup_extended_setup = Additional parameters
 setup_folder_settings = Plugin folders settings
 setup_group_font = Groups/Channels font size
+setup_hide_all_channels_player = Hide "All channels" in the player
 setup_history_folder_path = History info folder
 setup_icons_in_row = Icons in row
 setup_interface_newui_title = NewUI interface settings

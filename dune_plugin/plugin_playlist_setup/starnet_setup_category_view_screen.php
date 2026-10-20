@@ -77,6 +77,12 @@ class Starnet_Setup_Category_View_Screen extends Abstract_Controls_Screen
         Control_Factory::add_image_button($defs, $this, PARAM_SHOW_CLASSIC_CHANNEL_COUNT,
             TR::t('setup_show_channel_count'), SwitchOnOff::translate($show_count), SwitchOnOff::to_image($show_count));
 
+        //////////////////////////////////////
+        // Hide 'All channels' category in the player channels browser
+        $hide_all = $this->plugin->get_setting(PARAM_HIDE_ALL_IN_PLAYER, SwitchOnOff::off);
+        Control_Factory::add_image_button($defs, $this, PARAM_HIDE_ALL_IN_PLAYER,
+            TR::t('setup_hide_all_channels_player'), SwitchOnOff::translate($hide_all), SwitchOnOff::to_image($hide_all));
+
         return $defs;
     }
 
@@ -107,6 +113,10 @@ class Starnet_Setup_Category_View_Screen extends Abstract_Controls_Screen
                 $this->force_parent_reload = true;
                 $this->plugin->toggle_setting($control_id, false);
                 $this->plugin->update_ui_settings();
+                break;
+
+            case PARAM_HIDE_ALL_IN_PLAYER:
+                $this->plugin->toggle_setting($control_id, false);
                 break;
 
             case PARAM_PICONS_SOURCE:
