@@ -96,7 +96,10 @@ class Movie extends Json_Serializer implements User_Input_Handler
 
         $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
-        if (!is_limited_apk()) {
+        if (!is_limited_apk() && $this->plugin->get_bool_parameter(PARAM_SLEEP_TIMER_ENABLED)) {
+            Sleep_Timer::set_show_pos($this->plugin->get_parameter(PARAM_SLEEP_TIMER_POS, 'top_right'));
+            Sleep_Timer::set_show_time($this->plugin->get_parameter(PARAM_SLEEP_TIMER_COUNTDOWN, 120));
+            Sleep_Timer::set_timer_power($this->plugin->get_parameter(PARAM_SLEEP_TIMER_POWER, 0));
             $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER_CLEAR);
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER_ADD);
             $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SLEEP_TIMER);

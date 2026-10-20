@@ -71,7 +71,8 @@ class Sleep_Timer
      */
     public static function get_sleep_timer()
     {
-        return self::$sleep_time ? (self::$sleep_time - time()) : 0;
+        // the box may not have gone off when the script ended, never report a negative time
+        return self::$sleep_time ? max(0, self::$sleep_time - time()) : 0;
     }
 
     /**
@@ -173,9 +174,10 @@ class Sleep_Timer
             }
         }
 
-        safe_unlink(get_temp_path(self::SLEEP_TIMER_SCRIPT . '.log'));
+        $log_file = get_temp_path(self::SLEEP_TIMER_SCRIPT . '.log');
+        safe_unlink($log_file);
 
-        if ($sleep_timer_sec === 0) {
+        if ($sleep_timer_sec <= 0) {
             self::$sleep_time = 0;
             return;
         }
@@ -184,7 +186,8 @@ class Sleep_Timer
         self::$sleep_time = time() + $sleep_timer_sec;
 
         $script_file = get_install_path('bin/' . self::SLEEP_TIMER_SCRIPT . '.sh');
-        $command = "$script_file $sleep_timer_sec $type > /dev/null 2>&1 & echo $!";
+        $command = sprintf('sh %s %d %d %s %s > /dev/null 2>&1 & echo $!',
+            escapeshellarg($script_file), $sleep_timer_sec, $type, escapeshellarg($pid_file), escapeshellarg($log_file));
         $pid = (int)shell_exec($command);
         hd_debug_print("sleep_timer PID $pid");
         file_put_contents($pid_file, $pid);
