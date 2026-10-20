@@ -29,9 +29,9 @@ require_once 'lib/list_utils.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
+class Starnet_Setup_Category_View_Screen extends Abstract_Controls_Screen
 {
-    const ID = 'category_setup';
+    const ID = 'category_view_setup';
 
     const ACTION_APPLY_PICONS_SOURCE = 'apply_picons_source';
 
@@ -40,7 +40,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
     protected $force_parent_reload = false;
 
     /**
-     * interface dialog defs
+     * category settings dialog defs
      * @return array
      */
     protected function do_get_control_defs($media_url = null, &$plugin_cookies = null)
@@ -72,48 +72,6 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
         }
 
         //////////////////////////////////////
-        // show all channels category
-        $show_all = $this->plugin->get_setting(PARAM_SHOW_ALL, SwitchOnOff::on);
-        hd_debug_print("All channels group: $show_all", true);
-        Control_Factory::add_image_button($defs, $this, PARAM_SHOW_ALL,
-            TR::t('setup_show_all_channels'), SwitchOnOff::translate($show_all), SwitchOnOff::to_image($show_all));
-
-        //////////////////////////////////////
-        // show favorites category
-        $show_fav = $this->plugin->get_setting(PARAM_SHOW_FAVORITES, SwitchOnOff::on);
-        hd_debug_print("Favorites group: $show_fav", true);
-        Control_Factory::add_image_button($defs, $this, PARAM_SHOW_FAVORITES,
-            TR::t('setup_show_favorites'), SwitchOnOff::translate($show_fav), SwitchOnOff::to_image($show_fav));
-
-        //////////////////////////////////////
-        // show history category
-        $show_history = $this->plugin->get_setting(PARAM_SHOW_HISTORY, SwitchOnOff::on);
-        hd_debug_print("History group: $show_history", true);
-        Control_Factory::add_image_button($defs, $this, PARAM_SHOW_HISTORY,
-            TR::t('setup_show_history'), SwitchOnOff::translate($show_history), SwitchOnOff::to_image($show_history));
-
-        //////////////////////////////////////
-        // show changed channels category
-        $show_changed = $this->plugin->get_setting(PARAM_SHOW_CHANGED_CHANNELS, SwitchOnOff::on);
-        hd_debug_print("Changed group: $show_changed", true);
-        Control_Factory::add_image_button($defs, $this, PARAM_SHOW_CHANGED_CHANNELS,
-            TR::t('setup_show_changed_channels'), SwitchOnOff::translate($show_changed), SwitchOnOff::to_image($show_changed));
-
-        //////////////////////////////////////
-        // show VOD
-        $show_vod = $this->plugin->get_setting(PARAM_SHOW_VOD, SwitchOnOff::on);
-        hd_debug_print("VOD group: $show_vod", true);
-        Control_Factory::add_image_button($defs, $this, PARAM_SHOW_VOD,
-            TR::t('setup_show_vod'), SwitchOnOff::translate($show_vod), SwitchOnOff::to_image($show_vod));
-
-        //////////////////////////////////////
-        // show adult
-        $show_adult = $this->plugin->get_setting(PARAM_SHOW_ADULT, SwitchOnOff::on);
-        hd_debug_print("Adult group: $show_adult", true);
-        Control_Factory::add_image_button($defs, $this, PARAM_SHOW_ADULT,
-            TR::t('setup_show_adult'), SwitchOnOff::translate($show_adult), SwitchOnOff::to_image($show_adult));
-
-        //////////////////////////////////////
         // Show channel count
         $show_count = $this->plugin->get_setting(PARAM_SHOW_CLASSIC_CHANNEL_COUNT, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, PARAM_SHOW_CLASSIC_CHANNEL_COUNT,
@@ -143,17 +101,6 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
                     return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
                 }
                 return $post_action;
-
-            case PARAM_SHOW_ALL:
-            case PARAM_SHOW_FAVORITES:
-            case PARAM_SHOW_HISTORY:
-            case PARAM_SHOW_CHANGED_CHANNELS:
-            case PARAM_SHOW_VOD:
-            case PARAM_SHOW_ADULT:
-                $this->force_parent_reload = true;
-                $this->plugin->toggle_setting($control_id, true);
-                $this->plugin->update_ui_settings();
-                break;
 
             case PARAM_PICONS_DELAY_LOAD:
             case PARAM_SHOW_CLASSIC_CHANNEL_COUNT:

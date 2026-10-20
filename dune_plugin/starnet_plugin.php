@@ -43,7 +43,8 @@ require_once 'plugin_setup/starnet_setup_backup_screen.php';
 
 require_once 'plugin_playlist_setup/starnet_setup_interface_screen.php';
 require_once 'plugin_playlist_setup/starnet_setup_interface_newui_screen.php';
-require_once 'plugin_playlist_setup/starnet_setup_category_screen.php';
+require_once 'plugin_playlist_setup/starnet_setup_category_icons_screen.php';
+require_once 'plugin_playlist_setup/starnet_setup_category_view_screen.php';
 require_once 'plugin_playlist_setup/starnet_setup_epg_screen.php';
 require_once 'plugin_playlist_setup/starnet_setup_playback_screen.php';
 require_once 'plugin_playlist_setup/starnet_setup_provider_screen.php';
@@ -106,7 +107,8 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         // playlist setup screen
         $this->create_screen(new Starnet_Setup_Interface_Screen($this));
-        $this->create_screen(new Starnet_Setup_Category_Screen($this));
+        $this->create_screen(new Starnet_Setup_Category_Icons_Screen($this));
+        $this->create_screen(new Starnet_Setup_Category_View_Screen($this));
         $this->create_screen(new Starnet_Setup_Interface_NewUI_Screen($this));
         $this->create_screen(new Starnet_Setup_Playlist_Screen($this));
         $this->create_screen(new Starnet_Setup_Epg_Screen($this));

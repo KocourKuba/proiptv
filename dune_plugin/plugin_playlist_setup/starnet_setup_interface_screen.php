@@ -33,7 +33,8 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
 {
     const ID = 'interface_setup';
 
-    const CONTROL_EDIT_CATEGORY_SCREEN = 'edit_category_screen';
+    const CONTROL_EDIT_CATEGORY_ICONS_SCREEN = 'edit_category_icons_screen';
+    const CONTROL_EDIT_CATEGORY_VIEW_SCREEN = 'edit_category_view_screen';
     const CONTROL_EDIT_NEWUI_SETTINGS = 'edit_newui_settings';
 
     ///////////////////////////////////////////////////////////////////////
@@ -79,7 +80,12 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
         if (!$this->plugin->is_vod_playlist()) {
             //////////////////////////////////////
             // Category settings
-            Control_Factory::add_image_button($defs, $this, self::CONTROL_EDIT_CATEGORY_SCREEN, TR::t('setup_category_title'),
+            Control_Factory::add_image_button($defs, $this, self::CONTROL_EDIT_CATEGORY_ICONS_SCREEN, TR::t('setup_category_title'),
+                TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
+
+            //////////////////////////////////////
+            // Category view settings
+            Control_Factory::add_image_button($defs, $this, self::CONTROL_EDIT_CATEGORY_VIEW_SCREEN, TR::t('setup_category_view_title'),
                 TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
             if (Starnet_Epfs_Handler::$enabled) {
@@ -121,10 +127,15 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
             case GUI_EVENT_KEY_RETURN:
                 return self::make_return_action($parent_media_url, $this->force_parent_reload ? ACTION_RELOAD : ACTION_EMPTY);
 
-            case self::CONTROL_EDIT_CATEGORY_SCREEN: // show category settings dialog
+            case self::CONTROL_EDIT_CATEGORY_ICONS_SCREEN: // show category settings dialog
                 return Action_Factory::open_folder(
-                    Starnet_Setup_Category_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
+                    Starnet_Setup_Category_Icons_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
                     TR::t('setup_category_title'));
+
+            case self::CONTROL_EDIT_CATEGORY_VIEW_SCREEN: // show category view settings dialog
+                return Action_Factory::open_folder(
+                    Starnet_Setup_Category_View_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
+                    TR::t('setup_category_view_title'));
 
             case self::CONTROL_EDIT_NEWUI_SETTINGS: // show interface NewUI settings screen
                 return Action_Factory::open_folder(
