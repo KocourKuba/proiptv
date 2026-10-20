@@ -507,6 +507,7 @@ up = Вверх
 url = Ссылка:
 url__1 = Ссылка:|%s
 video_codec = Видеокодек:
+vod_categories_by__1 = Категории: %s
 vod_filter_type = Тип
 vod_filter_type_all = Все
 vod_filter_type_animation = Мультфильмы

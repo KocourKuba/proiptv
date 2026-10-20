@@ -37,7 +37,8 @@ require_once 'lib/vod/vod_standard.php';
  * Search is served by film_alt_search, which ignores page/page_size and returns up to
  * 50 results, so the search result is a single page.
  * The catalog is never fetched in bulk: film_alt_genres provides the VOD categories shown
- * in the category list (the genre ids of all sections are merged into one list).
+ * in the category list (the genre ids of all sections are merged into one list). The category
+ * list can be switched from the popup menu to the film_filter types (film, serial, animation).
  * Filters are served by film_filter (type, genre, country, year range) using the genre ids
  * from film_alt_genres and the country list from film_filter_countries.
  */
@@ -49,7 +50,16 @@ class vod_ttv extends vod_standard
     const CMD_FILM_ALT_INFO = 'film_alt_info';
     const CMD_FILM_ALT_HTTP = 'film_alt_http';
     const CMD_FILM_ALT_SEARCH = 'film_alt_search';
-    const FILM_PAGE_SIZE = 21;
+    const FILM_PAGE_SIZE = 30;
+    const CATEGORY_MODE_GENRE = 'genre';
+    const CATEGORY_MODE_TYPE = 'type';
+
+    /**
+     * film_filter types shown as categories in the type category mode
+     *
+     * @var array
+     */
+    protected static $category_types = array('film', 'serial', 'animation');
 
     /**
      * The path and exact body size (bytes) the TorrentTV app uses to probe
@@ -98,6 +108,35 @@ class vod_ttv extends vod_standard
     /**
      * @inheritDoc
      */
+    public function get_category_modes()
+    {
+        return array(
+            self::CATEGORY_MODE_GENRE => TR::t('genre'),
+            self::CATEGORY_MODE_TYPE => TR::t('vod_filter_type')
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_category_mode()
+    {
+        $mode = $this->provider->GetProviderParameter(PARAM_VOD_CATEGORY_MODE, self::CATEGORY_MODE_GENRE);
+        return $mode === self::CATEGORY_MODE_TYPE ? self::CATEGORY_MODE_TYPE : self::CATEGORY_MODE_GENRE;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function set_category_mode($mode)
+    {
+        $this->provider->SetProviderParameter(PARAM_VOD_CATEGORY_MODE, $mode);
+        $this->category_index = null;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function fetchVodCategories()
     {
         hd_debug_print(null, true);
@@ -115,6 +154,20 @@ class vod_ttv extends vod_standard
             $sections = array();
         }
 
+        // in the type mode the categories are the film_filter types with their film count,
+        // the genres are still collected for the filter
+        $by_type = $this->get_category_mode() === self::CATEGORY_MODE_TYPE;
+        if ($by_type) {
+            foreach (self::$category_types as $type) {
+                $caption = TR::load("vod_filter_type_$type");
+                $count = $this->get_type_film_count($type);
+                if ($count >= 0) {
+                    $caption .= " ($count)";
+                }
+                $this->category_index[$type] = new Vod_Category($type, $caption);
+            }
+        }
+
         // the sections (film, serial, animation) share the same genre id space,
         // so they are merged into one list. The 'All genres' entry without a
         // genre id and the '-1' favorites pseudo genre are skipped.
@@ -127,9 +180,11 @@ class vod_ttv extends vod_standard
                 $query = safe_get_value($genre, 'query', array());
                 $id = (int)safe_get_value($query, 'genre_id');
                 $name = safe_get_value($genre, 'name');
-                if ($id <= 0 || empty($name) || isset($this->category_index[(string)$id])) continue;
+                if ($id <= 0 || empty($name) || isset($genre_values[(string)$id])) continue;
 
-                $this->category_index[(string)$id] = new Vod_Category((string)$id, $name);
+                if (!$by_type) {
+                    $this->category_index[(string)$id] = new Vod_Category((string)$id, $name);
+                }
                 $genre_values[(string)$id] = $name;
             }
         }
@@ -190,11 +245,15 @@ class vod_ttv extends vod_standard
 
         // film_filter is the paginated catalog: without a genre it serves the
         // whole catalog (the type defaults to all), with genres_include it
-        // serves the genre browsing page
+        // serves the genre browsing page, with type the type browsing page
         $params = array('page' => $page, 'page_size' => self::FILM_PAGE_SIZE);
-        $genre_id = (int)$query_id;
-        if ($genre_id > 0) {
-            $params['genres_include[]'] = $genre_id;
+        if (in_array($query_id, self::$category_types, true)) {
+            $params['type'] = $query_id;
+        } else {
+            $genre_id = (int)$query_id;
+            if ($genre_id > 0) {
+                $params['genres_include[]'] = $genre_id;
+            }
         }
 
         $response = $this->make_json_request(self::CMD_FILM_FILTER, $params);
@@ -411,6 +470,25 @@ class vod_ttv extends vod_standard
     }
 
     ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * Number of films of the film_filter type: data.count of the response,
+     * one film per page keeps the response small.
+     *
+     * @param string $type
+     * @return int film count or -1 if the request failed
+     */
+    protected function get_type_film_count($type)
+    {
+        $response = $this->make_json_request(self::CMD_FILM_FILTER, array('page' => 1, 'page_size' => 1, 'type' => $type));
+        if ($response === false || (int)safe_get_value($response, 'success') !== 1) {
+            hd_debug_print("film_filter count request failed for type: $type", true);
+            return -1;
+        }
+
+        $data = safe_get_value($response, 'data', array());
+        return is_array($data) ? (int)safe_get_value($data, 'count', 0) : 0;
+    }
 
     /**
      * Normalizes the film_filter response to the common movie list shape so the

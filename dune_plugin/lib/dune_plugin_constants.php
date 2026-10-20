@@ -438,6 +438,7 @@ const PARAM_USER_CATCHUP = 'user_catchup';
 const PARAM_USER_ID = 'user_id';
 const PARAM_VALUE = 'value';
 const PARAM_VIEW_PROGRESS = 'view_progress';
+const PARAM_VOD_CATEGORY_MODE = 'vod_category_mode';
 const PARAM_VOD_IDX = 'vod_idx';
 const PARAM_VOD_LAST = 'vod_last';
 const PARAM_VOD_SELECTED_AUDIO = 'audio';

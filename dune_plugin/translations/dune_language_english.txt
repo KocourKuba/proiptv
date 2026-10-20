@@ -507,6 +507,7 @@ up = Up
 url = URL:
 url__1 = URL:|%s
 video_codec = Video codec:
+vod_categories_by__1 = Categories: %s
 vod_filter_type = Type
 vod_filter_type_all = All
 vod_filter_type_animation = Animation

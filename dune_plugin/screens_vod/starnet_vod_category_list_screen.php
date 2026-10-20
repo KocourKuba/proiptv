@@ -34,6 +34,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
     const ID = 'vod_category_list';
 
     const ACTION_VOD_PLAYLIST_SELECTED = 'vod_playlist_selected';
+    const ACTION_VOD_CATEGORY_MODE_SELECTED = 'vod_category_mode_selected';
 
     /**
      * @inheritDoc
@@ -84,6 +85,16 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 hd_debug_print("select vod playlist: " . $user_input->{LIST_IDX});
                 $provider->SetProviderParameter(PARAM_PLAYLIST_VOD_ID, $user_input->{LIST_IDX});
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+
+            case self::ACTION_VOD_CATEGORY_MODE_SELECTED:
+                if (!isset($user_input->{LIST_IDX})
+                    || $user_input->{LIST_IDX} === $this->plugin->vod->get_category_mode()) {
+                    break;
+                }
+
+                hd_debug_print("select vod category mode: " . $user_input->{LIST_IDX});
+                $this->plugin->vod->set_category_mode($user_input->{LIST_IDX});
+                return User_Input_Handler_Registry::create_action($this, ACTION_INVALIDATE);
 
             case ACTION_RELOAD:
                 hd_debug_print('reload categories');
@@ -327,6 +338,22 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                     $name,
                     (string)$key === $current ? 'check.png' : null,
                     array(LIST_IDX => (string)$key)
+                );
+            }
+
+            $menu_items[] = Control_Factory::menu_separator();
+        }
+
+        // category list modes of the vod (genres, types, ...), the current one is checked
+        $category_modes = $this->plugin->vod->get_category_modes();
+        if (count($category_modes) > 1) {
+            $current = $this->plugin->vod->get_category_mode();
+            foreach ($category_modes as $mode => $caption) {
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                    self::ACTION_VOD_CATEGORY_MODE_SELECTED,
+                    TR::t('vod_categories_by__1', $caption),
+                    (string)$mode === $current ? 'check.png' : null,
+                    array(LIST_IDX => (string)$mode)
                 );
             }
 

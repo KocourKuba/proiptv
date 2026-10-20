@@ -507,6 +507,7 @@ up = 向上
 url = 网址:
 url__1 = 网址:|%s
 video_codec = 视频编码:
+vod_categories_by__1 = 分类: %s
 vod_filter_type = 类别
 vod_filter_type_all = 全部
 vod_filter_type_animation = 动画片
