@@ -268,20 +268,26 @@ class Starnet_Tv implements User_Input_Handler
                 PluginTvGroup::icon_url => get_cached_image(safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON))
             );
 
-            $group_id_arr = array();
-            if ($show_all) {
-                $group_id_arr[TV_ALL_CHANNELS_GROUP_ID] = '';
-            }
-
             foreach ($this->plugin->get_channels_by_order($group_id, $show_adult) as $channel_row) {
                 if (empty($channel_row)) continue;
 
-                $group_id_arr[$group_id] = '';
+                $channel_id = $channel_row[COLUMN_CHANNEL_ID];
+                if (isset($all_channels[$channel_id])) {
+                    // channel already added from a previous group, add this group to it as well
+                    if (!in_array($group_id, $all_channels[$channel_id][PluginTvChannel::group_ids], true)) {
+                        $all_channels[$channel_id][PluginTvChannel::group_ids][] = $group_id;
+                    }
+                    if ($show_adult && !empty($pass_sex) && $group_row[COLUMN_ADULT]) {
+                        $all_channels[$channel_id][PluginTvChannel::is_protected] = 1;
+                    }
+                    continue;
+                }
+
                 $archive = $channel_row[COLUMN_ARCHIVE];
-                $all_channels[$channel_row[COLUMN_CHANNEL_ID]] = array(
-                    PluginTvChannel::id => $channel_row[COLUMN_CHANNEL_ID],
+                $all_channels[$channel_id] = array(
+                    PluginTvChannel::id => $channel_id,
                     PluginTvChannel::caption => $channel_row[COLUMN_SHOW_TITLE],
-                    PluginTvChannel::group_ids => array_keys($group_id_arr),
+                    PluginTvChannel::group_ids => $show_all ? array(TV_ALL_CHANNELS_GROUP_ID, $group_id) : array($group_id),
                     PluginTvChannel::icon_url => $this->plugin->get_channel_picon($channel_row, true),
                     PluginTvChannel::number => $channel_row[COLUMN_CH_NUMBER],
 
