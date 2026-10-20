@@ -671,7 +671,7 @@
       "logo": "https://iptv.proiptv.info/res/logo_glanz.png",
       "provider_url": "http://ottg.tv/",
       "api_url": "http://pl.{API_DOMAIN_ID}",
-      "vod_api_url": "http://api.{API_DOMAIN_ID}",
+      "vod_api_url": "http://api.ottg.tv",
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "api_domains": {

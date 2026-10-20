@@ -540,7 +540,7 @@
       "provider_url": "http://ottg.tv/",
       "api_commands": {
         "get_playlist": "{PLAYLIST}",
-        "get_vod": "http://api.{DOMAIN_ID}/playlist/vod?login={LOGIN}&password={PASSWORD}"
+        "get_vod": "http://api.ottg.tv/playlist/vod?login={LOGIN}&password={PASSWORD}"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
