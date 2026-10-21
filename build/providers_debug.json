@@ -1816,14 +1816,15 @@
       "provider_url": "https://ttvrun.one/",
       "api_url": "https://api.ttv.run/v3",
       "api_commands": {
-        "request_token": "{API}/auth.php?username={LOGIN}&password={PASSWORD}&application=android&guid={GUID}&typeresult=json",
-        "account_info": "{API}/userinfo.php?session={SESSION_ID}&typeresult=json",
-        "film_alt_genres": "{API}/film_alt_genres.php?session={SESSION_ID}&typeresult=json",
-        "film_filter": "{API}/film_filter.php?session={SESSION_ID}&typeresult=json",
-        "film_filter_countries": "{API}/film_filter_countries.php?session={SESSION_ID}&typeresult=json",
-        "film_alt_info": "{API}/film_alt_info.php?session={SESSION_ID}&typeresult=json",
-        "film_alt_http": "{API}/film_alt_http.php?session={SESSION_ID}&typeresult=json",
-        "film_alt_search": "{API}/film_alt_search.php?session={SESSION_ID}&typeresult=json"
+        "request_token": "{API}/auth.php?username={LOGIN}&password={PASSWORD}&application=android&guid={GUID}",
+        "account_info": "{API}/userinfo.php?session={SESSION_ID}",
+        "film_alt_genres": "{API}/film_alt_genres.php?session={SESSION_ID}",
+        "film_filter": "{API}/film_filter.php?session={SESSION_ID}",
+        "film_filter_countries": "{API}/film_filter_countries.php?session={SESSION_ID}",
+        "film_alt_info": "{API}/film_alt_info.php?session={SESSION_ID}",
+        "film_alt_http": "{API}/film_alt_http.php?session={SESSION_ID}",
+        "film_alt_search": "{API}/film_alt_search.php?session={SESSION_ID}",
+        "film_list": "{API}/film_list.php?session={SESSION_ID}"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?:.+)\\/(?<token>.+)\\/(?<id>.+)\\/(?:stream\\.m3u8)$/",

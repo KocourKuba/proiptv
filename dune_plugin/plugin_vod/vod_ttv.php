@@ -28,19 +28,6 @@ require_once 'lib/vod/vod_standard.php';
 
 /**
  * TorrentTV VOD
- *
- * The server paginates the catalog itself (21 films per page): film_filter is the paginated
- * catalog list (page/page_size with an optional genre), so the page index is the film_filter
- * page number both for the root category and for genre browsing.
- * Play URLs (HLS .m3u8) come from film_alt_http together with the season/episode info;
- * film_alt_info gives the description, ratings, genres, crew and the poster.
- * Search is served by film_alt_search, which ignores page/page_size and returns up to
- * 50 results, so the search result is a single page.
- * The catalog is never fetched in bulk: film_alt_genres provides the VOD categories shown
- * in the category list (the genre ids of all sections are merged into one list). The category
- * list can be switched from the popup menu to the film_filter types (film, serial, animation).
- * Filters are served by film_filter (type, genre, country, year range) using the genre ids
- * from film_alt_genres and the country list from film_filter_countries.
  */
 class vod_ttv extends vod_standard
 {
@@ -50,6 +37,7 @@ class vod_ttv extends vod_standard
     const CMD_FILM_ALT_INFO = 'film_alt_info';
     const CMD_FILM_ALT_HTTP = 'film_alt_http';
     const CMD_FILM_ALT_SEARCH = 'film_alt_search';
+    const CMD_FILM_LIST = 'film_list';
     const FILM_PAGE_SIZE = 30;
     const CATEGORY_MODE_GENRE = 'genre';
     const CATEGORY_MODE_TYPE = 'type';
@@ -237,23 +225,31 @@ class vod_ttv extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getMovieList: $query_id");
 
-        // the page index is the 1-based page number of the film_filter request
+        // the page index is the 1-based page number of the film_list/film_filter request
         $page = $this->get_current_page_index($query_id, 1);
         if ($page < 0) {
             return array();
         }
 
-        // film_filter is the paginated catalog: without a genre it serves the
-        // whole catalog (the type defaults to all), with genres_include it
-        // serves the genre browsing page, with type the type browsing page
         $params = array('page' => $page, 'page_size' => self::FILM_PAGE_SIZE);
-        if (in_array($query_id, self::$category_types, true)) {
-            $params['type'] = $query_id;
-        } else {
-            $genre_id = (int)$query_id;
+        $is_type = in_array($query_id, self::$category_types, true);
+        $genre_id = $is_type ? 0 : (int)$query_id;
+
+        // film_list serves the whole catalog and the genre browsing page (genre param),
+        // but ignores the type, so the type browsing page is served by film_filter
+        if (!$is_type && $this->provider->hasApiCommand(self::CMD_FILM_LIST)) {
             if ($genre_id > 0) {
-                $params['genres_include[]'] = $genre_id;
+                $params['genre'] = $genre_id;
             }
+
+            $response = $this->make_json_request(self::CMD_FILM_LIST, $params);
+            return $this->CollectQueryResult($query_id, $page, $response);
+        }
+
+        if ($is_type) {
+            $params['type'] = $query_id;
+        } else if ($genre_id > 0) {
+            $params['genres_include[]'] = $genre_id;
         }
 
         $response = $this->make_json_request(self::CMD_FILM_FILTER, $params);
@@ -273,8 +269,15 @@ class vod_ttv extends vod_standard
             return array();
         }
 
-        $response = $this->make_json_request(self::CMD_FILM_ALT_SEARCH, array('q' => $keyword), false);
-        return $this->CollectSearchResult($keyword, $page, $response);
+        if (!$this->provider->hasApiCommand(self::CMD_FILM_LIST)) {
+            $response = $this->make_json_request(self::CMD_FILM_ALT_SEARCH, array('q' => $keyword), false);
+            return $this->CollectSearchResult($keyword, $page, $response);
+        }
+
+        $response = $this->make_json_request(self::CMD_FILM_LIST, array('search' => $keyword, 'page' => $page, 'page_size' => self::FILM_PAGE_SIZE), false);
+        // film_list already has the common shape: data.films with the relative 'img' poster path
+        // and data.total_pages
+        return $this->CollectQueryResult($keyword, $page, $response);
     }
 
     /**
