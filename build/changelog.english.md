@@ -1,4 +1,11 @@
-﻿### Version 6.2.1358
+﻿### Version 6.2.1368
+- Added provider Torrent TV. TV channels, VOD (categories by type and genre, search, filters by type, genre, country and years, quality selection), account information and payment via QR code. VOD is also available for accounts without a TV subscription
+- Added provider Sharavoz.Pro
+- Fixed a bug where adding or editing an inactive provider playlist reset the authorization of the active playlist
+- Plugin version 6.2 is intended for firmware r17 - r21. On older or newer firmware a link to the plugin download page is shown
+- Plugin updates, provider configuration and resources are loaded from the new server
+
+### Version 6.2.1358
 - Fixed a bug with caching links to regular playlists
 
 ### Version 6.2.1356
