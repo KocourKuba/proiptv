@@ -125,7 +125,7 @@ class api_sharaclub extends api_default
             Control_Factory::add_vgap($defs, 20);
 
             if (file_exists($img)) {
-                HD::add_qr_code_defs($defs, $img);
+                HD::add_qr_code_defs($defs, $img, Action_Factory::SMALL_DLG_WIDTH);
             } else {
                 Control_Factory::add_smart_label($defs, "<text>" . TR::t('err_incorrect_access_data') . "</text>");
                 Control_Factory::add_vgap($defs, 50);

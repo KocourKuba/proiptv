@@ -166,6 +166,11 @@ class api_ttv extends api_default
     {
         $this->request_provider_info();
 
+        if ($this->hasApiCommand(API_COMMAND_PAY)) {
+            Control_Factory::add_button($defs, $handler, ACTION_ADD_MONEY_DLG,
+                "", TR::t('add_money'), null, 450, true);
+        }
+
         if (empty($this->account_info)) {
             return false;
         }
@@ -190,7 +195,76 @@ class api_ttv extends api_default
         return true;
     }
 
+    /**
+     * The payment_qr response contains the one-time link of the payment page and the link of its QR code image.
+     * The link carries the payment token, so the QR code is taken from the provider and never made by HD::get_qr_code().
+     *
+     * @inheritDoc
+     */
+    public function GetPayUI()
+    {
+        hd_debug_print(null, true);
+
+        try {
+            $response = $this->request_payment_qr();
+            $qr_url = safe_get_value($response, 'qr');
+
+            $img = get_temp_path('ttv_pay_qr.png');
+            if (file_exists($img)) {
+                unlink($img);
+            }
+
+            $defs = array();
+            Control_Factory::add_vgap($defs, 20);
+
+            if (!empty($qr_url) && Curl_Wrapper::getInstance()->download_file($qr_url, $img) && file_exists($img)) {
+                HD::add_qr_code_defs($defs, $img, Action_Factory::SMALL_DLG_WIDTH);
+            } else {
+                Control_Factory::add_smart_label($defs, "<text>" . TR::t('err_incorrect_access_data') . "</text>");
+                Control_Factory::add_vgap($defs, 50);
+            }
+
+            return Action_Factory::show_dialog($defs, TR::t('add_money'), Action_Factory::SMALL_DLG_WIDTH);
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
+        }
+
+        return null;
+    }
+
     ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * Request the payment link, a session rejected by the provider is requested again once
+     *
+     * @return array|null
+     */
+    protected function request_payment_qr()
+    {
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            if (!$this->request_provider_token()) {
+                return null;
+            }
+
+            $response = $this->execApiCommandResponseNoOpt(API_COMMAND_PAY);
+            if ($response === false) {
+                return null;
+            }
+
+            if ((int)safe_get_value($response, 'success') === 1) {
+                return $response;
+            }
+
+            hd_debug_print('payment_qr error response: ' . json_format_unescaped($response), true);
+            if (safe_get_value($response, 'error') !== 'incorrect') {
+                return null;
+            }
+
+            $this->plugin->remove_cookie(PARAM_SESSION_ID);
+        }
+
+        return null;
+    }
 
     /**
      * Request the account info by the current session and store the playlist token from it

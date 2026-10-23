@@ -1824,7 +1824,8 @@
         "film_alt_info": "{API}/film_alt_info.php?session={SESSION_ID}",
         "film_alt_http": "{API}/film_alt_http.php?session={SESSION_ID}",
         "film_alt_search": "{API}/film_alt_search.php?session={SESSION_ID}",
-        "film_list": "{API}/film_list.php?session={SESSION_ID}"
+        "film_list": "{API}/film_list.php?session={SESSION_ID}",
+        "pay": "{API}/payment_qr.php?session={SESSION_ID}&typeresult=json"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?:.+)\\/(?<token>.+)\\/(?<id>.+)\\/(?:stream\\.m3u8)$/",
