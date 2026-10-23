@@ -685,10 +685,13 @@ function get_parsed_firmware_ver()
     static $result = null;
 
     if (is_null($result)) {
+        $result = array();
+        // firmware version is not detected or has unknown format
         /** @var array $m */
-        preg_match_all('/^(\d*)_(\d*)_(\D*)(\d*)(.*)?$/', get_raw_firmware_version(), $m, PREG_SET_ORDER);
-        $m[0][5] = ltrim($m[0][5], '_');
-        $result = array_combine(array('string', 'build_date', 'build_number', 'rev_literal', 'rev_number', 'features'), $m[0]);
+        if (preg_match('/^(\d*)_(\d*)_(\D*)(\d*)(.*)$/', get_raw_firmware_version(), $m)) {
+            $m[5] = ltrim($m[5], '_');
+            $result = array_combine(array('string', 'build_date', 'build_number', 'rev_literal', 'rev_number', 'features'), $m);
+        }
     }
 
     return is_array($result) ? $result : array();
@@ -1857,16 +1860,6 @@ function get_local_storages_list($path)
 ###############################################################################
 # Miscellaneous
 ###############################################################################
-
-function is_r22_or_higher()
-{
-    return safe_get_value(get_parsed_firmware_ver(), 'rev_number', 0) > 21;
-}
-
-function is_r24_or_higher()
-{
-    return safe_get_value(get_parsed_firmware_ver(), 'rev_number', 0) > 22;
-}
 
 function is_ext_epg_supported()
 {

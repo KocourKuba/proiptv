@@ -49,7 +49,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_CALL_SEND_LOG = 'call_send_log';
     const ACTION_CALL_CLEAR_EPG = 'call_clear_epg';
     const ACTION_CONFIRM_BACKUP_DLG = 'create_backup';
-    const OLD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0di9yZWxlYXNlcy9kb3dubG9hZC81LjEuOTYyL2R1bmVfcGx1Z2luX3Byb2lwdHYuNS4xLjk2Mi56aXA=";
+    const MIN_FIRMWARE_REV = 17;
+    const MAX_FIRMWARE_REV = 21;
+    const DOWNLOAD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0dg==";
 
     private $plugin;
 
@@ -82,14 +84,25 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         hd_debug_print("user input control: $user_input->control_id", true);
 
-        if (!is_r22_or_higher()) {
+        // this plugin version is for firmware r17 - r21, newer firmware is served by the current plugin version.
+        // Only release firmware (r<number>) can be checked: beta (b<number>) builds have own numbering
+        // and firmware version can be not detected. Such firmware is allowed, SQLite3 check below still applies.
+        $firmware = get_parsed_firmware_ver();
+        $rev_literal = safe_get_value($firmware, 'rev_literal', '');
+        $rev_number = safe_get_value($firmware, 'rev_number', '');
+        if ($rev_literal !== 'r' || $rev_number === '') {
+            hd_debug_print("Firmware revision can't be checked: " . get_raw_firmware_version());
+        } else if ((int)$rev_number < self::MIN_FIRMWARE_REV) {
             hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
-            return $this->show_old_player(TR::t('err_too_old_player'));
+            return $this->show_unsupported_firmware(TR::t('err_too_old_player'), self::DOWNLOAD_LINK);
+        } else if ((int)$rev_number > self::MAX_FIRMWARE_REV) {
+            hd_debug_print("Too new Dune HD firmware! " . get_raw_firmware_version());
+            return $this->show_unsupported_firmware(TR::t('err_too_new_player'), self::DOWNLOAD_LINK);
         }
 
         if (!class_exists('SQLite3')) {
             hd_debug_print("No SQLite3 support! " . get_raw_firmware_version());
-            return $this->show_old_player(TR::t('err_no_sqlite'));
+            return $this->show_unsupported_firmware(TR::t('err_no_sqlite'), self::DOWNLOAD_LINK);
         }
 
         switch ($user_input->control_id) {
@@ -145,7 +158,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 return $this->open_xmltv_screen();
 
             case self::ACTION_CALL_SEND_LOG:
-                if (!is_r22_or_higher()) {
+                if (!class_exists('ZipArchive')) {
                     return Action_Factory::show_title_dialog(TR::t('entry_send_log'), null, TR::t('entry_log_not_sent_too_old'));
                 }
 
@@ -414,9 +427,14 @@ class Starnet_Entry_Handler implements User_Input_Handler
         return null;
     }
 
-    private function show_old_player($title) {
-        $qr_code = get_temp_path("link_to_old.jpg");
-        $url = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode(base64_decode(self::OLD_LINK));
+    /**
+     * @param string $title
+     * @param string $link base64 encoded link to the plugin version for this firmware
+     * @return array
+     */
+    private function show_unsupported_firmware($title, $link) {
+        $qr_code = get_temp_path("link_to_plugin.jpg");
+        $url = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode(base64_decode($link));
         Curl_Wrapper::simple_download_file($url, $qr_code);
 
         $defs = array();

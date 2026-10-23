@@ -402,7 +402,8 @@ warn_msg3 = Unable to display subscription details.
 warn_msg5 = The movie technical information contains incorrect or missing data.\nThe movie cannot be played.
 
 err_too_old_player = Firmware of DUNE HD is too old
-err_required_firmware = r21 or higher
+err_too_new_player = This plugin version is intended for older DUNE HD firmware. Install the current version
+err_required_firmware = r17 - r21
 err_no_sqlite = SQLite3 is not supported by this firmware!
 err_load_playlist = Playlist loading error!
 err_empty_playlist = Empty or incorrect playlist!
