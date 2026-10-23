@@ -32,10 +32,6 @@ class HD
     const DUNE_PARAMS_MAGIC = "|||dune_params|||";
     const QR_CODE_SIZE = 450;
     /**
-     * @var bool
-     */
-    private static $with_rows_api;
-    /**
      * @var string
      */
     private static $default_user_agent;
@@ -66,17 +62,6 @@ class HD
             $size_suf = "GiB";
         }
         return "$size_num $size_suf";
-    }
-
-    /**
-     * @return bool
-     */
-    public static function rows_api_support()
-    {
-        if (!isset(self::$with_rows_api))
-            self::$with_rows_api = class_exists("PluginRowsFolderView");
-
-        return self::$with_rows_api;
     }
 
     /**

@@ -167,10 +167,6 @@ class Default_Dune_Plugin implements DunePlugin
      */
     protected $perf;
 
-    private $plugin_cookies;
-    private $internet_status = -2;
-    private $opexec_id = -1;
-
     ///////////////////////////////////////////////////////////////////////
 
     public function __construct()
@@ -182,43 +178,6 @@ class Default_Dune_Plugin implements DunePlugin
         $this->epg_presets = new Hashed_Array();
         $this->image_libs = new Hashed_Array();
         $this->perf = new Perf_Collector();
-    }
-
-    public function get_plugin_cookies()
-    {
-        return $this->plugin_cookies;
-    }
-
-    public function set_plugin_cookies(&$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        $this->plugin_cookies = $plugin_cookies;
-    }
-
-    public function set_plugin_cookie($name, $value)
-    {
-        hd_debug_print("set_plugin_cookie: $name = $value", true);
-        return $this->plugin_cookies->{$name} = $value;
-    }
-
-    public function get_internet_status()
-    {
-        return $this->internet_status;
-    }
-
-    public function set_internet_status($internet_status)
-    {
-        $this->internet_status = $internet_status;
-    }
-
-    public function get_opexec_id()
-    {
-        return $this->opexec_id;
-    }
-
-    public function set_opexec_id($opexec_id)
-    {
-        $this->opexec_id = $opexec_id;
     }
 
     /**

@@ -117,7 +117,6 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 if ($this->has_changes()) {
                     $this->plugin->save_orders(true);
                     $this->set_no_changes();
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 }
 
                 return $post_action;

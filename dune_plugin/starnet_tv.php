@@ -477,7 +477,7 @@ class Starnet_Tv implements User_Input_Handler
             return Action_Factory::invalidate_folders(array(), null, true);
         }
 
-        return Starnet_Epfs_Handler::epfs_invalidate_folders(
+        return Action_Factory::invalidate_folders(
             array(Starnet_Tv_Favorites_Screen::get_media_url_string(FAVORITES_GROUP_ID),
                 Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID)
             )

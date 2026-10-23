@@ -167,7 +167,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if ($this->has_changes()) {
                     $this->plugin->save_orders(true);
                     $this->set_no_changes();
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 }
 
                 return $post_action;
@@ -438,7 +437,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_RELOAD:
                 hd_debug_print("reload");
                 $this->plugin->tv->reload_channels($plugin_cookies);
-                return Starnet_Epfs_Handler::epfs_invalidate_folders(
+                return Action_Factory::invalidate_folders(
                     array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::close_and_run(
                         Action_Factory::open_folder($parent_media_url->get_media_url_str())

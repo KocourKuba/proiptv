@@ -31,7 +31,6 @@ require_once 'starnet_entry_handler.php';
 require_once 'starnet_tv_groups_screen.php';
 require_once 'starnet_playlists_setup_screen.php';
 require_once 'starnet_interface_setup_screen.php';
-require_once 'starnet_interface_newui_setup_screen.php';
 require_once 'starnet_category_setup_screen.php';
 require_once 'starnet_epg_setup_screen.php';
 require_once 'starnet_streaming_setup_screen.php';
@@ -42,7 +41,6 @@ require_once 'starnet_tv.php';
 require_once 'starnet_tv_channel_list_screen.php';
 require_once 'starnet_tv_favorites_screen.php';
 require_once 'starnet_tv_history_screen.php';
-require_once 'starnet_epfs_handler.php';
 require_once 'starnet_edit_list_screen.php';
 
 class Starnet_Plugin extends Default_Dune_Plugin
@@ -67,10 +65,6 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Setup_Screen($this));
         $return_index = 2;
         $this->create_screen(new Starnet_Interface_Setup_Screen($this, $return_index));
-        if (HD::rows_api_support()) {
-            $return_index += 2;
-            $this->create_screen(new Starnet_Interface_NewUI_Setup_Screen($this, $return_index));
-        }
         $return_index += 2;
         $this->create_screen(new Starnet_Category_Setup_Screen($this, $return_index));
         $return_index += 2;
@@ -85,8 +79,6 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Folder_Screen($this));
         $this->create_screen(new Starnet_Edit_List_Screen($this));
 
-        Starnet_Epfs_Handler::init($this);
-
         print_sysinfo();
 
         hd_debug_print_separator();
@@ -96,7 +88,6 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_print("LocalTime:           " . format_datetime('Y-m-d H:i', time()));
         hd_print("TimeZone:            " . getTimeZone());
         hd_print("Daylight:            " . date('I'));
-        hd_print("New UI support:      " . var_export(HD::rows_api_support(), true));
         hd_debug_print_separator();
 
         hd_debug_print("Plugin loading complete.");

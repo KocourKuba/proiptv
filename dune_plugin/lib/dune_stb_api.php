@@ -1696,6 +1696,25 @@ function is_newer_versions()
     return (isset($versions['rev_number']) && $versions['rev_number'] > 10);
 }
 
+/**
+ * @return int firmware revision number (0 if unknown)
+ */
+function get_firmware_revision()
+{
+    $versions = get_parsed_firmware_ver();
+
+    return isset($versions['rev_number']) ? (int)$versions['rev_number'] : 0;
+}
+
+/**
+ * Firmware r17 and newer is supported only by the newer plugin versions
+ * @return bool
+ */
+function is_too_new_firmware()
+{
+    return get_firmware_revision() > 16;
+}
+
 
 function get_active_skin_path()
 {
@@ -2218,67 +2237,6 @@ function is_assoc_array($array)
 {
     $keys = array_keys($array);
     return $keys !== array_keys($keys);
-}
-
-function register_all_known_events($handler, &$actions)
-{
-    $all_events = array(
-        GUI_EVENT_KEY_NEXT,
-        GUI_EVENT_KEY_PREV,
-        GUI_EVENT_KEY_FIP_NEXT,
-        GUI_EVENT_KEY_FIP_PREV,
-        GUI_EVENT_KEY_SETUP,
-        GUI_EVENT_KEY_RETURN,
-        GUI_EVENT_KEY_SELECT,
-        GUI_EVENT_KEY_CLEAR,
-        GUI_EVENT_KEY_PAUSE,
-        GUI_EVENT_KEY_FWD,
-        GUI_EVENT_KEY_REW,
-        GUI_EVENT_KEY_SLOW,
-        GUI_EVENT_KEY_STOP,
-        GUI_EVENT_KEY_TOP_MENU,
-        GUI_EVENT_KEY_POWER,
-        GUI_EVENT_KEY_EJECT,
-        GUI_EVENT_KEY_MODE,
-        GUI_EVENT_KEY_VENDOR,
-        GUI_EVENT_KEY_SHUFFLE,
-        GUI_EVENT_KEY_MUSIC,
-        GUI_EVENT_KEY_MUTE,
-        GUI_EVENT_KEY_SEARCH,
-        GUI_EVENT_KEY_ZOOM,
-        GUI_EVENT_KEY_SUBTITLE,
-        GUI_EVENT_KEY_REPEAT,
-        GUI_EVENT_KEY_AUDIO,
-        GUI_EVENT_KEY_REC,
-        GUI_EVENT_KEY_DUNE,
-        GUI_EVENT_KEY_URL,
-        GUI_EVENT_UI_ACTION,
-        GUI_EVENT_TIMER,
-        GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE,
-        GUI_EVENT_FOLDER_LEAVE,
-        GUI_EVENT_FOLDER_ENTER,
-        GUI_EVENT_FOLDER_RETURN_BACK,
-        GUI_EVENT_PLAYBACK_USER_ACTION,
-        GUI_EVENT_PLAYBACK_STATE_CHANGED,
-        GUI_EVENT_MENU_PLAYBACK_OSD_CLOSED,
-        GUI_EVENT_MENU_PLAYBACK_OSD_GOING_TO_OPEN,
-        GUI_EVENT_MENU_PLAYBACK_FINISH,
-        GUI_EVENT_MENU_EXT_APP_FINISH,
-        GUI_EVENT_WEB_BROWSER_FINISH,
-        GUI_EVENT_GOING_TO_UPDATE,
-        GUI_EVENT_GOING_TO_STOP,
-        GUI_EVENT_TOPMENU_POPUP_MENU,
-        GUI_EVENT_GOING_TO_RELOAD_ALL_FOLDERS,
-        GUI_EVENT_FAVORITES_UPDATED,
-        GUI_EVENT_SHUTDOWN,
-    );
-
-    foreach ($all_events as $action) {
-        if (!isset($actions[$action])) {
-            hd_debug_print("register event: $action");
-            $actions[$action] = User_Input_Handler_Registry::create_action($handler, $action);
-        }
-    }
 }
 
 function dune_params_to_array($str)

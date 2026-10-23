@@ -8,12 +8,6 @@
     <version_index>0</version_index>
     <release_date>2023.08.01</release_date>
     <global_actions>
-        <boot_end>
-            <type>plugin_system</type>
-            <data>
-                <run_string>bin/update_suppliers.sh</run_string>
-            </data>
-        </boot_end>
         <install>
             <type>plugin_handle_user_input</type>
             <params>
@@ -42,23 +36,6 @@
     <params>
         <program>starnet.php</program>
     </params>
-    <embeddable_plugin_folders>
-        <enabled>yes</enabled>
-        <update_action>
-            <type>plugin_handle_user_input</type>
-            <data>
-                <show_dialog_delay>10000</show_dialog_delay>
-            </data>
-            <params>
-                <handler_id>entry_handler</handler_id>
-                <control_id>plugin_entry</control_id>
-                <action_id>update_epfs</action_id>
-            </params>
-        </update_action>
-        <mapping>
-            <tv>proiptv</tv>
-        </mapping>
-    </embeddable_plugin_folders>
     <entry_points>
         <entry_point>
             <parent_media_url>root://tv</parent_media_url>

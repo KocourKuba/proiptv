@@ -99,23 +99,6 @@ class Action_Factory
     }
 
     /**
-     * @param string $group_id
-     * @param string $channel_id
-     * @return array
-     */
-    public static function select_channel_id($group_id, $channel_id)
-    {
-        return array(
-            GuiAction::handler_string_id => PLUGIN_TV_SELECT_CHANNEL_ACTION_ID,
-            GuiAction::data => array(
-                PluginTvSelectChannelActionData::group_id => $group_id,
-                PluginTvSelectChannelActionData::channel_id => $channel_id,
-                PluginTvSelectChannelActionData::is_favorite => false
-            )
-        );
-    }
-
-    /**
      * @param bool $fatal
      * @param string $title
      * @param string|null $msg_lines
@@ -443,15 +426,7 @@ class Action_Factory
      */
     public static function invalidate_all_folders($plugin_cookies, $post_action = null)
     {
-        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-
-        if (Starnet_Epfs_Handler::$enabled) {
-            $post_invalidate = self::invalidate_folders(array(Starnet_Epfs_Handler::$epf_id), $post_action);
-        } else {
-            $post_invalidate = $post_action;
-        }
-
-        return self::invalidate_folders(array(), $post_invalidate, true);
+        return self::invalidate_folders(array(), $post_action, true);
     }
 
     /**
@@ -603,56 +578,11 @@ class Action_Factory
             exec('reboot');
         }
 
-        if (defined('CHANGE_SETTINGS_ACTION_ID')) {
-            return array(
-                GuiAction::handler_string_id => CHANGE_SETTINGS_ACTION_ID,
-                GuiAction::data => array(
-                    ChangeSettingsActionData::restart_gui => true,
-                    ChangeSettingsActionData::post_action => null
-                )
-            );
-        }
-
-        if (defined('RESTART_ACTION_ID')) {
-            return array(
-                GuiAction::handler_string_id => RESTART_ACTION_ID,
-                GuiAction::data => array(RestartActionData::reboot => false)
-            );
-        }
-
-        exec('killall shell');
-        return array();
-    }
-
-    public static function clear_rows_info_cache($post_action = null)
-    {
         return array(
-            GuiAction::handler_string_id => PLUGIN_UPDATE_ROWS_INFO_ACTION_ID,
+            GuiAction::handler_string_id => CHANGE_SETTINGS_ACTION_ID,
             GuiAction::data => array(
-                PluginUpdateRowsInfoActionData::clear_cache => true,
-                PluginUpdateRowsInfoActionData::post_action => $post_action
-            )
-        );
-    }
-
-    public static function update_rows_info($folder_key, $item_id, $info_defs,
-                                            $bg_url = null, $nl_bg_url = null, $mask_url = null, $playback_urls = null, $post_action = null)
-    {
-        $info = array(
-            PluginRowsInfo::folder_key => $folder_key,
-            PluginRowsInfo::item_id => $item_id,
-            PluginRowsInfo::info_defs => $info_defs,
-            PluginRowsInfo::bg_url => $bg_url,
-            PluginRowsInfo::nl_bg_url => $nl_bg_url,
-            PluginRowsInfo::mask_url => $mask_url,
-            PluginRowsInfo::playback_urls => $playback_urls
-        );
-
-        return array(
-            GuiAction::handler_string_id => PLUGIN_UPDATE_ROWS_INFO_ACTION_ID,
-            GuiAction::data => array(
-                PluginUpdateRowsInfoActionData::info => $info,
-                PluginUpdateRowsInfoActionData::post_action => $post_action
+                ChangeSettingsActionData::restart_gui => true,
+                ChangeSettingsActionData::post_action => null
             )
         );
     }

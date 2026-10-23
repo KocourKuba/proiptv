@@ -130,9 +130,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:
-                if ($this->save_if_changed()) {
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                }
+                $this->save_if_changed();
 
                 $has_error = HD::get_last_error();
                 if (empty($has_error)) {

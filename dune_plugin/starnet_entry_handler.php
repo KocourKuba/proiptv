@@ -34,7 +34,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_LAUNCH = 'launch';
     const ACTION_LAUNCH_VOD = 'launch_vod';
     const ACTION_AUTO_RESUME = 'auto_resume';
-    const ACTION_UPDATE_EPFS = 'update_epfs';
     const ACTION_INSTALL = 'install';
     const ACTION_UNINSTALL = 'uninstall';
     const ACTION_UPDATE = 'update';
@@ -139,12 +138,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 $this->plugin->init_plugin();
                 $this->plugin->init_epg_manager();
                 $this->plugin->safe_clear_selected_epg_cache();
-                $action = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
-                if (HD::rows_api_support()) {
-                    $action = Action_Factory::clear_rows_info_cache($action);
-                }
-
-                return $action;
+                return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
 
             case self::ACTION_PLUGIN_ENTRY:
                 if (!isset($user_input->action_id)) {
@@ -255,12 +249,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                         hd_debug_print("auto resume channel not exist. action: launch open", true);
                         return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
-
-                    case self::ACTION_UPDATE_EPFS:
-                        $this->plugin->init_plugin();
-                        $this->plugin->tv->load_channels($plugin_cookies);
-                        return Starnet_Epfs_Handler::update_all_epfs($plugin_cookies,
-                            isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep));
 
                     case self::ACTION_INSTALL:
                     case self::ACTION_UPDATE:

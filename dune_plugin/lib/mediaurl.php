@@ -30,7 +30,6 @@ require_once 'json_serializer.php';
  * @property string|null $screen_id // Screen ID, used to find screen handler
  * @property string|null $channel_id // Channel ID
  * @property string|null $group_id // Group ID
- * @property string|null $row_id // row id (used in NewUI)
  * @property string|null $source_window_id // Window ID called this screen
  * @property string|null $source_media_url_str // Media Url string of window called this screen
  * @property string|null $save_data // parameter used to save data
