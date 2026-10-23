@@ -891,8 +891,11 @@ class api_default
         }
 
         $this->plugin->clear_playlist_cache($this->playlist_id);
-        $this->plugin->remove_cookie(PARAM_TOKEN);
-        $this->plugin->remove_cookie(PARAM_REFRESH_TOKEN);
+        // cookies are stored in the database of the active playlist, cookies of other playlist must not be removed
+        if ($this->is_playlist_db_attached()) {
+            $this->plugin->remove_cookie(PARAM_TOKEN);
+            $this->plugin->remove_cookie(PARAM_REFRESH_TOKEN);
+        }
 
         if (!$this->request_provider_token(true)) {
             hd_debug_print("Can't get provider token");
@@ -900,6 +903,21 @@ class api_default
         }
 
         return $this->playlist_id;
+    }
+
+    /**
+     * Check if the database of this playlist is attached. Cookies are stored in the attached playlist database
+     *
+     * @return bool
+     */
+    protected function is_playlist_db_attached()
+    {
+        if (empty($this->playlist_id)) {
+            return false;
+        }
+
+        $sql_playlist = $this->plugin->get_sql_playlist();
+        return $sql_playlist !== null && $sql_playlist->is_database_attached('main', get_data_path("$this->playlist_id.db")) === 2;
     }
 
     /**

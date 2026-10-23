@@ -53,6 +53,7 @@ class vod_ttv extends vod_standard
      */
     const CHECK_PATH = '/ok.jpg';
     const CHECK_SIZE = 86998;
+    const COOKIE_POSTER_DOMAIN = 'ttv_poster_domain';
 
     /**
      * film_filter types shown as categories
@@ -125,19 +126,15 @@ class vod_ttv extends vod_standard
         // sections (film, serial, animation) share the same genre ids, so they are merged into one list.
         // 'All genres' entry without genre id and '-1' favorites pseudo genre are skipped.
         $genre_values = array(-1 => TR::t('no'));
-        if (isset($response->data) && is_array($response->data)) {
-            foreach ($response->data as $section) {
-                if (!isset($section->genres) || !is_array($section->genres)) continue;
+        foreach (self::to_list(safe_get_member($response, 'data')) as $section) {
+            foreach (self::to_list(safe_get_member($section, 'genres')) as $genre) {
+                $id = isset($genre->query->genre_id) ? (int)$genre->query->genre_id : 0;
+                if ($id <= 0 || empty($genre->name) || isset($genre_values[$id])) continue;
 
-                foreach ($section->genres as $genre) {
-                    $id = isset($genre->query->genre_id) ? (int)$genre->query->genre_id : 0;
-                    if ($id <= 0 || empty($genre->name) || isset($genre_values[$id])) continue;
-
-                    $genre_values[$id] = $genre->name;
-                    $category = new Vod_Category((string)$id, $genre->name);
-                    $category_list[] = $category;
-                    $category_index[(string)$id] = $category;
-                }
+                $genre_values[$id] = $genre->name;
+                $category = new Vod_Category((string)$id, $genre->name);
+                $category_list[] = $category;
+                $category_index[(string)$id] = $category;
             }
         }
 
@@ -149,9 +146,10 @@ class vod_ttv extends vod_standard
         );
 
         $response = $this->make_json_request(self::CMD_FILM_FILTER_COUNTRIES);
-        if (isset($response->data) && is_array($response->data) && !empty($response->data)) {
+        $countries = self::to_list(safe_get_member($response, 'data'));
+        if (!empty($countries)) {
             $country_values = array(-1 => TR::t('no'));
-            foreach ($response->data as $country) {
+            foreach ($countries as $country) {
                 $country = (string)$country;
                 if (!empty($country)) {
                     $country_values[$country] = $country;
@@ -292,15 +290,20 @@ class vod_ttv extends vod_standard
         hd_debug_print($movie_id);
 
         $response = $this->make_json_request(self::CMD_FILM_ALT_HTTP, array('film_id' => $movie_id));
-        if (!isset($response->data) || !is_array($response->data) || empty($response->data)) {
+        $files = array();
+        foreach (self::to_list(safe_get_member($response, 'data')) as $file) {
+            if (!empty($file->url)) {
+                $files[] = $file;
+            }
+        }
+
+        if (empty($files)) {
             hd_debug_print("failed to load movie files: $movie_id");
             return null;
         }
 
-        $files = $response->data;
-
         $response = $this->make_json_request(self::CMD_FILM_ALT_INFO, array('film_id' => $movie_id));
-        $film = isset($response->data) ? $response->data : new stdClass();
+        $film = isset($response->data) && is_object($response->data) ? $response->data : new stdClass();
 
         $name = safe_get_member($film, 'name', '');
         $poster_url = $this->get_image_url(safe_get_member($film, 'poster', ''));
@@ -315,18 +318,25 @@ class vod_ttv extends vod_standard
             }
         }
 
+        if (empty($name)) {
+            $name = TR::load('no_title');
+        }
+
         $movie = new Movie($movie_id, $this->plugin);
 
-        $qualities = array();
         $is_serial = false;
         foreach ($files as $file) {
-            $quality = self::make_quality_name($file);
-            if (!empty($quality)) {
-                $qualities[$quality] = $quality;
-            }
-
             if (isset($file->season)) {
                 $is_serial = true;
+                break;
+            }
+        }
+
+        $qualities = array();
+        foreach ($files as $file) {
+            $quality = self::get_quality_label($file);
+            if (!empty($quality)) {
+                $qualities[$quality] = $quality;
             }
         }
 
@@ -367,8 +377,8 @@ class vod_ttv extends vod_standard
             }
         }
 
-        $genres = isset($film->genres) && is_array($film->genres) ? implode(", ", $film->genres) : '';
-        $actors = isset($film->actors) && is_array($film->actors) ? implode(", ", $film->actors) : '';
+        $genres = implode(", ", self::to_list(safe_get_member($film, 'genres')));
+        $actors = implode(", ", self::to_list(safe_get_member($film, 'actors')));
 
         $movie->set_data(
             $name,                                                  // caption,
@@ -404,12 +414,9 @@ class vod_ttv extends vod_standard
      */
     protected function CollectListResult($page_id, $page_idx, $response)
     {
-        $films = array();
-        $total_pages = 0;
-        if (isset($response->data->films) && is_array($response->data->films)) {
-            $films = $response->data->films;
-            $total_pages = isset($response->data->total_pages) ? (int)$response->data->total_pages : 0;
-        }
+        $data = safe_get_member($response, 'data');
+        $films = self::to_list(safe_get_member($data, 'films'));
+        $total_pages = (int)safe_get_member($data, 'total_pages', 0);
 
         return $this->CollectMovies($page_id, $page_idx, $films, $total_pages, 'img');
     }
@@ -424,12 +431,9 @@ class vod_ttv extends vod_standard
      */
     protected function CollectFilterResult($page_id, $page_idx, $response)
     {
-        $films = array();
-        $total_pages = 0;
-        if (isset($response->data->result) && is_array($response->data->result)) {
-            $films = $response->data->result;
-            $total_pages = isset($response->data->pages) ? (int)$response->data->pages : 0;
-        }
+        $data = safe_get_member($response, 'data');
+        $films = self::to_list(safe_get_member($data, 'result'));
+        $total_pages = (int)safe_get_member($data, 'pages', 0);
 
         return $this->CollectMovies($page_id, $page_idx, $films, $total_pages, 'poster');
     }
@@ -446,6 +450,8 @@ class vod_ttv extends vod_standard
     {
         $movies = array();
         foreach ($films as $film) {
+            if (!is_object($film)) continue;
+
             $name = empty($film->rus_name) ? safe_get_member($film, 'name') : $film->rus_name;
             if (empty($film->id) || empty($name)) continue;
 
@@ -496,21 +502,30 @@ class vod_ttv extends vod_standard
      * Select the first poster host that returns the check file.
      * Plain http is tried first: the posters are loaded by the firmware image loader
      * that can't verify the certificates of these hosts.
+     * The result is cached in the playlist cookies to not probe the hosts on every VOD start,
+     * the fallback host is cached for a shorter time.
      *
      * @return string
      */
     protected function resolve_poster_domain()
     {
+        $poster_domain = $this->plugin->get_cookie(self::COOKIE_POSTER_DOMAIN, true);
+        if (!empty($poster_domain)) {
+            hd_debug_print("cached poster host: $poster_domain", true);
+            return $poster_domain;
+        }
+
         $curl_wrapper = Curl_Wrapper::getInstance();
         foreach (array('http', 'https') as $scheme) {
             foreach (self::$image_domains as $domain) {
                 $poster_domain = "$scheme://mdb.$domain";
                 $curl_wrapper->reset();
-                $curl_wrapper->set_connection_timeout(3);
-                $curl_wrapper->set_download_timeout(5);
+                $curl_wrapper->set_connection_timeout(2);
+                $curl_wrapper->set_download_timeout(4);
                 $content = $curl_wrapper->download_content($poster_domain . self::CHECK_PATH);
                 if ($content !== false && strlen($content) === self::CHECK_SIZE) {
                     hd_debug_print("poster host: $poster_domain");
+                    $this->plugin->set_cookie(self::COOKIE_POSTER_DOMAIN, $poster_domain, time() + 86400);
                     return $poster_domain;
                 }
             }
@@ -518,6 +533,7 @@ class vod_ttv extends vod_standard
 
         $poster_domain = 'http://mdb.' . self::$image_domains[0];
         hd_debug_print("poster hosts are not reachable, use default: $poster_domain");
+        $this->plugin->set_cookie(self::COOKIE_POSTER_DOMAIN, $poster_domain, time() + 3600);
         return $poster_domain;
     }
 
@@ -529,23 +545,65 @@ class vod_ttv extends vod_standard
      */
     protected static function add_qualities($movie_serie, $id, $files)
     {
-        foreach ($files as $file) {
-            $quality = self::make_quality_name($file);
-            if (!empty($quality)) {
-                $movie_serie->qualities[$quality] = new Movie_Variant("{$id}_$quality", $quality, $file->url);
-            }
+        foreach (self::make_quality_names($files) as $idx => $quality) {
+            $movie_serie->qualities[$quality] = new Movie_Variant("{$id}_$idx", $quality, $files[$idx]->url);
         }
     }
 
     /**
-     * Quality name of the file: 'BDRIP 1080P'
+     * Unique quality names of the files: 'BDRIP 1080P', 'BDRIP 1080P (2)'.
+     * File without quality information is named by its number: '#3'
+     *
+     * @param array $files
+     * @return array file index => quality name
+     */
+    protected static function make_quality_names($files)
+    {
+        $names = array();
+        $used = array();
+        foreach ($files as $idx => $file) {
+            $name = self::get_quality_label($file);
+            if (empty($name)) {
+                $name = '#' . ($idx + 1);
+            }
+
+            if (isset($used[$name])) {
+                $used[$name]++;
+                $name .= " ($used[$name])";
+            } else {
+                $used[$name] = 1;
+            }
+
+            $names[$idx] = $name;
+        }
+
+        return $names;
+    }
+
+    /**
+     * Quality label of the file: 'BDRIP 1080P'
      *
      * @param object $file
      * @return string
      */
-    protected static function make_quality_name($file)
+    protected static function get_quality_label($file)
     {
         return trim(strtoupper(safe_get_member($file, 'quality', '') . ' ' . safe_get_member($file, 'hd_standard', '')));
+    }
+
+    /**
+     * Provider can send the list as JSON array or as JSON object
+     *
+     * @param mixed $value
+     * @return array
+     */
+    protected static function to_list($value)
+    {
+        if (is_array($value) || is_object($value)) {
+            return array_values((array)$value);
+        }
+
+        return array();
     }
 
     /**
@@ -558,19 +616,19 @@ class vod_ttv extends vod_standard
      */
     protected static function get_person_names($film, $stems)
     {
-        if (!isset($film->persons)) {
+        if (!isset($film->persons) || !is_object($film->persons)) {
             return '';
         }
 
         foreach ((array)$film->persons as $role => $group) {
-            if (!is_array($group)) continue;
-
             $role = str_replace('ё', 'е', mb_strtolower((string)$role, 'UTF-8'));
             foreach ($stems as $stem) {
                 if (strpos($role, $stem) === false) continue;
 
                 $names = array();
-                foreach ($group as $person) {
+                foreach (self::to_list($group) as $person) {
+                    if (!is_object($person)) continue;
+
                     $name = empty($person->rus_name) ? safe_get_member($person, 'orig_name') : $person->rus_name;
                     if (!empty($name)) {
                         $names[] = $name;
