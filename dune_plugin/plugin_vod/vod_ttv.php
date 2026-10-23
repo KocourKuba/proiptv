@@ -300,6 +300,19 @@ class vod_ttv extends vod_standard
         }
 
         $params = array('page' => $page, 'page_size' => self::FILM_PAGE_SIZE);
+
+        // a genre-only filter is served by film_list like the genre category: it returns
+        // all films of the genre. film_list ignores type, country and years, so any other
+        // filter is served by film_filter
+        $type = safe_get_value($filter_params, 'type', 'all');
+        if (isset($filter_params['genre']) && $type === 'all'
+            && !isset($filter_params['country']) && !isset($filter_params['from']) && !isset($filter_params['to'])
+            && $this->provider->hasApiCommand(self::CMD_FILM_LIST)) {
+            $params['genre'] = (int)$filter_params['genre'];
+            $response = $this->make_json_request(self::CMD_FILM_LIST, $params);
+            return $this->CollectQueryResult($query_id, $page, $response);
+        }
+
         if (isset($filter_params['type'])) {
             $params['type'] = $filter_params['type'];
         }
