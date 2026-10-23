@@ -53,7 +53,7 @@ require_once 'starnet_setup_backup_screen.php';
 
 class Starnet_Plugin extends Default_Dune_Plugin
 {
-    const CONFIG_URL = 'http://iptv.esalecrm.net/config/providers';
+    const CONFIG_URL = 'http://iptv.proiptv.info/config/providers';
 
     /**
      * @throws Exception

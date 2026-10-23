@@ -40,7 +40,7 @@ require_once 'lib/smb_tree.php';
 
 class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlugin
 {
-    const ARCHIVE_URL_PREFIX = 'http://iptv.esalecrm.net/res';
+    const ARCHIVE_URL_PREFIX = 'http://iptv.proiptv.info/res';
     const ARCHIVE_ID = 'common';
     const PARSE_CONFIG = "%s_parse_config.json";
 
