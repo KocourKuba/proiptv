@@ -1066,6 +1066,44 @@ function get_shell_setting($setting)
     return isset($settings[$setting]) ? $settings[$setting] : '';
 }
 
+/**
+ * Language of the system interface
+ *
+ * @return string
+ */
+function get_system_language()
+{
+    $lang = get_shell_setting('interface_language');
+    return empty($lang) ? 'english' : $lang;
+}
+
+/**
+ * Split a 'key = value' translation file into a lookup map.
+ * The first line that declares a key wins and values are trimmed.
+ *
+ * @param string $lang_txt
+ * @return array
+ */
+function parse_translations($lang_txt)
+{
+    $map = array();
+    if ($lang_txt === '') {
+        return $map;
+    }
+
+    foreach (explode("\n", $lang_txt) as $line) {
+        $pos = strpos($line, '=');
+        if ($pos === false) continue;
+
+        $key = rtrim(substr($line, 0, $pos));
+        if ($key === '' || isset($map[$key])) continue;
+
+        $map[$key] = trim(substr($line, $pos + 1));
+    }
+
+    return $map;
+}
+
 ###############################################################################
 # Playback controls
 ###############################################################################

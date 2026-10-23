@@ -139,7 +139,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
         static $history_txt;
 
-        $lang = strtolower(TR::get_current_language());
+        $lang = strtolower(get_system_language());
         if (empty($history_txt)) {
             if ($lang !== 'russian' && $lang !== 'english') {
                 $lang = 'english';

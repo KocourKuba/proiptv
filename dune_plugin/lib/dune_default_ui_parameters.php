@@ -259,7 +259,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     {
         static $history_txt;
 
-        $lang = strtolower(TR::get_current_language());
+        $lang = strtolower(get_system_language());
         if (empty($history_txt)) {
             $doc = Curl_Wrapper::simple_download_content(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
             if ($doc === false) {

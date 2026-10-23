@@ -25,13 +25,16 @@
 
 class TR
 {
+    /**
+     * @return string
+     */
     public static function t()
     {
         $num_args = func_num_args();
         $arg_list = func_get_args();
         if ($num_args > 1) {
             $params = '';
-            for ($i = 1; $i < $num_args; $i++) {
+            for ($i = 1; $i < $num_args; ++$i) {
                 $params .= "<p>" . self::strip_param($arg_list[$i]) . "</p>";
             }
             $str = "%ext%<key_local>$arg_list[0]$params</key_local>";
@@ -45,6 +48,7 @@ class TR
 
     /**
      * @param string $key
+     * @return string
      */
     public static function g($key)
     {
@@ -52,7 +56,7 @@ class TR
         $arg_list = func_get_args();
         if ($num_args > 1) {
             $params = '';
-            for ($i = 1; $i < $num_args; $i++) {
+            for ($i = 1; $i < $num_args; ++$i) {
                 $params .= "<p>" . self::strip_param($arg_list[$i]) . "</p>";
             }
             $str = "%ext%<key_global>$arg_list[0]$params</key_global>";
@@ -66,26 +70,73 @@ class TR
     }
 
     /**
-     * @param string $string_key
+     * Load translation by key and format it if additional arguments passed as parameters
+     *
+     * @param string $string_key can be as format
      * @return string constant in the system language by key
      */
     public static function load($string_key)
     {
-        $lang_file = self::get_translation_filename(self::get_current_language());
+        static $lang_file = '';
         if (empty($lang_file)) {
-            return '';
+            $lang_file = self::get_translation_filename(get_system_language());
+            if (empty($lang_file)) {
+                hd_debug_print("Error loading language file $lang_file");
+                $lang_file = 'x';
+            }
         }
 
-        /** @var array $m */
-        if (($lang_txt = file_get_contents($lang_file)) && preg_match("/^$string_key\\s*=(.*)$/m", $lang_txt, $m)) {
+        static $lang_map = null;
+        if ($lang_map === null) {
+            $lang_txt = file_get_contents($lang_file);
+            if (empty($lang_txt)) {
+                hd_debug_print("Error loading language file $lang_file");
+                $lang_txt = '';
+            } else {
+                hd_debug_print("Loaded language file $lang_file, size: " . strlen($lang_txt));
+            }
+            $lang_map = parse_translations($lang_txt);
+        }
+
+        if (isset($lang_map[$string_key])) {
             $args = func_get_args();
             array_shift($args);
-            return vsprintf(trim($m[1]), $args);
+            return vsprintf($lang_map[$string_key], $args);
         }
 
+        hd_debug_print("Not found value for key '$string_key' in '$lang_file'!");
         return $string_key;
     }
 
+    /**
+     * Convert internal DuneHD translation format string to translated string
+     * if format string contains arguments they must passed as parameters
+     *
+     * @param string $tr_fmt
+     * @return string
+     */
+    public static function translate($tr_fmt)
+    {
+        if (strpos($tr_fmt, '%ext%') === false && strpos($tr_fmt, '%tr%') === false) {
+            return $tr_fmt;
+        }
+
+        $xml = simplexml_load_string(self::strip_param($tr_fmt));
+        if ($xml === false) {
+            return $tr_fmt;
+        }
+
+        $args = array((string)$xml);
+        foreach ($xml->p as $p) {
+            $args[] = (string)$p;
+        }
+        return call_user_func_array(array('TR', 'load'), $args);
+    }
+
+    /**
+     * @param string $lang
+     * @return string
+     */
     protected static function get_translation_filename($lang)
     {
         $lang_file = get_install_path("translations/dune_language_$lang.txt");
@@ -93,7 +144,7 @@ class TR
             return $lang_file;
         }
 
-        $lang_file = get_install_path("translations/dune_language_english.txt");
+        $lang_file = get_install_path('translations/dune_language_english.txt');
         if (file_exists($lang_file)) {
             return $lang_file;
         }
@@ -101,19 +152,10 @@ class TR
         return '';
     }
 
-    public static function get_current_language()
-    {
-        $lang = 'english';
-        if (file_exists('/config/settings.properties')) {
-            $sys_settings = parse_ini_file('/config/settings.properties', false, INI_SCANNER_RAW);
-            if ($sys_settings !== false) {
-                $lang = $sys_settings['interface_language'];
-            }
-        }
-
-        return $lang;
-    }
-
+    /**
+     * @param string $v
+     * @return string
+     */
     private static function strip_param($v)
     {
         if (0 === strpos($v, '%tr%')) {

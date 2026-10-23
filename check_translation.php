@@ -41,7 +41,14 @@ $translation_path = "$plugin_path/translations";
 $translation_prefix = 'dune_language_';
 
 // keys that are only used through a variable (TR::t($key)) and can't be found by scanning the sources
-$dynamic_keys = array();
+$dynamic_keys = array(
+    'plugin_vod', // VOD_GROUP_CAPTION
+    'entry_force_open', // build/dune_plugin.xml.tpl
+    'entry_reboot', // build/dune_plugin.xml.tpl
+    'vod_filter_type_animation', // vod_ttv: "vod_filter_type_$type"
+    'vod_filter_type_film',
+    'vod_filter_type_serial',
+);
 
 // load translations
 $translations = array();
