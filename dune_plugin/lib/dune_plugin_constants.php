@@ -367,6 +367,7 @@ const MACRO_DOMAIN = '{DOMAIN}';
 const MACRO_EXPIRE_DATA = '{EXPIRE_DATA}';
 const MACRO_ID = '{ID}';
 const MACRO_MIRROR = '{MIRROR}';
+const MACRO_GUID = '{GUID}';
 
 const MACRO_TIMESTAMP = '{TIMESTAMP}';
 const MACRO_YEAR = '{YEAR}';
