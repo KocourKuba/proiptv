@@ -1,4 +1,12 @@
-﻿### Version 5.1.1042
+﻿### Version 5.1.1044
+- TorrentTV: the category list of the media library can be switched in the popup menu between genres and types (films, serials, animation). In the type mode each category shows the number of its films.
+- TorrentTV: a genre category of the media library and a filter by genre only now show all films of the genre. Some films of the genre were missing there.
+- TorrentTV: the media library search uses the new provider catalog search.
+- TorrentTV: the subscription info dialog has the 'Add money' button. It shows a QR code of the payment page: scan it with a phone to pay, no login is needed there. The code is valid only for a short time.
+- The plugin version 5.1 supports only firmware r11 - r16. On firmware r17 - r21 the plugin does not start and asks to use the plugin version 6.2 or to update the firmware. On firmware r22 or higher it asks to install a newer plugin version.
+- Removed the NewUI interface (channel rows on the main screen) and its settings, it is not supported by the firmware r11 - r16.
+
+### Version 5.1.1042
 - Added TorrentTV provider support (https://ttvrun.one/) with VOD (genres, search, filters, quality selection) and automatic session renewal
 - Added Sharavoz.Pro provider support (https://sharavoz.pro/) with VOD
 - ShurikTV: added subscription info
