@@ -4,7 +4,7 @@ setlocal
 set /p VERSION=<build\version.txt
 for /f "delims=" %%a in ('git log --oneline ^| find "" /v /c') do @set BUILD=%%a
 
-php -f build\make_update.php %VERSION% %BUILD% %1
+php -f build\update.php %VERSION% %BUILD% %1
 
 del dune_plugin_proiptv.zip >nul
 
@@ -29,7 +29,6 @@ git tag %VERSION%.%BUILD%
 git.exe push --force  --tags  -- "origin" master:master
 
 echo copy to Dropbox
-copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\ >nul
 copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
 copy /Y .\dune_plugin_proiptv.zip .\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
 copy /Y .\build\providers_%VERSION%.json .\providers_%VERSION%.json >nul
@@ -42,7 +41,7 @@ echo %CREDS%
   /log="%~dp0WinSCP.log" /ini=nul ^
   /command ^
     "open %CREDS%" ^
-	"cd update/current" ^
+	"cd update/mid" ^
 	"put update_proiptv.tar.gz" ^
 	"put update_proiptv.xml" ^
 	"cd ../archive" ^
