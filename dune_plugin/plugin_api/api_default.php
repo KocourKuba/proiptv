@@ -33,7 +33,7 @@ require_once 'lib/json_serializer.php';
       "id": "viplime",
       "name": "VipLime",
       "type": "pin",
-      "logo": "http://iptv.proiptv.info/res/logo_viplime.png",
+      "logo": "https://iptv.proiptv.info/res/logo_viplime.png",
       "api_commands": {
         "playlist": "http://cdntv.online/{QUALITY_ID}/{PASSWORD}/playlist.m3u8"
       },

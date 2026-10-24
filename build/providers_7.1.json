@@ -62,7 +62,7 @@
       }
     },
     "proiptv": {
-      "json_source": "http://epg.proiptv.info/{PROVIDER}/epg/{EPG_ID}.json",
+      "json_source": "https://epg.proiptv.info/{PROVIDER}/epg/{EPG_ID}.json",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
@@ -464,7 +464,7 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "http://crdtv.net/m/{PASSWORD}/crdtv.m3u"
+            "url": "https://crdtv.net/m/{PASSWORD}/crdtv.m3u"
           }
         }
       }
@@ -599,7 +599,7 @@
       "name": "Glanz",
       "type": "login",
       "logo": "https://iptv.proiptv.info/res/logo_glanz.png",
-      "provider_url": "http://ottg.tv/",
+      "provider_url": "https://ottg.tv/",
       "api_url": "http://pl.{API_DOMAIN_ID}",
       "vod_api_url": "http://api.ottg.tv",
       "config": {
@@ -661,7 +661,7 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "http://list.ipstr.im/80/{STREAM_ID}_plus/{PASSWORD}?filter=only_live"
+            "url": "https://list.ipstr.im/80/{STREAM_ID}_plus/{PASSWORD}?filter=only_live"
           }
         },
         "playlists_vod": {
@@ -962,7 +962,7 @@
         "playlists": {
           "default": {
             "name": "Default",
-            "url": "http://lightiptv.cc/playlist/hls/{PASSWORD}.m3u"
+            "url": "https://lightiptv.cc/playlist/hls/{PASSWORD}.m3u"
           }
         },
         "url_subst": {
