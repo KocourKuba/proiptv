@@ -120,28 +120,8 @@ class api_ttv extends api_default
 
         Dune_Last_Error::clear_last_error(LAST_ERROR_REQUEST);
 
-        if (empty($session_id)) {
-            $response = $this->execApiCommandResponse(API_COMMAND_REQUEST_TOKEN, array(), Curl_Wrapper::RET_ARRAY);
-            if ($response === false) {
-                Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token'));
-                return false;
-            }
-
-            $error = safe_get_value($response, 'error');
-            if ((int)safe_get_value($response, 'success') !== 1 || !empty($error)) {
-                hd_debug_print('request provider token bad response: ' . json_format_unescaped($response), true);
-                Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, $error);
-                return false;
-            }
-
-            $session_id = safe_get_value($response, 'session');
-            if (empty($session_id)) {
-                hd_debug_print('Empty session in response: ' . json_format_unescaped($response), true);
-                Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token'));
-                return false;
-            }
-
-            $this->plugin->set_cookie(PARAM_SESSION_ID, $session_id, time() + self::SESSION_LIFETIME);
+        if (empty($session_id) && !$this->request_session()) {
+            return false;
         }
 
         if (!$this->request_user_info()) {
@@ -267,11 +247,44 @@ class api_ttv extends api_default
     }
 
     /**
-     * Request the account info by the current session and store the playlist token from it
+     * Request a new session by the login/password pair and store it
      *
      * @return bool
      */
-    protected function request_user_info()
+    protected function request_session()
+    {
+        $response = $this->execApiCommandResponse(API_COMMAND_REQUEST_TOKEN, array(), Curl_Wrapper::RET_ARRAY);
+        if ($response === false) {
+            Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token'));
+            return false;
+        }
+
+        $error = safe_get_value($response, 'error');
+        if ((int)safe_get_value($response, 'success') !== 1 || !empty($error)) {
+            hd_debug_print('request provider token bad response: ' . json_format_unescaped($response), true);
+            Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, $error);
+            return false;
+        }
+
+        $session_id = safe_get_value($response, 'session');
+        if (empty($session_id)) {
+            hd_debug_print('Empty session in response: ' . json_format_unescaped($response), true);
+            Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token'));
+            return false;
+        }
+
+        $this->plugin->set_cookie(PARAM_SESSION_ID, $session_id, time() + self::SESSION_LIFETIME);
+        return true;
+    }
+
+    /**
+     * Request the account info by the current session and store the playlist token from it.
+     * A session rejected by the server is requested again once.
+     *
+     * @param bool $renew_session
+     * @return bool
+     */
+    protected function request_user_info($renew_session = true)
     {
         $response = $this->execApiCommandResponseNoOpt(API_COMMAND_ACCOUNT_INFO);
         if ($response === false) {
@@ -281,6 +294,12 @@ class api_ttv extends api_default
 
         if ((int)safe_get_value($response, 'success') !== 1) {
             hd_debug_print('request_provider_info error response: ' . json_format_unescaped($response), true);
+            if ($renew_session && safe_get_value($response, 'error') === 'incorrect') {
+                hd_debug_print('ttv session rejected, request new session', true);
+                $this->plugin->remove_cookie(PARAM_SESSION_ID);
+                $this->plugin->remove_cookie(PARAM_TOKEN);
+                return $this->request_session() && $this->request_user_info(false);
+            }
             return false;
         }
 

@@ -836,6 +836,11 @@ class vod_ttv extends vod_standard
             }
         }
 
+        // an error envelope is a valid json body, keep it out of the response cache
+        if ($cache && is_array($response) && (int)safe_get_value($response, 'success') !== 1) {
+            Curl_Wrapper::drop_last_cached_response();
+        }
+
         return $response;
     }
 }

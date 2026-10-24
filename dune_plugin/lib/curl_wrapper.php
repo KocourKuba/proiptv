@@ -109,6 +109,12 @@ class Curl_Wrapper
     private static $etag_db;
 
     /**
+     * response cache file used by the last request, empty if the request was not cached
+     * @var string
+     */
+    private static $last_cached_path = '';
+
+    /**
      * @param string $cache_subdir
      * @return void
      */
@@ -357,6 +363,21 @@ class Curl_Wrapper
     /// static functions
 
     /**
+     * Removes the cached response of the last request, for a body that turned out to be
+     * an error the caller does not want to get back from the cache
+     *
+     * @return void
+     */
+    public static function drop_last_cached_response()
+    {
+        if (!empty(self::$last_cached_path)) {
+            hd_debug_print("Drop cached response: " . self::$last_cached_path, true);
+            safe_unlink(self::$last_cached_path);
+            self::$last_cached_path = '';
+        }
+    }
+
+    /**
      * @return void
      */
     public static function init_etag_db()
@@ -500,7 +521,9 @@ class Curl_Wrapper
         $opts[CURLOPT_HTTPHEADER][] = "Pragma: no-cache";
         $parsed_url = parse_url($url);
         if (isset($parsed_url['host'])) {
-            $opts[CURLOPT_HTTPHEADER][] = "Host: {$parsed_url['host']}";
+            // a non-default port is part of Host, virtual hosts and redirects are built from it
+            $port = isset($parsed_url['port']) ? ":{$parsed_url['port']}" : '';
+            $opts[CURLOPT_HTTPHEADER][] = "Host: {$parsed_url['host']}$port";
         }
 
         if (!empty($this->send_headers)) {
@@ -540,6 +563,7 @@ class Curl_Wrapper
         }
 
         $cached_path = $this->file_cache_path . $hash;
+        self::$last_cached_path = '';
         // the response cache holds bodies, it is meaningless for a file download or a HEAD
         if (($cache_opts & self::CACHE_RESPONSE) && $mode === self::GET_CONTENT) {
             hd_debug_print("cache opts: Use cache response. Cache time: {$this->file_cache_time}h", true);
@@ -550,6 +574,7 @@ class Curl_Wrapper
                 hd_debug_print('Cache expiration time: ' . format_datetime('Y-m-d H:i', $cache_expired_in), true);
                 if ($now < $cache_expired_in) {
                     hd_debug_print("Response read from cache $cached_path", true);
+                    self::$last_cached_path = $cached_path;
                     return file_get_contents($cached_path);
                 }
                 hd_debug_print("Cache expired: $cached_path", true);
@@ -676,6 +701,7 @@ class Curl_Wrapper
         if (($cache_opts & self::CACHE_RESPONSE) && $mode === self::GET_CONTENT && !empty($content)) {
             hd_debug_print("Save response to $cached_path", true);
             file_put_contents($cached_path, $content);
+            self::$last_cached_path = $cached_path;
         }
 
         if ($mode === self::HEADERS_ONLY) {

@@ -662,7 +662,7 @@ class M3uParser extends Json_Serializer
                       FROM $table GROUP BY $value);";
             $res = $db->query_value($query);
             if ($res !== false && $res !== null) {
-                $stat[$key] = ($res > 0) ? $res - 1 : $res;
+                $stat[$key] = (int)$res;
                 hd_debug_print("Key '$key' => '$value' dupes count: $stat[$key]");
             }
         }

@@ -1771,7 +1771,7 @@ function is_teletext_mix_mode_enabled()
 {
     # Return: boolean value of teletext mix mode is turned
 
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "teletext_mix_mode" | sed -n "s/^.*teletext_enabled = /\1/p"';
+    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "teletext_mix_mode" | sed -n "s/^.*teletext_mix_mode = /\1/p"';
     return get_shell_exec($cmd) === '1';
 }
 

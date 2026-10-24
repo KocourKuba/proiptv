@@ -2627,9 +2627,11 @@ class Dune_Default_Sqlite_Engine
      * @param bool $include_adult
      * @param bool $include_hidden
      * @param bool $icons_only
+     * @param array|null $ids channel ids of a group whose order table is in the playlist settings db,
+     *                        the order table can't be joined then and the rows come unordered
      * @return string|false false when the playlist table is not attached
      */
-    protected function make_channels_by_order_query($group_id, $include_adult, $include_hidden, $icons_only)
+    protected function make_channels_by_order_query($group_id, $include_adult, $include_hidden, $icons_only, $ids = null)
     {
         if (!$this->is_attached_playlist_table_exists(M3uParser::S_CHANNELS_TABLE)) {
             return false;
@@ -2648,11 +2650,23 @@ class Dune_Default_Sqlite_Engine
                 COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_DISABLED, FALSE);
         }
 
+        $ord = ($ids === null) ? 'ord' : 'ch';
         if ($icons_only) {
-            $columns = sprintf('ord.%s, %s', COLUMN_CHANNEL_ID, self::ICON_ITEM_COLUMNS);
+            $columns = sprintf('%s.%s, %s', $ord, COLUMN_CHANNEL_ID, self::ICON_ITEM_COLUMNS);
         } else {
-            $columns = sprintf('ord.%s, ch.%s, ch.%s, ch.%s, pl.*, pl.ROWID as ch_number',
-                COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_DISABLED);
+            $columns = sprintf('%s.%s, ch.%s, ch.%s, ch.%s, pl.*, pl.ROWID as ch_number',
+                $ord, COLUMN_CHANNEL_ID, COLUMN_TITLE, COLUMN_SHOW_TITLE, COLUMN_DISABLED);
+        }
+
+        if ($ids !== null) {
+            return sprintf('SELECT %s
+                    FROM %s AS pl
+                    JOIN %s as ch ON pl.%s=ch.%s AND %s
+                    WHERE ch.%s IN (%s) AND %s;',
+                $columns,
+                M3uParser::CHANNELS_TABLE,
+                self::get_table_name(CHANNELS_INFO), $this->get_id_column(), COLUMN_CHANNEL_ID, $on,
+                COLUMN_CHANNEL_ID, Sql_Wrapper::sql_make_list_from_values($ids), $where);
         }
 
         return sprintf('SELECT %s
@@ -2694,16 +2708,36 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_channels_by_order($group_id, $include_adult = true, $include_hidden = false, $icons_only = false)
     {
-        $query = $this->make_channels_by_order_query($group_id, $include_adult, $include_hidden, $icons_only);
+        if (!self::is_playlist_settings_group($group_id)) {
+            $query = $this->make_channels_by_order_query($group_id, $include_adult, $include_hidden, $icons_only);
+            return ($query === false) ? array() : $this->safe_sql_playlist(SQL_FETCH_ARRAY, $query);
+        }
+
+        // the order table is in the playlist settings db and the channels are in the playlist db,
+        // so the ids are taken first and the rows are put into their order here
+        $ids = $this->get_channels_order($group_id);
+        if (empty($ids)) {
+            return array();
+        }
+
+        $query = $this->make_channels_by_order_query($group_id, $include_adult, $include_hidden, $icons_only, $ids);
         if ($query === false) {
             return array();
         }
 
-        if (self::is_playlist_settings_group($group_id)) {
-            return $this->safe_sql_playlist_settings(SQL_EXEC, $query);
+        $rows = array();
+        foreach ((array)$this->safe_sql_playlist(SQL_FETCH_ARRAY, $query) as $row) {
+            $rows[$row[COLUMN_CHANNEL_ID]] = $row;
         }
 
-        return $this->safe_sql_playlist(SQL_FETCH_ARRAY, $query);
+        $result = array();
+        foreach ($ids as $id) {
+            if (isset($rows[$id])) {
+                $result[] = $rows[$id];
+            }
+        }
+
+        return $result;
     }
 
     /**

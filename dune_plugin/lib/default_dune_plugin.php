@@ -1555,7 +1555,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 // if delay load is not enabled need to download and index xmltv source for channels at this time
                 foreach ($all_sources as $params) {
                     $flag = Epg_Manager_Xmltv::check_xmltv_source($params, INDEXING_CHANNELS);
-                    if ($flag !== 0) {
+                    if ($flag > 0) {
                         $params[PARAM_CURL_CONNECT_TIMEOUT] = $this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30);
                         $params[PARAM_CURL_DOWNLOAD_TIMEOUT] = $this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
                         Epg_Manager_Xmltv::reindex_xmltv($params, $flag, true);

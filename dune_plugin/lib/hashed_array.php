@@ -153,7 +153,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function has($key)
     {
-        return isset($this->map[$key]);
+        // isset() alone misses a key stored with a null value
+        return isset($this->map[$key]) || array_key_exists($key, $this->map);
     }
 
     /**
@@ -164,7 +165,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function has_value($value)
     {
-        return isset($this->map[self::hash($value)]);
+        return $this->has(self::hash($value));
     }
 
     /**

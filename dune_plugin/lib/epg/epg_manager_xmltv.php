@@ -265,7 +265,12 @@ class Epg_Manager_Xmltv
                         throw new Exception("Unable to open: cached file $cached_file");
                     }
 
+                    $found_id = null;
                     foreach ($positions as $pos) {
+                        // the day is taken from all blocks of the first channel id that has it,
+                        // other ids are alternative EPGs of the same channel and are not mixed in
+                        if ($found_id !== null && $pos[COLUMN_CHANNEL_ID] !== $found_id) break;
+
                         // offsets past PHP_INT_MAX come back from sqlite as strings, so the
                         // arithmetic is done in float to keep them intact
                         $length = (float)$pos['end'] - (float)$pos['start'];
@@ -325,7 +330,9 @@ class Epg_Manager_Xmltv
                             }
                         }
 
-                        if (!empty($day_items)) break;
+                        if ($found_id === null && !empty($day_items)) {
+                            $found_id = $pos[COLUMN_CHANNEL_ID];
+                        }
                     }
 
                     fclose($handle);
@@ -517,7 +524,6 @@ class Epg_Manager_Xmltv
 
     /**
      * check xmltv source and return required flags for indexing
-     * or -1 in case of error
      *
      * @param array $params
      * @param int $index_flag index to be checked
@@ -565,14 +571,18 @@ class Epg_Manager_Xmltv
                 $etag = Curl_Wrapper::get_cached_etag($url);
                 $res = Curl_Wrapper::getInstance()->download_file($url, false, Curl_Wrapper::USE_ETAG);
                 if ($res === false) {
-                    return -1;
-                }
-                $code = Curl_Wrapper::get_http_code();
-                hd_debug_print("http code: $code", true);
-                $expired = !($code === 304 || ($code === 200 && Curl_Wrapper::get_response_header('etag') === $etag));
+                    // a failed check says nothing about the source, keep the cached file
+                    // instead of dropping it for a download that is likely to fail too
+                    hd_debug_print("ETag check failed, cached file is kept");
+                    $expired = false;
+                } else {
+                    $code = Curl_Wrapper::get_http_code();
+                    hd_debug_print("http code: $code", true);
+                    $expired = !($code === 304 || ($code === 200 && Curl_Wrapper::get_response_header('etag') === $etag));
 
-                if ($expired) {
-                    Curl_Wrapper::clear_cached_etag($url);
+                    if ($expired) {
+                        Curl_Wrapper::clear_cached_etag($url);
+                    }
                 }
             } else if (filesize($cached_file) !== 0) {
                 if ($cache_ttl === XMLTV_CACHE_AUTO) {
@@ -696,7 +706,7 @@ class Epg_Manager_Xmltv
         $new_flag = $flag_resolved
             ? $indexing_flag
             : Epg_Manager_Xmltv::check_xmltv_source($params, $indexing_flag);
-        if ($new_flag === 0) {
+        if ($new_flag <= 0) {
             return;
         }
 
@@ -1888,8 +1898,10 @@ class Epg_Manager_Xmltv
         hd_debug_print("Load position indexes for: $channel_id ($channel_title)", true);
 
         if ($db->is_table_exists(self::TABLE_ENTRIES)) {
-            $query = sprintf('SELECT %s, %s FROM %s WHERE %s;',
-                COLUMN_START, COLUMN_END, self::TABLE_ENTRIES, Sql_Wrapper::sql_make_where_clause($channel_ids, COLUMN_CHANNEL_ID));
+            // grouped by channel id: one id can be split into several blocks (e.g. a feed written day by day)
+            $query = sprintf('SELECT %s, %s, %s FROM %s WHERE %s ORDER BY %s;',
+                COLUMN_CHANNEL_ID, COLUMN_START, COLUMN_END, self::TABLE_ENTRIES,
+                Sql_Wrapper::sql_make_where_clause($channel_ids, COLUMN_CHANNEL_ID), COLUMN_CHANNEL_ID);
             $channel_positions = $db->fetch_array($query);
         }
 
@@ -2123,7 +2135,7 @@ class Epg_Manager_Xmltv
             }
             $tmp_filename = $gz_filename;
             hd_debug_print("ungzip $tmp_filename to $cached_file");
-            $cmd = "gzip -d $tmp_filename 2>&1";
+            $cmd = "gzip -d " . escapeshellarg($tmp_filename) . " 2>&1";
             /** @var int $ret */
             $out = system($cmd, $ret);
             if ($ret > 1) {
