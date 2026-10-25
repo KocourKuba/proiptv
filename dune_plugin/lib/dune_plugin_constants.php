@@ -294,6 +294,7 @@ const PARAM_COOKIE_ENABLE_DEBUG = 'enable_debug';
 const PARAM_COOKIE_MEMORY_LIMIT = 'memory_limit';
 const PARAM_COOKIE_ENABLE_NEWUI = 'enable_newui';
 const PARAM_COOKIE_SHOW_VOD_ICON = 'show_vod_icon';
+const PARAM_COOKIE_DISABLE_UPDATE = 'disable_update';
 
 // plugin params
 const PARAM_ADULT_PASSWORD = 'adult_password';

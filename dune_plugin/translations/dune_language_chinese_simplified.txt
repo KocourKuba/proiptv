@@ -351,6 +351,7 @@ setup_copy_to_data = 复制到所选文件夹
 setup_copy_to_plugin = 复制到插件文件夹
 setup_debug = 启用调试日志
 setup_delay_time = 最小存档延迟时间
+setup_disable_update = 禁用插件更新
 setup_donate_title = 捐赠给开发者
 setup_download_settings = 下载设置
 setup_download_timeout = 下载超时（秒）

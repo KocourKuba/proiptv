@@ -351,6 +351,7 @@ setup_copy_to_data = Копировать в выбраную папку
 setup_copy_to_plugin = Копировать в папку плагина
 setup_debug = Расширенное логирование
 setup_delay_time = Мин. задержка для архива
+setup_disable_update = Отключить обновление плагина
 setup_donate_title = Поддержать автора
 setup_download_settings = Настройки скачивания
 setup_download_timeout = Таймаут скачивания (сек)

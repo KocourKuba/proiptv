@@ -351,6 +351,7 @@ setup_copy_to_data = Copy to the selected folder
 setup_copy_to_plugin = Copy to plugin folder
 setup_debug = Enable debug logging
 setup_delay_time = Minimum archive delay time
+setup_disable_update = Disable plugin update
 setup_donate_title = Donate to author
 setup_download_settings = Download settings
 setup_download_timeout = Download timeout (sec)

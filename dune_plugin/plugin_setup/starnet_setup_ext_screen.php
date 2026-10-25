@@ -88,6 +88,14 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
             TR::t('setup_debug'), SwitchOnOff::translate($debug_state), SwitchOnOff::to_image($debug_state));
 
         //////////////////////////////////////
+        // disable plugin update (confirm_update event exists only on r24+)
+        if (is_r24_or_higher()) {
+            $disable_update = safe_get_value($plugin_cookies, PARAM_COOKIE_DISABLE_UPDATE, SwitchOnOff::off);
+            Control_Factory::add_image_button($defs, $this, PARAM_COOKIE_DISABLE_UPDATE,
+                TR::t('setup_disable_update'), SwitchOnOff::translate($disable_update), SwitchOnOff::to_image($disable_update));
+        }
+
+        //////////////////////////////////////
         // Media info sampling time
         $sample_range = array();
         foreach (array(3, 5, 10, 15, 20, 30) as $sec) {
@@ -184,6 +192,10 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
                 $debug = toggle_cookie_param($plugin_cookies, PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off);
                 set_debug_log($debug);
                 hd_debug_print("Debug logging: $debug");
+                break;
+
+            case PARAM_COOKIE_DISABLE_UPDATE:
+                toggle_cookie_param($plugin_cookies, PARAM_COOKIE_DISABLE_UPDATE, SwitchOnOff::off);
                 break;
 
             case PARAM_MEDIA_INFO_SAMPLE:

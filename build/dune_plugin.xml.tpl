@@ -39,6 +39,14 @@
                 <action_id>update</action_id>
             </params>
         </update>
+        <confirm_update>
+            <type>plugin_handle_user_input</type>
+            <params>
+                <handler_id>entry_handler</handler_id>
+                <control_id>plugin_entry</control_id>
+                <action_id>confirm_update</action_id>
+            </params>
+        </confirm_update>
     </global_actions>
     <params>
         <program>starnet.php</program>

@@ -39,6 +39,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_UNINSTALL = 'uninstall';
     const ACTION_CONTINUE_UNINSTALL = 'continue_uninstall';
     const ACTION_UPDATE = 'update';
+    const ACTION_CONFIRM_UPDATE = 'confirm_update'; // r24+, this action coded in manifest
     const ACTION_CALL_PLUGIN_SETTINGS = 'call_plugin_setup'; // this action coded in manifest
     const ACTION_CALL_PLAYLIST_SETTINGS = 'call_playlist_settings'; // this action coded in manifest
     const ACTION_CALL_PLAYLIST_SCREEN = 'call_playlists_setup'; // this action coded in manifest
@@ -82,6 +83,14 @@ class Starnet_Entry_Handler implements User_Input_Handler
         if (!isset($user_input->control_id)) {
             hd_debug_print('user input control id not set');
             return null;
+        }
+
+        if ($user_input->control_id === self::ACTION_PLUGIN_ENTRY
+            && safe_get_value($user_input, PARAM_ACTION_ID) === self::ACTION_CONFIRM_UPDATE) {
+            // TRUE - continue update, FALSE - skip update
+            $disabled = SwitchOnOff::to_bool(safe_get_value($plugin_cookies, PARAM_COOKIE_DISABLE_UPDATE, SwitchOnOff::off));
+            hd_debug_print('Confirm update, update disabled: ' . var_export($disabled, true));
+            return !$disabled;
         }
 
         if (!is_r22_or_higher()) {
