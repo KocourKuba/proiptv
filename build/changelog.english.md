@@ -1,3 +1,26 @@
+### Version 9.1.1934
+- The channel icons source and the channel count settings are moved to the new 'Category settings' screen of the interface settings. The former 'Icon and category settings' screen is renamed to 'Show Icon settings'.
+- The 'Category settings' screen has a new option 'Hide "All channels" in the player' (off by default). When it is on, the channel list of the TV player has no 'All channels' group, and a channel started from the 'All channels' category opens in its own group. The plugin screens still show the category.
+- The channel list of the TV player now shows a channel in every group it belongs to. A channel listed in several groups of the playlist was shown in the player only in the last of them.
+- Sleep timer: the box is switched off on time. With a long timer the box was switched off noticeably later than the countdown ended.
+- Sleep timer: a timer that was set again or cleared just when the previous one ended could no longer be cancelled and switched the box off.
+- Sleep timer: when the box was not switched off at the end of the timer, the player showed a negative countdown.
+- Sleep timer: the VOD player now follows the 'Enable Sleep Timer' setting and uses the selected power off action, countdown time and position.
+- Glanz: the media library is now always loaded from the main ottg.tv server. With the sprintplay.ru server selected the media library did not open, because that server has no media library.
+- TorrentTV: the category list of the media library can be switched in the popup menu between genres and types (films, serials, animation). In the type mode each category shows the number of its films, if possible.
+- TorrentTV: the media library search now shows all found films page by page. Before, the search showed no more than 50 films.
+- TorrentTV: a genre category of the media library and a filter by genre only now show all films of the genre. Some films of the genre were missing there.
+- TorrentTV: the subscription info dialog has the 'Add money' button. It shows a QR code of the payment page: scan it with a phone to pay, no login is needed there. The code is valid only for a short time.
+- TorrentTV: an error response of the server is no longer cached, so the media library is loaded again at the next attempt instead of failing for several hours.
+- TorrentTV: a session rejected by the server is now renewed when the account info is requested. Before, the balance and tariff stayed empty until the session expired.
+- XMLTV EPG: a failed check of a source with the ETag cache mode no longer deletes the downloaded EPG. Before, a network error or a server that rejects the check caused a full download and, if that failed too, the cached EPG was removed.
+- XMLTV EPG: the day schedule of a channel is now collected from all parts of the EPG file. With sources written day by day a part of the day was missing.
+- EPG cache: at plugin start the cached files of an XMLTV source that was not downloaded or indexed for 14 days and the JSON EPG cache files older than 14 days are deleted. The cache of removed sources no longer stays in the cache folder forever, a source that is still used is simply downloaded again.- Auto detection of the channel ID column: a column with exactly one duplicate is no longer counted as having no duplicates, so two channels with the same ID are not merged.
+- Auto detection of the channel ID column: a column with exactly one duplicate is no longer counted as having no duplicates, so two channels with the same ID are not merged.
+- Requests to servers on a non-standard port now send the port in the Host header. Such servers could answer with an error or a wrong redirect.
+- The extended settings have a new option 'Disable plugin update' (off by default, firmware r24 and newer).
+- Fixed spelling and translation errors in the English, Russian, German and Chinese interface texts. The channel info of the English and Chinese interfaces showed the zoom value as the EPG shift.
+
 ### Version 9.1.1910
 - Added TorrentTV provider support (https://ttvrun.one/)
 - The provider configuration is now checked at plugin start: a provider whose API implementation file is missing is not shown in the list, and the VOD support is disabled when the VOD implementation file is missing
