@@ -32,11 +32,8 @@ class smb_tree
     const PARAM_USER = 'user';
     const PARAM_PASSWORD = 'password';
     const PARAM_IP = 'ip';
-    const PARAM_ID = 'id';
     const PARAM_SERVER = 'server';
     const PARAM_DIRECTORY = 'directory';
-    const PARAM_IP_PATH = 'ip_path';
-    const PARAM_NFS_PROTOCOL = 'nfs_protocol';
     const PARAM_ERR = 'err';
     const PARAM_PROTOCOL = 'protocol';
 
@@ -61,27 +58,6 @@ class smb_tree
             1 => array('pipe', 'w'),
             2 => array('pipe', 'w')
         );
-    }
-
-    /**
-     * @param MediaURL $selected_url
-     * @return string encoded path
-     */
-    public static function set_folder_info(&$selected_url)
-    {
-        if (!isset($selected_url->{self::PARAM_IP_PATH}) || $selected_url->{self::PARAM_IP_PATH} === false) {
-            $save_folder[PARAM_FILEPATH] = $selected_url->{PARAM_FILEPATH};
-        } else if ($selected_url->{self::PARAM_NFS_PROTOCOL} !== false) {
-            $save_folder[$selected_url->{self::PARAM_IP_PATH}][self::PARAM_FOLDERNAME] = preg_replace(
-                "|^/tmp/mnt/network/\d*|", '', $selected_url->{PARAM_FILEPATH});
-        } else {
-            $save_folder[$selected_url->{self::PARAM_IP_PATH}][self::PARAM_FOLDERNAME] = preg_replace(
-                "|^/tmp/mnt/smb/\d*|", '', $selected_url->{PARAM_FILEPATH});
-            $save_folder[$selected_url->{self::PARAM_IP_PATH}][self::PARAM_USER] = safe_get_value($selected_url, self::PARAM_USER,  false);
-            $save_folder[$selected_url->{self::PARAM_IP_PATH}][self::PARAM_PASSWORD] = safe_get_value($selected_url, self::PARAM_PASSWORD, false);
-        }
-
-        return json_encode($save_folder);
     }
 
     /**

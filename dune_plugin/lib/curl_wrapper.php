@@ -33,7 +33,6 @@ class Curl_Wrapper
 
     const RET_RAW = 0;
     const RET_ARRAY = 1;
-    const RET_OBJECT = 2;
 
     const USE_ETAG = 1;
     const CACHE_RESPONSE = 2;
@@ -300,14 +299,6 @@ class Curl_Wrapper
     public function set_file_cache_time($time)
     {
         $this->file_cache_time = $time;
-    }
-
-    /**
-     * @return int time in hours
-     */
-    public function get_file_cache_time()
-    {
-        return $this->file_cache_time;
     }
 
     /**

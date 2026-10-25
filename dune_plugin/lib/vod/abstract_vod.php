@@ -44,11 +44,6 @@ abstract class Abstract_Vod extends vod_pagination
      */
     protected $failed_movie_ids = array();
 
-    /**
-     * @var array
-     */
-    protected $genres;
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -81,16 +76,6 @@ abstract class Abstract_Vod extends vod_pagination
         $this->short_movie_by_id[$short_movie->id] = $short_movie;
     }
 
-    /**
-     * @param string $movie_id
-     * @return void
-     */
-    public function set_failed_movie_id($movie_id)
-    {
-        hd_debug_print("set failed movie id: $movie_id", true);
-        $this->failed_movie_ids[$movie_id] = true;
-    }
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -100,15 +85,6 @@ abstract class Abstract_Vod extends vod_pagination
     public function has_cached_movie($movie_id)
     {
         return isset($this->movie_by_id[$movie_id]);
-    }
-
-    /**
-     * @param string $movie_id
-     * @return bool
-     */
-    public function has_cached_short_movie($movie_id)
-    {
-        return isset($this->short_movie_by_id[$movie_id]);
     }
 
     /**
@@ -130,16 +106,6 @@ abstract class Abstract_Vod extends vod_pagination
         $this->short_movie_by_id = array();
         $this->movie_by_id = array();
         $this->failed_movie_ids = array();
-    }
-
-    /**
-     * Clear cached genress
-     * @return void
-     */
-    public function clear_genre_cache()
-    {
-        unset($this->genres);
-        $this->genres = null;
     }
 
     /**
@@ -222,91 +188,5 @@ abstract class Abstract_Vod extends vod_pagination
     public function get_cached_movie($movie_id)
     {
         return isset($this->movie_by_id[$movie_id]) ? $this->movie_by_id[$movie_id] : null;
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-    // Genres.
-
-    /**
-     * @param string $genre_id
-     * @return string|null
-     */
-    public function get_genre_icon_url($genre_id)
-    {
-        hd_debug_print('Not implemented.');
-        return null;
-    }
-
-    /**
-     * @param string $genre_id
-     * @return string|null
-     */
-    public function get_genre_media_url_str($genre_id)
-    {
-        hd_debug_print('Not implemented.');
-        return null;
-    }
-
-    /**
-     * Verify that genres loaded if not - perform load
-     * @return void
-     */
-    public function ensure_genres_loaded()
-    {
-        hd_debug_print(null, true);
-        if ($this->genres !== null) {
-            return;
-        }
-
-        $this->genres = $this->load_genres();
-
-        if ($this->genres === null) {
-            hd_debug_print('Not implemented.');
-        }
-    }
-
-    /**
-     * @return array|null
-     */
-    protected function load_genres()
-    {
-        hd_debug_print('Not implemented.');
-        return null;
-    }
-
-    /**
-     * @return string[]|null
-     */
-    public function get_genre_ids()
-    {
-        if ($this->genres === null) {
-            hd_debug_print('Not implemented.');
-            return null;
-        }
-
-        return array_keys($this->genres);
-    }
-
-    /**
-     * @param string $genre_id
-     * @return string|null
-     */
-    public function get_genre_caption($genre_id)
-    {
-        if ($this->genres === null) {
-            hd_debug_print('Not implemented.');
-            return null;
-        }
-
-        return $this->genres[$genre_id];
-    }
-
-    /**
-     * @return array|null
-     */
-    public function get_vod_genres_folder_views()
-    {
-        hd_debug_print('Not implemented.');
-        return null;
     }
 }

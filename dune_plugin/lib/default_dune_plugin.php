@@ -1856,19 +1856,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * Clear vod information
-     * @return void
-     */
-    public function reset_vod()
-    {
-        $this->setup_curl()->clear_cache();
-        if (isset($this->vod)) {
-            $this->vod->clear_movie_cache();
-            $this->vod = null;
-        }
-    }
-
-    /**
      * @return void
      */
     public function init_user_agent()
@@ -2001,28 +1988,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @return int
-     */
-    public function get_internet_status()
-    {
-        return $this->internet_status;
-    }
-
-    /**
      * @param int $internet_status
      * @return void
      */
     public function set_internet_status($internet_status)
     {
         $this->internet_status = $internet_status;
-    }
-
-    /**
-     * @return int
-     */
-    public function get_opexec_id()
-    {
-        return $this->opexec_id;
     }
 
     /**
@@ -2455,15 +2426,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function &get_json_epg_manager()
     {
         return $this->json_epg_manager;
-    }
-
-    /**
-     * @param string $playlist_id
-     * @return string
-     */
-    public function get_active_epg_config($playlist_id = '')
-    {
-        return 'proiptv_epg_' . (empty($playlist_id) ? $this->get_active_playlist_id() : $playlist_id);
     }
 
     /**
@@ -4179,19 +4141,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 )
             )
         );
-    }
-
-    /**
-     * @param string $group_id
-     * @return bool
-     */
-    public static function is_special_group_id($group_id)
-    {
-        return ($group_id === TV_ALL_CHANNELS_GROUP_ID
-            || $group_id === TV_FAV_GROUP_ID
-            || $group_id === TV_HISTORY_GROUP_ID
-            || $group_id === TV_CHANGED_CHANNELS_GROUP_ID
-            || $group_id === VOD_GROUP_ID);
     }
 
     /**

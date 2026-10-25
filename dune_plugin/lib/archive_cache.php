@@ -49,19 +49,6 @@ class Archive_Cache
     }
 
     /**
-     * @param string $id
-     * @return void
-     */
-    public static function clear_archive($id)
-    {
-        if (is_null(self::$archive_by_id)) {
-            return;
-        }
-
-        unset(self::$archive_by_id[$id]);
-    }
-
-    /**
      * @return void
      */
     public static function clear_all()

@@ -154,14 +154,6 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
-     * @return Sql_Wrapper|null
-     */
-    public function get_sql_vod()
-    {
-        return $this->sql_vod;
-    }
-
-    /**
      * @param Sql_Wrapper|null $sql_vod
      * @return void
      */
@@ -274,19 +266,6 @@ class Dune_Default_Sqlite_Engine
             $value = $default;
         }
         return $value;
-    }
-
-    /**
-     * Remove parameter
-     *
-     * @param string $name
-     * @return void
-     */
-    public function remove_parameter($name)
-    {
-        $query = sprintf(Sql_Wrapper::DELETE_FROM_WHERE,
-            self::PARAMETERS_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($name));
-        $this->safe_sql_plugin(SQL_EXEC, $query);
     }
 
     /**
@@ -459,19 +438,6 @@ class Dune_Default_Sqlite_Engine
             COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id), COLUMN_NAME, Sql_Wrapper::sql_quote($name));
         $value = $this->safe_sql_plugin(SQL_QUERY_VALUE, $query);
         return $value === false ? $default : $value;
-    }
-
-    /**
-     * @param string $playlist_id
-     * @param string $name
-     * @return void
-     */
-    public function remove_playlist_parameter($playlist_id, $name)
-    {
-        hd_debug_print(null, true);
-        $query = sprintf('DELETE FROM %s WHERE %s=%s AND %s=%s;', self::PLAYLIST_PARAMETERS_TABLE,
-            COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id), COLUMN_NAME, Sql_Wrapper::sql_quote($name));
-        $this->safe_sql_plugin(SQL_EXEC, $query);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -1746,28 +1712,6 @@ class Dune_Default_Sqlite_Engine
     public function arrange_channels_order_rows($group_id, $channel_id, $direction)
     {
         return $this->arrange_rows($group_id, COLUMN_CHANNEL_ID, $channel_id, $direction);
-    }
-
-    /**
-     * Arrange groups
-     *
-     * @param string|array $group_id
-     * @param int $direction
-     * @return bool
-     */
-    public function arrange_groups_order_rows($group_id, $direction)
-    {
-        if (is_array($group_id)) {
-            $res = false;
-            if ($direction === Ordered_Array::DOWN) {
-                $group_id = array_reverse($group_id);
-            }
-            foreach ($group_id as $id) {
-                $res |= $this->arrange_rows(GROUPS_ORDER, COLUMN_GROUP_ID, $id, $direction);
-            }
-            return $res;
-        }
-        return $this->arrange_rows(GROUPS_ORDER, COLUMN_GROUP_ID, $group_id, $direction);
     }
 
     /**
@@ -3145,16 +3089,6 @@ class Dune_Default_Sqlite_Engine
         }
 
         return $this->is_playlist_table_exists($table_name, $db_name);
-    }
-
-    /**
-     * @param string $table_name
-     * @return bool
-     */
-    protected function is_playlist_settings_table_exists($table_name)
-    {
-        $query = "SELECT COUNT(name) FROM sqlite_master WHERE type='table' AND name='$table_name';";
-        return (int)$this->safe_sql_playlist_settings(SQL_QUERY_VALUE, $query) !== 0;
     }
 
     /**

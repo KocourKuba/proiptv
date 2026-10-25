@@ -1516,41 +1516,6 @@ class Epg_Manager_Xmltv
      * @param array $params
      * @return array
      */
-    public static function get_all_xmltv_channels($params)
-    {
-        $db = self::open_indexed_db($params);
-        if ($db === null) {
-            return array();
-        }
-
-        $query = sprintf('SELECT DISTINCT ch.%s FROM %s AS ch JOIN %s AS ent WHERE ch.%s=ent.%s ORDER BY ch.%s;',
-            COLUMN_CHANNEL_ID, self::TABLE_CHANNELS, self::TABLE_ENTRIES, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID);
-
-        return $db->fetch_array($query, COLUMN_CHANNEL_ID);
-    }
-
-    /**
-     * @param array $params
-     * @return array
-     */
-    public static function get_all_xmltv_aliases($params)
-    {
-        $db = self::open_indexed_db($params);
-        if ($db === null) {
-            return array();
-        }
-
-        $query = sprintf('SELECT DISTINCT ch.%s, ch.%s FROM %s AS ch JOIN %s AS ent WHERE ch.%s != ch.%s AND ch.%s=ent.%s ORDER BY ch.%s;',
-            COLUMN_ALIAS, COLUMN_CHANNEL_ID, self::TABLE_CHANNELS, self::TABLE_ENTRIES,
-            COLUMN_ALIAS, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_CHANNEL_ID, COLUMN_ALIAS);
-
-        return $db->fetch_array($query);
-    }
-
-    /**
-     * @param array $params
-     * @return array
-     */
     public static function get_all_xmltv_ids($params)
     {
         $db = self::open_indexed_db($params);
@@ -2025,15 +1990,6 @@ class Epg_Manager_Xmltv
         }
 
         return $value;
-    }
-
-    /**
-     * @param string $hash
-     * @return void
-     */
-    protected static function clear_log($hash)
-    {
-        array_map('unlink', glob(get_temp_path("{$hash}_*.log")));
     }
 
     /**

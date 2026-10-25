@@ -88,14 +88,6 @@ class Movie_Series
     }
 
     /**
-     * @return bool
-     */
-    public function has_variants()
-    {
-        return !empty($this->variants);
-    }
-
-    /**
      * @return Movie_Variant[]
      */
     public function get_variants()

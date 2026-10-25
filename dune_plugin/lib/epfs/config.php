@@ -37,7 +37,6 @@ class PaneParams
 	const info_dy					    = 40;
     const pane_width                    = 1790;
     const pane_height                   = 640;
-    const group_list_width              = 350;
 	const info_width				    = 670;
 	const info_height				    = 640;
 	const vod_width				        = 1120;

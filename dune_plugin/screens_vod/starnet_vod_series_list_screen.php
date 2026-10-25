@@ -44,11 +44,6 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
     protected $audios;
 
     /**
-     * @var array
-     */
-    protected $default_audio;
-
-    /**
      * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)

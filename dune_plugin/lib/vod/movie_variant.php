@@ -54,14 +54,6 @@ class Movie_Variant
     }
 
     /**
-     * @return Movie_Playback_Url
-     */
-    public function get_default_playback_url()
-    {
-        return $this->default_playback_url;
-    }
-
-    /**
      * @param string $id
      * @param Movie_Variant $variant_data
      * @return void

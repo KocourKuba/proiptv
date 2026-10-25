@@ -32,7 +32,6 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
 {
     const ID = 'backup_setup';
 
-    const ACTION_RESTORE_FILE_SELECTED = 'restore_file_selected';
     const ACTION_BACKUP_FOLDER_SELECTED = 'backup_folder_selected';
     const CONTROL_BACKUP = 'backup';
     const CONTROL_RESTORE = 'restore';

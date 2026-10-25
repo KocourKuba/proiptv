@@ -72,24 +72,6 @@ class Default_Archive implements Archive
 
     /**
      * @param string $id
-     * @return void
-     */
-    public static function clear_cached_image_archive($id)
-    {
-        Archive_Cache::clear_archive($id);
-    }
-
-    /**
-     * @param string $id
-     * @return Archive|null
-     */
-    public static function get_cached_image_archive($id)
-    {
-        return Archive_Cache::get_archive_by_id($id);
-    }
-
-    /**
-     * @param string $id
      * @param string $url_prefix
      * @return Archive|null
      */

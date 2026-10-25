@@ -36,7 +36,6 @@ class Starnet_Setup_Plugin_Screen extends Abstract_Controls_Screen
     const CONTROL_INTERFACE_SCREEN = 'interface_screen';
     const CONTROL_EPG_INTERFACE_SCREEN = 'epg_interface_screen';
     const CONTROL_SLEEP_TIMER_SCREEN = 'sleep_timer_screen';
-    const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
     const CONTROL_FOLDERS_SCREEN = 'folders_screen';
     const CONTROL_DOWNLOAD_SCREEN = 'download_screen';
     const CONTROL_EXT_SETUP_SCREEN = 'extended_setup_screen';

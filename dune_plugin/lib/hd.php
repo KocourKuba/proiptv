@@ -238,38 +238,9 @@ class HD
      * @param string $path
      * @return void
      */
-    public static function erase_data_items($path)
-    {
-        self::erase_items(get_data_path($path));
-    }
-
-    /**
-     * @param string $path
-     * @return void
-     */
     public static function erase_items($path)
     {
         safe_unlink($path);
-    }
-
-    /**
-     * @param string $path
-     * @return false|string
-     */
-    public static function get_data_item($path)
-    {
-        $full_path = get_data_path($path);
-        return file_exists($full_path) ? file_get_contents($full_path) : '';
-    }
-
-    /**
-     * @param string $path
-     * @param mixed $item
-     * @return void
-     */
-    public static function put_data_item($path, $item)
-    {
-        file_put_contents(get_data_path($path), $item);
     }
 
     /**
@@ -300,43 +271,6 @@ class HD
                 throw new Exception(error_get_last());
             }
         }
-    }
-
-    /**
-     * @param string $string
-     * @return string|null
-     */
-    public static function detect_encoding($string)
-    {
-        static $list = array('utf-8', 'windows-1251', 'windows-1252', 'ASCII');
-
-        foreach ($list as $item) {
-            try {
-                $sample = @iconv($item, $item, $string);
-            } catch (Exception $ex) {
-                print_backtrace_exception($ex);
-                continue;
-            }
-
-            if (md5($sample) === md5($string)) {
-                return $item;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Set cookie with expired time (timestamp).
-     * If $persistent is true cookie stored to plugin data path
-     *
-     * @param string $filename file name without path
-     * @param bool $persistent [optional] is stored in persistent file storage
-     * @return void
-     */
-    public static function clear_cookie($filename, $persistent = false)
-    {
-        $file_path = $persistent ? get_data_path($filename) : get_temp_path($filename);
-        safe_unlink($file_path);
     }
 
     /**

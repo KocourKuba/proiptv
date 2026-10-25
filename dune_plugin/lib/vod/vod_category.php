@@ -103,12 +103,4 @@ class Vod_Category
     {
         return $this->parent;
     }
-
-    /**
-     * @return string|null
-     */
-    public function get_url()
-    {
-        return $this->url;
-    }
 }

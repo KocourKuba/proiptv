@@ -47,7 +47,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_CALL_REBOOT = 'call_reboot'; // this action coded in manifest
     const ACTION_CALL_SEND_LOG = 'call_send_log'; // this action coded in manifest
     const ACTION_CONFIRM_BACKUP_DLG = 'create_backup';
-    const ACTION_RUN_PLAYLIST_SCREEN = 'playlist_screen';
     const OLD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0dg==";
 
     private $plugin;

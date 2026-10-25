@@ -162,14 +162,6 @@ class Rows_Json_Writer
         $this->deferred[$placeholder] = $value;
     }
 
-    /**
-     * @return int
-     */
-    public function get_rows_written()
-    {
-        return $this->rows_written;
-    }
-
     ////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -425,14 +417,6 @@ class Rows_Array_Collector
      */
     public function set_deferred_value($placeholder, $value)
     {
-    }
-
-    /**
-     * @return int
-     */
-    public function get_rows_written()
-    {
-        return count($this->rows);
     }
 
     /**

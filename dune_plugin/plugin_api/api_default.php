@@ -280,14 +280,6 @@ class api_default
     }
 
     /**
-     * @return string
-     */
-    public function getClass()
-    {
-        return $this->id;
-    }
-
-    /**
      * @param string $class
      */
     public function setClass($class)
@@ -357,14 +349,6 @@ class api_default
     public function setEnable($enable)
     {
         $this->enable = $enable;
-    }
-
-    /**
-     * @return array
-     */
-    public function getConfig()
-    {
-        return $this->config;
     }
 
     /**
@@ -751,16 +735,6 @@ class api_default
         }
 
         return $this->plugin->get_playlist_parameter($this->playlist_id, $name, $default);
-    }
-
-    /**
-     * @param string $name
-     */
-    public function removeProviderParameter($name)
-    {
-        if (!empty($this->playlist_id)) {
-            $this->plugin->remove_playlist_parameter($this->playlist_id, $name);
-        }
     }
 
     /**
@@ -1495,18 +1469,6 @@ class api_default
     }
 
     /**
-     * Check if parameter is changed and save it
-     * @param object $user_input
-     * @param string $param
-     * @param string $param_settings
-     * @return bool
-     */
-    protected function IsParameterChanged($user_input, $param, $param_settings)
-    {
-        return isset($user_input->{$param}) && $user_input->{$param} != $this->GetProviderParameter($param_settings);
-    }
-
-    /**
      * @param array $info
      * @return string
      */
@@ -1529,57 +1491,6 @@ class api_default
     public function request_provider_token($force = false)
     {
         return true;
-    }
-
-    /**
-     * @return bool
-     */
-    public function has_ext_params()
-    {
-        hd_debug_print(null, true);
-
-        $has_ext_params = false;
-        $streams = $this->GetStreams();
-        if (!empty($streams) && count($streams) > 1) {
-            $has_ext_params |= true;
-        }
-
-        $domains = $this->GetPlDomains();
-        if (!empty($domains) && count($domains) > 1) {
-            $has_ext_params |= true;
-        }
-
-        $servers = $this->GetServers();
-        if (!empty($servers) && count($servers) > 1) {
-            $has_ext_params |= true;
-        }
-
-        $devices = $this->GetDevices();
-        if (!empty($devices) && count($devices) > 1) {
-            $has_ext_params |= true;
-        }
-
-        $qualities = $this->GetQualities();
-        if (!empty($qualities) && count($qualities) > 1) {
-            $has_ext_params |= true;
-        }
-
-        $playlists = $this->GetPlaylistsIptv();
-        if (!empty($playlists)) {
-            $has_ext_params |= true;
-        }
-
-        $icon_replacements = $this->getConfigValue(CONFIG_ICON_REPLACE);
-        if (!empty($icon_replacements)) {
-            $has_ext_params |= true;
-        }
-
-        $playlist_mirrors = $this->getConfigValue(CONFIG_PLAYLIST_MIRRORS);
-        if (!empty($playlist_mirrors)) {
-            $has_ext_params |= true;
-        }
-
-        return $has_ext_params;
     }
 
     /**

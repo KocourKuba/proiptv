@@ -224,15 +224,6 @@ class vod_standard extends Abstract_Vod
 
     /**
      * @param string $id
-     * @return array|null
-     */
-    public function get_special_group($id)
-    {
-        return $this->special_groups->get($id);
-    }
-
-    /**
-     * @param string $id
      * @param bool $disable
      * @return void
      */

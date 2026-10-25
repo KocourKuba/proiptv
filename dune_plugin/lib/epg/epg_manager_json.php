@@ -68,12 +68,6 @@ class Epg_Manager_Json
     protected $plugin;
 
     /**
-     * contains current dune IP
-     * @var string
-     */
-    protected $dune_ip;
-
-    /**
      * contains known channels epg_id and aliases
      * @var ChannelInfo[]
      */
@@ -370,24 +364,6 @@ class Epg_Manager_Json
         }
 
         return self::$all_channels_info[$channels_info_url]->valid;
-    }
-
-    /**
-     * @param array $config_preset
-     * @return array
-     */
-    public static function get_all_json_ids($config_preset)
-    {
-        $ids = array();
-        $info = self::get_channels_info($config_preset);
-        if (isset($info[COLUMN_EPG_ID])) {
-            $ids = $info[COLUMN_EPG_ID];
-        }
-        if (isset($info[COLUMN_EPG_ALIASES])) {
-            $ids = array_merge($ids, array_keys($info[COLUMN_EPG_ALIASES]));
-        }
-
-        return $ids;
     }
 
     /**

@@ -28,7 +28,6 @@ require_once 'lib/ordered_array.php';
 require_once 'lib/osd_component_factory.php';
 require_once 'lib/sleep_timer.php';
 require_once 'lib/user_input_handler_registry.php';
-require_once 'lib/epg/default_epg_item.php';
 require_once 'lib/m3u/KnownCatchupSourceTags.php';
 require_once 'lib/vod/vod_standard.php';
 require_once 'screens_tv/starnet_tv_epg_info.php';

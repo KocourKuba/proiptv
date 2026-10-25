@@ -332,46 +332,6 @@ class jellyfin_api
     }
 
     /**
-     * get main.m3u8 play url (contains media segments )
-     *
-     * @param string $itemId
-     * @param array $query
-     * @return string
-     */
-    public function getPlayUrlMain($itemId, $query = array())
-    {
-        $this->updateQuery($query);
-        return $this->baseUrl . '/Videos/' . urlencode($itemId) . '/main.m3u8?' . http_build_query($query);
-    }
-
-    /**
-     * get download url (streams entire file)
-     *
-     * @param string $itemId
-     * @return string
-     */
-    public function getDownloadUrl($itemId)
-    {
-        $query = array();
-        $this->updateQuery($query);
-        return $this->baseUrl . '/Items/' . urlencode($itemId) . '/Download?' . http_build_query($query);
-    }
-
-    // ---------------- Internal ----------------
-
-    /**
-     * Get all distinct genres in the library
-     *
-     * @param array $query
-     * @return array
-     */
-    public function getFilters($query = array())
-    {
-        $query['userId'] = $this->userId;
-        return $this->get('Items/Filters', $query);
-    }
-
-    /**
      * Add authorization to the url played by the player, it can't send the Authorization header.
      * ApiKey replaces the api_key parameter deprecated since 10.11
      *

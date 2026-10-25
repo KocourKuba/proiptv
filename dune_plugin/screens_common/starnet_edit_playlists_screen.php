@@ -36,7 +36,6 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
     const ACTION_FILE_TEXT_LIST = 'text_list_file';
 
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
-    const ACTION_ADD_PROVIDER = 'add_provider';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
     const ACTION_ASSIGN_SHORTCUT_POPUP = 'assign_shortcut';
     const ACTION_SHORTCUT_SELECTED = 'shortcut_selected';

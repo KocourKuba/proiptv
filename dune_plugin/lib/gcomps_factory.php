@@ -26,33 +26,6 @@
 
 class GComps_Factory
 {
-    /**
-     * @param array $geom # GCompGeometryDef
-     * @param array $margins # GCompMarginsDef
-     * @param string $text
-     * @param int $max_num_lines
-     * @param string $color # color index
-     * @param int $font_size # FONT_SIZE_NORMAL, FONT_SIZE_SMALL, FONT_SIZE_LARGE
-     * @param string|null $id
-     * @return array
-     */
-    public static function get_label_def($geom, $margins, $text,
-                                         $max_num_lines = 1, $color = 15, $font_size = FONT_SIZE_NORMAL, $id = null)
-    {
-        return array(
-            GComponentDef::id => $id,
-            GComponentDef::geom_def => $geom,
-            GComponentDef::margins_def => $margins,
-            GComponentDef::kind => GCOMPONENT_LABEL,
-            GComponentDef::specific_def => array(
-                GCompLabelDef::text => $text,
-                GCompLabelDef::max_num_lines => $max_num_lines,
-                GCompLabelDef::text_color => self::rgba_to_argb($color),
-                GCompLabelDef::font_size => $font_size,
-            ),
-        );
-    }
-
     /** convert standard RGBA representation of the color
      * to DUNE ARGB GComps representation
      *
@@ -212,48 +185,6 @@ class GComps_Factory
     }
 
     /**
-     * @param string $id
-     * @param array $geom # GCompGeometryDef
-     * @param array $margins # GCompMarginsDef
-     * @param string $url
-     * @return array
-     */
-    public static function get_cut_image_def($id, $geom, $margins, $url)
-    {
-        return array(
-            GComponentDef::id => $id,
-            GComponentDef::geom_def => $geom,
-            GComponentDef::margins_def => $margins,
-            GComponentDef::kind => GCOMPONENT_CUT_IMAGE,
-            GComponentDef::specific_def => array(GCompImageDef::url => $url),
-        );
-    }
-
-    /**
-     * @param string $id
-     * @param array $geom # GCompGeometryDef
-     * @param array $margins # GCompMarginsDef
-     * @param string $caption
-     * @param bool $selected
-     * @param bool $caption_centered
-     * @return array
-     */
-    public static function get_button_def($id, $geom, $margins, $caption, $selected = false, $caption_centered = true)
-    {
-        return array(
-            GComponentDef::id => $id,
-            GComponentDef::geom_def => $geom,
-            GComponentDef::margins_def => $margins,
-            GComponentDef::kind => GCOMPONENT_BUTTON,
-            GComponentDef::specific_def => array(
-                GCompButtonDef::caption => $caption,
-                GCompButtonDef::selected => $selected,
-                GCompButtonDef::caption_centered => $caption_centered,
-            ),
-        );
-    }
-
-    /**
      * @param array $geom # GCompGeometryDef
      * @param array|null $margins # GCompMarginsDef
      * @param string $scroll_pane_id
@@ -310,54 +241,6 @@ class GComps_Factory
     /**
      * @param string $id
      * @param array $geom # GCompGeometryDef
-     * @param array $children # GComponentDefList
-     * @param int $native_width
-     * @param int $native_height
-     * @return array
-     */
-    public static function get_ppane_def($id, $geom, $children, $native_width = 0, $native_height = 0)
-    {
-        return array(
-            GComponentDef::id => $id,
-            GComponentDef::geom_def => $geom,
-            GComponentDef::kind => GCOMPONENT_PREPAINT_PANE,
-            GComponentDef::specific_def => array(
-                GCompPrepaintPaneDef::panel => array(GCompPanelDef::children => $children),
-                GCompPrepaintPaneDef::native_width => $native_width,
-                GCompPrepaintPaneDef::native_height => $native_height,
-            ),
-        );
-    }
-
-    /**
-     * @param string $id
-     * @param array $geom # GCompGeometryDef
-     * @param array $margins # GCompMarginsDef
-     * @param array $children # GComponentDefList
-     * @param int $view_width
-     * @param int $view_height
-     * @param array|null $view_position # GCompViewPositionDef
-     * @return array
-     */
-    public static function get_spane_def($id, $geom, $margins, $children, $view_width = 0, $view_height = 0, $view_position = null)
-    {
-        return array(
-            GComponentDef::id => $id,
-            GComponentDef::geom_def => $geom,
-            GComponentDef::margins_def => $margins,
-            GComponentDef::kind => GCOMPONENT_SCROLL_PANE,
-            GComponentDef::specific_def => array(
-                GCompScrollPaneDef::panel => array(GCompPanelDef::children => $children),
-                GCompScrollPaneDef::view_width => $view_width,
-                GCompScrollPaneDef::view_height => $view_height,
-                GCompScrollPaneDef::view_position => $view_position,
-            ),
-        );
-    }
-
-    /**
-     * @param string $id
-     * @param array $geom # GCompGeometryDef
      * @param array|null $margins # GCompMarginsDef
      * @param array $children # GComponentDefList
      * @param array|null $view_position # GCompViewPositionDef
@@ -373,29 +256,6 @@ class GComps_Factory
             GComponentDef::specific_def => array(
                 GCompScrollPaneDef::panel => array(GCompPanelDef::children => $children),
                 GCompScrollPaneDef::view_use_base_width => true,
-                GCompScrollPaneDef::view_position => $view_position,
-            ),
-        );
-    }
-
-    /**
-     * @param string $id
-     * @param array $geom # GCompGeometryDef
-     * @param array $margins # GCompMarginsDef
-     * @param array $children # GComponentDefList
-     * @param array|null $view_position # GCompViewPositionDef
-     * @return array
-     */
-    public static function get_horizontal_spane_def($id, $geom, $margins, $children, $view_position = null)
-    {
-        return array(
-            GComponentDef::id => $id,
-            GComponentDef::geom_def => $geom,
-            GComponentDef::margins_def => $margins,
-            GComponentDef::kind => GCOMPONENT_SCROLL_PANE,
-            GComponentDef::specific_def => array(
-                GCompScrollPaneDef::panel => array(GCompPanelDef::children => $children),
-                GCompScrollPaneDef::view_use_base_height => true,
                 GCompScrollPaneDef::view_position => $view_position,
             ),
         );
@@ -440,114 +300,6 @@ class GComps_Factory
     }
 
     /**
-     * @param double $base_halign_ratio
-     * @param double $base_valign_ratio
-     * @return array
-     */
-    public static function get_image_fit_def($base_halign_ratio, $base_valign_ratio)
-    {
-        return array(
-            ImageFitDef::base_halign_ratio => $base_halign_ratio,
-            ImageFitDef::base_valign_ratio => $base_valign_ratio
-        );
-    }
-
-    /**
-     * @param string $id
-     * @param string $caption
-     * @param string|null $icon_url
-     * @return array
-     */
-    public static function get_comp_item_def($id, $caption, $icon_url = null)
-    {
-        return array(
-            GCompItemDef::type => GCOMP_ITEM_REGULAR,
-            GCompItemDef::id => $id,
-            GCompItemDef::caption => $caption,
-            GCompItemDef::icon_url => $icon_url
-        );
-    }
-
-    /**
-     * @param string $caption
-     * @param string|null $left_caption
-     * @return array
-     */
-    public static function get_label_item_def($caption, $left_caption = null)
-    {
-        return array(
-            GCompItemDef::type => GCOMP_ITEM_LABEL,
-            GCompItemDef::left_caption => $left_caption,
-            GCompItemDef::caption => $caption
-        );
-    }
-
-    /**
-     * @param string $id
-     * @param string $caption
-     * @param string|null $left_caption
-     * @return array
-     */
-    public static function get_button_item_def($id, $caption, $left_caption = null)
-    {
-        return array(
-            GCompItemDef::type => GCOMP_ITEM_BUTTON,
-            GCompItemDef::id => $id,
-            GCompItemDef::left_caption => $left_caption,
-            GCompItemDef::caption => $caption
-        );
-    }
-
-    /**
-     * @param array $items
-     * @param string|null $title
-     * @param string|null $bg_url
-     * @param string|null $poster_url
-     * @param array|null $view_params # MY_Properties
-     * @return array
-     */
-    public static function get_gcomp_ui_state_def($items, $title = null, $bg_url = null, $poster_url = null, $view_params = null)
-    {
-        return array(
-            GCompUiStateDef::items => $items,
-            GCompUiStateDef::title => $title,
-            GCompUiStateDef::bg_url => $bg_url,
-            GCompUiStateDef::poster_url => $poster_url,
-            GCompUiStateDef::view_params => $view_params,
-        );
-    }
-
-    /**
-     * @param array $def
-     * @param array|null $sel_margins # GCompMarginsDef
-     * @param string|null $background_url
-     * @return void
-     */
-    public static function set_focusable(&$def, $sel_margins = null, $background_url = null)
-    {
-        $def[GComponentDef::focusable_def] = array(
-            GCompFocusableDef::sel_margins => $sel_margins,
-            GCompFocusableDef::background_url => $background_url,
-        );
-    }
-
-    /**
-     * @param array $def
-     * @param string $ref_id
-     * @param array $geom # GCompGeometryDef
-     * @param array|null $props # MY_Properties
-     * @return void
-     */
-    public static function set_focus_var(&$def, $ref_id, $geom, $props = null)
-    {
-        $def[GComponentDef::focused_variant_def] = array(
-            GCompVariantDef::ref_id => $ref_id,
-            GCompVariantDef::geom_def => $geom,
-            GCompVariantDef::props => $props,
-        );
-    }
-
-    /**
      * @param array $def
      * @param string $ref_id
      * @param array|null $geom # GCompGeometryDef
@@ -560,23 +312,6 @@ class GComps_Factory
             GCompVariantDef::ref_id => $ref_id,
             GCompVariantDef::geom_def => $geom,
             GCompVariantDef::props => $props,
-        );
-    }
-
-    /**
-     * @param string $icon_url
-     * @param string|null $text
-     * @param string|null $color # RGBA format
-     * @param array|null $rect # MY_Rect
-     * @return array
-     */
-    public static function get_sticker_def($icon_url, $text = null, $color = null, $rect = null)
-    {
-        return array(
-            PluginRegularSticker::icon_url => $icon_url,
-            PluginRegularSticker::text => $text,
-            PluginRegularSticker::color => self::rgba_to_argb($color),
-            PluginRegularSticker::r => $rect,
         );
     }
 
@@ -758,128 +493,11 @@ class GComp_Geom
      * @param string|null $base_id
      * @return array
      */
-    public static function place_top_center($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
-    {
-        return self::geom($w, $h, null,
-            self::align($x, $y, false, false,
-                HALIGN_CENTER, VALIGN_TOP, HALIGN_CENTER, VALIGN_TOP, false, $base_id));
-    }
-
-    /**
-     * @param int $w
-     * @param int $h
-     * @param int $x
-     * @param int $y
-     * @param string|null $base_id
-     * @return array
-     */
-    public static function place_top_right($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
-    {
-        return self::geom($w, $h, null,
-            self::align($x, $y, false, false,
-                HALIGN_RIGHT, VALIGN_TOP, HALIGN_RIGHT, VALIGN_TOP, false, $base_id));
-    }
-
-    /**
-     * @param int $w
-     * @param int $h
-     * @param int $x
-     * @param int $y
-     * @param string|null $base_id
-     * @return array
-     */
     public static function place_left_center($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
     {
         return self::geom($w, $h, null,
             self::align($x, $y, false, false,
                 HALIGN_LEFT, VALIGN_CENTER, HALIGN_LEFT, VALIGN_CENTER, false, $base_id));
-    }
-
-    /**
-     * @param int $w
-     * @param int $h
-     * @param int $x
-     * @param int $y
-     * @return array
-     */
-    public static function place_top_left_by_center($w, $h, $x, $y)
-    {
-        return self::geom($w, $h, null, self::align($x, $y, false, false, HALIGN_LEFT, VALIGN_CENTER));
-    }
-
-    /**
-     * @param int $w_diff
-     * @param int $h
-     * @param int $x
-     * @param int $y
-     * @return array
-     */
-    public static function place_top_left_same_width($w_diff = 0, $h = -1, $x = 0, $y = 0)
-    {
-        return self::geom($w_diff, $h, null, self::align($x, $y, true));
-    }
-
-    /**
-     * @param int $w
-     * @param int $h
-     * @param int $x
-     * @param int $y
-     * @param string|null $base_id
-     * @return array
-     */
-    public static function place_bottom_left($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
-    {
-        return self::geom($w, $h, null,
-            self::align($x, $y, false, false,
-                HALIGN_LEFT, VALIGN_BOTTOM, HALIGN_LEFT, VALIGN_BOTTOM,
-                false, $base_id));
-    }
-
-    /**
-     * @param int $w
-     * @param int $h
-     * @param int $x
-     * @param int $y
-     * @param string|null $base_id
-     * @return array
-     */
-    public static function place_bottom_right($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
-    {
-        return self::geom($w, $h, null,
-            self::align($x, $y, false, false,
-                HALIGN_RIGHT, VALIGN_BOTTOM, HALIGN_RIGHT, VALIGN_BOTTOM,
-                false, $base_id));
-    }
-
-    /**
-     * @param int $w
-     * @param int $h
-     * @param int $x
-     * @param int $y
-     * @param string|null $base_id
-     * @return array
-     */
-    public static function place_bottom_center($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
-    {
-        return self::geom($w, $h, null,
-            self::align($x, $y, false, false,
-                HALIGN_CENTER, VALIGN_BOTTOM, HALIGN_CENTER, VALIGN_BOTTOM,
-                false, $base_id));
-    }
-
-    /**
-     * @param int $w_diff
-     * @param int $h_diff
-     * @param int $x
-     * @param int $y
-     * @param string|null $base_id
-     * @return array
-     */
-    public static function place_same_size($w_diff = 0, $h_diff = 0, $x = 0, $y = 0, $base_id = null)
-    {
-        return self::geom($w_diff, $h_diff, null,
-            self::align($x, $y, true, true,
-                null, null, null, null, false, $base_id));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -895,48 +513,6 @@ class GComp_Geom
     {
         return self::geom($w, $h, null,
             self::align($x, $y, false, false,
-                HALIGN_LEFT, VALIGN_TOP, HALIGN_LEFT, VALIGN_BOTTOM, true));
-    }
-
-    /**
-     * @param int $w
-     * @param int $h
-     * @param int $x
-     * @param int $y
-     * @return array
-     */
-    public static function place_below_right($w = -1, $h = -1, $x = 0, $y = 0)
-    {
-        return self::geom($w, $h, null,
-            self::align($x, $y, false, false,
-                HALIGN_RIGHT, VALIGN_TOP, HALIGN_RIGHT, VALIGN_BOTTOM, true));
-    }
-
-    /**
-     * @param int $w
-     * @param int $h
-     * @param int $x
-     * @param int $y
-     * @return array
-     */
-    public static function place_below_center($w = -1, $h = -1, $x = 0, $y = 0)
-    {
-        return self::geom($w, $h, null,
-            self::align($x, $y, false, false,
-                HALIGN_CENTER, VALIGN_TOP, HALIGN_CENTER, VALIGN_BOTTOM, true));
-    }
-
-    /**
-     * @param int $w_diff
-     * @param int $h
-     * @param int $x
-     * @param int $y
-     * @return array
-     */
-    public static function place_below_left_same_width($w_diff = 0, $h = -1, $x = 0, $y = 0)
-    {
-        return self::geom($w_diff, $h, null,
-            self::align($x, $y, true, false,
                 HALIGN_LEFT, VALIGN_TOP, HALIGN_LEFT, VALIGN_BOTTOM, true));
     }
 
@@ -980,19 +556,5 @@ class GComp_Geom
         return self::geom($w, $h_diff, null,
             self::align($x, $y, false, true,
                 HALIGN_LEFT, VALIGN_CENTER, HALIGN_RIGHT, VALIGN_CENTER, true));
-    }
-
-    /**
-     * @param int $w
-     * @param int $h
-     * @param int $x
-     * @param int $y
-     * @return array
-     */
-    public static function place_next_left_align_top($w = -1, $h = -1, $x = 0, $y = 0)
-    {
-        return self::geom($w, $h, null,
-            self::align($x, $y, false, false,
-                HALIGN_RIGHT, VALIGN_TOP, HALIGN_LEFT, VALIGN_TOP, true));
     }
 }

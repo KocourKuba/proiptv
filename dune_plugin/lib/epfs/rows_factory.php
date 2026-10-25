@@ -249,88 +249,6 @@ class Rows_Factory
     }
 
     /**
-     * @param string $id
-     * @param array $items
-     * @param string $params_template_id
-     * @param string $title
-     * @param string $group_id
-     * @param string|null $header_id
-     * @param array|null $show_all_action
-     * @param int $height
-     * @param int $inactive_height
-     * @param int $width
-     * @param int $left_padding
-     * @param int $inactive_left_padding
-     * @param int $right_padding
-     * @param bool $hide_captions
-     * @param bool $hide_icons
-     * @param bool $fade_enabled
-     * @param array|null $focusable
-     * @param string $fade_icon_mix_color # RGBA format
-     * @param int $fade_icon_mix_alpha # 0-255
-     * @param int $lite_fade_icon_mix_alpha # 0-255
-     * @param string $fade_caption_color # RGBA format
-     * @param array|null $params
-     * @return array
-     */
-    public static function regular_row($id, $items, $params_template_id, $title, $group_id, $header_id,
-                                       $show_all_action = null,
-                                       $height = 0,
-                                       $inactive_height = 0,
-                                       $width = RowsParams::full_width,
-                                       $left_padding = RowsParams::left_padding,
-                                       $inactive_left_padding = RowsParams::inactive_left_padding,
-                                       $right_padding = RowsParams::right_padding,
-                                       $hide_captions = false,
-                                       $hide_icons = false,
-                                       $fade_enabled = true,
-                                       $focusable = null,
-                                       $fade_icon_mix_color = RowsParams::fade_icon_mix_color,
-                                       $fade_icon_mix_alpha = RowsParams::fade_icon_mix_alpha,
-                                       $lite_fade_icon_mix_alpha = RowsParams::lite_fade_icon_mix_alpha,
-                                       $fade_caption_color = RowsParams::fade_caption_color,
-                                       $params = null)
-    {
-        $arr[PluginRow::type] = PLUGIN_ROW_TYPE_REGULAR;
-        $arr[PluginRow::id] = $id;
-        $arr[PluginRow::title] = $title;
-        if ($header_id) {
-            $arr[PluginRow::header_id] = $header_id;
-        }
-        $arr[PluginRow::group_id] = $group_id;
-        $arr[PluginRow::height] = $height;
-        $arr[PluginRow::inactive_height] = $inactive_height;
-        if ($focusable) {
-            $arr[PluginRow::focusable] = $focusable;
-        }
-        if ($show_all_action) {
-            $arr[PluginRow::show_all_action] = $show_all_action;
-        }
-
-        $data[PluginRegularRow::item_params_template_id] = $params_template_id;
-        $data[PluginRegularRow::width] = $width;
-        $data[PluginRegularRow::left_padding] = $left_padding;
-        $data[PluginRegularRow::inactive_left_padding] = $inactive_left_padding;
-        $data[PluginRegularRow::right_padding] = $right_padding;
-        $data[PluginRegularRow::hide_captions] = $hide_captions;
-        $data[PluginRegularRow::hide_icons] = $hide_icons;
-        $data[PluginRegularRow::fade_enabled] = $fade_enabled;
-        $data[PluginRegularRow::fade_icon_mix_color] = GComps_Factory::rgba_to_argb($fade_icon_mix_color);
-        $data[PluginRegularRow::fade_icon_mix_alpha] = $fade_icon_mix_alpha;
-        $data[PluginRegularRow::lite_fade_icon_mix_alpha] = $lite_fade_icon_mix_alpha;
-        $data[PluginRegularRow::fade_caption_color] = GComps_Factory::rgba_to_argb($fade_caption_color);
-        $data[PluginRegularRow::items] = $items;
-
-        if ($params) {
-            $data[PluginRegularRow::item_params] = $params;
-        }
-
-        $arr[PluginRow::data] = $data;
-
-        return $arr;
-    }
-
-    /**
      * Builds the part of a regular row that is the same for every row of a
      * group, so a screen emitting hundreds of rows pays for it once instead of
      * once per row. Everything here is constant per group;
@@ -541,16 +459,6 @@ class Rows_Factory
     public static function add_regular_sticker_image($icon_url, $rect)
     {
         return array(PluginRegularSticker::r => $rect, PluginRegularSticker::icon_url => $icon_url);
-    }
-
-    /**
-     * @param string $text
-     * @param array $rect
-     * @return array
-     */
-    public static function add_regular_sticker_text($text, $rect)
-    {
-        return array(PluginRegularSticker::r => $rect, PluginRegularSticker::text => $text);
     }
 
     /**

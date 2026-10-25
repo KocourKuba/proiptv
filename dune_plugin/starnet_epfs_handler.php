@@ -277,33 +277,9 @@ class Starnet_Epfs_Handler
     /**
      * @return string
      */
-    public static function warmed_up_path()
-    {
-        return get_temp_path('epfs_warmed_up');
-    }
-
-    /**
-     * @return string
-     */
     public static function first_run_path()
     {
         return get_temp_path('epfs_first_run');
-    }
-
-    /**
-     * @return string
-     */
-    public static function async_worker_warmed_up_path()
-    {
-        return get_temp_path('async_worker_warmed_up');
-    }
-
-    /**
-     * @return string
-     */
-    public static function get_epfs_changed_path()
-    {
-        return get_temp_path('update_epfs_if_needed_flag');
     }
 
     /**
@@ -318,33 +294,5 @@ class Starnet_Epfs_Handler
             }
         }
         return "";
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * @return string
-     */
-    protected static function get_ilang_path()
-    {
-        return self::$dir_path . '/ilang';
-    }
-
-    /**
-     * @param string $id
-     * @return string
-     */
-    protected static function read_epfs_ts($id)
-    {
-        return is_file($path = self::get_epfs_ts_path($id)) ? file_get_contents($path) : '';
-    }
-
-    /**
-     * @param string $id
-     * @return string
-     */
-    protected static function get_epfs_ts_path($id)
-    {
-        return self::$dir_path . "/{$id}_timestamp";
     }
 }

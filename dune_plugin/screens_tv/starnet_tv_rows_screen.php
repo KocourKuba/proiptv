@@ -410,28 +410,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen
     }
 
     /**
-     * @param array $pane
-     * @param array|null $rows_before
-     * @param array|null $rows_after
-     * @param int|null $min_row_index_for_y2
-     * @return void
-     */
-    public function add_rows_to_pane(&$pane, $rows_before = null, $rows_after = null, $min_row_index_for_y2 = null)
-    {
-        if (is_array($rows_before)) {
-            $pane[PluginRowsPane::rows] = array_merge($rows_before, $pane[PluginRowsPane::rows]);
-        }
-
-        if (is_array($rows_after)) {
-            $pane[PluginRowsPane::rows] = array_merge($pane[PluginRowsPane::rows], $rows_after);
-        }
-
-        if (!is_null($min_row_index_for_y2)) {
-            $pane[PluginRowsPane::min_row_index_for_y2] = $min_row_index_for_y2;
-        }
-    }
-
-    /**
      * @param object $plugin_cookies
      * @return array|null
      */

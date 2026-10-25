@@ -94,14 +94,6 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
     /**
      * @inheritDoc
      */
-    public function setAttributes($attributes)
-    {
-        $this->attributes = $attributes;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function addAttributes($attributes)
     {
         if (is_array($this->attributes)) {
@@ -109,22 +101,6 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
         } else {
             $this->attributes = $attributes;
         }
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getAttributeValue($attribute_name)
-    {
-        return isset($this->attributes[$attribute_name]) ? $this->attributes[$attribute_name] : null;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function hasAttributeValue($attribute_name)
-    {
-        return is_array($this->attributes) && array_key_exists($attribute_name, $this->attributes);
     }
 
     /**

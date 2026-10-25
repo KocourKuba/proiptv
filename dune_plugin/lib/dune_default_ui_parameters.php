@@ -93,23 +93,6 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     }
 
     /**
-     * @return array
-     */
-    public function get_screens()
-    {
-        return $this->screens;
-    }
-
-    /**
-     * @param string $id
-     * @return Screen|null
-     */
-    public function get_screen($id)
-    {
-        return safe_get_value($this->screens, $id);
-    }
-
-    /**
      * @param string $name
      * @return array
      */

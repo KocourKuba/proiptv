@@ -248,28 +248,6 @@ class Entry extends Json_Serializer
     }
 
     /**
-     * Get attributes for selected tag
-     * If tag not specified returns attributes from all tags
-     *
-     * @param string $tag
-     * @return array
-     */
-    public function getEntryAttributes($tag = null)
-    {
-        $attributes = array();
-        if (!is_null($this->tags) && is_null($tag)) {
-            foreach ($this->tags as $item) {
-                $attributes = safe_merge_array($attributes, $item->getAttributes());
-            }
-        } else if ($this->hasTag($tag)) {
-            $entry_tag = $this->getEntryTag($tag);
-            $attributes = empty($entry_tag) ? array() : $entry_tag->getAttributes();
-        }
-
-        return $attributes;
-    }
-
-    /**
      * @param string $tag_name
      * @return bool
      */
@@ -285,28 +263,6 @@ class Entry extends Json_Serializer
     public function getEntryTag($tag)
     {
         return $this->hasTag($tag) ? $this->tags[$tag] : null;
-    }
-
-    /**
-     * @param string $attribute_name
-     * @param string $tag
-     * @return bool
-     */
-    public function hasEntryAttribute($attribute_name, $tag = null)
-    {
-        if (!is_null($this->tags)) {
-            if (is_null($tag)) {
-                foreach ($this->tags as $item) {
-                    $val = $item->hasAttributeValue($attribute_name);
-                    if ($val) {
-                        return true;
-                    }
-                }
-            } else if ($this->hasTag($tag)) {
-                return $this->tags[$tag]->hasAttributeValue($attribute_name);
-            }
-        }
-        return false;
     }
 
     /**

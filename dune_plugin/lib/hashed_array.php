@@ -55,16 +55,6 @@ class Hashed_Array extends Json_Serializer implements Iterator
     private $pos = 0;
 
     /**
-     * @param Tkey $a
-     * @param Tkey $b
-     * @return int
-     */
-    protected static function sort_array_cb($a, $b)
-    {
-        return strnatcasecmp($a, $b);
-    }
-
-    /**
      * Only names what to save. It used to rewrite $map into $seq order first,
      * so the order survived as map key order - which meant anything calling
      * __sleep(), json logging included, reordered the live object. Saving $seq
@@ -124,17 +114,6 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * Get value by index
-     *
-     * @param int $ndx
-     * @return TValue|null
-     */
-    public function get_by_idx($ndx)
-    {
-        return $this->get($this->seq[$ndx]);
-    }
-
-    /**
      * return value associated with key
      *
      * @param Tkey $key
@@ -155,17 +134,6 @@ class Hashed_Array extends Json_Serializer implements Iterator
     {
         // isset() alone misses a key stored with a null value
         return isset($this->map[$key]) || array_key_exists($key, $this->map);
-    }
-
-    /**
-     * Check if key exist
-     *
-     * @param TValue $value
-     * @return bool
-     */
-    public function has_value($value)
-    {
-        return $this->has(self::hash($value));
     }
 
     /**
@@ -216,32 +184,6 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * Add items
-     *
-     * @param Hashed_Array<Tkey, TValue> $items
-     * @return void
-     */
-    public function add_items($items)
-    {
-        foreach ($items as $key => $item) {
-            $this->put($key, $item);
-        }
-    }
-
-    /**
-     * Add items
-     *
-     * @param TValue[] $values
-     * @return void
-     */
-    public function add_values($values)
-    {
-        foreach ($values as $item) {
-            $this->add($item);
-        }
-    }
-
-    /**
      * add new item or replace existing
      *
      * @param Tkey $key
@@ -254,23 +196,6 @@ class Hashed_Array extends Json_Serializer implements Iterator
             $this->seq[] = $key;
         }
         $this->map[$key] = $item;
-    }
-
-    /**
-     * filter array by keys, return values only match with keys
-     *
-     * @param Tkey[] $keys
-     * @return Hashed_Array<Tkey, TValue>
-     */
-    public function &filter_keys($keys)
-    {
-        $filtered = new self();
-        foreach ($keys as $key) {
-            if ($this->has($key)) {
-                $filtered->put($key, $this->map[$key]);
-            }
-        }
-        return $filtered;
     }
 
     /**
@@ -320,19 +245,6 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * Erase by values from array
-     *
-     * @param TValue[] $values
-     * @return void
-     */
-    public function erase_values($values)
-    {
-        foreach ($values as $value) {
-            $this->erase(self::hash($value));
-        }
-    }
-
-    /**
      * Return keys
      *
      * @return Tkey[]
@@ -350,103 +262,6 @@ class Hashed_Array extends Json_Serializer implements Iterator
     public function get_values()
     {
         return array_values($this->map);
-    }
-
-    /**
-     * Return key sequences
-     *
-     * @return Tkey[]
-     */
-    public function get_ordered_keys()
-    {
-        return $this->seq;
-    }
-
-    /**
-     * Return value sequences
-     *
-     * @return TValue[]
-     */
-    public function get_ordered_values()
-    {
-        $values = array();
-        foreach ($this->seq as $key) {
-            $values[] = $this->get($key);
-        }
-
-        return $values;
-    }
-
-    /**
-     * Convert Hashed_Array to associative array
-     *
-     * @return array
-     */
-    public function to_array()
-    {
-        $values = array();
-        foreach ($this->seq as $key) {
-            $values[$key] = $this->get($key);
-        }
-
-        return $values;
-    }
-
-    /**
-     * Create Hashed_Array from array
-     *
-     * @oaram TValue[] $values
-     * @return Hashed_Array<Tkey, TValue>
-     */
-    public static function from_array($values)
-    {
-        $result = new self();
-        foreach ($values as $value) {
-            $result->add($value);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Sort by values
-     *
-     * @return void
-     */
-    public function value_sort()
-    {
-        uasort($this->map, array(__CLASS__, 'sort_array_cb'));
-        $this->seq = array_keys($this->map);
-    }
-
-    /**
-     * Change position of value by key
-     *
-     * @param Tkey $key
-     * @param int $direction
-     * @return bool
-     */
-    public function arrange_item($key, $direction)
-    {
-        $k = $this->get_idx($key);
-        //hd_debug_print("move id: $id from idx: $k to direction: $direction");
-
-        if ($k === false || $direction === 0)
-            return false;
-
-        if ($direction < 0 && $k !== 0) {
-            $t = $this->seq[$k - 1];
-            $this->seq[$k - 1] = $this->seq[$k];
-            $this->seq[$k] = $t;
-        } else if ($direction > 0 && $k !== count($this->seq) - 1) {
-            $t = $this->seq[$k + 1];
-            $this->seq[$k + 1] = $this->seq[$k];
-            $this->seq[$k] = $t;
-        } else {
-            return false;
-        }
-
-        return true;
     }
 
     /**

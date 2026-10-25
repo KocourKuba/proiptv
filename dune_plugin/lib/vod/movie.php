@@ -305,14 +305,6 @@ class Movie extends Json_Serializer implements User_Input_Handler
     }
 
     /**
-     * @return void
-     */
-    public function clear_season_data()
-    {
-        $this->seasons_list = array();
-    }
-
-    /**
      * @param Movie_Season $movie_season
      * @return void
      */
@@ -368,15 +360,6 @@ class Movie extends Json_Serializer implements User_Input_Handler
     public function get_seasons_list()
     {
         return $this->seasons_list;
-    }
-
-    /**
-     * @param string $season_id
-     * @return Movie_Season|null
-     */
-    public function get_season($season_id)
-    {
-        return isset($this->seasons_list[$season_id]) ? $this->seasons_list[$season_id] : null;
     }
 
     /**
@@ -453,17 +436,6 @@ class Movie extends Json_Serializer implements User_Input_Handler
     /**
      * @param string $series_id
      * @param string $quality_id
-     * @return bool
-     */
-    public function has_audios($series_id, $quality_id)
-    {
-        $a_variants = $this->get_audios($series_id, $quality_id);
-        return !empty($a_variants);
-    }
-
-    /**
-     * @param string $series_id
-     * @param string $quality_id
      * @return string[]|null
      */
     public function get_audios($series_id, $quality_id)
@@ -488,27 +460,6 @@ class Movie extends Json_Serializer implements User_Input_Handler
     }
 
     /**
-     * @param string $series_id
-     * @param string $quality_id
-     * @param string $id
-     * @return Movie_Playback_Url|null
-     */
-    public function get_audio($series_id, $quality_id, $id)
-    {
-        $q_variant = $this->get_quality($series_id, $quality_id);
-        if (empty($q_variant)) {
-            return null;
-        }
-
-        $a_variant = $q_variant->get_variant($id);
-        if (is_null($a_variant)) {
-            return null;
-        }
-
-        return $a_variant->get_default_playback_url();
-    }
-
-    /**
      * Collect quality information only from first series
      * Return array of key => variant_name
      *
@@ -530,32 +481,6 @@ class Movie extends Json_Serializer implements User_Input_Handler
         }
 
         return $series_quality;
-    }
-
-    /**
-     * Collect audio information only from first series and first quality
-     * @param string $season_id
-     * @return array
-     */
-    public function collect_all_audios($season_id)
-    {
-        $quality_audios = array();
-        foreach ($this->series_list as $series_id => $episode) {
-            if (!is_null($season_id) && $season_id !== $episode->season_id) continue;
-
-            $series_quality = $this->get_qualities($series_id);
-            if (empty($series_quality)) continue;
-
-            foreach ($series_quality as $key => $quality) {
-                $quality_audios = $this->get_audios($series_id, $key);
-                if (!empty($quality_audios)) {
-                    unset($quality_audios['auto']);
-                    break;
-                }
-            }
-        }
-
-        return $quality_audios;
     }
 
     /**

@@ -49,8 +49,6 @@ class M3uParser extends Json_Serializer
         ATTR_CHANNEL_HASH   => COLUMN_HASH,      // url hash
     );
 
-    public static $mapper_ops = array();
-
     /*
      * Attributes contains epg id
      * "tvg-id", "tvg-epgid"
@@ -68,11 +66,6 @@ class M3uParser extends Json_Serializer
     protected $m3u_info;
 
     /**
-     * @var array
-     */
-    protected $data_positions;
-
-    /**
      * @var string
      */
     public $id_parser = '';
@@ -86,22 +79,6 @@ class M3uParser extends Json_Serializer
      * @var array
      */
     public $icon_replace_pattern = array();
-
-    /**
-     * @return string
-     */
-    public function get_icon_base_url()
-    {
-        return $this->icon_base_url;
-    }
-
-    /**
-     * @return string
-     */
-    public function get_filename()
-    {
-        return $this->file_name;
-    }
 
     /**
      * @return void
@@ -559,66 +536,6 @@ class M3uParser extends Json_Serializer
         hd_print_separator();
 
         return true;
-    }
-
-    /**
-     * Returns headers attributes from specified tag
-     * If tag not specified try to search in all available tags
-     *
-     * @param string|null $tag
-     * @return array
-     */
-    public function getHeaderAttributes($tag = null)
-    {
-        $attributes = array();
-        foreach ($this->m3u_info->getEntryAttributes($tag) as $attr) {
-            $attributes[] = $attr;
-        }
-        return array_unique($attributes);
-    }
-
-    /**
-     * Returns headers attribute from specified tag
-     * If tag not specified try to search specified attribute in all available tags
-     *
-     * @param string|array $name
-     * @param string|null $tag
-     * @return string
-     */
-    public function getHeaderAttribute($name, $tag = null)
-    {
-        $attr = $this->m3u_info->getAnyEntryAttribute($name, $tag);
-        if (!empty($attr)) {
-            return $attr;
-        }
-
-        return "";
-    }
-
-    /**
-     * @param string|array $attrs
-     * @param string|null $tag
-     * @param string|null $found_attr
-     * @return string
-     */
-    public function getAnyHeaderAttribute($attrs, $tag = null, &$found_attr = null)
-    {
-        if (!is_array($attrs)) {
-            $attrs = array($attrs);
-        }
-
-        $val = '';
-        foreach ($attrs as $attr) {
-            $val = $this->m3u_info->getEntryAttribute($attr, $tag);
-            if (empty($val)) continue;
-
-            if ($found_attr !== null) {
-                $found_attr = $attr;
-            }
-            break;
-        }
-
-        return $val;
     }
 
     /**

@@ -114,15 +114,6 @@ class Json_Serializer
     }
 
     /**
-     * @param array $value
-     * @return array
-     */
-    public function _toArray($value)
-    {
-        return self::to_json_value($value);
-    }
-
-    /**
      * Converts any value into something json_encode() writes out completely.
      *
      * A Json_Serializer anywhere in the value - in a member, an array, a

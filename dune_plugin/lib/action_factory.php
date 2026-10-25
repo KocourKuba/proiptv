@@ -28,7 +28,6 @@ class Action_Factory
 {
     const DEF_DLG_WIDTH = 1300;
     const SMALL_DLG_WIDTH = 850;
-    const MID_DLG_WIDTH = 1600;
     const MAX_DLG_WIDTH = 1800;
 
     /**
@@ -103,23 +102,6 @@ class Action_Factory
     }
 
     /**
-     * @param string $group_id
-     * @param string $channel_id
-     * @return array
-     */
-    public static function select_channel_id($group_id, $channel_id)
-    {
-        return array(
-            GuiAction::handler_string_id => PLUGIN_TV_SELECT_CHANNEL_ACTION_ID,
-            GuiAction::data => array(
-                PluginTvSelectChannelActionData::group_id => $group_id,
-                PluginTvSelectChannelActionData::channel_id => $channel_id,
-                PluginTvSelectChannelActionData::is_favorite => false
-            )
-        );
-    }
-
-    /**
      * @param bool $fatal
      * @param string $title
      * @param string|null $msg_lines
@@ -157,50 +139,6 @@ class Action_Factory
             GuiAction::handler_string_id => CLOSE_DIALOG_AND_RUN_ACTION_ID,
             GuiAction::caption => null,
             GuiAction::data => array(CloseDialogAndRunActionData::post_action => $post_action),
-            GuiAction::params => null
-        );
-    }
-
-    /**
-     * Ask the parental control dialog of the box to enter the code and run
-     * the post action only after the correct code is entered. The dialog is
-     * not shown when the parental code is not set.
-     *
-     * @param string $id
-     * @param array|null $post_action
-     * @return array
-     */
-    public static function check_restricted($id, $post_action = null)
-    {
-        return array(
-            GuiAction::handler_string_id => CHECK_RESTRICTED_ACTION_ID,
-            GuiAction::caption => null,
-            GuiAction::data => array(
-                CheckRestrictedActionData::id => (string)$id,
-                CheckRestrictedActionData::post_action => $post_action
-            ),
-            GuiAction::params => null
-        );
-    }
-
-    /**
-     * Add the id to the parental control restricted set or remove it from there
-     *
-     * @param string $id
-     * @param bool $restricted
-     * @param array|null $post_action
-     * @return array
-     */
-    public static function set_restricted($id, $restricted, $post_action = null)
-    {
-        return array(
-            GuiAction::handler_string_id => SET_RESTRICTED_ACTION_ID,
-            GuiAction::caption => null,
-            GuiAction::data => array(
-                SetRestrictedActionData::id => (string)$id,
-                SetRestrictedActionData::restricted => (bool)$restricted,
-                SetRestrictedActionData::post_action => $post_action
-            ),
             GuiAction::params => null
         );
     }
@@ -384,22 +322,6 @@ class Action_Factory
     }
 
     /**
-     * @param string|null $archive_id
-     * @param array $post_action
-     * @return array
-     */
-    public static function clear_archive_cache($archive_id = null, $post_action = null)
-    {
-        return array(
-            GuiAction::handler_string_id => PLUGIN_CLEAR_ARCHIVE_CACHE_ACTION_ID,
-            GuiAction::data => array(
-                PluginClearArchiveCacheActionData::archive_id => $archive_id,
-                PluginClearArchiveCacheActionData::post_action => $post_action
-            )
-        );
-    }
-
-    /**
      * @param int|null $erase_count
      * @param string|null $elements
      * @param array|null $post_action
@@ -539,93 +461,6 @@ class Action_Factory
     }
 
     /**
-     * @param string $config_id
-     * @param string $set_default
-     * @param string $def_id
-     * @param array|null $ids_to_check
-     * @param array|null $ids_to_uncheck
-     * @param array|null $ids_to_def
-     * @param array|null $order
-     * @param array|null $post_action
-     * @return array|null
-     */
-    public static function change_list_config($config_id, $set_default = null, $def_id = null, $ids_to_check = null,
-                                              $ids_to_uncheck = null, $ids_to_def = null, $order = null, $post_action = null)
-    {
-        if (!defined('ChangeListConfigActionData::config_id')) {
-            return null;
-        }
-
-        $arr = array(
-            ChangeListConfigActionData::config_id => $config_id,
-            ChangeListConfigActionData::post_action => $post_action,
-        );
-
-        if (!is_null($set_default)) {
-            $arr[ChangeListConfigActionData::set_default] = $set_default;
-        }
-
-        if (!is_null($def_id)) {
-            $arr[ChangeListConfigActionData::def_id] = $def_id;
-        }
-
-        if (!is_null($ids_to_check)) {
-            $arr[ChangeListConfigActionData::ids_to_check] = $ids_to_check;
-        }
-
-        if (!is_null($ids_to_uncheck)) {
-            $arr[ChangeListConfigActionData::ids_to_uncheck] = $ids_to_uncheck;
-        }
-
-        if (!is_null($ids_to_def)) {
-            $arr[ChangeListConfigActionData::ids_to_def] = $ids_to_def;
-        }
-
-        if (defined('ChangeListConfigActionData::order') && !is_null($order)) {
-            // r24?
-            $arr[ChangeListConfigActionData::order] = $order;
-        }
-
-        return array(GuiAction::handler_string_id => CHANGE_LIST_CONFIG_ACTION_ID, GuiAction::data => $arr,);
-    }
-
-    /**
-     * @param string $config_id
-     * @param array|null $post_action
-     * @return array|null
-     */
-    public static function change_list_config_reset_to_default($config_id, $post_action)
-    {
-        return self::change_list_config($config_id, true, null, null, null, null, null, $post_action);
-    }
-
-    /**
-     * @param string $config_id
-     * @param array|null $order
-     * @param array|null $post_action
-     * @return array|null
-     */
-    public static function change_list_config_replace_order($config_id, $order, $post_action)
-    {
-        return self::change_list_config($config_id, false, null, null, null, null, $order, $post_action);
-    }
-
-    /**
-     * @param array $action
-     * @param string $key
-     * @param mixed $value
-     * @return void
-     */
-    public static function set_action_param(&$action, $key, $value)
-    {
-        if (isset($action['params'])) {
-            $action['params'][$key] = $value;
-        } else {
-            $action['params'] = array($key => $value);
-        }
-    }
-
-    /**
      * @param int $delay_ms
      * @param bool $reset_on_keypress
      * @param bool $clear_on_keypress
@@ -750,30 +585,6 @@ class Action_Factory
                 PluginInvalidateFoldersActionData::media_urls => $media_urls,
                 PluginInvalidateFoldersActionData::post_action => $post_action,
                 PluginInvalidateFoldersActionData::all_except => $all_except
-            )
-        );
-    }
-
-    /**
-     * @param string $text_above
-     * @param string|null $text_color
-     * @param bool $text_halo
-     * @param int $text_y_offset
-     * @param array $post_action
-     * @return array
-     */
-    public static function update_info_block(
-        $text_above, $text_color = null, $text_halo = false, $text_y_offset = 0,
-        $post_action = null)
-    {
-        return array(
-            GuiAction::handler_string_id => PLUGIN_UPDATE_INFO_BLOCK_ACTION_ID,
-            GuiAction::data => array(
-                PluginUpdateInfoBlockActionData::text_above => $text_above,
-                PluginUpdateInfoBlockActionData::text_color => $text_color,
-                PluginUpdateInfoBlockActionData::text_halo => $text_halo,
-                PluginUpdateInfoBlockActionData::text_y_offset => $text_y_offset,
-                PluginUpdateInfoBlockActionData::post_action => $post_action
             )
         );
     }
@@ -1012,24 +823,6 @@ class Action_Factory
             GuiAction::handler_string_id => PLUGIN_REFRESH_ENTRY_POINTS_ACTION_ID,
             GuiAction::data => array(
                 PluginRefreshEntryPointsActionData::post_action => $post_action
-            ),
-        );
-    }
-
-    /**
-     * @param string $name
-     * @param array|null $params
-     * @param array|null $callback_action
-     * @return array
-     */
-    public static function bt_command($name, $params = null, $callback_action = null)
-    {
-        return array(
-            GuiAction::handler_string_id => BT_COMMAND_ACTION_ID,
-            GuiAction::data => array(
-                BtCommandActionData::name => $name,
-                BtCommandActionData::params => $params,
-                BtCommandActionData::callback_action => $callback_action
             ),
         );
     }

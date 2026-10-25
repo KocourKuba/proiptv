@@ -81,23 +81,5 @@ interface ExtTag
      * @param array $attributes ;
      * @return void
      */
-    public function setAttributes($attributes);
-
-    /**
-     * @param array $attributes ;
-     * @return void
-     */
     public function addAttributes($attributes);
-
-    /**
-     * @param string $attribute_name
-     * @return string
-     */
-    public function getAttributeValue($attribute_name);
-
-    /**
-     * @param string $attribute_name
-     * @return bool
-     */
-    public function hasAttributeValue($attribute_name);
 }

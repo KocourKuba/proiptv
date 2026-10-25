@@ -93,15 +93,6 @@ class Perf_Collector
     }
 
     /**
-     * Get the labels array
-     * @return array
-     */
-    public function getLabels()
-    {
-        return $this->labels;
-    }
-
-    /**
      * Get the labels count
      * @return int
      */

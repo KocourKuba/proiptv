@@ -171,14 +171,6 @@ class Sql_Wrapper
     }
 
     /**
-     * @return SQLite3|null
-     */
-    public function get_db()
-    {
-        return $this->db;
-    }
-
-    /**
      * @return string
      */
     public function get_db_path()

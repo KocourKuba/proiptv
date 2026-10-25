@@ -29,21 +29,6 @@ const COMMAND_STATUS_TIMEOUT = 'timeout';
 const GUI_EVENT_KEY_DISCRETE_POWER_ON = 'key_power_on';
 const GUI_EVENT_KEY_DISCRETE_POWER_OFF = 'key_power_off';
 
-# Standby modes
-const STANDBY_MODE_OFF = 0;
-const STANDBY_MODE_ON = 1;
-
-# Zoom presets
-const VIDEO_ZOOM_NORMAL = 'normal';
-const VIDEO_ZOOM_ENLARGE = 'enlarge';
-const VIDEO_ZOOM_MAKE_WIDER = 'make_wider';
-const VIDEO_ZOOM_NON_LINEAR_STRETCH = 'fill_screen';
-const VIDEO_ZOOM_NON_LINEAR_STRETCH_TO_FULL_SCREEN = 'full_fill_screen';
-const VIDEO_ZOOM_MAKE_TALLER = 'make_taller';
-const VIDEO_ZOOM_CUT_EDGES = 'cut_edges';
-const VIDEO_ZOOM_FULL_SCREEN = 'full_enlarge';
-const VIDEO_ZOOM_STRETCH_TO_FULL_SCREEN = 'full_stretch';
-
 # Player states
 const PLAYER_STATE = 'player_state';
 const PLAYBACK_STATE = 'playback_state';
@@ -314,27 +299,6 @@ class DuneVideoZoomPresets
     const cut_edges = '6';
     const full_enlarge = '8';
     const full_stretch = '9';
-
-    public static $zoom_value = array(
-        DuneVideoZoomPresets::normal => VIDEO_ZOOM_NORMAL,
-        DuneVideoZoomPresets::enlarge => VIDEO_ZOOM_ENLARGE,
-        DuneVideoZoomPresets::make_wider => VIDEO_ZOOM_MAKE_WIDER,
-        DuneVideoZoomPresets::fill_screen => VIDEO_ZOOM_NON_LINEAR_STRETCH,
-        DuneVideoZoomPresets::full_fill_screen => VIDEO_ZOOM_NON_LINEAR_STRETCH_TO_FULL_SCREEN,
-        DuneVideoZoomPresets::make_taller => VIDEO_ZOOM_MAKE_TALLER,
-        DuneVideoZoomPresets::cut_edges => VIDEO_ZOOM_CUT_EDGES,
-        DuneVideoZoomPresets::full_enlarge => VIDEO_ZOOM_FULL_SCREEN,
-        DuneVideoZoomPresets::full_stretch => VIDEO_ZOOM_STRETCH_TO_FULL_SCREEN
-    );
-}
-
-// Deinterlacing modes for media_url string (|||dune_params|||deint:value)
-class DuneParamsDeintMode
-{
-    const    off = '1';
-    const    bob = '0';
-    const    adaptive = '4';
-    const    adaptive_plus = '5';
 }
 
 class DuneIrControl
@@ -402,112 +366,6 @@ class DuneIrControl
         GUI_EVENT_KEY_ANGLE             => 'B24DBF00',
         GUI_EVENT_DISCRETE_POWER_ON     => 'A05FBF00',
         GUI_EVENT_DISCRETE_POWER_OFF    => 'A15EBF00'
-    );
-
-    public static $new_key_codes = array(
-        GUI_EVENT_KEY_VENDOR            => '0',
-        GUI_EVENT_KEY_ENTER             => 'EB14CFCF',
-        GUI_EVENT_KEY_PLAY              => 'B748CFCF',
-        GUI_EVENT_KEY_A_RED             => 'BF40CFCF',
-        GUI_EVENT_KEY_B_GREEN           => 'E01FCFCF',
-        GUI_EVENT_KEY_C_YELLOW          => 'FF00CFCF',
-        GUI_EVENT_KEY_D_BLUE            => 'BE41CFCF',
-        GUI_EVENT_KEY_POPUP_MENU        => 'F807CFCF',
-        GUI_EVENT_KEY_INFO              => 'AF50CFCF',
-        GUI_EVENT_KEY_LEFT              => 'E817CFCF',
-        GUI_EVENT_KEY_RIGHT             => 'E718CFCF',
-        GUI_EVENT_KEY_UP                => 'EA15CFCF',
-        GUI_EVENT_KEY_DOWN              => 'E916CFCF',
-        GUI_EVENT_KEY_P_PLUS            => 'B44BCFCF',
-        GUI_EVENT_KEY_P_MINUS           => 'B34CCFCF',
-        GUI_EVENT_KEY_NEXT              => 'E21DCFCF',
-        GUI_EVENT_KEY_PREV              => 'B649CFCF',
-        GUI_EVENT_KEY_SETUP             => 'B14ECFCF',
-        GUI_EVENT_KEY_RETURN            => 'FB04CFCF',
-        GUI_EVENT_KEY_SELECT            => 'BD42CFCF',
-        GUI_EVENT_KEY_CLEAR             => 'FA05CFCF',
-        GUI_EVENT_KEY_PAUSE             => 'E11ECFCF',
-        GUI_EVENT_KEY_FWD               => 'E41BCFCF',
-        GUI_EVENT_KEY_REW               => 'E31CCFCF',
-        GUI_EVENT_KEY_SLOW              => 'E51ACFCF',
-        GUI_EVENT_KEY_STOP              => 'E619CFCF',
-        GUI_EVENT_KEY_TOP_MENU          => 'AE51CFCF',
-        GUI_EVENT_KEY_POWER             => 'BC43CFCF',
-        GUI_EVENT_KEY_EJECT             => 'EF10CFCF',
-        GUI_EVENT_KEY_MODE              => 'BA45CFCF',
-        GUI_EVENT_KEY_MUTE              => 'B946CFCF',
-        GUI_EVENT_KEY_V_PLUS            => 'AD52CFCF',
-        GUI_EVENT_KEY_V_MINUS           => 'AC53CFCF',
-        GUI_EVENT_KEY_SEARCH            => 'F906CFCF',
-        GUI_EVENT_KEY_ZOOM              => 'FD02CFCF',
-        GUI_EVENT_KEY_SUBTITLE          => 'AB54CFCF',
-        GUI_EVENT_KEY_AUDIO             => 'BB44CFCF',
-        GUI_EVENT_KEY_REC               => '9F60CFCF',
-        GUI_EVENT_KEY_URL               => '9D62CFCF', // not works when sent to /proc/ir/button
-        GUI_EVENT_KEY_0                 => 'F50ACFCF',
-        GUI_EVENT_KEY_1                 => 'F40BCFCF',
-        GUI_EVENT_KEY_2                 => 'F30CCFCF',
-        GUI_EVENT_KEY_3                 => 'F20DCFCF',
-        GUI_EVENT_KEY_4                 => 'F10ECFCF',
-        GUI_EVENT_KEY_5                 => 'F00FCFCF',
-        GUI_EVENT_KEY_6                 => 'FE01CFCF',
-        GUI_EVENT_KEY_7                 => 'EE11CFCF',
-        GUI_EVENT_KEY_8                 => 'ED12CFCF',
-        GUI_EVENT_KEY_9                 => 'EC13CFCF',
-        GUI_EVENT_KEY_MOUSE             => 'B04FCFCF',
-        GUI_EVENT_KEY_KEYBRD            => 'FC03CFCF', // not works when sent to /proc/ir/button
-        GUI_EVENT_KEY_DUNE              => '9E61CFCF', //FAV1
-        GUI_EVENT_KEY_RECENT            => '9E61CFCF', //FAV1
-        GUI_EVENT_KEY_FAVORITES         => '8B74CFCF', //FAV2 not implemented yet in firmware lower r24
-        GUI_EVENT_KEY_TV                => '9C63CFCF',
-        GUI_EVENT_KEY_MUSIC             => 'A758CFCF',
-        GUI_EVENT_KEY_MOVIES            => 'B847CFCF',
-        GUI_EVENT_KEY_SHUFFLE           => 'B847CFCF',
-        GUI_EVENT_KEY_REPEAT            => 'B24DCFCF', // Reload plugin when called from main screen
-        GUI_EVENT_KEY_ANGLE             => 'B24DCFCF',
-        GUI_EVENT_DISCRETE_POWER_ON     => 'A05FCFCF',
-        GUI_EVENT_DISCRETE_POWER_OFF    => 'A15ECFCF'
-    );
-
-    public static $google_key_codes = array(
-        GUI_EVENT_KEY_POWER             => 'DE217788',
-        GUI_EVENT_KEY_SETUP             => 'F00F7788',
-        GUI_EVENT_KEY_UP                => 'EA157788',
-        GUI_EVENT_KEY_LEFT              => 'E8177788',
-        GUI_EVENT_KEY_RIGHT             => 'E7187788',
-        GUI_EVENT_KEY_DOWN              => 'E9167788',
-        GUI_EVENT_KEY_ENTER             => 'E6197788',
-        GUI_EVENT_KEY_RETURN            => 'B7487788',
-        GUI_EVENT_KEY_TOP_MENU          => 'B8477788',
-        GUI_EVENT_KEY_TV                => 'CD327788',
-        GUI_EVENT_KEY_MUTE              => 'DA257788',
-        GUI_EVENT_KEY_V_PLUS            => 'DC237788',
-        GUI_EVENT_KEY_V_MINUS           => 'DB247788',
-        GUI_EVENT_KEY_P_PLUS            => 'CC337788',
-        GUI_EVENT_KEY_P_MINUS           => 'CB347788',
-        GUI_EVENT_KEY_0                 => 'F50A7788',
-        GUI_EVENT_KEY_1                 => 'FE017788',
-        GUI_EVENT_KEY_2                 => 'FD027788',
-        GUI_EVENT_KEY_3                 => 'FC037788',
-        GUI_EVENT_KEY_4                 => 'FB047788',
-        GUI_EVENT_KEY_5                 => 'FA057788',
-        GUI_EVENT_KEY_6                 => 'F9067788',
-        GUI_EVENT_KEY_7                 => 'F8077788',
-        GUI_EVENT_KEY_8                 => 'F7087788',
-        GUI_EVENT_KEY_9                 => 'F6097788',
-        GUI_EVENT_KEY_SUBTITLE          => 'A7587788',
-        GUI_EVENT_KEY_INFO              => 'D6297788',
-        GUI_EVENT_KEY_A_RED             => 'B44B7788',
-        GUI_EVENT_KEY_B_GREEN           => 'B54A7788',
-        GUI_EVENT_KEY_C_YELLOW          => 'B6497788',
-        GUI_EVENT_KEY_D_BLUE            => 'B34C7788',
-
-        GUI_EVENT_KEY_ACCOUNT           => 'A6597788',
-        GUI_EVENT_KEY_BOOKMARK          => '8B747788',
-        GUI_EVENT_KEY_YOUTUBE           => '9B647788',
-        GUI_EVENT_KEY_NETFLIX           => '9C637788',
-        GUI_EVENT_KEY_PRIME             => '98677788',
-        GUI_EVENT_KEY_APP_CUSTOM        => '97687788',
     );
 }
 
@@ -753,28 +611,6 @@ function get_platform_info()
         }
     }
     return $platform;
-}
-
-/**
- * @return string
- */
-function get_platform_curl()
-{
-    static $curl = null;
-    if (is_null($curl)) {
-        $v = get_platform_info();
-        hd_debug_print("platform: {$v['platform']}", true);
-        hd_debug_print("type:     {$v['type']}", true);
-        if ($v['platform'] == 'android') {
-            $curl = getenv('FS_PREFIX') . "/firmware/bin/curl";
-        } else {
-            // run curl using path
-            $curl = "curl";
-        }
-        hd_debug_print("used curl: $curl", true);
-    }
-
-    return $curl;
 }
 
 /**
@@ -1071,37 +907,6 @@ function format_datetime($fmt, $ts)
 }
 
 /**
- * @param string $ticks
- * @param bool $point
- * @return string
- */
-function format_duration($ticks, $point = false)
-{
-    $n = (int)$ticks;
-    if ($n <= 0 || strlen($ticks) <= 0) {
-        return "--:--";
-    }
-
-    $hours = (int)($n / 3600000);
-    $remainder = $n % 3600000;
-    $minutes = (int)($remainder / 60000);
-    $seconds = (int)(($remainder % 60000) / 1000);
-    if ($point) {
-        $msecond = $remainder % 1000;
-    }
-
-    if ($hours > 0) {
-        return sprintf('%d:%02d:%02d', $hours, $minutes, $seconds);
-    }
-
-    if ($point) {
-        return sprintf('%02d:%02d.%03d', $minutes, $seconds, $msecond);
-    }
-
-    return sprintf('%02d:%02d', $minutes, $seconds);
-}
-
-/**
  * @param string $secs
  * @return string
  */
@@ -1212,20 +1017,6 @@ function get_shell_exec($cmd)
 }
 
 /**
- * @param string $key
- * @return false|string|null
- */
-function send_ir_code($key)
-{
-    if (isset(DuneIrControl::$key_codes[$key])) {
-        return shell_exec('echo ' . DuneIrControl::$key_codes[$key] . ' > /proc/ir/button');
-    }
-
-    hd_debug_print('Error in class ' . get_class($this) . '::' . __FUNCTION__ . "! Code of key '$key' not found in base!");
-    return '0';
-}
-
-/**
  * Send IR code through the firmware http command server.
  * Unlike /proc/ir/button it also works on ATV (limited apk), where the event still reaches the plugin.
  *
@@ -1242,35 +1033,6 @@ function send_ir_code_http($key)
     $url = 'http://127.0.0.1:' . http_local_port() . '/cgi-bin/do?cmd=ir_code&ir_code=' . DuneIrControl::$key_codes[$key];
     $status = shell_exec('wget -q -O - "' . $url . '"');
     return strpos($status, '"command_status" value="ok"') !== false;
-}
-
-/**
- * @param string $key
- * @return string
- */
-function send_ir_code_return_status($key)
-{
-    # return string (command execution status)
-
-    if (isset(DuneIrControl::$key_codes[$key])) {
-        $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=ir_code&ir_code=' . DuneIrControl::$key_codes[$key] . CMD_STATUS_GREP;
-        return get_shell_exec($cmd);
-    }
-
-    hd_debug_print('Error in class ' . get_class($this) . '::' . __FUNCTION__ . "! Code of key '$key' not found in base!");
-    return '0';
-}
-
-/**
- * @return string
- */
-function get_player_state()
-{
-    # return string (PLAYER_STATE_STANDBY | PLAYER_STATE_BLACK_SCREEN | PLAYER_STATE_NAVIGATOR
-    # | PLAYER_STATE_FILE_PLAYBACK | PLAYER_STATE_DVD_PLAYBACK | PLAYER_STATE_BLURAY_PLAYBACK)
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "player_state" | sed -n "s/^.*player_state = /\1/p"';
-    return get_shell_exec($cmd);
 }
 
 /**
@@ -1373,29 +1135,6 @@ function get_resume_state_assoc()
 }
 
 /**
- * @return int
- */
-function get_standby_mode()
-{
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "player_state" | sed -n "s/^.*player_state = /\1/p"';
-    return (int)(get_shell_exec($cmd) === PLAYER_STATE_STANDBY);
-}
-
-/**
- * @param int $mode
- * @return string
- */
-function set_standby_mode($mode)
-{
-    # return string (command execution status)
-    # argument values (STANDBY_MODE_OFF | STANDBY_MODE_ON)
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=ir_code&ir_code='
-        . (($mode === STANDBY_MODE_OFF) ? GUI_EVENT_DISCRETE_POWER_ON : GUI_EVENT_DISCRETE_POWER_OFF) . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
  * @return array
  */
 function get_shell_settings()
@@ -1419,22 +1158,6 @@ function get_shell_setting($setting)
     return isset($settings[$setting]) ? $settings[$setting] : '';
 }
 
-###############################################################################
-# Playback controls
-###############################################################################
-
-/**
- * @return string
- */
-function get_playback_state()
-{
-    # return string (PLAYBACK_STOPPED | PLAYBACK_INITIALIZING | PLAYBACK_PLAYING | PLAYBACK_PAUSED
-    # | PLAYBACK_SEEKING | PLAYBACK_BUFFERING | PLAYBACK_FINISHED | PLAYBACK_DEINITIALIZING)
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_state" | sed -n "s/^.*playback_state = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
 /**
  * @return string
  */
@@ -1447,43 +1170,12 @@ function stop()
 }
 
 /**
- * @return bool
- */
-function can_pause()
-{
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "pause_is_available" | sed -n "s/^.*pause_is_available = /\1/p"';
-    return get_shell_exec($cmd) === '1';
-}
-
-/**
- * @return string
- */
-function pause()
-{
-    # return string (command execution status)
-
-    return set_speed(0);
-}
-
-/**
  * @return string
  */
 function resume()
 {
     # return string (command execution status)
     return set_speed(256);
-}
-
-/**
- * @return string
- */
-function get_speed()
-{
-    # return string			(-8192|-4096|-2048|-1024|-512|-256| -128|  -64|  -32|   -16|    -8|    0|    8|   16|   32|  64| 128|  256|  512| 1024| 2048|  4096|  8192)
-    # corresponds speed		( -32x| -16x|  -8x|  -4x| -2x| -1x|-1/2x|-1/4x|-1/8x|-1/16x|-1/32x|pause|1/32x|1/16x| 1/8x|1/4x|1/2x|   1x|   2x|   4x|   8x|   16x|   32x)
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_speed" | sed -n "s/^.*playback_speed = /\1/p"';
-    return get_shell_exec($cmd);
 }
 
 /**
@@ -1499,152 +1191,6 @@ function set_speed($value)
     return get_shell_exec($cmd);
 }
 
-/**
- * @return string
- */
-function get_length_seconds()
-{
-    # return string
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_duration" | sed -n "s/^.*playback_duration = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return bool
- */
-function has_length()
-{
-    # return boolean (true if length of media is known)
-
-    return get_length_seconds() > 0;
-}
-
-/**
- * @return string
- */
-function get_position_seconds()
-{
-    # return string
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_position" | sed -n "s/^.*playback_position = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @param int $seconds
- * @return string
- */
-function set_position_seconds($seconds)
-{
-    # return string (command execution status)
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=' . (empty($seconds) ? 'status' : "set_playback_state&position=$seconds") . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @param string $speed
- * @param int $seconds
- * @return string
- */
-function set_speed_and_position_seconds($speed, $seconds)
-{
-    # return string (command execution status)
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd='
-        . ((empty($speed) || empty($seconds)) ? 'status' : "set_playback_state&speed=$speed&position=$seconds")
-        . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return bool
- */
-function is_scrambling_detected()
-{
-    # return boolean
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "scrambling_detected" | sed -n "s/^.*scrambling_detected = /\1/p"';
-    return get_shell_exec($cmd) === '1';
-}
-
-/**
- * @return string
- */
-function get_segment_length_seconds()
-{
-    # return string (length of one media segment for segment-based media, for HLS returns the value of X-EXT-TARGETDURATION)
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "segment_length" | sed -n "s/^.*segment_length = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_playback_url()
-{
-    # return string
-
-    $url = rtrim(shell_exec('cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_url" | sed -n "s/^.*playback_url = /\1/p"'), "\n");
-
-    /** @var array $m */
-    if (preg_match_all('/\/\/(127\.0\.0\.1|localhost).*((htt|rt|rtc|rts|ud)p:\/\/.*$)/i', $url, $m) && !empty($m[2][0])) {
-        return $m[2][0];
-    }
-
-    return $url;
-}
-
-
-###############################################################################
-# Audio controls
-###############################################################################
-
-/**
- * @return string
- */
-function get_volume()
-{
-    # return string (value 0..100 - current volume in percents)
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_volume" | sed -n "s/^.*playback_volume = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @param int $percents 0-100
- * @return string
- */
-function set_volume($percents /*0-100*/)
-{
-    # return string (command execution status)
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&volume=' . $percents . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return bool
- */
-function is_mute_enabled()
-{
-    # return boolean
-
-    $cmd = 'cat /tmp/run/ext_command.state | grep -w "playback_mute" | sed -n "s/^.*playback_mute = /\1/p"';
-    return get_shell_exec($cmd) === '1';
-}
-
-/**
- * @param int $mute
- * @return string
- */
-function toggle_mute($mute = 1)
-{
-    # return string (command execution status)
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&mute=' . $mute . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
 
 /**
  * @return array
@@ -1677,508 +1223,6 @@ function get_audio_tracks_description()
     return $result;
 }
 
-/**
- * @return string
- */
-function get_audio_track()
-{
-    # Return: 0..N - current audio track index
-
-    return
-        rtrim(shell_exec('cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "audio_track" | sed -n "s/^.*audio_track = /\1/p"'), "\n");
-}
-
-/**
- * @param int $track
- * @return string
- */
-function set_audio_track($track)
-{
-    # Argument: 0..N - audio track index
-    # Return: command execution status
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&audio_track=' . $track . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-
-###############################################################################
-# Teletext controls (playback in TV mode)
-###############################################################################
-
-/**
- * @return string
- */
-function is_teletext_available()
-{
-    # Return: boolean value of teletext available in the current stream
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "teletext_available" | sed -n "s/^.*teletext_available = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function is_teletext_enabled()
-{
-    # Return: boolean value of teletext mode is turned
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "teletext_enabled" | sed -n "s/^.*teletext_enabled = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @param int $enable
- * @return string
- */
-function toggle_teletext($enable = 1)
-{
-    # Return: command execution status
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&teletext_enabled=' . $enable . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_teletext_page_number()
-{
-    # Return: string value of current teletext page number
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "teletext_page_number" | sed -n "s/^.*teletext_page_number = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @param int $value 100..899 - page number
- * @return string
- */
-function set_teletext_page_number($value)
-{
-    # Argument: 100..899 - page number
-    # Return: command execution status
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&teletext_page_number=' . $value . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return bool
- */
-function is_teletext_mix_mode_enabled()
-{
-    # Return: boolean value of teletext mix mode is turned
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "teletext_mix_mode" | sed -n "s/^.*teletext_mix_mode = /\1/p"';
-    return get_shell_exec($cmd) === '1';
-}
-
-/**
- * @param int $mode
- * @return string
- */
-function set_teletext_mix_mode($mode = 1)
-{
-    # Return: command execution status
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&teletext_mix_mode=' . $mode . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-###############################################################################
-# Video controls
-###############################################################################
-
-/**
- * @return bool
- */
-function is_video_enabled()
-{
-    # Returns true if primary video showing during primary video playback is enabled.
-    # When primary video playback is performed and primary video showing is disabled,
-    # primary video playback internally runs in the usual way, but primary video is
-    # hidden. By default, primary video showing is enabled.
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "video_enabled" | sed -n "s/^.*video_enabled = /\1/p"';
-    return get_shell_exec($cmd) === '1';
-}
-
-/**
- * @param int $enable
- * @return string
- */
-function toggle_video($enable = 1)
-{
-    # Return: command execution status
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&video_enabled=' . $enable . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_video_zorder()
-{
-    # Return: string value of current Z-order of primary video
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "video_zorder" | sed -n "s/^.*video_zorder = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @param int $value 0..1000 - Z-order
- * @return string
- */
-function set_video_zorder($value)
-{
-    # Sets Z-order of primary video. If primary video playback is not running or primary
-    # video showing is disabled, primary video layer is absent and this setting has no
-    # effect. Z-ordering of primary video, PiP video and OSD layers works in the following
-    # way. Layers with greater Z-order are put above layers with lesser Z-order. Default
-    # Z-order values for primary video, PiP video, OSD are: 200, 400, 500. If some of the
-    # layers (primary video, PiP video, OSD) have the same Z-order, the following ordering
-    # rules are used: OSD is above PiP video, PiP video is above primary video.
-    # Argument: 0..1000 - Z-order
-    # Return: command execution status
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&video_zorder=' . $value . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_osd_zorder()
-{
-    # Return: string value of current Z-order of OSD
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "osd_zorder" | sed -n "s/^.*osd_zorder = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @param int $value 0..1000 - Z-order
- * @return string
- */
-function set_osd_zorder($value)
-{
-    # Argument: 0..1000 - Z-order
-    # Return: command execution status
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&osd_zorder=' . $value . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function is_video_on_top()
-{
-    # Return: true if primary video has Z-order greater than Z-order of OSD
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "video_on_top" | sed -n "s/^.*video_on_top = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @param int $enable
- * @return string
- */
-function toggle_video_on_top($enable = 1)
-{
-    # Puts primary video above OSD. The function is equivalent to setVideoZOrder(900) and
-    # setOSDZOrder(500). NOTE: This function is intended to be used by applications which
-    # do not use PiP video; if PiP video is used, it is recommended not to use this function
-    # and instead use set{Video,PIP,OSD}ZOrder functions directly.
-    # Return: command execution status
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&video_on_top=' . $enable . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return bool
- */
-function is_window_full_screen()
-{
-    # Return: boolean value of window full screen mode enabled
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_window_fullscreen" | sed -n "s/^.*playback_window_fullscreen = /\1/p"';
-    return get_shell_exec($cmd) === '1';
-}
-
-/**
- * @return string
- */
-function enable_window_full_screen()
-{
-    # Return: command execution status
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&window_fullscreen=1"' . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_window_rect_x()
-{
-    # Return: string value of window rect x
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_window_rect_x" | sed -n "s/^.*playback_window_rect_x = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_window_rect_y()
-{
-    # Return: string value of window rect y
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_window_rect_y" | sed -n "s/^.*playback_window_rect_y = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_window_rect_width()
-{
-    # Return: string value of window rect width
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_window_rect_width" | sed -n "s/^.*playback_window_rect_width = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_window_rect_height()
-{
-    # Return: string value of window rect height
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_window_rect_height" | sed -n "s/^.*playback_window_rect_height = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @param int $x
- * @param int $y
- * @param int $width
- * @param int $height
- * @return string
- */
-function set_window_rect($x, $y, $width, $height)
-{
-    # Return: command execution status
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd='
-        . "set_playback_state&window_fullscreen=0&window_rect_x=$x&window_rect_y=$y&window_rect_width=$width&window_rect_height=$height"
-        . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_clip_rect_x()
-{
-    # Return: string value of clip rect x
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_clip_rect_x" | sed -n "s/^.*playback_clip_rect_x = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_clip_rect_y()
-{
-    # Return: string value of clip rect y
-
-    $cmd = 'cat /tmp/run/ext_command.state | grep -w "playback_clip_rect_y" | sed -n "s/^.*playback_clip_rect_y = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_clip_rect_width()
-{
-    # Return: string value of clip rect width
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_clip_rect_width" | sed -n "s/^.*playback_clip_rect_width = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_clip_rect_height()
-{
-    # Return: string value of clip rect height
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_clip_rect_height" | sed -n "s/^.*playback_clip_rect_height = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @param int $x
- * @param int $y
- * @param int $width
- * @param int $height
- * @return string
- */
-function set_clip_rect($x, $y, $width, $height)
-{
-    # Return: command execution status
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd='
-        . "set_playback_state&clip_rect_x=$x&clip_rect_y=$y&clip_rect_width=$width&clip_rect_height=$height"
-        . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_video_source_rect_x()
-{
-    # Return: string value of video source rect x
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_video_source_rect_x" | sed -n "s/^.*playback_video_source_rect_x = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_video_source_rect_y()
-{
-    # Return: string value of video source rect y
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_video_source_rect_y" | sed -n "s/^.*playback_video_source_rect_y = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_video_source_rect_width()
-{
-    # Return: string value of video source rect width
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_video_source_rect_width" | sed -n "s/^.*playback_video_source_rect_width = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_video_source_rect_height()
-{
-    # Return: string value of video source rect height
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_video_source_rect_height" | sed -n "s/^.*playback_video_source_rect_height = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @param int $x
- * @param int $y
- * @param int $width
- * @param int $height
- * @return string
- */
-function set_video_source_rect($x, $y, $width, $height)
-{
-    # Sets coordinates of a portion of the original video for displaying in window or on full
-    # screen as specified via set_window_rect(). The specification of the portion coordinates is
-    # in 0-4096 scale for all arguments instead of OSD size scale in set_window_rect() and
-    # set_clip_rect() thus set_video_source_rect(0, 0, 4096, 4096) specifies complete original video.
-    # The coordinates are specified relative to the original video dimensions with no dependence
-    # on display/window aspect ratio so if there is, say, 4:3 video that should be displayed in a
-    # 3:1 window and set_video_source_rect(0, 0, 1024, 4096) is called then the resulting video will
-    # have 1:3 aspect ratio with appropriate black bars added in the window if normal zoom mode is
-    # specified. The video source rectangle specification is also compatible with
-    # VIDEO_ZOOM_STRETCH_TO_FULL_SCREEN preset, in this case the portion of the original video is
-    # stretched to full screen or window as expected. Other zoom presets are not compatible, just
-    # like with set_clip_rect() call - set_video_source_rect() fails if an incompatible zoom preset is
-    # set and set_video_zoom() fails with an incompatible zoom preset if a partial video source
-    # rectangle is already in effect. Note that both video source rectangle and clip rectangle may
-    # be specified with set_video_source_rect() and set_clip_rect() respectively but if both are in effect
-    # then the clip rectangle setting is ignored until set_video_source_rect() is set to complete
-    # original video so programmer should take care to avoid such situations.
-    # Return: command execution status
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd='
-        . "set_playback_state&video_source_rect_x=$x&video_source_rect_y=$y&video_source_rect_width=$width&video_source_rect_height=$height"
-        . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_video_width()
-{
-    # Return: string value of current video width
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_video_width" | sed -n "s/^.*playback_video_width = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_video_height()
-{
-    # Return: string value of current video height
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_video_height" | sed -n "s/^.*playback_video_height = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @return string
- */
-function get_video_zoom()
-{
-    # Return: string value of current video zoom
-
-    $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "video_zoom" | sed -n "s/^.*video_zoom = /\1/p"';
-    return get_shell_exec($cmd);
-}
-
-/**
- * @param string $value
- * @return string
- */
-function set_video_zoom($value)
-{
-    # Argument: VIDEO_ZOOM_NORMAL | VIDEO_ZOOM_ENLARGE | VIDEO_ZOOM_MAKE_WIDER | VIDEO_ZOOM_NON_LINEAR_STRETCH |
-    #           VIDEO_ZOOM_NON_LINEAR_STRETCH_TO_FULL_SCREEN | VIDEO_ZOOM_MAKE_TALLER | VIDEO_ZOOM_CUT_EDGES |
-    #           VIDEO_ZOOM_FULL_SCREEN | VIDEO_ZOOM_STRETCH_TO_FULL_SCREEN
-    # Return: command execution status
-
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&video_zoom=' . $value . CMD_STATUS_GREP;
-    return get_shell_exec($cmd);
-}
-
-/**
- * @param DuneVideoZoomPresets::const $preset
- * @return string
- */
-function get_zoom_value($preset)
-{
-    return isset(DuneVideoZoomPresets::$zoom_value[$preset])
-        ? DuneVideoZoomPresets::$zoom_value[$preset]
-        : DuneVideoZoomPresets::$zoom_value[DuneVideoZoomPresets::normal];
-}
 
 ###############################################################################
 # Storage access
@@ -2218,15 +1262,6 @@ function get_install_path($path = '')
 function get_plugin_cgi_url($path = '')
 {
     return DuneSystem::$properties['plugin_cgi_url'] . ltrim($path, "/");
-}
-
-/**
- * @param string $path
- * @return string
- */
-function get_plugin_www_url($path = '')
-{
-    return DuneSystem::$properties['plugin_www_url'] . ltrim($path, "/");
 }
 
 /**
@@ -2334,36 +1369,6 @@ function get_plugin_manifest_info()
     return $result;
 }
 
-/**
- * @param string $path
- * @return array array of local storages
- */
-function get_local_storages_list($path)
-{
-    $i = 0;
-    $result = array();
-
-    foreach (scandir($path) as $item) {
-        if (($item === '.') || ($item === '..') || !is_dir($path . '/' . $item)) {
-            continue;
-        }
-
-        $disk_name = '';
-
-        foreach (explode('_', $item) as $chunk) {
-            $disk_name .= is_numeric('0x' . $chunk) ? '' : $chunk;
-        }
-
-        $alias = (($disk_name === 'DuneHDD') ? 'D:' : 'usb' . $i++ . ':');
-        $result['list'][$item] = $alias;
-        $result['names'][] = $item;
-        $result['aliases'][] = $alias;
-        $result['labels'][] = (($disk_name === 'usbstorage') ? '' : $disk_name);
-    }
-
-    return $result;
-}
-
 ###############################################################################
 # Miscellaneous
 ###############################################################################
@@ -2426,37 +1431,6 @@ function is_choose_file_supported()
 }
 
 /**
- * Features of the firmware listed in /tmp/firmware_features.txt, read once
- *
- * @return array feature => true
- */
-function get_firmware_features()
-{
-    static $features = null;
-    if ($features === null) {
-        $features = array();
-        $lines = readlines(getenv('FS_PREFIX') . '/tmp/firmware_features.txt');
-        if (is_array($lines)) {
-            foreach ($lines as $feature) {
-                $features[$feature] = true;
-            }
-        }
-    }
-
-    return $features;
-}
-
-/**
- * @param string $feature
- * @return bool
- */
-function has_firmware_feature($feature)
-{
-    $features = get_firmware_features();
-    return isset($features[$feature]);
-}
-
-/**
  * NewUI rows folders
  *
  * @return bool
@@ -2464,22 +1438,6 @@ function has_firmware_feature($feature)
 function is_rows_api_supported()
 {
     return class_exists('PluginRowsFolderView');
-}
-
-/**
- * @return bool
- */
-function is_list_config_supported()
-{
-    return class_exists('EditListConfigActionData') && defined('EDIT_LIST_CONFIG_OPT_REMOVE_UNCHECKED');
-}
-
-/**
- * @return bool
- */
-function is_lcfg_v2_supported()
-{
-    return is_list_config_supported() && has_firmware_feature('lcfg_v2');
 }
 
 /**
@@ -2634,14 +1592,6 @@ function sys_tr_value($key, $default)
 }
 
 /**
- * @param string $path
- * @return string
- */
-function normalizePath($path) {
-    return str_replace(array('\\', '/'), DIRECTORY_SEPARATOR, $path);
-}
-
-/**
  * Returns the path to the directory of the active skin (no trailing slash)
  *
  * @return string
@@ -2655,16 +1605,6 @@ function get_active_skin_path()
 
     hd_debug_print('Error in class ' . __METHOD__ . " ! Can not determine the path to the active skin. $skin_path");
     return '';
-}
-
-/**
- * Returns the path to the skin configuration
- *
- * @return string
- */
-function get_skin_config_path()
-{
-    return getenv('FS_PREFIX') . "/flashdata/dune_skin/dune_skin_config.xml";
 }
 
 /**
@@ -2736,16 +1676,6 @@ function get_noslash_trailed_path($path)
 }
 
 /**
- * @param string $path
- * @return string
- */
-function get_filename($path)
-{
-    $ar = explode('/', $path);
-    return (count($ar) === 1) ? $path : end($ar);
-}
-
-/**
  * creating directories along the way
  *
  * @param string $path
@@ -2803,30 +1733,6 @@ function move_file($source, $dest)
     }
 
     return true;
-}
-
-/**
- * Analog of json_encode() with the JSON_UNESCAPED_UNICODE option available in PHP 5.4.0 and higher
- *
- * @param mixed $data
- * @param int $flags
- * @return string
- * @noinspection PhpUnusedParameterInspection
- */
-function json_encode_unicode($data, $flags = 0)
-{
-    # Analog of json_encode() with the JSON_UNESCAPED_UNICODE option available in PHP 5.4.0 and higher
-
-    array_walk_recursive(
-        $data,
-        function (&$item, $key) {
-            if (is_string($item)) {
-                $item = mb_encode_numericentity($item, array(0x80, 0xffff, 0, 0xffff), 'UTF-8');
-            }
-        }
-    );
-
-    return mb_decode_numericentity(json_encode($data), array(0x80, 0xffff, 0, 0xffff), 'UTF-8');
 }
 
 /**
@@ -2968,46 +1874,6 @@ function get_dune_model()
 }
 
 /**
- * Returns canonized string in lowercase
- *
- * @param string $str
- * @param string $encoding
- * @return string
- */
-function get_canonize_string($str, $encoding = 'UTF-8')
-{
-    # Returns canonized string in lowercase
-
-    return str_replace(
-        array('а', 'в', 'е', 'к', 'м', 'н', 'о', 'р', 'с', 'т', 'у', 'х'),
-        array('a', 'b', 'e', 'k', 'm', 'h', 'o', 'p', 'c', 't', 'y', 'x'),
-        mb_strtolower(trim($str), $encoding));
-}
-
-/**
- * one or more values to dump (variadic, collected via func_get_args)
- * @return void
- */
-function debug_print(/*mixed $var1, $var2...*/)
-{
-    if (!is_null($backtrace = debug_backtrace(false))) {
-        $var = $chain = '';
-
-        foreach (func_get_args() as $value) {
-            $var .= "\n" . trim(var_export($value, true), "'");
-        }
-
-        for ($i = count($backtrace) - 4; $i > 1; $i--) {
-            if ($backtrace[$i - 1]['class'] !== 'User_Input_Handler_Registry') {
-                $chain .= $backtrace[$i - 1]['class'] . '::' . $backtrace[$i - 1]['function'] . '()->';
-            }
-        }
-
-        hd_debug_print('Debug alert! ' . rtrim($chain, '->') . (empty($var) ? '' : ' >> ') . ltrim($var, "\n"));
-    }
-}
-
-/**
  * @param object $user_input
  * @param bool $force
  * @return void
@@ -3146,17 +2012,6 @@ function is_supported_proto($url)
 }
 
 /**
- * Replace https scheme to http
- *
- * @param string $url
- * @return string
- */
-function replace_https($url)
-{
-    return str_replace('https://', 'http://', $url);
-}
-
-/**
  * This is more efficient then merge_array in the loops
  * Do not use with indexed arrays!
  *
@@ -3276,24 +2131,6 @@ function toggle_cookie_param($plugin_cookies, $param, $default)
     $plugin_cookies->{$param} = $new;
     hd_debug_print("toggle new cookie param $param: $old -> $new", true);
     return $new;
-}
-
-/**
- * @param string $doc
- * @return SimpleXMLElement
- * @throws Exception
- */
-function parse_xml_document($doc)
-{
-    $xml = simplexml_load_string($doc);
-
-    if ($xml === false) {
-        hd_debug_print('Error: can not parse XML document.');
-        hd_debug_print("XML-text: $doc.");
-        throw new Exception('Illegal XML document');
-    }
-
-    return $xml;
 }
 
 /**
@@ -3528,84 +2365,6 @@ function wrap_string_to_lines($long_string, $max_chars, $separator = PHP_EOL)
 }
 
 /**
- * @param array $array
- * @return bool
- */
-function is_assoc_array($array)
-{
-    $keys = array_keys($array);
-    return $keys !== array_keys($keys);
-}
-
-/**
- * @param User_Input_Handler $handler
- * @param array $actions
- * @return void
- */
-function register_all_known_events($handler, &$actions)
-{
-    $all_events = array(
-        GUI_EVENT_KEY_V_PLUS,
-        GUI_EVENT_KEY_V_MINUS,
-        GUI_EVENT_KEY_NEXT,
-        GUI_EVENT_KEY_PREV,
-        GUI_EVENT_KEY_FIP_NEXT,
-        GUI_EVENT_KEY_FIP_PREV,
-        GUI_EVENT_KEY_SETUP,
-        GUI_EVENT_KEY_SELECT,
-        GUI_EVENT_KEY_CLEAR,
-        GUI_EVENT_KEY_PAUSE,
-        GUI_EVENT_KEY_FWD,
-        GUI_EVENT_KEY_REW,
-        GUI_EVENT_KEY_SLOW,
-        GUI_EVENT_KEY_TOP_MENU,
-        GUI_EVENT_KEY_EJECT,
-        GUI_EVENT_KEY_MODE,
-        GUI_EVENT_KEY_VENDOR,
-        GUI_EVENT_KEY_SHUFFLE,
-        GUI_EVENT_KEY_MUSIC,
-        GUI_EVENT_KEY_MUTE,
-        GUI_EVENT_KEY_SEARCH,
-        GUI_EVENT_KEY_ZOOM,
-        GUI_EVENT_KEY_SUBTITLE,
-        GUI_EVENT_KEY_REPEAT,
-        GUI_EVENT_KEY_AUDIO,
-        GUI_EVENT_KEY_REC,
-        GUI_EVENT_KEY_DUNE,
-        GUI_EVENT_KEY_URL,
-        GUI_EVENT_UI_ACTION,
-        GUI_EVENT_KEY_RECENT,
-        GUI_EVENT_KEY_TV,
-        GUI_EVENT_KEY_MOVIES,
-        GUI_EVENT_KEY_MUSIC,
-        GUI_EVENT_TIMER,
-        GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE,
-        GUI_EVENT_FOLDER_LEAVE,
-        GUI_EVENT_FOLDER_ENTER,
-        GUI_EVENT_FOLDER_RETURN_BACK,
-        GUI_EVENT_PLAYBACK_USER_ACTION,
-        GUI_EVENT_PLAYBACK_STATE_CHANGED,
-        GUI_EVENT_MENU_PLAYBACK_OSD_CLOSED,
-        GUI_EVENT_MENU_PLAYBACK_OSD_GOING_TO_OPEN,
-        GUI_EVENT_MENU_PLAYBACK_FINISH,
-        GUI_EVENT_MENU_EXT_APP_FINISH,
-        GUI_EVENT_WEB_BROWSER_FINISH,
-        GUI_EVENT_GOING_TO_UPDATE,
-        GUI_EVENT_GOING_TO_STOP,
-        GUI_EVENT_TOPMENU_POPUP_MENU,
-        GUI_EVENT_GOING_TO_RELOAD_ALL_FOLDERS,
-        GUI_EVENT_FAVORITES_UPDATED,
-    );
-
-    foreach ($all_events as $action) {
-        if (!isset($actions[$action])) {
-            hd_debug_print("register event: $action");
-            $actions[$action] = User_Input_Handler_Registry::create_action($handler, $action);
-        }
-    }
-}
-
-/**
  * @param string $str
  * @return array
  */
@@ -3690,18 +2449,6 @@ function recursive_copy($source, $target)
 
         $dir->close();
     }
-}
-
-/**
- * Convert dune serial number to uuid
- * @return string
- */
-function get_uuid()
-{
-    // convert 0000-0003-6081-4dc6-c48f-dbd4-bb02-7cba
-    // to 00000003-6081-4dc6-c48f-dbd4bb027cba
-    $parts = explode('-', strtolower(get_serial_number()));
-    return "$parts[0]$parts[1]-$parts[2]-$parts[3]-$parts[4]-$parts[5]$parts[6]$parts[7]";
 }
 
 /**
@@ -4203,19 +2950,6 @@ function extract_dune_params($url)
 }
 
 /**
- * @param array $arr
- * @param string|int $key
- * @param mixed $val
- * @return array
- */
-function array_unshift_assoc(&$arr, $key, $val)
-{
-    $arr = array_reverse($arr, true);
-    $arr[$key] = $val;
-    return array_reverse($arr, true);
-}
-
-/**
  * @param array $arrayItems
  * @return string
  */
@@ -4246,17 +2980,6 @@ function string_ellipsis($string, $max_size = 34)
     }
 
     return $string;
-}
-
-/**
- * case insensitive search in array
- * @param string|array $needle
- * @param string|array $haystack
- * @return false|int|string
- */
-function array_search_i($needle, $haystack)
-{
-    return array_search(strtolower($needle), array_map('strtolower', $haystack));
 }
 
 /**
@@ -4296,34 +3019,6 @@ function array_search_id($needle, $haystack)
 function in_array_id($needle, $haystack)
 {
     return array_search_id($needle, $haystack) !== false;
-}
-
-/**
- * @param string $source
- * @param string $dest
- * @return int|false
- */
-function compress_file($source, $dest)
-{
-    $data = file_get_contents($source);
-    $gz_data = gzencode($data, -1);
-    return file_put_contents($dest, $gz_data);
-}
-
-/**
- * @return bool
- */
-function is_dual_system()
-{
-    return has_firmware_feature('dual_system');
-}
-
-/**
- * @return bool
- */
-function is_whale_tv()
-{
-    return has_firmware_feature('whale_tv');
 }
 
 /**
