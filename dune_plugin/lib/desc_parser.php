@@ -40,7 +40,7 @@
 class Desc_Parser
 {
     const API = 1;
-    const REVISION = 2026100201;
+    const REVISION = 2026102501;
 
     /**
      * Stages: matcher pick (icon/detect) -> 'prepare' -> chunks -> 'cleanup' -> newline cap.
@@ -140,6 +140,7 @@ class Desc_Parser
             array(
                 'if' => array('▪', '►'),
                 'rules' => array(
+                    '/▪(?:[ \t]*▪)+[ \t]*(?=\n|$)/u',
                     array(
                         '/^▪ сз\. (\d+),[ \t]*▪ с\. (\d+)\.[ \t]*/u',
                         "\$1 сезон, \$2-я серия\n",
@@ -164,6 +165,7 @@ class Desc_Parser
                         'Оригинальное название',
                     ),
                     array('/(?<!\p{L})Cлоган(?=[ \t]*[▪►])/u', 'Слоган'),
+                    array('/(?<!\p{L})Ориг(?=[ \t]*▪)/u', 'Оригинальное название'),
                     array('/(?<!\p{L})Рейтинг[ \t]*▪[ \t]*/u', "\n"),
                     array(
                         '/(?<![^\n])(Жанр|Страна|Год|Режисс[её]ры?|В [Рр]олях|Сценари[йи]|Сценаристы?|Композиторы?|Операторы?|Продюсеры?|Ведущ(?:ий|ая|ие)|Оригинальное название|Альтернативное название|Бюджет|Премьера|Награды|Производство|Художники?|Официальный слоган|Российский слоган|Слоган|Из серии|Автор|Рейтинг IMDb|IMDb|Кино[Пп]оиск)[ \t]*(?:▪|►)[ \t]*/u',
@@ -335,7 +337,11 @@ class Desc_Parser
                     $m = preg_split($item, $raw_descr, 0, PREG_SPLIT_DELIM_CAPTURE);
                     if (!isset($m[1])) continue;
 
-                    $total[$key] = trim($m[1]);
+                    // an empty label ("Страна: Год: 2026") is removed, but gives no value
+                    $value = trim($m[1]);
+                    if ($value !== '') {
+                        $total[$key] = $value;
+                    }
                     $raw_descr = preg_replace($item, '', $raw_descr);
                     break;
                 }
