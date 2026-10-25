@@ -1,0 +1,32 @@
+# Publishes a GitHub release for every version tag pushed by make_package.cmd
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build package
+        run: |
+          TAG="$GITHUB_REF_NAME"
+          php -d phar.readonly=0 -f build/make_update.php "${TAG%.*}" "${TAG##*.}"
+          cd dune_plugin
+          zip -qr "../dune_plugin_proiptv.$TAG.zip" .
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="$GITHUB_REF_NAME"
+          NOTES="[Changelog](https://github.com/$GITHUB_REPOSITORY/blob/master/build/changelog.english.md)
+          [Список изменений](https://github.com/$GITHUB_REPOSITORY/blob/master/build/changelog.russian.md)"
+          gh release create "$TAG" "dune_plugin_proiptv.$TAG.zip" --notes "$NOTES"

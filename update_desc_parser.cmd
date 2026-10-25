@@ -1,6 +1,9 @@
 @echo off
-rem Publish EPG description parser (dune_plugin\lib\desc_parser.php) to the server.
+rem Prepare EPG description parser (dune_plugin\lib\desc_parser.php) for the server.
 rem Installed plugins pick it up on the next start if its REVISION is newer than the one they have.
+rem Usage: update_desc_parser.cmd [upload]
+rem   without arguments: check the parser and create desc_parser_<API>.txt, its name is returned in DESC_PARSER_FILE
+rem   upload: also upload the file to the server and remove it
 setlocal
 
 rem the parser must run on the box: check it with the PHP 5.3 build if there is one
@@ -26,6 +29,13 @@ if not defined API (
 rem not .php: the server would execute it instead of returning the source
 set DST=desc_parser_%API%.txt
 copy /Y %SRC% %DST% >nul
+
+if /i not "%~1" == "upload" (
+  echo prepared %DST% (API %INFO%^)
+  endlocal & set "DESC_PARSER_FILE=%DST%"
+  exit /b 0
+)
+
 echo upload %DST% (API %INFO%)
 
 set /p CREDS=<creds.txt
