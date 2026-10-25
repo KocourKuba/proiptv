@@ -708,12 +708,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @return void
+     * Loads providers configuration. Shown once per load: if the config contains
+     * a non-empty plugin_config/server_message, returns the message dialog that runs $post_action on OK.
+     *
+     * @param array|null $post_action action to continue with after the message is closed
+     * @return array|null
      */
-    public function init_providers_config()
+    public function init_providers_config($post_action = null)
     {
         if (!is_null(self::$providers) && !self::$providers->is_empty()) {
-            return;
+            return null;
         }
 
         // 1. Check local debug version
@@ -761,6 +765,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             self::$image_libs->set($key, $value);
         }
 
+        $action = null;
+        $message = trim((string)safe_get_value($jsonArray, array('plugin_config', 'server_message'), ''));
+        if ($message !== '') {
+            hd_debug_print("server message: $message");
+            $action = Action_Factory::show_title_dialog(TR::t('information'), $message, $post_action);
+        }
+
         $this->epg_json_presets = new Hashed_Array();
         foreach ($jsonArray[EPG_JSON_PRESETS] as $key => $value) {
             if (isset($value[EPG_JSON_DISABLED])) continue;
@@ -784,7 +795,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if ($jsonArray === false || !isset($jsonArray['providers'])) {
             hd_debug_print('Problem to get providers configuration');
-            return;
+            return $action;
         }
 
         self::$providers = new Hashed_Array();
@@ -854,6 +865,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
             self::$providers->set($provider->getId(), $provider);
         }
+
+        return $action;
     }
 
     /**

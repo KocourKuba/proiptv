@@ -103,7 +103,19 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return $this->show_old_player(TR::t('err_no_sqlite'));
         }
 
-        $this->plugin->init_providers_config();
+        // server message: on OK re-enter with the same input (the config is loaded by then, so no message again)
+        $params = array();
+        foreach ($user_input as $key => $value) {
+            if ($key !== 'handler_id' && $key !== 'control_id') {
+                $params[$key] = $value;
+            }
+        }
+        $post_action = User_Input_Handler_Registry::create_action($this, $user_input->control_id, null, $params);
+        $message_action = $this->plugin->init_providers_config($post_action);
+        if ($message_action !== null) {
+            return $message_action;
+        }
+
         $this->plugin->init_desc_parser();
 
         switch ($user_input->control_id) {
