@@ -1,75 +1,96 @@
 <?php
 /** @noinspection PhpLanguageLevelInspection */
 
+// Server side script, runs on PHP 8.3+
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/shared_scripts/iptv_utils.php");
 
-$white_list = [];
-$file = file_get_contents("whitelist.txt");
-foreach (explode(PHP_EOL, $file) as $l) {
-    if (!empty($l)) {
-        $white_list[] = trim($l);
+/**
+ * Replace control chars so a request value can't break a log line
+ */
+function log_safe(string $value): string
+{
+    return preg_replace('/[\x00-\x1F\x7F]/', ' ', $value);
+}
+
+/**
+ * Send an error status with a JSON body and stop
+ */
+function send_error(int $code, string $message = ''): never
+{
+    http_response_code($code);
+    if ($message !== '') {
+        header("Content-Type: application/json; charset=utf-8");
+        echo json_encode(['error' => $message]);
     }
+    exit;
 }
 
-$url_params = parse_url(getenv("REQUEST_URI"));
-if (isset($url_params['query'])) {
-    parse_str($url_params['query'], $params);
+/**
+ * Query parameter as string, a missing or array value gives ''
+ */
+function get_param(array $params, string $name): string
+{
+    $value = $params[$name] ?? '';
+    return is_string($value) ? $value : '';
 }
 
-$name = '';
-if (!isset($params['ver'])) {
-    header("HTTP/1.1 404 Not found");
-    echo '["error" : "This version is not supported"]';
-    die();
+$white_list = is_file("whitelist.txt")
+    ? array_values(array_filter(array_map('trim', file("whitelist.txt", FILE_IGNORE_NEW_LINES) ?: [])))
+    : [];
+
+$params = [];
+$query = parse_url((string)getenv("REQUEST_URI"), PHP_URL_QUERY);
+if (is_string($query)) {
+    parse_str($query, $params);
+}
+
+$version = get_param($params, 'ver');
+if ($version === '') {
+    send_error(404, "This version is not supported");
 }
 
 $time = time();
 $date = date("Y.m.d H:i:s");
 $ip = get_ip();
 $country = IP2Country($ip);
-$version = $params['ver'];
-$model =  $params['model'];
-$serial = $params['serial'];
+$model = strtolower(get_param($params, 'model'));
+$serial = get_param($params, 'serial');
+$user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
 
-$firmware = '';
-$revision = '';
-$rev = 0;
-/** @var array $m */
-if (isset($params['firmware'])) {
-    $firmware = $params['firmware'];
-} else if (preg_match("/firmware_version:\s+([0-9_rb]+)/", $_SERVER['HTTP_USER_AGENT'], $m)) {
+$firmware = get_param($params, 'firmware');
+if ($firmware === '' && preg_match("/firmware_version:\s+([0-9_rb]+)/", $user_agent, $m)) {
     $firmware = $m[1];
 }
 
-if (!empty($firmware) && preg_match('/.+_(r\d{2})/', $firmware, $m)) {
+$revision = '';
+$rev = 0;
+if ($firmware !== '' && preg_match('/.+_([rb]\d{2})/', $firmware, $m)) {
     $revision = $m[1];
-    $rev = substr($revision, 1);
+    $rev = (int)substr($revision, 1);
 }
 
-$request = getenv("REQUEST_URI");
+$request = (string)getenv("REQUEST_URI");
 
 $logbuf = "========================================" . PHP_EOL;
 $logbuf .= "date       : $date" . PHP_EOL;
-$logbuf .= "url        : $request" . PHP_EOL;
+$logbuf .= "url        : " . log_safe($request) . PHP_EOL;
 $logbuf .= "ip         : $ip ( $country )" . PHP_EOL;
-$logbuf .= "version    : $version" . PHP_EOL;
-$logbuf .= "model      : $model" . PHP_EOL;
-$logbuf .= "firmware   : $firmware" . PHP_EOL;
-$logbuf .= "serial     : $serial" . PHP_EOL;
-$logbuf .= "user_agent : {$_SERVER['HTTP_USER_AGENT']}" . PHP_EOL;
+$logbuf .= "version    : " . log_safe($version) . PHP_EOL;
+$logbuf .= "model      : " . log_safe($model) . PHP_EOL;
+$logbuf .= "firmware   : " . log_safe($firmware) . PHP_EOL;
+$logbuf .= "serial     : " . log_safe($serial) . PHP_EOL;
+$logbuf .= "user_agent : " . log_safe($user_agent) . PHP_EOL;
 
-if (empty($revision)) {
-    $logbuf .= "Unknown version";
+if ($revision === '') {
+    $logbuf .= "Unknown version" . PHP_EOL;
     write_to_log($logbuf, 'error.log');
-    header("HTTP/1.1 403 Forbidden");
-    die();
+    send_error(403);
 }
 
 if ($rev < 11) {
     write_to_log($logbuf, 'unsupported.log');
-    header("HTTP/1.1 404 Not found");
-    echo '["error" : "This version is not supported"]';
-    die();
+    send_error(404, "This version is not supported");
 }
 
 $DB = new db_driver();
@@ -77,51 +98,51 @@ $DB->obj['sql_database'] = IPTV_DATABASE;
 $DB->obj['sql_user'] = IPTV_USER;
 $DB->obj['sql_pass'] = IPTV_PASSWORD;
 
-if($DB->connect()) {
-    $data = [];
-    $data['model'] = $model;
-    $data['firmware'] = $firmware;
-    $data['revision'] = $revision;
-    $data['serial'] = $serial;
-    $data['time'] = $time;
-    $data['date'] = $date;
-    $data['version'] = $version;
-    $data['ip'] = $ip;
-    $data['country'] = $country;
-    if (!empty($serial)) {
-        $DB->insert_or_update_table($data, 'statistics');
-        $error = $DB->error;
-        if (!empty($error)) {
-            write_to_log("database query error $error", 'error.log');
+if ($DB->connect()) {
+    if ($serial !== '') {
+        $DB->insert_or_update_table([
+            'model' => $model,
+            'firmware' => $firmware,
+            'revision' => $revision,
+            'serial' => $serial,
+            'time' => $time,
+            'date' => $date,
+            'version' => $version,
+            'ip' => $ip,
+            'country' => $country,
+        ], 'statistics');
+        if (!empty($DB->error)) {
+            write_to_log("database query error $DB->error", 'error.log');
         }
-        $DB->close_db();
     } else {
-        write_to_log("bad url query $request", 'error.log');
+        write_to_log("bad url query " . log_safe($request), 'error.log');
     }
+    $DB->close_db();
 } else {
     write_to_log("can't connect to database", 'error.log');
 }
 
-$ver = explode('.', $version);
-if (isset($ver[0], $ver[1])) {
-    $name ="providers_$ver[0].$ver[1].json";
+$name = '';
+$major = 0;
+if (preg_match('/^(\d+)\.(\d+)/', $version, $m)) {
+    $name = "providers_$m[1].$m[2].json";
+    $major = (int)$m[1];
 }
 
-if (!in_array($serial, $white_list) && (empty($name) || !file_exists($name) || ($rev >= 21 && $rev <= 22 && $ver[0] == 5))) {
+$disabled = "providers_disabled.json";
+if ($name === '' || !file_exists($name)
+    || (!in_array($serial, $white_list, true) && $rev >= 21 && $rev <= 22 && $major === 5)) {
     $logbuf .= "disabled   : yes" . PHP_EOL;
-    $name = "providers_disabled.json";
+    $name = $disabled;
 }
 
-if ($rev < 21) {
-    write_to_log($logbuf, 'old.log');
-} else if ($rev < 22) {
-    write_to_log($logbuf, 'mid.log');
-} else if ($name == "providers_disabled.json") {
-    write_to_log($logbuf, 'disabled.log');
-} else {
-    write_to_log($logbuf, 'providers.log');
-}
+write_to_log($logbuf, match (true) {
+    $rev < 17 => 'old.log',
+    $rev < 22 => 'mid.log',
+    $name === $disabled => 'disabled.log',
+    default => 'providers.log',
+});
 
-header("HTTP/1.1 200 OK");
+http_response_code(200);
 header("Content-Type: application/json; charset=utf-8");
 readfile($name);
