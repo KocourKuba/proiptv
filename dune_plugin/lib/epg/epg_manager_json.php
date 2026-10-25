@@ -669,6 +669,32 @@ class Epg_Manager_Json
     }
 
     /**
+     * Remove cached json files older than a given number of days
+     *
+     * @param int $max_age_days
+     * @return void
+     */
+    public static function clear_old_epg_files($max_age_days)
+    {
+        if (empty(self::$cache_dir)) {
+            return;
+        }
+
+        $expired_time = time() - $max_age_days * 86400;
+        $removed = 0;
+        foreach (glob(self::$cache_dir . '*.json') as $file) {
+            if (filemtime($file) < $expired_time && unlink($file)) {
+                $removed++;
+            }
+        }
+
+        if ($removed) {
+            hd_debug_print("Removed $removed json cache file(s) older than $max_age_days day(s)");
+            clearstatcache();
+        }
+    }
+
+    /**
      * Set and create cache dir
      *
      * @param string $cache_dir

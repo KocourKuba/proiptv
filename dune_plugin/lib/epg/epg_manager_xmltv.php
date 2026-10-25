@@ -1453,6 +1453,46 @@ class Epg_Manager_Xmltv
     }
 
     /**
+     * Remove cached files of the sources not refreshed for a given number of days.
+     * All files of a source start with its hash. The .xmltv file keeps the server time,
+     * so a source is judged by its newest file (.db and .url are written locally).
+     * Sources that are being indexed (locked) are skipped.
+     *
+     * @param int $max_age_days
+     * @return void
+     */
+    public static function clear_old_epg_files($max_age_days)
+    {
+        if (empty(self::$cache_dir)) {
+            return;
+        }
+
+        $locked = array();
+        foreach (glob(self::get_lock_name('', 0, '*'), GLOB_ONLYDIR) as $lock) {
+            $locked[strtok(basename($lock), '_.')] = true;
+        }
+
+        $newest = array();
+        foreach (glob(self::$cache_dir . '*') as $file) {
+            $hash = strtok(basename($file), '_.');
+            if ($hash === false || isset($locked[$hash])) continue;
+
+            $mtime = filemtime($file);
+            if (!isset($newest[$hash]) || $newest[$hash] < $mtime) {
+                $newest[$hash] = $mtime;
+            }
+        }
+
+        $expired_time = time() - $max_age_days * 86400;
+        foreach ($newest as $hash => $mtime) {
+            if ($mtime < $expired_time) {
+                hd_debug_print("Xmltv cache '$hash' is not updated since " . date('Y-m-d H:i', $mtime));
+                self::clear_epg_files($hash);
+            }
+        }
+    }
+
+    /**
      * Get url of xmltv source by its hash
      *
      * @param string $hash

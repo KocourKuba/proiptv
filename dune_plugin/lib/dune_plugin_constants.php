@@ -566,6 +566,7 @@ const JSON_EPG_CACHE_SUBDIR = 'json_epg_cache';
 const XMLTV_CACHE_AUTO = 'auto';
 const XMLTV_CACHE_MANUAL = 'manual';
 const XMLTV_EPG_CACHE_SUBDIR = 'xmltv_epg_cache';
+const EPG_CACHE_MAX_AGE_DAYS = 14;
 
 # Media types patterns
 const AUDIO_PATTERN = 'mp3|ac3|wma|ogg|ogm|m4a|aif|iff|mid|mpa|ra|wav|flac|ape|vorbis|aac|a52';

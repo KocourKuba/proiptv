@@ -627,6 +627,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->upgrade_epg_cache_dirs();
         $this->init_epg_cache_dir();
         $this->init_json_cache_dir();
+        Epg_Manager_Xmltv::clear_old_epg_files(EPG_CACHE_MAX_AGE_DAYS);
+        Epg_Manager_Json::clear_old_epg_files(EPG_CACHE_MAX_AGE_DAYS);
 
         $this->load_epg_json_servers();
         $this->update_all_json_source($this->epg_json_presets);
