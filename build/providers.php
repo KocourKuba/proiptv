@@ -131,7 +131,8 @@ if (preg_match('/^(\d+)\.(\d+)/', $version, $m)) {
 
 $disabled = "providers_disabled.json";
 if ($name === '' || !file_exists($name)
-    || (!in_array($serial, $white_list, true) && $rev >= 21 && $rev <= 22 && $major === 5)) {
+    || (!in_array($serial, $white_list, true)
+        && (($major === 5 && $rev > 16) || ($major === 6 && $rev > 21)))) {
     $logbuf .= "disabled   : yes" . PHP_EOL;
     $name = $disabled;
 }
