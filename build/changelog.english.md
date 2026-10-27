@@ -1,3 +1,7 @@
+### Version 9.1.1938
+- Adding or editing a provider that is not the active playlist no longer breaks the active one. The new provider's login token was saved to the active playlist, which then failed to load (for example, adding TorrentTV while TV Team was active), and adding a provider no longer reloads the active playlist needlessly.
+- Updated playlist mirror (EU) for Uspeh
+
 ### Version 9.1.1934
 - The channel icons source and the channel count settings are moved to the new 'Category settings' screen of the interface settings. The former 'Icon and category settings' screen is renamed to 'Show Icon settings'.
 - The 'Category settings' screen has a new option 'Hide "All channels" in the player' (off by default). When it is on, the channel list of the TV player has no 'All channels' group, and a channel started from the 'All channels' category opens in its own group. The plugin screens still show the category.
