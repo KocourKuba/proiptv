@@ -36,6 +36,7 @@ require_once 'api/api_default.php';
 require_once 'm3u/M3uParser.php';
 require_once 'lib/curl_wrapper.php';
 require_once 'lib/perf_collector.php';
+require_once 'lib/playback_points.php';
 require_once 'lib/epg/epg_manager_json.php';
 
 class Default_Dune_Plugin implements DunePlugin
@@ -1466,6 +1467,8 @@ class Default_Dune_Plugin implements DunePlugin
                 return;
             }
 
+            // a failed download usually means no network, do not wait for every next logo
+            $logo_download_failed = false;
             foreach ($jsonArray['providers'] as $item) {
                 if (!isset($item['id'], $item['enable']) || $item['enable'] === false) continue;
 
@@ -1494,15 +1497,21 @@ class Default_Dune_Plugin implements DunePlugin
                 $logo = $provider->getLogo();
                 $filename = basename($logo);
                 $local_file = get_install_path("logo/$filename");
+                $cached_file = get_cached_image_path($filename);
                 if (file_exists($local_file)) {
                     $provider->setLogo("plugin_file://logo/$filename");
-                } else {
-                    $cached_file = get_cached_image_path($filename);
+                } else if (file_exists($cached_file) && filesize($cached_file) !== 0) {
+                    $provider->setLogo($cached_file);
+                } else if (!$logo_download_failed) {
                     list($res,) = Curl_Wrapper::simple_download_file($logo, $cached_file);
                     if ($res) {
                         $provider->setLogo($cached_file);
                     } else {
                         hd_debug_print("failed to download provider logo: $logo");
+                        $logo_download_failed = true;
+                        if (file_exists($cached_file)) {
+                            unlink($cached_file);
+                        }
                     }
                 }
                 $this->providers->set($provider->getId(), $provider);

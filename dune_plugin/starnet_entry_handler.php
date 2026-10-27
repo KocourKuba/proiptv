@@ -46,6 +46,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_CALL_SEND_LOG = 'call_send_log';
     const ACTION_CALL_CLEAR_EPG = 'call_clear_epg';
 
+    const COOKIE_TOO_NEW_FW_WARNING_SHOWN = 'too_new_fw_warning_shown';
+
     private $plugin;
 
     /**
@@ -155,7 +157,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                         $this->plugin->init_plugin(true);
                         if ($this->plugin->get_playlists()->size() === 0) {
-                            return $this->add_too_new_firmware_warning(
+                            return $this->add_too_new_firmware_warning($plugin_cookies,
                                 $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID, Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
                         }
 
@@ -178,7 +180,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             }
 
                             if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
-                                return $this->add_too_new_firmware_warning(Action_Factory::open_folder(
+                                return $this->add_too_new_firmware_warning($plugin_cookies, Action_Factory::open_folder(
                                     Starnet_Tv_Groups_Screen::ID,
                                     $this->plugin->create_plugin_title(),
                                     null,
@@ -191,7 +193,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         hd_debug_print("action: launch open", true);
-                        return $this->add_too_new_firmware_warning(
+                        return $this->add_too_new_firmware_warning($plugin_cookies,
                             Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title()));
 
                     case self::ACTION_LAUNCH_VOD:
@@ -254,10 +256,13 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                     case self::ACTION_INSTALL:
                     case self::ACTION_UPDATE:
+                        // show the firmware warning again for the new plugin version
+                        unset($plugin_cookies->{self::COOKIE_TOO_NEW_FW_WARNING_SHOWN});
                         $this->plugin->upgrade_parameters();
                         break;
 
                     case self::ACTION_UNINSTALL:
+                        unset($plugin_cookies->{self::COOKIE_TOO_NEW_FW_WARNING_SHOWN});
                         $this->plugin->init_plugin();
                         $this->plugin->init_epg_manager();
                         $this->plugin->safe_clear_selected_epg_cache();
@@ -277,18 +282,25 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
     /**
      * The plugin supports only firmware r11 - r16 but is allowed to run on a newer one,
-     * the opened folder shows the warning before its own post action
+     * the opened folder shows the warning before its own post action.
+     * The warning is shown once, the flag is reset on install/update/uninstall
      *
+     * @param Object $plugin_cookies
      * @param array $action open folder action
      * @return array
      */
-    private function add_too_new_firmware_warning($action)
+    private function add_too_new_firmware_warning($plugin_cookies, $action)
     {
         if (!is_too_new_firmware() || !isset($action[GuiAction::data])) {
             return $action;
         }
 
         hd_debug_print("Too new Dune HD firmware! " . get_raw_firmware_version());
+        if (!empty($plugin_cookies->{self::COOKIE_TOO_NEW_FW_WARNING_SHOWN})) {
+            return $action;
+        }
+
+        $plugin_cookies->{self::COOKIE_TOO_NEW_FW_WARNING_SHOWN} = '1';
         if (get_firmware_revision() <= 21) {
             // r17 - r21
             $details = array(TR::load_string('err_use_plugin_62'));

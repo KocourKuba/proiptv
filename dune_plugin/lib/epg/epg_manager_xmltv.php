@@ -29,7 +29,6 @@ require_once 'lib/tr.php';
 
 require_once 'epg_params.php';
 require_once 'epg_indexer_classic.php';
-require_once 'epg_indexer_sql.php';
 
 class Epg_Manager_Xmltv
 {
@@ -124,11 +123,7 @@ class Epg_Manager_Xmltv
      */
     public function init_indexer()
     {
-        if (class_exists('SQLite3')) {
-            $this->indexer = new Epg_Indexer_Sql();
-        } else {
-            $this->indexer = new Epg_Indexer_Classic();
-        }
+        $this->indexer = new Epg_Indexer_Classic();
     }
 
     /**

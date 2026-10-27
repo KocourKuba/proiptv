@@ -1804,11 +1804,6 @@ function print_sysinfo()
         'CURL Version' => $ext_curl,
     );
 
-    if (class_exists("SQLite3")) {
-        $sqlite_ver = SQLite3::version();
-        $table['SQLite3 Version'] = $sqlite_ver['versionString'];
-    }
-
     $table = array_merge($table, DuneSystem::$properties);
 
     $max = 0;
