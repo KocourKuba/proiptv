@@ -37,12 +37,36 @@ if '%1' == 'debug' goto :EOF
 choice /T 5 /D N /M "Upload"
 if ERRORLEVEL 2 exit /b 0
 
+set TAG=%VERSION%.%BUILD%
+set TAG_EXISTS=
+
+git rev-parse -q --verify refs/tags/%TAG% >nul 2>&1
+if not errorlevel 1 (
+  echo ERROR: local tag %TAG% already exists
+  echo   delete it: git tag -d %TAG%
+  set TAG_EXISTS=1
+)
+
+git ls-remote --exit-code --tags origin refs/tags/%TAG% >nul 2>&1
+set LS_RESULT=%ERRORLEVEL%
+if %LS_RESULT% equ 0 (
+  echo ERROR: remote tag %TAG% already exists
+  echo   delete it: git push origin --delete refs/tags/%TAG%
+  set TAG_EXISTS=1
+) else if not %LS_RESULT% equ 2 (
+  echo ERROR: can't read remote tags, exit code %LS_RESULT%
+  exit /b 1
+)
+
+if defined TAG_EXISTS (
+  echo upload aborted
+  exit /b 1
+)
+
 echo create GIT tag
-git tag %VERSION%.%BUILD%
+git tag %TAG%
 git push --tags -- "origin" master:master
 
-echo copy to Dropbox
-copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
 copy /Y .\dune_plugin_proiptv.zip .\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
 copy /Y .\build\providers_%VERSION%.json .\providers_%VERSION%.json >nul
 echo.
@@ -65,11 +89,14 @@ set /p CREDS=<creds.txt
 set WINSCP_RESULT=%ERRORLEVEL%
 if %WINSCP_RESULT% equ 0 (
   echo Success
+  del .\dune_plugin_proiptv.zip >nul 2>&1
+  del .\update_proiptv.xml >nul 2>&1
 ) else (
   echo Error
 )
 
 del .\providers_%VERSION%.json >nul 2>&1
+del .\%DESC_PARSER_FILE% >nul 2>&1
 del .\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul 2>&1
 
 exit /b %WINSCP_RESULT%
