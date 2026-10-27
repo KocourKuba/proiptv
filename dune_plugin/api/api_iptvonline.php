@@ -51,7 +51,7 @@ class api_iptvonline extends api_default
         hd_debug_print(null, true);
         hd_debug_print("force request provider token: " . var_export($force, true));
 
-        $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
+        $token = $this->GetCookie(PARAM_TOKEN, true);
         $expired = empty($token);
 
         $rq_last_error_name = $this->plugin->get_request_error_name();
@@ -70,7 +70,7 @@ class api_iptvonline extends api_default
 
         HD::set_last_error($rq_last_error_name, null);
 
-        $refresh_token = $this->plugin->get_cookie(PARAM_REFRESH_TOKEN);
+        $refresh_token = $this->GetCookie(PARAM_REFRESH_TOKEN);
         $can_refresh = $expired && !empty($refresh_token);
         if ($can_refresh) {
             hd_debug_print("need to refresh token", true);
@@ -95,15 +95,15 @@ class api_iptvonline extends api_default
         $data = $this->execApiCommand($cmd, null, true, $curl_opt);
         if (isset($data->access_token)) {
             hd_debug_print("token requested", true);
-            $this->plugin->set_cookie(PARAM_TOKEN, $data->access_token, $data->expires_time);
-            $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $data->refresh_token, PHP_INT_MAX);
+            $this->SetCookie(PARAM_TOKEN, $data->access_token, $data->expires_time);
+            $this->SetCookie(PARAM_REFRESH_TOKEN, $data->refresh_token, PHP_INT_MAX);
             return true;
         }
 
         if ($can_refresh && isset($data->error)) {
             // refresh token failed. Need to make complete auth
-            $this->plugin->remove_cookie(PARAM_TOKEN);
-            $this->plugin->remove_cookie(PARAM_REFRESH_TOKEN);
+            $this->RemoveCookie(PARAM_TOKEN);
+            $this->RemoveCookie(PARAM_REFRESH_TOKEN);
             return $this->request_provider_token(true);
         }
 
@@ -136,7 +136,7 @@ class api_iptvonline extends api_default
     public function replace_macros($string)
     {
         hd_debug_print("current api template: $string", true);
-        $string = str_replace(MACRO_TOKEN, $this->plugin->get_cookie(PARAM_TOKEN), $string);
+        $string = str_replace(MACRO_TOKEN, $this->GetCookie(PARAM_TOKEN), $string);
         hd_debug_print("current api result: $string", true);
 
         return parent::replace_macros($string);
@@ -378,7 +378,7 @@ class api_iptvonline extends api_default
      */
     protected function get_additional_headers($command)
     {
-        $token = $this->plugin->get_cookie(PARAM_TOKEN);
+        $token = $this->GetCookie(PARAM_TOKEN);
         if (!empty($token) && $command !== API_COMMAND_REQUEST_TOKEN && $command !== API_COMMAND_REFRESH_TOKEN) {
             return array($this->replace_macros("Authorization: Bearer {TOKEN}"));
         }

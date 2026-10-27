@@ -891,11 +891,8 @@ class api_default
         }
 
         $this->plugin->clear_playlist_cache($this->playlist_id);
-        // cookies are stored in the database of the active playlist, cookies of other playlist must not be removed
-        if ($this->is_playlist_db_attached()) {
-            $this->plugin->remove_cookie(PARAM_TOKEN);
-            $this->plugin->remove_cookie(PARAM_REFRESH_TOKEN);
-        }
+        $this->RemoveCookie(PARAM_TOKEN);
+        $this->RemoveCookie(PARAM_REFRESH_TOKEN);
 
         if (!$this->request_provider_token(true)) {
             hd_debug_print("Can't get provider token");
@@ -1232,6 +1229,45 @@ class api_default
     {
         if (!empty($this->playlist_id)) {
             $this->plugin->remove_playlist_parameter($this->playlist_id, $name);
+        }
+    }
+
+    /**
+     * Cookies (tokens, session id) are stored in the settings db of the provider playlist,
+     * not in the one of the active playlist: a provider can be set up while another playlist is active.
+     *
+     * @param string $name
+     * @param bool $check_expire
+     * @return string
+     */
+    public function GetCookie($name, $check_expire = false)
+    {
+        if (empty($this->playlist_id)) {
+            return '';
+        }
+
+        return (string)$this->plugin->get_cookie($name, $check_expire, $this->playlist_id);
+    }
+
+    /**
+     * @param string $name
+     * @param string $value
+     * @param int|null $expired
+     */
+    public function SetCookie($name, $value, $expired = null)
+    {
+        if (!empty($this->playlist_id)) {
+            $this->plugin->set_cookie($name, $value, $expired, $this->playlist_id);
+        }
+    }
+
+    /**
+     * @param string $name
+     */
+    public function RemoveCookie($name)
+    {
+        if (!empty($this->playlist_id)) {
+            $this->plugin->remove_cookie($name, $this->playlist_id);
         }
     }
 

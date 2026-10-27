@@ -791,9 +791,10 @@ class Dune_Default_Sqlite_Engine
      *
      * @param string $name
      * @param bool $check_expire
+     * @param string|null $playlist_id cookies of this playlist, the active playlist if null
      * @return string
      */
-    public function get_cookie($name, $check_expire = false)
+    public function get_cookie($name, $check_expire = false, $playlist_id = null)
     {
         if ($check_expire) {
             $were = "param = '$name' AND time_stamp > " . time();
@@ -801,37 +802,74 @@ class Dune_Default_Sqlite_Engine
             $were = "param = '$name'";
         }
         $table_name = self::COOKIES_TABLE;
-        return $this->sql_playlist->query_value("SELECT value FROM $table_name WHERE $were;");
+        return $this->exec_cookies_query($playlist_id, 'query_value', "SELECT value FROM $table_name WHERE $were;");
     }
 
     /**
-     * Get cookie
+     * Set cookie
      *
      * @param string $name
      * @param string $value
      * @param int|null $expired
+     * @param string|null $playlist_id cookies of this playlist, the active playlist if null
      */
-    public function set_cookie($name, $value, $expired = null)
+    public function set_cookie($name, $value, $expired = null, $playlist_id = null)
     {
         if ($expired === null) {
             $expired = time();
         }
 
         $table_name = self::COOKIES_TABLE;
-        $this->sql_playlist->exec("INSERT OR REPLACE INTO $table_name (param, value, time_stamp) VALUES ('$name', '$value', '$expired');");
+        $q_value = Sql_Wrapper::sql_quote($value);
+        $this->exec_cookies_query($playlist_id, 'exec', "INSERT OR REPLACE INTO $table_name (param, value, time_stamp) VALUES ('$name', $q_value, '$expired');");
     }
 
     /**
-     * Get cookie
+     * Remove cookie
      *
      * @param string $name
+     * @param string|null $playlist_id cookies of this playlist, the active playlist if null
      */
-    public function remove_cookie($name)
+    public function remove_cookie($name, $playlist_id = null)
     {
-        if ($this->sql_playlist) {
-            $table_name = self::COOKIES_TABLE;
-            $this->sql_playlist->exec("DELETE FROM $table_name WHERE param = '$name';");
+        $table_name = self::COOKIES_TABLE;
+        $this->exec_cookies_query($playlist_id, 'exec', "DELETE FROM $table_name WHERE param = '$name';");
+    }
+
+    /**
+     * Execute the cookies query in the settings db of the playlist.
+     * A provider set up while another playlist is active keeps its cookies in its own settings db,
+     * the db is opened only for this query.
+     *
+     * @param string|null $playlist_id
+     * @param string $function Sql_Wrapper method: 'exec' or 'query_value'
+     * @param string $query
+     * @return mixed
+     */
+    protected function exec_cookies_query($playlist_id, $function, $query)
+    {
+        $db_file = empty($playlist_id) ? null : get_data_path("$playlist_id.db");
+        if ($this->sql_playlist
+            && ($db_file === null || $this->sql_playlist->is_database_attached('main', $db_file) === 2)) {
+            return $this->sql_playlist->{$function}($query);
         }
+
+        if ($db_file === null) {
+            hd_debug_print("Playlist database is not inited! Cookies query is not executed!");
+            return false;
+        }
+
+        $sql_settings = new Sql_Wrapper($db_file);
+        if (!$sql_settings->is_valid()) {
+            hd_debug_print("Database $db_file is not valid! Cookies query is not executed!");
+            return false;
+        }
+
+        $sql_settings->exec(sprintf(self::CREATE_COOKIES_TABLE, self::COOKIES_TABLE));
+        $result = $sql_settings->{$function}($query);
+        $sql_settings->get_db()->close();
+
+        return $result;
     }
 
     ///////////////////////////////////////////////////////////////////////

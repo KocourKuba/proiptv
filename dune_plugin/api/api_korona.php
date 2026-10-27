@@ -41,7 +41,7 @@ class api_korona extends api_default
         hd_debug_print(null, true);
         hd_debug_print("force request provider token: " . var_export($force, true));
 
-        $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
+        $token = $this->GetCookie(PARAM_TOKEN, true);
         $expired = empty($token);
 
         if (!$force && !$expired) {
@@ -49,7 +49,7 @@ class api_korona extends api_default
             return true;
         }
 
-        $refresh_token = $this->plugin->get_cookie(PARAM_REFRESH_TOKEN);
+        $refresh_token = $this->GetCookie(PARAM_REFRESH_TOKEN);
         $can_refresh = $expired && !empty($refresh_token);
         if ($can_refresh) {
             hd_debug_print("need to refresh token", true);
@@ -79,15 +79,15 @@ class api_korona extends api_default
         $data = $this->execApiCommand($cmd, null, true, $curl_opt);
         if (isset($data->access_token)) {
             hd_debug_print("token requested: " . pretty_json_format($data), true);
-            $this->plugin->set_cookie(PARAM_TOKEN, $data->access_token, time() + $data->expires_in);
-            $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $data->access_token, PHP_INT_MAX);
+            $this->SetCookie(PARAM_TOKEN, $data->access_token, time() + $data->expires_in);
+            $this->SetCookie(PARAM_REFRESH_TOKEN, $data->access_token, PHP_INT_MAX);
             return true;
         }
 
         if ($can_refresh && isset($data->error)) {
             // refresh token failed. Need to make complete auth
-            $this->plugin->remove_cookie(PARAM_TOKEN);
-            $this->plugin->remove_cookie(PARAM_REFRESH_TOKEN);
+            $this->RemoveCookie(PARAM_TOKEN);
+            $this->RemoveCookie(PARAM_REFRESH_TOKEN);
             return $this->request_provider_token(true);
         }
 
@@ -103,7 +103,7 @@ class api_korona extends api_default
     public function replace_macros($string)
     {
         hd_debug_print("current api template: $string", true);
-        $string = str_replace(MACRO_TOKEN, $this->plugin->get_cookie(PARAM_TOKEN), $string);
+        $string = str_replace(MACRO_TOKEN, $this->GetCookie(PARAM_TOKEN), $string);
         hd_debug_print("current api result: $string", true);
 
         return parent::replace_macros($string);

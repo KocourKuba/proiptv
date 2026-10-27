@@ -34,7 +34,7 @@ class api_1ott extends api_default
         hd_debug_print(null, true);
         hd_debug_print("force request provider token: " . var_export($force, true));
 
-        $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID, true);
+        $session_id = $this->GetCookie(PARAM_SESSION_ID, true);
         if (!$force && !empty($session_id)) {
             hd_debug_print("request not required", true);
             return true;
@@ -43,7 +43,7 @@ class api_1ott extends api_default
         $rq_last_error_name = $this->plugin->get_request_error_name();
         $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
         if (isset($response->token)) {
-            $this->plugin->set_cookie(PARAM_SESSION_ID, $response->token,time() + 86400);
+            $this->SetCookie(PARAM_SESSION_ID, $response->token,time() + 86400);
             HD::set_last_error($rq_last_error_name, null);
             return true;
         }
@@ -58,7 +58,7 @@ class api_1ott extends api_default
     public function replace_macros($string)
     {
         hd_debug_print("current api template: $string", true);
-        $string = str_replace(MACRO_SESSION_ID, $this->plugin->get_cookie(PARAM_SESSION_ID), $string);
+        $string = str_replace(MACRO_SESSION_ID, $this->GetCookie(PARAM_SESSION_ID), $string);
         hd_debug_print("current api result: $string", true);
 
         return parent::replace_macros($string);

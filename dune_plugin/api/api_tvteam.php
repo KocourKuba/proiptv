@@ -39,8 +39,8 @@ class api_tvteam extends api_default
     public function replace_macros($string)
     {
         $hash_password = md5($this->GetParameter(MACRO_PASSWORD));
-        $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID);
-        $token = $this->plugin->get_cookie(PARAM_TOKEN);
+        $session_id = $this->GetCookie(PARAM_SESSION_ID);
+        $token = $this->GetCookie(PARAM_TOKEN);
         $string = str_replace(
             array(MACRO_SESSION_ID, MACRO_HASH_PASSWORD, MACRO_TOKEN),
             array($session_id, $hash_password, $token),
@@ -123,7 +123,7 @@ class api_tvteam extends api_default
             hd_debug_print("get provider info response: " . pretty_json_format($this->account_info), true);
 
             if (isset($this->account_info->data->userData->userToken)) {
-                $this->plugin->set_cookie(PARAM_TOKEN, $this->account_info->data->userData->userToken);
+                $this->SetCookie(PARAM_TOKEN, $this->account_info->data->userData->userToken);
             }
 
             if (isset($this->account_info->data->userData->groupId)) {
@@ -148,7 +148,7 @@ class api_tvteam extends api_default
         hd_debug_print(null, true);
         hd_debug_print("force request provider token: " . var_export($force, true));
 
-        $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID, true);
+        $session_id = $this->GetCookie(PARAM_SESSION_ID, true);
         $expired = empty($session_id);
 
         if (!$force && !$expired) {
@@ -175,7 +175,7 @@ class api_tvteam extends api_default
                 HD::set_last_error($pl_last_error, $response->error);
                 HD::set_last_error($rq_last_error, $response->error);
             } else if (isset($response->data->sessionId)) {
-                $this->plugin->set_cookie(PARAM_SESSION_ID, $response->data->sessionId, time() + 86400 * 7);
+                $this->SetCookie(PARAM_SESSION_ID, $response->data->sessionId, time() + 86400 * 7);
                 HD::set_last_error($rq_last_error, null);
 
                 return true;
