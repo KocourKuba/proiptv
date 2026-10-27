@@ -52,6 +52,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const MIN_FIRMWARE_REV = 17;
     const MAX_FIRMWARE_REV = 21;
     const DOWNLOAD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0dg==";
+    const COOKIE_TOO_NEW_FW_WARNING_SHOWN = 'too_new_fw_warning_shown';
 
     private $plugin;
 
@@ -84,20 +85,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         hd_debug_print("user input control: $user_input->control_id", true);
 
-        // this plugin version is for firmware r17 - r21, newer firmware is served by the current plugin version.
-        // Only release firmware (r<number>) can be checked: beta (b<number>) builds have own numbering
-        // and firmware version can be not detected. Such firmware is allowed, SQLite3 check below still applies.
-        $firmware = get_parsed_firmware_ver();
-        $rev_literal = safe_get_value($firmware, 'rev_literal', '');
-        $rev_number = safe_get_value($firmware, 'rev_number', '');
-        if ($rev_literal !== 'r' || $rev_number === '') {
-            hd_debug_print("Firmware revision can't be checked: " . get_raw_firmware_version());
-        } else if ((int)$rev_number < self::MIN_FIRMWARE_REV) {
+        // this plugin version is for firmware r17 - r21, newer firmware is served by the current plugin version
+        // but this one is allowed to run on it, the warning is shown on launch (see add_too_new_firmware_warning)
+        if (self::is_too_old_firmware()) {
             hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
             return $this->show_unsupported_firmware(TR::t('err_too_old_player'), self::DOWNLOAD_LINK);
-        } else if ((int)$rev_number > self::MAX_FIRMWARE_REV) {
-            hd_debug_print("Too new Dune HD firmware! " . get_raw_firmware_version());
-            return $this->show_unsupported_firmware(TR::t('err_too_new_player'), self::DOWNLOAD_LINK);
         }
 
         if (!class_exists('SQLite3')) {
@@ -263,7 +255,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                         $this->plugin->init_plugin();
                         if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) {
-                            return $this->open_playlist_screen();
+                            return $this->add_too_new_firmware_warning($plugin_cookies, $this->open_playlist_screen());
                         }
 
                         $mandatory_playback = (int)safe_get_member($user_input,'mandatory_playback');
@@ -288,7 +280,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             }
 
                             if (!$this->plugin->load_channels($plugin_cookies)) {
-                                return Action_Factory::open_folder(
+                                return $this->add_too_new_firmware_warning($plugin_cookies, Action_Factory::open_folder(
                                     Starnet_Tv_Groups_Screen::ID,
                                     $this->plugin->get_plugin_title(),
                                     null,
@@ -296,14 +288,15 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                     Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                                         null,
                                         HD::get_last_error($this->plugin->get_pl_error_name()))
-                                );
+                                ));
                             }
 
                             return Action_Factory::tv_play($media_url);
                         }
 
                         hd_debug_print("action: launch open", true);
-                        return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
+                        return $this->add_too_new_firmware_warning($plugin_cookies,
+                            Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title()));
 
                     case self::ACTION_LAUNCH_VOD:
                         $action = $this->check_upgrade($user_input);
@@ -385,7 +378,14 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         return Action_Factory::refresh_entry_points(Starnet_Epfs_Handler::update_epfs_file($plugin_cookies,
                             isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep)));
 
+                    case self::ACTION_INSTALL:
+                    case self::ACTION_UPDATE:
+                        // show the firmware warning again for the new plugin version
+                        unset($plugin_cookies->{self::COOKIE_TOO_NEW_FW_WARNING_SHOWN});
+                        break;
+
                     case self::ACTION_UNINSTALL:
+                        unset($plugin_cookies->{self::COOKIE_TOO_NEW_FW_WARNING_SHOWN});
                         Default_Archive::clear_cache();
                         if (color_palette_check()) {
                             return Action_Factory::show_confirmation_dialog(
@@ -428,11 +428,76 @@ class Starnet_Entry_Handler implements User_Input_Handler
     }
 
     /**
-     * @param string $title
-     * @param string $link base64 encoded link to the plugin version for this firmware
+     * Only release firmware (r<number>) can be checked: beta (b<number>) builds have own numbering
+     * and firmware version can be not detected. Such firmware is allowed.
+     *
+     * @return int firmware revision number, 0 if it can't be checked
+     */
+    private static function get_checked_firmware_rev()
+    {
+        $firmware = get_parsed_firmware_ver();
+        $rev_literal = safe_get_value($firmware, 'rev_literal', '');
+        $rev_number = safe_get_value($firmware, 'rev_number', '');
+        if ($rev_literal !== 'r' || $rev_number === '') {
+            hd_debug_print("Firmware revision can't be checked: " . get_raw_firmware_version());
+            return 0;
+        }
+
+        return (int)$rev_number;
+    }
+
+    /**
+     * @return bool
+     */
+    private static function is_too_old_firmware()
+    {
+        $rev = self::get_checked_firmware_rev();
+        return $rev !== 0 && $rev < self::MIN_FIRMWARE_REV;
+    }
+
+    /**
+     * @return bool
+     */
+    private static function is_too_new_firmware()
+    {
+        return self::get_checked_firmware_rev() > self::MAX_FIRMWARE_REV;
+    }
+
+    /**
+     * The plugin supports only firmware r17 - r21 but is allowed to run on a newer one,
+     * the opened folder shows the warning before its own post action.
+     * The warning is shown once, the flag is reset on install/update/uninstall
+     *
+     * @param object $plugin_cookies
+     * @param array $action open folder action
      * @return array
      */
-    private function show_unsupported_firmware($title, $link) {
+    private function add_too_new_firmware_warning($plugin_cookies, $action)
+    {
+        if (!self::is_too_new_firmware() || !isset($action[GuiAction::data])) {
+            return $action;
+        }
+
+        hd_debug_print("Too new Dune HD firmware! " . get_raw_firmware_version());
+        if (!empty($plugin_cookies->{self::COOKIE_TOO_NEW_FW_WARNING_SHOWN})) {
+            return $action;
+        }
+
+        $plugin_cookies->{self::COOKIE_TOO_NEW_FW_WARNING_SHOWN} = '1';
+        $post_action = safe_get_value($action[GuiAction::data], PluginOpenFolderActionData::post_action);
+        $action[GuiAction::data][PluginOpenFolderActionData::post_action] =
+            $this->show_unsupported_firmware(TR::t('err_too_new_player'), self::DOWNLOAD_LINK, $post_action);
+
+        return $action;
+    }
+
+    /**
+     * @param string $title
+     * @param string $link base64 encoded link to the plugin version for this firmware
+     * @param array|null $post_action run after the dialog is closed by the OK button
+     * @return array
+     */
+    private function show_unsupported_firmware($title, $link, $post_action = null) {
         $qr_code = get_temp_path("link_to_plugin.jpg");
         $url = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode(base64_decode($link));
         Curl_Wrapper::simple_download_file($url, $qr_code);
@@ -445,6 +510,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
         Control_Factory::add_vgap($defs, 20);
         Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
         Control_Factory::add_vgap($defs, 450);
+        if ($post_action !== null) {
+            Control_Factory::add_custom_close_dialog_and_apply_button($defs, 'close_button', TR::t('ok'), 300, $post_action);
+        }
         return Action_Factory::show_dialog($title, $defs, true, 1000);
     }
 
