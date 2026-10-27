@@ -1,4 +1,4 @@
-﻿*.gitattributes text
+*.gitattributes text
 .gitignore      text
 
 *.md            text eol=lf diff=markdown
@@ -6,8 +6,8 @@
 channels		text eol=lf
 epg				text eol=lf
 
-*.{cmd,[cC][mM][dD]} text eol=crlf
-*.{bat,[bB][aA][tT]} text eol=crlf
+*.[cC][mM][dD] text eol=crlf
+*.[bB][aA][tT] text eol=crlf
 
 # Images
 *.jpg binary -text
