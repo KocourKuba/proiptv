@@ -1,11 +1,13 @@
-﻿*.gitattributes text
+*.gitattributes text
 .gitignore      text
 
-*.md            text diff=markdown
+*.md            text eol=lf diff=markdown
 *.sh			text eol=lf
+channels		text eol=lf
+epg				text eol=lf
 
-*.{cmd,[cC][mM][dD]} text eol=crlf
-*.{bat,[bB][aA][tT]} text eol=crlf
+*.[cC][mM][dD] text eol=crlf
+*.[bB][aA][tT] text eol=crlf
 
 # Images
 *.jpg binary -text
@@ -19,6 +21,7 @@
 .gitignore      export-ignore
 
 *.php diff=php
+*.php text eol=lf
 
 *.txt text eol=lf
 *.tpl html eol=lf
