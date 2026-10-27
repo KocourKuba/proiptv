@@ -61,28 +61,6 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
 
         // assert($plugin);
 
-        // Deny any operation except uninstall on firmware that requires the newer plugin version
-        if (is_too_new_firmware()
-            && !(isset($call_ctx->input_data->action_id) && $call_ctx->input_data->action_id === 'uninstall')) {
-            hd_debug_print("Too new Dune HD firmware! " . get_raw_firmware_version());
-            if (get_firmware_revision() <= 21) {
-                // r17 - r21
-                $details = array(TR::load_string('err_use_plugin_62'));
-            } else {
-                $details = array(TR::load_string('err_supported_firmware'), TR::load_string('err_install_newer_plugin'));
-            }
-            $details[] = "Dune Product ID: " . get_product_id();
-            $details[] = "Dune Firmware: " . get_raw_firmware_version();
-
-            return array(
-                PluginOutputData::has_data => false,
-                PluginOutputData::plugin_cookies => $call_ctx->plugin_cookies,
-                PluginOutputData::is_error => true,
-                PluginOutputData::error_action =>
-                    Action_Factory::show_error(true, TR::t('err_too_new_player'), $details)
-            );
-        }
-
         try {
             $out_data = $this->invoke_operation($plugin, $call_ctx);
         } /** @noinspection PhpRedundantCatchClauseInspection */

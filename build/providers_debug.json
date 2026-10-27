@@ -34,7 +34,7 @@
       }
     },
     "proiptv": {
-      "json_source": "http://epg.proiptv.info/{PROVIDER}/epg/{EPG_ID}.json",
+      "json_source": "https://epg.proiptv.info/{PROVIDER}/epg/{EPG_ID}.json",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
@@ -44,7 +44,7 @@
       }
     },
     "iptvx.one": {
-      "json_source": "http://epg.iptvx.one/api/id/{EPG_ID}.json",
+      "json_source": "https://epg.iptvx.one/api/id/{EPG_ID}.json",
       "parser": {
         "epg_root": "ch_programme",
         "epg_name": "title",
@@ -419,7 +419,7 @@
       "logo": "https://iptv.proiptv.info/res/logo_crdtv.png",
       "provider_url": "https://crdtv.net/",
       "api_commands": {
-        "get_playlist": "http://crdtv.net/m/{PASSWORD}/crdtv.m3u"
+        "get_playlist": "https://crdtv.net/m/{PASSWORD}/crdtv.m3u"
       }
     },
     {
@@ -537,7 +537,7 @@
       "name": "Glanz",
       "type": "login",
       "logo": "https://iptv.proiptv.info/res/logo_glanz.png",
-      "provider_url": "http://ottg.tv/",
+      "provider_url": "https://ottg.tv/",
       "api_commands": {
         "get_playlist": "{PLAYLIST}",
         "get_vod": "http://api.ottg.tv/playlist/vod?login={LOGIN}&password={PASSWORD}"
@@ -844,7 +844,7 @@
       "logo": "https://iptv.proiptv.info/res/logo_lightiptv.png",
       "provider_url": "https://ottbill.cc/",
       "api_commands": {
-        "get_playlist": "http://lightiptv.cc/playlist/hls/{PASSWORD}.m3u"
+        "get_playlist": "https://lightiptv.cc/playlist/hls/{PASSWORD}.m3u"
       },
       "config": {
         "id_map": "name",
@@ -1471,8 +1471,7 @@
         "film_alt_info": "{API}/film_alt_info.php?session={SESSION_ID}",
         "film_alt_http": "{API}/film_alt_http.php?session={SESSION_ID}",
         "film_alt_search": "{API}/film_alt_search.php?session={SESSION_ID}",
-        "film_list": "{API}/film_list.php?session={SESSION_ID}",
-        "pay": "{API}/payment_qr.php?session={SESSION_ID}&typeresult=json"
+        "film_list": "{API}/film_list.php?session={SESSION_ID}"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?:.+)\\/(?<token>.+)\\/(?<id>.+)\\/(?:stream\\.m3u8)$/",
@@ -1646,7 +1645,7 @@
         ],
         "ext_params": true,
         "servers": {
-          "m3u.uspeh.my/hls": "EU",
+          "m3u.usp11.com/hls": "EU",
           "m3u.uspeh-bil.ru/ru": "Russia"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"

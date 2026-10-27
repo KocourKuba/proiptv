@@ -894,6 +894,9 @@ class api_default
             return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
         }
 
+        // session/token files are named by playlist id, provider created for setup dialog does not have it
+        $this->playlist_id = $id;
+
         hd_debug_print("ApplySetupUI compiled provider ($id) info: " . pretty_json_format($this->playlist_info), true);
 
         if ($is_new) {

@@ -3400,7 +3400,13 @@ class Default_Dune_Plugin implements DunePlugin
             return false;
         }
 
-        return $provider->ApplySetupUI($user_input);
+        $id = $provider->ApplySetupUI($user_input);
+        if (is_string($id) && $id === $this->get_active_playlist_key() && $provider !== $this->cur_provider) {
+            // active provider edited from playlists screen, recreate it with the new credentials
+            $this->cur_provider = null;
+        }
+
+        return $id;
     }
 
     /**

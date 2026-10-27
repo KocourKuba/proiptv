@@ -143,7 +143,12 @@ class api_edem extends api_default
      */
     public function ApplySetupUI($user_input)
     {
-        $id = $user_input->{CONTROL_EDIT_ITEM};
+        $id = empty($user_input->{CONTROL_EDIT_ITEM}) ? '' : $user_input->{CONTROL_EDIT_ITEM};
+
+        if (!empty($id)) {
+            hd_debug_print("load info for existing playlist id: $id", true);
+            $this->playlist_info = $this->plugin->get_playlists()->get($id);
+        }
 
         if (is_null($this->playlist_info)) {
             hd_debug_print("Create new provider info", true);
@@ -194,6 +199,8 @@ class api_edem extends api_default
         if (empty($id)) {
             return Action_Factory::show_title_dialog(TR::t('err_incorrect_access_data'));
         }
+
+        $this->playlist_id = $id;
 
         hd_debug_print("ApplySetupUI compiled provider ($id) info: " . pretty_json_format($this->playlist_info), true);
 
