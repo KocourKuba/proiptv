@@ -5,9 +5,9 @@ Universal **Dune HD** plugin with M3U playlist and XMLTV EPG support. Also, it h
 
 Minimal firmware revision supported by the current version of the plugin (9.x and higher) is R22. Some features available only for R24
 
-For devices (Android-based), with a revision higher than R16 and lower than R22, the latest version is [6.2.1368](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1368) Strongly recommend to update firmware to r22
+For devices (Android-based), with a revision higher than R16 and lower than R22, the latest version is [6.2.1376](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1376) Strongly recommend to update firmware to r22
 
-For old devices (Sigma chipset-based, non-Android), with a revision R11 (b11) and lower then R17, the latest version is [5.1.1044](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1044)
+For old devices (Sigma chipset-based, non-Android), with a revision R11 (b11) and lower then R17, the latest version is [5.1.1050](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1050)
 
 For Dune HD ATV devices (Homatics, Boxy, Premier) and Dune HD Whale TV there are some limitations like network access, Sleep timer, etc.
 
@@ -19,9 +19,9 @@ For Dune HD ATV devices (Homatics, Boxy, Premier) and Dune HD Whale TV there are
 
 Минимальная версия прошивки поддерживаемая текущей версией плагина (9.x и старше) - R22. Некоторые действия и настройки доступны только с R24
 
-Для приставок (на Android) с ревизией прошивки больше R16 и меньше R22 - актуальная версия [6.2.1368](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1368) рекомендую обновить прошивку до r22
+Для приставок (на Android) с ревизией прошивки больше R16 и меньше R22 - актуальная версия [6.2.1376](https://github.com/KocourKuba/proiptv/releases/tag/6.2.1376) рекомендую обновить прошивку до r22
 
-Для старых приставок (на чипсете Sigma, не Android), с ревизией прошивки R11(b11) и меньше R17 - актуальная версия [5.1.1044](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1044)
+Для старых приставок (на чипсете Sigma, не Android), с ревизией прошивки R11(b11) и меньше R17 - актуальная версия [5.1.1050](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1050)
 
 Для приставок Dune HD на базе ATV (Homatics, Boxy, Premier) и Dune HD Whale TV есть ограничения в функциональности. Сеть, таймер выключения.
 
