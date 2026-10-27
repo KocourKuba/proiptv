@@ -62,7 +62,7 @@
       }
     },
     "proiptv": {
-      "json_source": "http://epg.proiptv.info/{PROVIDER}/epg/{EPG_ID}.json",
+      "json_source": "https://epg.proiptv.info/{PROVIDER}/epg/{EPG_ID}.json",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
@@ -409,7 +409,7 @@
       "logo": "https://iptv.proiptv.info/res/logo_crdtv.png",
       "provider_url": "https://crdtv.net/",
       "api_commands": {
-        "get_playlist": "http://crdtv.net/m/{PASSWORD}/crdtv.m3u"
+        "get_playlist": "https://crdtv.net/m/{PASSWORD}/crdtv.m3u"
       }
     },
     {
@@ -534,7 +534,7 @@
       "name": "Glanz",
       "type": "login",
       "logo": "https://iptv.proiptv.info/res/logo_glanz.png",
-      "provider_url": "http://ottg.tv/",
+      "provider_url": "https://ottg.tv/",
       "api_commands": {
         "get_playlist": "{PLAYLIST}",
         "get_vod": "http://api.ottg.tv/playlist/vod?login={LOGIN}&password={PASSWORD}"
@@ -840,7 +840,7 @@
       "logo": "https://iptv.proiptv.info/res/logo_lightiptv.png",
       "provider_url": "https://ottbill.cc/",
       "api_commands": {
-        "get_playlist": "http://lightiptv.cc/playlist/hls/{PASSWORD}.m3u"
+        "get_playlist": "https://lightiptv.cc/playlist/hls/{PASSWORD}.m3u"
       },
       "config": {
         "id_map": "name",
@@ -1284,38 +1284,6 @@
     },
     {
       "enable": true,
-      "id": "sharavozpro",
-      "vod": "sharavoz",
-      "name": "Sharavoz.Pro",
-      "type": "pin",
-      "logo": "https://iptv.proiptv.info/res/logo_sharavozpro.png",
-      "provider_url": "https://sharavoz.pro/",
-      "api_commands": {
-        "get_playlist": "https://links-s-pro.cc/{PASSWORD}/navigator.m3u8",
-        "get_vod": "http://app.media24.cc/json/c"
-      },
-      "config": {
-        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
-        "epg_presets": [
-          {
-            "name": "proiptv",
-            "alias": "sharavoz"
-          }
-        ],
-        "ext_params": true,
-        "url_subst": {
-          "regex": "/^(.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
-          "replace": "$1{STREAM_ID}$2"
-        },
-        "streams": {
-          "index.m3u8": "HLS",
-          "mpegts": "MPEG-TS"
-        },
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
-      }
-    },
-    {
-      "enable": true,
       "id": "shuratv",
       "name": "ShuraTV",
       "type": "pin",
@@ -1547,38 +1515,6 @@
     },
     {
       "enable": true,
-      "id": "ttv",
-      "class": "ttv",
-      "vod": "ttv",
-      "name": "Torrent TV",
-      "type": "login",
-      "logo": "https://iptv.proiptv.info/res/logo_ttv.png",
-      "provider_url": "https://ttvrun.one/",
-      "api_url": "https://api.ttv.run/v3",
-      "api_commands": {
-        "request_token": "{API}/auth.php?username={LOGIN}&password={PASSWORD}&application=android&guid={GUID}",
-        "account_info": "{API}/userinfo.php?session={SESSION_ID}",
-        "get_playlist": "https://tapitv.com/k/{TOKEN}/1611268/tv.m3u",
-        "get_vod": "{API}/film_list.php?session={SESSION_ID}",
-        "film_alt_genres": "{API}/film_alt_genres.php?session={SESSION_ID}",
-        "film_filter": "{API}/film_filter.php?session={SESSION_ID}",
-        "film_filter_countries": "{API}/film_filter_countries.php?session={SESSION_ID}",
-        "film_alt_info": "{API}/film_alt_info.php?session={SESSION_ID}",
-        "film_alt_http": "{API}/film_alt_http.php?session={SESSION_ID}",
-        "pay": "{API}/payment_qr.php?session={SESSION_ID}&typeresult=json"
-      },
-      "config": {
-        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?:.+)\\/(?<token>.+)\\/(?<id>.+)\\/(?:stream\\.m3u8)$/",
-        "epg_presets": [
-          {
-            "name": "proiptv"
-          }
-        ],
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
-      }
-    },
-    {
-      "enable": true,
       "id": "tvizi",
       "class": "iptvonline",
       "vod": "iptvonline",
@@ -1631,7 +1567,7 @@
           }
         ],
         "servers": {
-          "m3u.uspeh.my/hls": "EU",
+          "m3u.usp11.com/hls": "EU",
           "m3u.uspeh-bil.ru/ru": "Russia"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"

@@ -62,7 +62,7 @@
       }
     },
     "proiptv": {
-      "json_source": "http://epg.proiptv.info/{PROVIDER}/epg/{EPG_ID}.json",
+      "json_source": "https://epg.proiptv.info/{PROVIDER}/epg/{EPG_ID}.json",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
@@ -409,7 +409,7 @@
       "logo": "https://iptv.proiptv.info/res/logo_crdtv.png",
       "provider_url": "https://crdtv.net/",
       "api_commands": {
-        "get_playlist": "http://crdtv.net/m/{PASSWORD}/crdtv.m3u"
+        "get_playlist": "https://crdtv.net/m/{PASSWORD}/crdtv.m3u"
       }
     },
     {
@@ -534,7 +534,7 @@
       "name": "Glanz",
       "type": "login",
       "logo": "https://iptv.proiptv.info/res/logo_glanz.png",
-      "provider_url": "http://ottg.tv/",
+      "provider_url": "https://ottg.tv/",
       "api_commands": {
         "get_playlist": "{PLAYLIST}",
         "get_vod": "http://api.ottg.tv/playlist/vod?login={LOGIN}&password={PASSWORD}"
@@ -840,7 +840,7 @@
       "logo": "https://iptv.proiptv.info/res/logo_lightiptv.png",
       "provider_url": "https://ottbill.cc/",
       "api_commands": {
-        "get_playlist": "http://lightiptv.cc/playlist/hls/{PASSWORD}.m3u"
+        "get_playlist": "https://lightiptv.cc/playlist/hls/{PASSWORD}.m3u"
       },
       "config": {
         "id_map": "name",
@@ -1631,7 +1631,7 @@
           }
         ],
         "servers": {
-          "m3u.uspeh.my/hls": "EU",
+          "m3u.usp11.com/hls": "EU",
           "m3u.uspeh-bil.ru/ru": "Russia"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"

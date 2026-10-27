@@ -39,6 +39,43 @@ function copy_or_fail($src, $dst)
     }
 }
 
+/**
+ * Stamps the topmost changelog section with the version being built.
+ * A section whose version is already a git tag is released and stays untouched,
+ * so the entries accumulate in one section until the next tag is created.
+ */
+function update_changelog_version($file, $full_version, $tags)
+{
+    $text = file_get_contents($file);
+    if ($text === false) {
+        fail("can't read $file");
+    }
+
+    if (!preg_match('/^(### \S+ )(\S+)[ \t]*$/m', $text, $m, PREG_OFFSET_CAPTURE)) {
+        fail("no version header in $file");
+    }
+
+    $current = $m[2][0];
+    if ($current === $full_version || in_array($current, $tags, true)) {
+        return;
+    }
+
+    $text = substr_replace($text, $m[1][0] . $full_version, $m[0][1], strlen($m[0][0]));
+    if (file_put_contents($file, $text) === false) {
+        fail("can't write $file");
+    }
+
+    echo "$file: $current -> $full_version" . PHP_EOL;
+}
+
+exec('git tag -l', $tags, $git_result);
+if ($git_result !== 0) {
+    fail("can't read git tags");
+}
+
+update_changelog_version("./build/changelog.russian.md", $full_version, $tags);
+update_changelog_version("./build/changelog.english.md", $full_version, $tags);
+
 $tpl = "build/$plugin_info.tpl";
 if (!file_exists($tpl)) {
     fail("required file not found: $tpl");
