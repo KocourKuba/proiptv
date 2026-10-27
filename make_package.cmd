@@ -65,7 +65,12 @@ if defined TAG_EXISTS (
 
 echo create GIT tag
 git tag %TAG%
-git push --tags -- "origin" master:master
+git push --atomic origin HEAD refs/tags/%TAG%
+if errorlevel 1 (
+  echo ERROR: git push failed
+  git tag -d %TAG% >nul
+  exit /b 1
+)
 
 copy /Y .\dune_plugin_proiptv.zip .\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
 copy /Y .\build\providers_%VERSION%.json .\providers_%VERSION%.json >nul
@@ -96,7 +101,6 @@ if %WINSCP_RESULT% equ 0 (
 )
 
 del .\providers_%VERSION%.json >nul 2>&1
-del .\%DESC_PARSER_FILE% >nul 2>&1
 del .\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul 2>&1
 
 exit /b %WINSCP_RESULT%
