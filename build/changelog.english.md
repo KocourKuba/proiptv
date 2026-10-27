@@ -1,4 +1,10 @@
-﻿### Version 5.1.1044
+﻿### Version 5.1.1050
+- The plugin runs on firmware r17 or higher again. At start it shows a warning that the version 5.1 supports only firmware r11 - r16: on firmware r17 - r21 it suggests to use the plugin version 6.2 or to update the firmware, on firmware r22 or higher to install a newer plugin version.
+- Changing the login or password of a provider in the playlists list now takes effect at once. The provider kept using the session of the old account until it expired, and a new account of the same provider could be accepted with wrong credentials.
+- Edem: editing the provider in the playlists list no longer resets its other settings.
+- Updated playlist mirror (EU) for Uspeh
+
+### Version 5.1.1044
 - TorrentTV: the category list of the media library can be switched in the popup menu between genres and types (films, serials, animation). In the type mode each category shows the number of its films.
 - TorrentTV: a genre category of the media library and a filter by genre only now show all films of the genre. Some films of the genre were missing there.
 - TorrentTV: the media library search uses the new provider catalog search.
