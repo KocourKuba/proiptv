@@ -155,7 +155,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                         $this->plugin->init_plugin(true);
                         if ($this->plugin->get_playlists()->size() === 0) {
-                            return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID, Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
+                            return $this->add_too_new_firmware_warning(
+                                $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID, Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
                         }
 
                         if ((int)$user_input->mandatory_playback === 1
@@ -177,20 +178,21 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             }
 
                             if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
-                                return Action_Factory::open_folder(
+                                return $this->add_too_new_firmware_warning(Action_Factory::open_folder(
                                     Starnet_Tv_Groups_Screen::ID,
                                     $this->plugin->create_plugin_title(),
                                     null,
                                     null,
                                     Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error())
-                                );
+                                ));
                             }
 
                             return Action_Factory::tv_play($media_url);
                         }
 
                         hd_debug_print("action: launch open", true);
-                        return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
+                        return $this->add_too_new_firmware_warning(
+                            Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title()));
 
                     case self::ACTION_LAUNCH_VOD:
                         hd_debug_print_separator();
@@ -271,5 +273,37 @@ class Starnet_Entry_Handler implements User_Input_Handler
         }
 
         return null;
+    }
+
+    /**
+     * The plugin supports only firmware r11 - r16 but is allowed to run on a newer one,
+     * the opened folder shows the warning before its own post action
+     *
+     * @param array $action open folder action
+     * @return array
+     */
+    private function add_too_new_firmware_warning($action)
+    {
+        if (!is_too_new_firmware() || !isset($action[GuiAction::data])) {
+            return $action;
+        }
+
+        hd_debug_print("Too new Dune HD firmware! " . get_raw_firmware_version());
+        if (get_firmware_revision() <= 21) {
+            // r17 - r21
+            $details = array(TR::load_string('err_use_plugin_62'));
+        } else {
+            $details = array(TR::load_string('err_supported_firmware'), TR::load_string('err_install_newer_plugin'));
+        }
+        $details[] = "Dune Product ID: " . get_product_id();
+        $details[] = "Dune Firmware: " . get_raw_firmware_version();
+
+        $post_action = isset($action[GuiAction::data][PluginOpenFolderActionData::post_action])
+            ? $action[GuiAction::data][PluginOpenFolderActionData::post_action]
+            : null;
+        $action[GuiAction::data][PluginOpenFolderActionData::post_action] =
+            Action_Factory::show_title_dialog(TR::t('err_too_new_player'), $post_action, $details);
+
+        return $action;
     }
 }
