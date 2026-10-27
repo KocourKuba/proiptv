@@ -403,6 +403,7 @@ warn_msg5 = The movie technical information contains incorrect or missing data.\
 
 err_too_old_player = Firmware of DUNE HD is too old
 err_too_new_player = This plugin version is intended for older DUNE HD firmware. Install the current version
+err_unsupported_firmware = Unsupported firmware
 err_required_firmware = r17 - r21
 err_no_sqlite = SQLite3 is not supported by this firmware!
 err_load_playlist = Playlist loading error!

@@ -51,7 +51,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_CONFIRM_BACKUP_DLG = 'create_backup';
     const MIN_FIRMWARE_REV = 17;
     const MAX_FIRMWARE_REV = 21;
-    const DOWNLOAD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0dg==";
+    // qr code of the link to the plugin download page,
+    // bundled because the qr code service can be unreachable and the download blocks the launch
+    const DOWNLOAD_LINK_QR = 'qr_download.png';
     const COOKIE_TOO_NEW_FW_WARNING_SHOWN = 'too_new_fw_warning_shown';
 
     private $plugin;
@@ -89,12 +91,12 @@ class Starnet_Entry_Handler implements User_Input_Handler
         // but this one is allowed to run on it, the warning is shown on launch (see add_too_new_firmware_warning)
         if (self::is_too_old_firmware()) {
             hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
-            return $this->show_unsupported_firmware(TR::t('err_too_old_player'), self::DOWNLOAD_LINK);
+            return $this->show_unsupported_firmware(TR::t('err_too_old_player'));
         }
 
         if (!class_exists('SQLite3')) {
             hd_debug_print("No SQLite3 support! " . get_raw_firmware_version());
-            return $this->show_unsupported_firmware(TR::t('err_no_sqlite'), self::DOWNLOAD_LINK);
+            return $this->show_unsupported_firmware(TR::t('err_no_sqlite'));
         }
 
         switch ($user_input->control_id) {
@@ -486,34 +488,36 @@ class Starnet_Entry_Handler implements User_Input_Handler
         $plugin_cookies->{self::COOKIE_TOO_NEW_FW_WARNING_SHOWN} = '1';
         $post_action = safe_get_value($action[GuiAction::data], PluginOpenFolderActionData::post_action);
         $action[GuiAction::data][PluginOpenFolderActionData::post_action] =
-            $this->show_unsupported_firmware(TR::t('err_too_new_player'), self::DOWNLOAD_LINK, $post_action);
+            $this->show_unsupported_firmware(TR::t('err_unsupported_firmware'), $post_action,
+                TR::t('err_too_new_player'));
 
         return $action;
     }
 
     /**
      * @param string $title
-     * @param string $link base64 encoded link to the plugin version for this firmware
      * @param array|null $post_action run after the dialog is closed by the OK button
+     * @param string|null $message long text shown in the dialog, the dialog title is truncated to one line
      * @return array
      */
-    private function show_unsupported_firmware($title, $link, $post_action = null) {
-        $qr_code = get_temp_path("link_to_plugin.jpg");
-        $url = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode(base64_decode($link));
-        Curl_Wrapper::simple_download_file($url, $qr_code);
+    private function show_unsupported_firmware($title, $post_action = null, $message = null) {
+        $qr_code = get_image_path(self::DOWNLOAD_LINK_QR);
 
         $defs = array();
+        if ($message !== null) {
+            // the label scrolls if the text needs more lines, translations can be longer
+            Control_Factory::add_multiline_label($defs, '', $message, 6);
+        }
         Control_Factory::add_label($defs, TR::t('required_firmware'), TR::t('err_required_firmware'));
         Control_Factory::add_label($defs, "Dune Product ID:",  get_product_id());
         Control_Factory::add_label($defs, "Dune Firmware:", get_raw_firmware_version());
-        Control_Factory::add_label($defs, TR::t('download_link'), "");
-        Control_Factory::add_vgap($defs, 20);
-        Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
-        Control_Factory::add_vgap($defs, 450);
+        // the icon does not reserve its height, the gap after the row covers the rest of the qr code
+        Control_Factory::add_smart_label($defs, TR::t('download_link'), "<icon width=300 height=300>$qr_code</icon>");
+        Control_Factory::add_vgap($defs, 240);
         if ($post_action !== null) {
             Control_Factory::add_custom_close_dialog_and_apply_button($defs, 'close_button', TR::t('ok'), 300, $post_action);
         }
-        return Action_Factory::show_dialog($title, $defs, true, 1000);
+        return Action_Factory::show_dialog($title, $defs, true, 1300);
     }
 
     private function open_playlist_screen()
