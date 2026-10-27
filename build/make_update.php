@@ -51,16 +51,18 @@ function update_changelog_version($file, $full_version, $tags)
         fail("can't read $file");
     }
 
-    if (!preg_match('/^(### \S+ )(\S+)[ \t]*$/m', $text, $m, PREG_OFFSET_CAPTURE)) {
+    // the file starts with a UTF-8 BOM and is CRLF in a Windows checkout (core.autocrlf)
+    if (!preg_match('/^(?:\xEF\xBB\xBF)?### \S+ (\S+)[ \t\r]*$/m', $text, $m, PREG_OFFSET_CAPTURE)) {
         fail("no version header in $file");
     }
 
-    $current = $m[2][0];
+    $current = $m[1][0];
     if ($current === $full_version || in_array($current, $tags, true)) {
         return;
     }
 
-    $text = substr_replace($text, $m[1][0] . $full_version, $m[0][1], strlen($m[0][0]));
+    // only the version is replaced, BOM and line ending stay as they are
+    $text = substr_replace($text, $full_version, $m[1][1], strlen($current));
     if (file_put_contents($file, $text) === false) {
         fail("can't write $file");
     }
