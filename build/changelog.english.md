@@ -1,4 +1,10 @@
-﻿### Version 6.2.1368
+﻿### Version 6.2.1376
+- Fixed a bug where adding or editing an inactive provider playlist overwrote the session/token of the active playlist (1OTT, IPTV Online, Korona, TV Team)
+- Fixed a bug where editing an Edem playlist reset a custom domain to the default one
+- On firmware newer than r21 the plugin is no longer blocked: a warning with a link to the current plugin version is shown once at launch (again after a plugin update)
+- QR codes of the plugin download page and the Telegram channel are included in the plugin: dialogs no longer wait for the QR code service, the Telegram QR code in the changelog is always shown
+
+### Version 6.2.1368
 - Added provider Torrent TV. TV channels, VOD (categories by type and genre, search, filters by type, genre, country and years, quality selection), account information and payment via QR code. VOD is also available for accounts without a TV subscription
 - Added provider Sharavoz.Pro
 - Fixed a bug where adding or editing an inactive provider playlist reset the authorization of the active playlist
