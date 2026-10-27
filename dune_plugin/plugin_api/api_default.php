@@ -701,7 +701,7 @@ class api_default
             }
         }
 
-        $string = str_replace(MACRO_TOKEN, $this->plugin->get_cookie(PARAM_TOKEN), $string);
+        $string = str_replace(MACRO_TOKEN, $this->GetProviderCookie(PARAM_TOKEN), $string);
 
         hd_debug_print("result: $string", true);
 
@@ -735,6 +735,47 @@ class api_default
         }
 
         return $this->plugin->get_playlist_parameter($this->playlist_id, $name, $default);
+    }
+
+    /**
+     * Cookies (tokens, session id) are stored in the settings db of the provider playlist,
+     * not in the one of the active playlist: a provider can be set up while another playlist is active.
+     *
+     * @param string $name
+     * @param bool $check_expire
+     * @return string
+     */
+    public function GetProviderCookie($name, $check_expire = false)
+    {
+        if (empty($this->playlist_id)) {
+            return '';
+        }
+
+        return $this->plugin->get_cookie($name, $check_expire, $this->playlist_id);
+    }
+
+    /**
+     * @param string $name
+     * @param string $value
+     * @param int|null $expired
+     * @return void
+     */
+    public function SetProviderCookie($name, $value, $expired = null)
+    {
+        if (!empty($this->playlist_id)) {
+            $this->plugin->set_cookie($name, $value, $expired, $this->playlist_id);
+        }
+    }
+
+    /**
+     * @param string $name
+     * @return void
+     */
+    public function RemoveProviderCookie($name)
+    {
+        if (!empty($this->playlist_id)) {
+            $this->plugin->remove_cookie($name, $this->playlist_id);
+        }
     }
 
     /**
@@ -1002,7 +1043,7 @@ class api_default
      */
     public function GetSessionId()
     {
-        return $this->plugin->get_cookie(PARAM_SESSION_ID);
+        return $this->GetProviderCookie(PARAM_SESSION_ID);
     }
 
     /**
@@ -1193,7 +1234,7 @@ class api_default
         hd_debug_print(null, true);
         hd_debug_print('force request provider token: ' . var_export($force, true));
 
-        $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
+        $token = $this->GetProviderCookie(PARAM_TOKEN, true);
         $expired = empty($token);
 
         if (!$force && !$expired) {
@@ -1203,7 +1244,7 @@ class api_default
 
         Dune_Last_Error::clear_last_error(LAST_ERROR_REQUEST);
 
-        $refresh_token = $this->plugin->get_cookie(PARAM_REFRESH_TOKEN);
+        $refresh_token = $this->GetProviderCookie(PARAM_REFRESH_TOKEN);
         $can_refresh = $expired && !empty($refresh_token);
         if ($can_refresh) {
             hd_debug_print('need to refresh token', true);
@@ -1227,16 +1268,16 @@ class api_default
             $expires = isset($data['expires_time'])
                 ? $data['expires_time']
                 : time() + (int)safe_get_value($data, 'expires_in', $default_ttl);
-            $this->plugin->set_cookie(PARAM_TOKEN, $access_token, $expires);
-            $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $refresh_token, PHP_INT_MAX);
+            $this->SetProviderCookie(PARAM_TOKEN, $access_token, $expires);
+            $this->SetProviderCookie(PARAM_REFRESH_TOKEN, $refresh_token, PHP_INT_MAX);
             return true;
         }
 
         $error = safe_get_value($data, 'error');
         if ($can_refresh && !empty($error)) {
             // refresh token failed. Need to make complete auth
-            $this->plugin->remove_cookie(PARAM_TOKEN);
-            $this->plugin->remove_cookie(PARAM_REFRESH_TOKEN);
+            $this->RemoveProviderCookie(PARAM_TOKEN);
+            $this->RemoveProviderCookie(PARAM_REFRESH_TOKEN);
             return $this->request_provider_token(true);
         }
 
@@ -1441,8 +1482,8 @@ class api_default
         $this->check_config_values();
 
         $this->plugin->clear_playlist_cache($this->playlist_id);
-        $this->plugin->remove_cookie(PARAM_TOKEN);
-        $this->plugin->remove_cookie(PARAM_REFRESH_TOKEN);
+        $this->RemoveProviderCookie(PARAM_TOKEN);
+        $this->RemoveProviderCookie(PARAM_REFRESH_TOKEN);
 
         if (!$this->request_provider_token(true)) {
             hd_debug_print("Can't get provider token");

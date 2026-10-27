@@ -459,7 +459,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
         $sel_idx = array_search_id($res, $this->plugin->get_all_playlists_ids());
         $this->force_parent_reload = $this->plugin->get_active_playlist_id() === $res;
-        if ($this->plugin->load_channels($plugin_cookies, true)) {
+        // only the active playlist is loaded, setup of another provider does not need to reload it
+        if (!$this->force_parent_reload || $this->plugin->load_channels($plugin_cookies, true)) {
             return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_idx);
         }
 

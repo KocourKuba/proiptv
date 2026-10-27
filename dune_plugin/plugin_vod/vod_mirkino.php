@@ -60,13 +60,13 @@ class vod_mirkino extends vod_standard
             $access_info = array(
                 MACRO_LOGIN => $this->provider->GetProviderParameter(MACRO_LOGIN),
                 MACRO_PASSWORD => $this->provider->GetProviderParameter(MACRO_PASSWORD),
-                PARAM_TOKEN => $this->plugin->get_cookie(PARAM_TOKEN),
-                PARAM_USER_ID => $this->plugin->get_cookie(PARAM_USER_ID)
+                PARAM_TOKEN => $this->provider->GetProviderCookie(PARAM_TOKEN),
+                PARAM_USER_ID => $this->provider->GetProviderCookie(PARAM_USER_ID)
             );
 
             if ($this->jfc->login($access_info) !== false) {
-                $this->plugin->set_cookie(PARAM_TOKEN, $this->jfc->get_access_token());
-                $this->plugin->set_cookie(PARAM_USER_ID, $this->jfc->get_user_id());
+                $this->provider->SetProviderCookie(PARAM_TOKEN, $this->jfc->get_access_token());
+                $this->provider->SetProviderCookie(PARAM_USER_ID, $this->jfc->get_user_id());
                 return true;
             }
         }

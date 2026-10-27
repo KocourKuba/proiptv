@@ -116,8 +116,8 @@ class api_tvteam extends api_default
         hd_debug_print(null, true);
         hd_debug_print('force request provider token: ' . var_export($force, true));
 
-        $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID, true);
-        $userToken = $this->plugin->get_cookie(PARAM_TOKEN);
+        $session_id = $this->GetProviderCookie(PARAM_SESSION_ID, true);
+        $userToken = $this->GetProviderCookie(PARAM_TOKEN);
         $expired = empty($session_id) || empty($userToken);
 
         if (!$force && !$expired) {
@@ -155,7 +155,7 @@ class api_tvteam extends api_default
                 break;
             }
 
-            $this->plugin->set_cookie(PARAM_SESSION_ID, $session_id, time() + 86400 * 7);
+            $this->SetProviderCookie(PARAM_SESSION_ID, $session_id, time() + 86400 * 7);
 
             if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
                 $this->account_info = array();
@@ -179,7 +179,7 @@ class api_tvteam extends api_default
                 $userToken = safe_get_value($userData, 'userToken');
 
                 if (!empty($userToken)) {
-                    $this->plugin->set_cookie(PARAM_TOKEN, $userToken);
+                    $this->SetProviderCookie(PARAM_TOKEN, $userToken);
                     hd_debug_print("save token: $userToken", true);
                 }
 

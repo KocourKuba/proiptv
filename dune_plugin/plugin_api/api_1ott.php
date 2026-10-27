@@ -34,7 +34,7 @@ class api_1ott extends api_default
         hd_debug_print(null, true);
         hd_debug_print('force request provider token: ' . var_export($force, true));
 
-        $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID, true);
+        $session_id = $this->GetProviderCookie(PARAM_SESSION_ID, true);
         if (!$force && !empty($session_id)) {
             hd_debug_print('request not required', true);
             return true;
@@ -43,7 +43,7 @@ class api_1ott extends api_default
         $response = $this->execApiCommandResponseNoOpt(API_COMMAND_REQUEST_TOKEN);
         $token = safe_get_value($response, 'token');
         if (!empty($token)) {
-            $this->plugin->set_cookie(PARAM_SESSION_ID, $token,time() + 86400);
+            $this->SetProviderCookie(PARAM_SESSION_ID, $token,time() + 86400);
             Dune_Last_Error::clear_last_error(LAST_ERROR_REQUEST);
             return true;
         }

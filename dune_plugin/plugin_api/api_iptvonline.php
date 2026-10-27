@@ -239,7 +239,7 @@ class api_iptvonline extends api_default
      */
     protected function get_additional_headers($command)
     {
-        $token = $this->plugin->get_cookie(PARAM_TOKEN);
+        $token = $this->GetProviderCookie(PARAM_TOKEN);
         if (!empty($token) && $command !== API_COMMAND_REQUEST_TOKEN && $command !== API_COMMAND_REFRESH_TOKEN) {
             return array($this->replace_macros('Authorization: Bearer {TOKEN}'));
         }

@@ -94,7 +94,7 @@ class api_ttv extends api_default
     {
         hd_debug_print(null, true);
 
-        $this->plugin->remove_cookie(PARAM_SESSION_ID);
+        $this->RemoveProviderCookie(PARAM_SESSION_ID);
 
         return parent::ApplySetupUI($user_input);
     }
@@ -111,8 +111,8 @@ class api_ttv extends api_default
         hd_debug_print(null, true);
         hd_debug_print('force request provider token: ' . var_export($force, true));
 
-        $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID, true);
-        $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
+        $session_id = $this->GetProviderCookie(PARAM_SESSION_ID, true);
+        $token = $this->GetProviderCookie(PARAM_TOKEN, true);
         if (!empty($session_id) && !empty($token)) {
             hd_debug_print('session is still valid', true);
             return true;
@@ -240,7 +240,7 @@ class api_ttv extends api_default
                 return null;
             }
 
-            $this->plugin->remove_cookie(PARAM_SESSION_ID);
+            $this->RemoveProviderCookie(PARAM_SESSION_ID);
         }
 
         return null;
@@ -273,7 +273,7 @@ class api_ttv extends api_default
             return false;
         }
 
-        $this->plugin->set_cookie(PARAM_SESSION_ID, $session_id, time() + self::SESSION_LIFETIME);
+        $this->SetProviderCookie(PARAM_SESSION_ID, $session_id, time() + self::SESSION_LIFETIME);
         return true;
     }
 
@@ -296,8 +296,8 @@ class api_ttv extends api_default
             hd_debug_print('request_provider_info error response: ' . json_format_unescaped($response), true);
             if ($renew_session && safe_get_value($response, 'error') === 'incorrect') {
                 hd_debug_print('ttv session rejected, request new session', true);
-                $this->plugin->remove_cookie(PARAM_SESSION_ID);
-                $this->plugin->remove_cookie(PARAM_TOKEN);
+                $this->RemoveProviderCookie(PARAM_SESSION_ID);
+                $this->RemoveProviderCookie(PARAM_TOKEN);
                 return $this->request_session() && $this->request_user_info(false);
             }
             return false;
@@ -308,7 +308,7 @@ class api_ttv extends api_default
 
         $token = safe_get_value($response, 'playlist_token');
         if (!empty($token)) {
-            $this->plugin->set_cookie(PARAM_TOKEN, $token, time() + self::SESSION_LIFETIME);
+            $this->SetProviderCookie(PARAM_TOKEN, $token, time() + self::SESSION_LIFETIME);
         }
 
         return true;

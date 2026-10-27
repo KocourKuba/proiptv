@@ -830,7 +830,7 @@ class vod_ttv extends vod_standard
             && (int)safe_get_value($response, 'success') !== 1
             && safe_get_value($response, 'error') === 'incorrect') {
             hd_debug_print("ttv session rejected for $command, request new session", true);
-            $this->plugin->remove_cookie(PARAM_SESSION_ID);
+            $this->provider->RemoveProviderCookie(PARAM_SESSION_ID);
             if ($this->provider->request_provider_token(true)) {
                 $response = $this->provider->execApiCommandResponse($command, $curl_opt, Curl_Wrapper::RET_ARRAY, $cache);
             }
