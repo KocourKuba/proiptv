@@ -109,11 +109,12 @@ class vod_pagination
     }
 
     /**
+     * @param bool $keep_pages keep the page indexes, the first page was already fetched
      * @return void
      */
-    public function reset_movie_counter()
+    public function reset_movie_counter($keep_pages = false)
     {
-        $this->is_entered = true;
+        $this->is_entered = !$keep_pages;
         $this->movie_counter = array();
     }
 

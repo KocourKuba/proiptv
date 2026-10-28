@@ -102,6 +102,11 @@ class vod_standard extends Abstract_Vod
     protected $vod_m3u_parser;
 
     /**
+     * @var array|null array(keyword, Short_Movie[]) fetched by prefetchSearchList()
+     */
+    protected $prefetched_search;
+
+    /**
      * @param Default_Dune_Plugin $plugin
      */
     public function __construct(Default_Dune_Plugin $plugin)
@@ -535,6 +540,50 @@ class vod_standard extends Abstract_Vod
         hd_debug_print('Movies found: ' . count($movies));
         hd_debug_print("Search time: {$report[Perf_Collector::TIME]} secs");
 
+        return $movies;
+    }
+
+    /**
+     * Runs the search from the first page before its folder is opened, to know
+     * whether there is only one movie to show. The result is kept for the movie
+     * list so the provider is not asked twice.
+     *
+     * @param string $keyword
+     * @return Short_Movie[]
+     */
+    public function prefetchSearchList($keyword)
+    {
+        $this->reset_movie_counter();
+        $this->try_reset_pages();
+        $movies = $this->getSearchList($keyword);
+        $this->prefetched_search = array($keyword, $movies);
+
+        return $movies;
+    }
+
+    /**
+     * @param string $keyword
+     * @return bool
+     */
+    public function hasPrefetchedSearchList($keyword)
+    {
+        return !is_null($this->prefetched_search) && $this->prefetched_search[0] === $keyword;
+    }
+
+    /**
+     * Returns the prefetched search result once
+     *
+     * @param string $keyword
+     * @return Short_Movie[]|null
+     */
+    public function takePrefetchedSearchList($keyword)
+    {
+        if (!$this->hasPrefetchedSearchList($keyword)) {
+            return null;
+        }
+
+        $movies = $this->prefetched_search[1];
+        $this->prefetched_search = null;
         return $movies;
     }
 

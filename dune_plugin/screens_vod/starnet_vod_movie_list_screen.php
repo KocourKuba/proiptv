@@ -91,10 +91,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
                 return Action_Factory::close_dialog_and_run(
                     Action_Factory::invalidate_folders(
                         array(Default_Dune_Plugin::get_group_media_url_str(VOD_SEARCH_GROUP_ID)),
-                        Action_Factory::open_folder(
-                            static::make_vod_media_url_str(Vod_Category::FLAG_SEARCH, $search_string),
-                            TR::t('search') . ": $search_string"
-                        )
+                        static::make_search_action($this->plugin, $search_string, TR::t('search__1', $search_string))
                     )
                 );
 
@@ -154,6 +151,30 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
     }
 
     /**
+     * Opens the search result, or the movie itself if only one movie is found
+     *
+     * @param Default_Dune_Plugin $plugin
+     * @param string $search_string
+     * @param string $caption
+     * @return array
+     */
+    public static function make_search_action($plugin, $search_string, $caption)
+    {
+        $movies = $plugin->vod->prefetchSearchList($search_string);
+        if (count($movies) === 1) {
+            $plugin->vod->takePrefetchedSearchList($search_string);
+            $movie = $movies[0];
+            hd_debug_print("Only one movie found, open it: $movie->id");
+            return Action_Factory::open_folder(
+                Starnet_Vod_Movie_Screen::make_vod_media_url_str($movie->id, $movie->name, $movie->poster_url, $movie->info),
+                $movie->name
+            );
+        }
+
+        return Action_Factory::open_folder(static::make_vod_media_url_str(Vod_Category::FLAG_SEARCH, $search_string), $caption);
+    }
+
+    /**
      * @param MediaURL $media_url
      * @param int $from_ndx
      * @param object $plugin_cookies
@@ -174,7 +195,10 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
         }
 
         if ($media_url->category_id === Vod_Category::FLAG_SEARCH) {
-            $movies = $this->plugin->vod->getSearchList($media_url->genre_id);
+            $movies = $from_ndx === 0 ? $this->plugin->vod->takePrefetchedSearchList($media_url->genre_id) : null;
+            if (is_null($movies)) {
+                $movies = $this->plugin->vod->getSearchList($media_url->genre_id);
+            }
         } else if ($media_url->category_id === Vod_Category::FLAG_FILTER) {
             $movies = $this->plugin->vod->getFilterList($media_url->genre_id);
         } else {
@@ -263,7 +287,9 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
      */
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
-        $this->plugin->vod->reset_movie_counter();
+        // the first page of a search was already fetched by make_search_action()
+        $this->plugin->vod->reset_movie_counter($media_url->category_id === Vod_Category::FLAG_SEARCH
+            && $this->plugin->vod->hasPrefetchedSearchList($media_url->genre_id));
         $this->plugin->vod->clear_movie_cache();
 
         return parent::get_folder_view($media_url, $plugin_cookies);
