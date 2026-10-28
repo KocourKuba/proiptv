@@ -235,9 +235,11 @@ class vod_ttv extends vod_standard
         $is_type = in_array($query_id, self::$category_types, true);
         $genre_id = $is_type ? 0 : (int)$query_id;
 
-        // film_list serves the whole catalog and the genre browsing page (genre param),
-        // but ignores the type, so the type browsing page is served by film_filter
-        if (!$is_type && $this->provider->hasApiCommand(self::CMD_FILM_LIST)) {
+        // the browsing pages are served by film_filter: a genre page lists the films of all types.
+        // The deprecated film_list is only a fallback, it ignores the type and also lists
+        // films without playable files
+        if (!$is_type && !$this->provider->hasApiCommand(self::CMD_FILM_FILTER)
+            && $this->provider->hasApiCommand(self::CMD_FILM_LIST)) {
             if ($genre_id > 0) {
                 $params['genre'] = $genre_id;
             }
@@ -246,9 +248,8 @@ class vod_ttv extends vod_standard
             return $this->CollectQueryResult($query_id, $page, $response);
         }
 
-        if ($is_type) {
-            $params['type'] = $query_id;
-        } else if ($genre_id > 0) {
+        $params['type'] = $is_type ? $query_id : 'all';
+        if ($genre_id > 0) {
             $params['genres_include[]'] = $genre_id;
         }
 
@@ -269,8 +270,24 @@ class vod_ttv extends vod_standard
             return array();
         }
 
-        if (!$this->provider->hasApiCommand(self::CMD_FILM_LIST)) {
-            $response = $this->make_json_request(self::CMD_FILM_ALT_SEARCH, array('q' => $keyword), false);
+        // film_alt_search is the app's own search: the best matches come first and multi-word
+        // queries are matched as a phrase, while the deprecated film_list search matches any word.
+        // paginate=1 enables the paging, without it the result is limited to 50 films
+        if ($this->provider->hasApiCommand(self::CMD_FILM_ALT_SEARCH) || !$this->provider->hasApiCommand(self::CMD_FILM_LIST)) {
+            $params = array(
+                'q' => $keyword,
+                'paginate' => 1,
+                'movies_page' => $page,
+                'movies_page_size' => self::FILM_PAGE_SIZE
+            );
+
+            // the poster urls are built on mdb_domain (a host name only, the scheme is always http)
+            $poster_host = parse_url($this->poster_domain, PHP_URL_HOST);
+            if (!empty($poster_host)) {
+                $params['mdb_domain'] = $poster_host;
+            }
+
+            $response = $this->make_json_request(self::CMD_FILM_ALT_SEARCH, $params, false);
             return $this->CollectSearchResult($keyword, $page, $response);
         }
 
@@ -302,12 +319,12 @@ class vod_ttv extends vod_standard
 
         $params = array('page' => $page, 'page_size' => self::FILM_PAGE_SIZE);
 
-        // a genre-only filter is served by film_list like the genre category: it returns
-        // all films of the genre. film_list ignores type, country and years, so any other
-        // filter is served by film_filter
+        // a genre-only filter falls back to the deprecated film_list when there is no film_filter.
+        // film_list ignores type, country and years, so any other filter needs film_filter
         $type = safe_get_value($filter_params, 'type', 'all');
         if (isset($filter_params['genre']) && $type === 'all'
             && !isset($filter_params['country']) && !isset($filter_params['from']) && !isset($filter_params['to'])
+            && !$this->provider->hasApiCommand(self::CMD_FILM_FILTER)
             && $this->provider->hasApiCommand(self::CMD_FILM_LIST)) {
             $params['genre'] = (int)$filter_params['genre'];
             $response = $this->make_json_request(self::CMD_FILM_LIST, $params);
@@ -550,9 +567,9 @@ class vod_ttv extends vod_standard
     }
 
     /**
-     * Normalizes the film_alt_search response to the common movie list shape so the
-     * shared result collector can be reused. The endpoint ignores page/page_size and
-     * returns up to 50 results, so the search result is a single page.
+     * Normalizes the paginated (paginate=1) film_alt_search response to the common movie
+     * list shape so the shared result collector can be reused: data.movies[] becomes
+     * data.films[] and the page count is data.pages instead of data.total_pages.
      *
      * @param string $query_id
      * @param int $page
@@ -562,7 +579,12 @@ class vod_ttv extends vod_standard
     protected function CollectSearchResult($query_id, $page, $response)
     {
         if (is_array($response) && (int)safe_get_value($response, 'success') === 1) {
-            $items = safe_get_value($response, 'data', array());
+            $data = safe_get_value($response, 'data', array());
+            if (!is_array($data)) {
+                $data = array();
+            }
+
+            $items = safe_get_value($data, 'movies', array());
             if (!is_array($items)) {
                 $items = array();
             }
@@ -580,7 +602,7 @@ class vod_ttv extends vod_standard
                 $films[] = $film;
             }
 
-            $response['data'] = array('films' => $films, 'total_pages' => 1);
+            $response['data'] = array('films' => $films, 'total_pages' => (int)safe_get_value($data, 'pages', 0));
         }
 
         return $this->CollectQueryResult($query_id, $page, $response);
