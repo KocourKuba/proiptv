@@ -38,9 +38,12 @@ class vod_ttv extends vod_standard
     const CMD_FILM_ALT_HTTP = 'film_alt_http';
     const CMD_FILM_ALT_SEARCH = 'film_alt_search';
     const CMD_FILM_LIST = 'film_list';
+    const CMD_FILM_ALT_LIST = 'film_alt_list';
+    const CMD_FILM_ALT_LIST_TYPES = 'film_alt_list_types';
     const FILM_PAGE_SIZE = 30;
     const CATEGORY_MODE_GENRE = 'genre';
     const CATEGORY_MODE_TYPE = 'type';
+    const CATEGORY_MODE_COLLECTION = 'collection';
 
     /**
      * film_filter types shown as categories in the type category mode
@@ -48,6 +51,14 @@ class vod_ttv extends vod_standard
      * @var array
      */
     protected static $category_types = array('film', 'serial', 'animation');
+
+    /**
+     * Sort order of the collections shown as categories in the collection mode
+     * (film_alt_list type => order, null for the default one)
+     *
+     * @var array
+     */
+    protected $collection_orders = array();
 
     /**
      * The path and exact body size (bytes) the TorrentTV app uses to probe
@@ -98,10 +109,16 @@ class vod_ttv extends vod_standard
      */
     public function get_category_modes()
     {
-        return array(
+        $modes = array(
             self::CATEGORY_MODE_GENRE => TR::t('genre'),
             self::CATEGORY_MODE_TYPE => TR::t('vod_filter_type')
         );
+
+        if ($this->has_collections()) {
+            $modes[self::CATEGORY_MODE_COLLECTION] = TR::t('vod_collections');
+        }
+
+        return $modes;
     }
 
     /**
@@ -110,7 +127,12 @@ class vod_ttv extends vod_standard
     public function get_category_mode()
     {
         $mode = $this->provider->GetProviderParameter(PARAM_VOD_CATEGORY_MODE, self::CATEGORY_MODE_GENRE);
-        return $mode === self::CATEGORY_MODE_TYPE ? self::CATEGORY_MODE_TYPE : self::CATEGORY_MODE_GENRE;
+        if ($mode === self::CATEGORY_MODE_TYPE
+            || ($mode === self::CATEGORY_MODE_COLLECTION && $this->has_collections())) {
+            return $mode;
+        }
+
+        return self::CATEGORY_MODE_GENRE;
     }
 
     /**
@@ -143,9 +165,16 @@ class vod_ttv extends vod_standard
         }
 
         // in the type mode the categories are the film_filter types with their film count,
-        // the genres are still collected for the filter
-        $by_type = $this->get_category_mode() === self::CATEGORY_MODE_TYPE;
-        if ($by_type) {
+        // in the collection mode the film_alt_list collections (the genre categories are shown
+        // if they can't be loaded). The genres are still collected for the filter
+        $mode = $this->get_category_mode();
+        if ($mode === self::CATEGORY_MODE_COLLECTION) {
+            $by_genre = !$this->add_collection_categories();
+        } else {
+            $by_genre = $mode !== self::CATEGORY_MODE_TYPE;
+        }
+
+        if ($mode === self::CATEGORY_MODE_TYPE) {
             foreach (self::$category_types as $type) {
                 $caption = TR::load("vod_filter_type_$type");
                 $count = $this->get_type_film_count($type);
@@ -170,7 +199,7 @@ class vod_ttv extends vod_standard
                 $name = safe_get_value($genre, 'name');
                 if ($id <= 0 || empty($name) || isset($genre_values[(string)$id])) continue;
 
-                if (!$by_type) {
+                if ($by_genre) {
                     $this->category_index[(string)$id] = new Vod_Category((string)$id, $name);
                 }
                 $genre_values[(string)$id] = $name;
@@ -231,8 +260,12 @@ class vod_ttv extends vod_standard
             return array();
         }
 
-        $params = array('page' => $page, 'page_size' => self::FILM_PAGE_SIZE);
         $is_type = in_array($query_id, self::$category_types, true);
+        if (!$is_type && !is_numeric($query_id)) {
+            return $this->get_collection_page($query_id, $page);
+        }
+
+        $params = array('page' => $page, 'page_size' => self::FILM_PAGE_SIZE);
         $genre_id = $is_type ? 0 : (int)$query_id;
 
         // the browsing pages are served by film_filter: a genre page lists the films of all types.
@@ -522,6 +555,110 @@ class vod_ttv extends vod_standard
 
         $data = safe_get_value($response, 'data', array());
         return is_array($data) ? (int)safe_get_value($data, 'count', 0) : 0;
+    }
+
+    /**
+     * The collection category mode needs the collection list and the collection films commands
+     *
+     * @return bool
+     */
+    protected function has_collections()
+    {
+        return $this->provider->hasApiCommand(self::CMD_FILM_ALT_LIST_TYPES)
+            && $this->provider->hasApiCommand(self::CMD_FILM_ALT_LIST);
+    }
+
+    /**
+     * Categories of the collection mode: the film_alt_list_types collections. The same title
+     * is used in several sections (best foreign films, serials and animation), so the caption
+     * starts with the section name.
+     *
+     * @return bool false if the collection list can't be loaded
+     */
+    protected function add_collection_categories()
+    {
+        $response = $this->make_json_request(self::CMD_FILM_ALT_LIST_TYPES, array());
+        if ($response === false || (int)safe_get_value($response, 'success') !== 1) {
+            hd_debug_print('film_alt_list_types request failed', true);
+            return false;
+        }
+
+        $collections = safe_get_value($response, 'data', array());
+        if (!is_array($collections)) {
+            return false;
+        }
+
+        $this->collection_orders = array();
+        foreach ($collections as $collection) {
+            $type = (string)safe_get_value($collection, 'type', '');
+            $title = safe_get_value($collection, 'title');
+            // the type is the category id, a numeric one would be taken for a genre id
+            if (empty($type) || empty($title) || is_numeric($type) || in_array($type, self::$category_types, true)) continue;
+
+            $section = safe_get_value($collection, 'category');
+            if (in_array($section, self::$category_types, true)) {
+                $title = TR::load("vod_filter_type_$section") . ": $title";
+            }
+
+            $this->category_index[$type] = new Vod_Category($type, $title);
+            $this->collection_orders[$type] = safe_get_value($collection, 'order');
+        }
+
+        return !empty($this->collection_orders);
+    }
+
+    /**
+     * Films of the collection page. film_alt_list pages by skip/limit and has no total count,
+     * so a full page means there may be a next one.
+     *
+     * @param string $type collection type
+     * @param int $page 1-based page number
+     * @return Short_Movie[]
+     */
+    protected function get_collection_page($type, $page)
+    {
+        $params = array(
+            'type' => $type,
+            'skip' => ($page - 1) * self::FILM_PAGE_SIZE,
+            'limit' => self::FILM_PAGE_SIZE
+        );
+
+        // a random order is shuffled on every request, the pages would repeat films
+        $order = safe_get_value($this->collection_orders, $type);
+        if (!empty($order) && $order !== 'random') {
+            $params['order'] = $order;
+        }
+
+        $poster_host = parse_url($this->poster_domain, PHP_URL_HOST);
+        if (!empty($poster_host)) {
+            $params['mdb_domain'] = $poster_host;
+        }
+
+        $response = $this->make_json_request(self::CMD_FILM_ALT_LIST, $params);
+        if (is_array($response) && (int)safe_get_value($response, 'success') === 1) {
+            $items = safe_get_value($response, 'data', array());
+            if (!is_array($items)) {
+                $items = array();
+            }
+
+            $films = array();
+            foreach ($items as $film) {
+                if (!is_array($film)) continue;
+
+                // film_alt_list calls the poster field 'poster', the collector 'img'
+                $poster = safe_get_value($film, 'poster');
+                if (!empty($poster)) {
+                    $film['img'] = $poster;
+                }
+
+                $films[] = $film;
+            }
+
+            $total_pages = count($films) < self::FILM_PAGE_SIZE ? $page : $page + 1;
+            $response['data'] = array('films' => $films, 'total_pages' => $total_pages);
+        }
+
+        return $this->CollectQueryResult($type, $page, $response);
     }
 
     /**

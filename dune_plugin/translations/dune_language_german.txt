@@ -511,6 +511,7 @@ url = URL:
 url__1 = URL:|%s
 video_codec = Videocodec:
 vod_categories_by__1 = Kategorien: %s
+vod_collections = Sammlungen
 vod_filter_type = Typ
 vod_filter_type_all = Alle
 vod_filter_type_animation = Zeichentrickfilme
