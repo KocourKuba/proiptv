@@ -73,7 +73,8 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
 
                 $media_url = MediaURL::decode($user_input->selected_media_url);
                 if ($media_url->genre_id !== Vod_Category::FLAG_SEARCH && $user_input->{ACTION_SEARCH} === ACTION_OPEN_FOLDER) {
-                    return Action_Factory::open_folder($user_input->selected_media_url);
+                    return Starnet_Vod_Movie_List_Screen::make_search_action($this->plugin, $media_url->genre_id,
+                        TR::t('search__1', $media_url->genre_id));
                 }
 
                 if ($user_input->{ACTION_SEARCH} === ACTION_ITEMS_EDIT) {
@@ -105,9 +106,8 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
                 }
                 hd_debug_print("search string: $search_string", true);
                 $this->plugin->set_table_value(VOD_SEARCH_LIST, $search_string, $idx);
-                $action = Action_Factory::open_folder(
-                    Starnet_Vod_Movie_List_Screen::get_media_url_string(Vod_Category::FLAG_SEARCH, $search_string),
-                    TR::t('search__1', ": $search_string"));
+                $action = Starnet_Vod_Movie_List_Screen::make_search_action($this->plugin, $search_string,
+                    TR::t('search__1', $search_string));
 
                 return Action_Factory::invalidate_folders(array($user_input->parent_media_url), $action);
 

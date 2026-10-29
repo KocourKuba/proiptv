@@ -193,22 +193,41 @@ class vod_cbilling extends vod_standard
      */
     public function getSearchList($keyword)
     {
-        $page_idx = $this->get_next_page($keyword);
+        $page_id = Vod_Category::FLAG_SEARCH . "_$keyword";
+        $page_idx = $this->get_next_page($page_id);
         if ($page_idx < 0)
             return array();
 
         $params[CURLOPT_CUSTOMREQUEST] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx";
         $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
-        return $response === false ? array() : $this->CollectSearchResult($response);
+        return $this->CollectSearchResult($page_id, $response);
     }
 
     /**
-     * @param object $json
+     * @inheritDoc
+     */
+    public function is_search_paged()
+    {
+        return true;
+    }
+
+    /**
+     * Short movies of the page. The paging stops on the last page (meta.current_page/meta.last_page),
+     * on an empty page or on a failed request
+     *
+     * @param string $page_id
+     * @param object|bool $json
      * @return array
      */
-    protected function CollectSearchResult($json)
+    protected function CollectSearchResult($page_id, $json)
     {
         $movies = array();
+
+        if (!isset($json->data) || (!is_array($json->data) && !is_object($json->data))) {
+            hd_debug_print("Wrong response: " . json_encode($json));
+            $this->set_next_page($page_id, -1);
+            return $movies;
+        }
 
         foreach ($json->data as $entry) {
             $genresArray = array();
@@ -226,6 +245,13 @@ class vod_cbilling extends vod_standard
                     TR::t('vod_screen_movie_info__5', $entry->name, $entry->year, $entry->country, $genre_str, $entry->rating)
                 );
             }
+        }
+
+        $cur_page = isset($json->meta->current_page) ? (int)$json->meta->current_page : 1;
+        $last_page = isset($json->meta->last_page) ? (int)$json->meta->last_page : 1;
+        if (empty($movies) || $cur_page >= $last_page) {
+            hd_debug_print("Last page: $cur_page");
+            $this->set_next_page($page_id, -1);
         }
 
         hd_debug_print("Movies found: " . count($movies));
@@ -251,6 +277,6 @@ class vod_cbilling extends vod_standard
         }
 
         $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
-        return $response === false ? array() : $this->CollectSearchResult($response);
+        return $this->CollectSearchResult($query_id, $response);
     }
 }

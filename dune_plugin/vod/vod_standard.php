@@ -97,6 +97,11 @@ class vod_standard extends Abstract_Vod
     protected $movie_counter = array();
 
     /**
+     * @var array|null array(keyword, Short_Movie[]) fetched by prefetchSearchList()
+     */
+    protected $prefetched_search;
+
+    /**
      * @var array
      */
     protected $filters = array();
@@ -282,9 +287,13 @@ class vod_standard extends Abstract_Vod
         }
     }
 
-    public function reset_movie_counter()
+    /**
+     * @param bool $keep_pages keep the page indexes, the first page was already fetched
+     * @return void
+     */
+    public function reset_movie_counter($keep_pages = false)
     {
-        $this->is_entered = true;
+        $this->is_entered = !$keep_pages;
         $this->movie_counter = array();
     }
 
@@ -520,6 +529,61 @@ class vod_standard extends Abstract_Vod
         hd_debug_print_separator();
 
         return true;
+    }
+
+    /**
+     * Runs the search from the first page before its folder is opened, to know
+     * whether there is only one movie to show. The result is kept for the movie
+     * list so the provider is not asked twice.
+     *
+     * @param string $keyword
+     * @return Short_Movie[]
+     */
+    public function prefetchSearchList($keyword)
+    {
+        $this->reset_movie_counter();
+        $this->try_reset_pages();
+        $movies = $this->getSearchList($keyword);
+        $this->prefetched_search = array($keyword, $movies);
+
+        return $movies;
+    }
+
+    /**
+     * @param string $keyword
+     * @return bool
+     */
+    public function hasPrefetchedSearchList($keyword)
+    {
+        return !is_null($this->prefetched_search) && $this->prefetched_search[0] === $keyword;
+    }
+
+    /**
+     * Returns the prefetched search result once
+     *
+     * @param string $keyword
+     * @return Short_Movie[]|null
+     */
+    public function takePrefetchedSearchList($keyword)
+    {
+        if (!$this->hasPrefetchedSearchList($keyword)) {
+            return null;
+        }
+
+        $movies = $this->prefetched_search[1];
+        $this->prefetched_search = null;
+        return $movies;
+    }
+
+    /**
+     * Search list is returned by pages: getSearchList() is called for every next part of the list
+     * and returns an empty list after the last page. Otherwise it is called only once and returns all movies.
+     *
+     * @return bool
+     */
+    public function is_search_paged()
+    {
+        return false;
     }
 
     /**

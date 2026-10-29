@@ -1,4 +1,12 @@
-﻿### Version 6.2.1376
+﻿### Version 6.2.1378
+- Torrent TV: added VOD collections (category 'Collections'), film count is shown for categories by type
+- Torrent TV: search uses the same search as the Torrent TV app (best matches first, a phrase is searched as a whole) and loads all results page by page instead of the first 50 films
+- Torrent TV: genre categories and genre filter show only films that can be played
+- Fixed paged VOD search for IPTV Online: only the first page of results was shown, serials stopped loading after the last page of movies
+- Fixed paged VOD search and movie lists for CBilling providers: only the first page of search results was shown, the list did not stop after the last page
+- If the VOD search finds only one movie, the movie screen is opened instead of the list of movies
+
+### Version 6.2.1376
 - Fixed a bug where adding or editing an inactive provider playlist overwrote the session/token of the active playlist (1OTT, IPTV Online, Korona, TV Team)
 - Fixed a bug where editing an Edem playlist reset a custom domain to the default one
 - On firmware newer than r21 the plugin is no longer blocked: a warning with a link to the current plugin version is shown once at launch (again after a plugin update)
