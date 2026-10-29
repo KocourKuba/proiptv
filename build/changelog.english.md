@@ -1,10 +1,13 @@
-﻿### Version 6.2.1378
+﻿### Version 6.2.1380
 - Torrent TV: added VOD collections (category 'Collections'), film count is shown for categories by type
 - Torrent TV: search uses the same search as the Torrent TV app (best matches first, a phrase is searched as a whole) and loads all results page by page instead of the first 50 films
 - Torrent TV: genre categories and genre filter show only films that can be played
 - Fixed paged VOD search for IPTV Online: only the first page of results was shown, serials stopped loading after the last page of movies
 - Fixed paged VOD search and movie lists for CBilling providers: only the first page of search results was shown, the list did not stop after the last page
 - If the VOD search finds only one movie, the movie screen is opened instead of the list of movies
+- Fixed parsing of the VOD movie titles: a title with '/' or brackets is no longer cut, movies without a country (101film, Smile TV, OnlineOTT TV, RU TV) and without an original title (Fox TV, Ping TV) are parsed, a country with brackets for RU TV, movies with dots or an age after the year for VipLime, titles with brackets before the year for Yosso. 2TV: titles without a space before '|' are parsed.
+- M3U VOD: non-breaking spaces are trimmed from the movie titles. The movie page shows the age (VipLime).
+- Channel and movie titles with a comma are no longer cut to the last comma (e.g. 'Title, part 2' was shown as 'part 2').
 
 ### Version 6.2.1376
 - Fixed a bug where adding or editing an inactive provider playlist overwrote the session/token of the active playlist (1OTT, IPTV Online, Korona, TV Team)
