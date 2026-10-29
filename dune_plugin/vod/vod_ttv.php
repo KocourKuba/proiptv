@@ -29,8 +29,11 @@ require_once 'vod_standard.php';
 /**
  * TorrentTV VOD. The catalog is loaded page by page through the film_* API commands.
  *
- * get_vod (film_list): data.films[] {id, name, rus_name, img, year, country, kp_rating}, data.total_pages
  * film_filter: data.result[] {id, name, rus_name, poster, ...}, data.pages, data.count
+ * film_alt_search (paginate=1): data.movies[] {id, name, rus_name, poster, ...}, data.pages
+ * film_alt_list_types: data[] {type, title, category, order}
+ * film_alt_list: data[] {id, name, rus_name, poster, ...}, no total count
+ * get_vod (film_list, deprecated fallback): data.films[] {id, name, rus_name, img, ...}, data.total_pages
  * film_alt_genres: data[] {genres[] {name, query {genre_id}}}
  * film_alt_info: data {name, description, poster, year, country, genres[], actors[], persons {role => [{rus_name, orig_name}]}, imdb_rating, kp_rating}
  * film_alt_http: data[] {url, quality, hd_standard, duration, season, episode, tfile_id}
@@ -42,9 +45,12 @@ class vod_ttv extends vod_standard
     const CMD_FILM_FILTER_COUNTRIES = 'film_filter_countries';
     const CMD_FILM_ALT_INFO = 'film_alt_info';
     const CMD_FILM_ALT_HTTP = 'film_alt_http';
+    const CMD_FILM_ALT_SEARCH = 'film_alt_search';
+    const CMD_FILM_ALT_LIST = 'film_alt_list';
+    const CMD_FILM_ALT_LIST_TYPES = 'film_alt_list_types';
     const CMD_FILM_LIST = API_COMMAND_GET_VOD;
     const FILM_PAGE_SIZE = 30;
-    const SEARCH_PAGE_SIZE = 50;
+    const CATEGORY_COLLECTIONS = 'collections';
 
     /**
      * Poster hosts are probed by the file that the TorrentTV app uses:
@@ -68,6 +74,13 @@ class vod_ttv extends vod_standard
      * @var array
      */
     protected static $image_domains = array('ttvrun.one', 'ttv.run', 'totv.one');
+
+    /**
+     * Sort order of the collections (film_alt_list type => order, null for the default one)
+     *
+     * @var array
+     */
+    protected $collection_orders = array();
 
     /**
      * @var api_ttv
@@ -118,9 +131,16 @@ class vod_ttv extends vod_standard
         foreach (self::$category_types as $type) {
             $caption = TR::load("vod_filter_type_$type");
             $type_values[$type] = $caption;
-            $category = new Vod_Category($type, $caption);
+            $count = $this->get_type_film_count($type);
+            $category = new Vod_Category($type, $count < 0 ? $caption : "$caption ($count)");
             $category_list[] = $category;
             $category_index[$type] = $category;
+        }
+
+        $category = $this->make_collections_category();
+        if (!is_null($category)) {
+            $category_list[] = $category;
+            $category_index[self::CATEGORY_COLLECTIONS] = $category;
         }
 
         // sections (film, serial, animation) share the same genre ids, so they are merged into one list.
@@ -178,19 +198,33 @@ class vod_ttv extends vod_standard
             return array();
         }
 
+        // sub category of the collections: collections_<film_alt_list type>
+        $prefix = self::CATEGORY_COLLECTIONS . '_';
+        if (strpos($query_id, $prefix) === 0) {
+            return $this->get_collection_page($query_id, substr($query_id, strlen($prefix)), $page_idx);
+        }
+
         $params = array('page' => $page_idx, 'page_size' => self::FILM_PAGE_SIZE);
+        $is_type = in_array($query_id, self::$category_types, true);
+        $genre_id = ($is_type || $query_id === Vod_Category::FLAG_ALL_MOVIES) ? 0 : (int)$query_id;
 
-        // film_list ignores the type, so the type categories are served by film_filter
-        if (in_array($query_id, self::$category_types)) {
-            $params['type'] = $query_id;
-            return $this->CollectFilterResult($query_id, $page_idx, $this->make_json_request(self::CMD_FILM_FILTER, $params));
+        // the browsing pages are served by film_filter: a genre page lists the films of all types.
+        // The deprecated film_list is only a fallback, it ignores the type and also lists
+        // films without playable files
+        if (!$is_type && !$this->provider->hasApiCommand(self::CMD_FILM_FILTER)) {
+            if ($genre_id > 0) {
+                $params['genre'] = $genre_id;
+            }
+
+            return $this->CollectListResult($query_id, $page_idx, $this->make_json_request(self::CMD_FILM_LIST, $params));
         }
 
-        if ($query_id !== Vod_Category::FLAG_ALL_MOVIES) {
-            $params['genre'] = (int)$query_id;
+        $params['type'] = $is_type ? $query_id : 'all';
+        if ($genre_id > 0) {
+            $params['genres_include[]'] = $genre_id;
         }
 
-        return $this->CollectListResult($query_id, $page_idx, $this->make_json_request(self::CMD_FILM_LIST, $params));
+        return $this->CollectFilterResult($query_id, $page_idx, $this->make_json_request(self::CMD_FILM_FILTER, $params));
     }
 
     /**
@@ -201,11 +235,45 @@ class vod_ttv extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getSearchList: $keyword");
 
-        // search list is loaded only once by the movie list screen, so only the first page is requested
         $page_id = Vod_Category::FLAG_SEARCH . "_$keyword";
-        $params = array('search' => $keyword, 'page' => 1, 'page_size' => self::SEARCH_PAGE_SIZE);
+        $page_idx = $this->get_next_page($page_id);
+        if ($page_idx < 0) {
+            return array();
+        }
 
-        return $this->CollectListResult($page_id, 1, $this->make_json_request(self::CMD_FILM_LIST, $params));
+        // film_alt_search is the app's own search: the best matches come first and multi-word
+        // queries are matched as a phrase, while the deprecated film_list search matches any word.
+        // paginate=1 enables the paging, without it the result is limited to 50 films
+        if ($this->provider->hasApiCommand(self::CMD_FILM_ALT_SEARCH)) {
+            $params = array(
+                'q' => $keyword,
+                'paginate' => 1,
+                'movies_page' => $page_idx,
+                'movies_page_size' => self::FILM_PAGE_SIZE
+            );
+
+            // the poster urls are built on mdb_domain (a host name only)
+            $poster_host = $this->get_poster_host();
+            if (!empty($poster_host)) {
+                $params['mdb_domain'] = $poster_host;
+            }
+
+            $response = $this->make_json_request(self::CMD_FILM_ALT_SEARCH, $params);
+            $data = safe_get_member($response, 'data');
+            $films = self::to_list(safe_get_member($data, 'movies'));
+            return $this->CollectMovies($page_id, $page_idx, $films, (int)safe_get_member($data, 'pages', 0), 'poster');
+        }
+
+        $params = array('search' => $keyword, 'page' => $page_idx, 'page_size' => self::FILM_PAGE_SIZE);
+        return $this->CollectListResult($page_id, $page_idx, $this->make_json_request(self::CMD_FILM_LIST, $params));
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function is_search_paged()
+    {
+        return true;
     }
 
     /**
@@ -249,10 +317,12 @@ class vod_ttv extends vod_standard
 
         $query = array('page' => $page_idx, 'page_size' => self::FILM_PAGE_SIZE);
 
-        // film_list ignores type, country and years, so only the genre filter can be served by it
+        // a genre-only filter falls back to the deprecated film_list when there is no film_filter.
+        // film_list ignores type, country and years, so any other filter needs film_filter
         $type = safe_get_value($filter_params, 'type', 'all');
         if (isset($filter_params['genre']) && $type === 'all'
-            && !isset($filter_params['country']) && !isset($filter_params['from']) && !isset($filter_params['to'])) {
+            && !isset($filter_params['country']) && !isset($filter_params['from']) && !isset($filter_params['to'])
+            && !$this->provider->hasApiCommand(self::CMD_FILM_FILTER)) {
             $query['genre'] = (int)$filter_params['genre'];
             return $this->CollectListResult($page_id, $page_idx, $this->make_json_request(self::CMD_FILM_LIST, $query));
         }
@@ -439,6 +509,102 @@ class vod_ttv extends vod_standard
     }
 
     /**
+     * Number of films of the film_filter type: data.count of the response,
+     * one film per page keeps the response small.
+     *
+     * @param string $type
+     * @return int film count or -1 if the request failed
+     */
+    protected function get_type_film_count($type)
+    {
+        $response = $this->make_json_request(self::CMD_FILM_FILTER, array('page' => 1, 'page_size' => 1, 'type' => $type));
+        if ($response === false) {
+            hd_debug_print("film_filter count request failed for type: $type", true);
+            return -1;
+        }
+
+        return (int)safe_get_member(safe_get_member($response, 'data'), 'count', 0);
+    }
+
+    /**
+     * Collections folder with the film_alt_list_types collections as sub categories.
+     * The same title is used in several sections (best foreign films, serials and animation),
+     * so the caption starts with the section name.
+     *
+     * @return Vod_Category|null null if the collections are not available
+     */
+    protected function make_collections_category()
+    {
+        if (!$this->provider->hasApiCommand(self::CMD_FILM_ALT_LIST_TYPES) || !$this->provider->hasApiCommand(self::CMD_FILM_ALT_LIST)) {
+            return null;
+        }
+
+        $response = $this->make_json_request(self::CMD_FILM_ALT_LIST_TYPES);
+        if ($response === false) {
+            hd_debug_print('film_alt_list_types request failed', true);
+            return null;
+        }
+
+        $parent = new Vod_Category(self::CATEGORY_COLLECTIONS, TR::load('vod_collections'));
+        $sub_categories = array();
+        $this->collection_orders = array();
+        foreach (self::to_list(safe_get_member($response, 'data')) as $collection) {
+            $type = (string)safe_get_member($collection, 'type', '');
+            $title = safe_get_member($collection, 'title');
+            if (empty($type) || empty($title) || array_key_exists($type, $this->collection_orders)) continue;
+
+            $section = safe_get_member($collection, 'category');
+            if (in_array($section, self::$category_types, true)) {
+                $title = TR::load("vod_filter_type_$section") . ": $title";
+            }
+
+            $sub_categories[] = new Vod_Category($type, $title, $parent);
+            $this->collection_orders[$type] = safe_get_member($collection, 'order');
+        }
+
+        if (empty($sub_categories)) {
+            return null;
+        }
+
+        $parent->set_sub_categories($sub_categories);
+        return $parent;
+    }
+
+    /**
+     * Films of the collection page. film_alt_list pages by skip/limit and has no total count,
+     * so a full page means there may be a next one.
+     *
+     * @param string $page_id
+     * @param string $type collection type
+     * @param int $page_idx 1-based page number
+     * @return Short_Movie[]
+     */
+    protected function get_collection_page($page_id, $type, $page_idx)
+    {
+        $params = array(
+            'type' => $type,
+            'skip' => ($page_idx - 1) * self::FILM_PAGE_SIZE,
+            'limit' => self::FILM_PAGE_SIZE
+        );
+
+        // a random order is shuffled on every request, the pages would repeat films
+        $order = safe_get_value($this->collection_orders, $type);
+        if (!empty($order) && $order !== 'random') {
+            $params['order'] = $order;
+        }
+
+        $poster_host = $this->get_poster_host();
+        if (!empty($poster_host)) {
+            $params['mdb_domain'] = $poster_host;
+        }
+
+        $films = self::to_list(safe_get_member($this->make_json_request(self::CMD_FILM_ALT_LIST, $params), 'data'));
+        $total_pages = count($films) < self::FILM_PAGE_SIZE ? $page_idx : $page_idx + 1;
+
+        return $this->CollectMovies($page_id, $page_idx, $films, $total_pages, 'poster');
+    }
+
+    /**
      * @param string $page_id
      * @param int $page_idx
      * @param array $films
@@ -496,6 +662,20 @@ class vod_ttv extends vod_standard
         }
 
         return $this->poster_domain . '/media/' . ltrim($img, '/');
+    }
+
+    /**
+     * Host name of the poster domain for the mdb_domain parameter
+     *
+     * @return string
+     */
+    protected function get_poster_host()
+    {
+        if (empty($this->poster_domain)) {
+            $this->poster_domain = $this->resolve_poster_domain();
+        }
+
+        return (string)parse_url($this->poster_domain, PHP_URL_HOST);
     }
 
     /**

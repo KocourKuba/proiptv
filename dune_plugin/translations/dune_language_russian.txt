@@ -383,6 +383,7 @@ vod_screen_movie_info__5 = %s|Год: %s|Страна: %s|Жанр: %s|Рейт�
 vod_screen_group_info__2 = %s|Фильмов: %s
 vod_screen_air_date__2 = %s||Дата выхода: %s
 no_title = Без названия
+vod_collections = Подборки
 vod_filter_type = Тип
 vod_filter_type_all = Все
 vod_filter_type_animation = Мультфильмы
