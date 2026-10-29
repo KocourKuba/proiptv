@@ -156,7 +156,7 @@
             "alias": "smile"
           }
         ],
-        "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/",
+        "vod_parser": "/^(?<title>.+) \\((?:(?<country>(?:[^()]|\\([^()]*\\))+) )?(?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -268,7 +268,7 @@
           "ru.seetv.cc": "Russia",
           "ua.online24.pm": "Ukraine"
         },
-        "vod_parser": "/^(?<title>[^|]+)\\s\\|(?<year>\\d+)\\|\\s?IMDB\\:(?<rating>.+)$/",
+        "vod_parser": "/^(?<title>[^|]+)\\|(?<year>\\d+)\\|\\s?IMDB:(?<rating>.+)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -523,7 +523,7 @@
             "name": "proiptv"
           }
         ],
-        "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/",
+        "vod_parser": "/^(?<title>.+?)(?:\\/ (?<title_orig>.+))? (?<year>\\d{4})$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -909,7 +909,7 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8?\\?(?<token>.+)$/",
-        "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<year>\\d+)\\)$/",
+        "vod_parser": "/^(?<title>.+) \\((?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -926,7 +926,7 @@
         "get_vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
       },
       "config": {
-        "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<country>.+)\\s(?<year>\\d+)\\)$/",
+        "vod_parser": "/^(?<title>.+) \\((?:(?<country>(?:[^()]|\\([^()]*\\))+) )?(?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1075,7 +1075,7 @@
             "alias": "fox"
           }
         ],
-        "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/",
+        "vod_parser": "/^(?<title>.+?)(?:\\/ (?<title_orig>.+))? (?<year>\\d{4})$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1118,7 +1118,7 @@
             "name": "proiptv"
           }
         ],
-        "vod_parser": "/^(?<title>[^\\/]+)\\s\\((?:(?<country>.+)\\s)?(?<year>\\d+)\\)$/",
+        "vod_parser": "/^(?<title>.+) \\((?:(?<country>(?:[^()]|\\([^()]*\\))+) )?(?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1382,7 +1382,7 @@
           "3": "Server NL",
           "4": "Server RU"
         },
-        "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/",
+        "vod_parser": "/^(?<title>.+) \\((?:(?<country>(?:[^()]|\\([^()]*\\))+) )?(?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1639,7 +1639,7 @@
           }
         ],
         "ext_params": true,
-        "vod_parser": "/^(?<title>[^\\(]*)\\s\\((?<year>\\d+)\\)$/",
+        "vod_parser": "/^(?<title>.+) \\((?<year>\\d{4})\\)\\.*(?: (?<age>\\d+\\+))?$/",
         "url_subst": {
           "regex": "/^(.+\\.).+$/",
           "replace": "$1{STREAM_ID}"
@@ -1715,7 +1715,7 @@
           "streaming-elbrus.su": "streaming-elbrus.su",
           "p.rapidnas.org": "p.rapidnas.org"
         },
-        "vod_parser": "/^(?<title>[^\\(]+)\\s\\((?<year>\\d+)\\).*$/",
+        "vod_parser": "/^(?<title>.+?(?: \\((?<year>\\d{4})\\).*)?)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     }
