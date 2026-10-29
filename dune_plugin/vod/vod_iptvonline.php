@@ -190,16 +190,19 @@ class vod_iptvonline extends vod_standard
 
         $params[CURLOPT_POSTFIELDS] = array("search" => $keyword);
 
+        // the movies and the serials are paged separately, the serials go on after the last movie page
         $movies = array();
         $page_id = self::API_ACTION_MOVIE . "_" . self::API_ACTION_SEARCH;
         $page_idx = $this->get_next_page($page_id);
-        if ($page_idx < 0)
-            return $movies;
-
-        $params[CURLOPT_CUSTOMREQUEST] = sprintf(self::REQUEST_TEMPLATE, $page_idx, self::API_ACTION_MOVIE);
-        $searchRes = $this->make_json_request($params);
-
-        $movies = ($searchRes === false) ? array() : $this->CollectSearchResult(self::API_ACTION_MOVIE, $searchRes, self::API_ACTION_SEARCH);
+        if ($page_idx >= 0) {
+            $params[CURLOPT_CUSTOMREQUEST] = sprintf(self::REQUEST_TEMPLATE, $page_idx, self::API_ACTION_MOVIE);
+            $searchRes = $this->make_json_request($params);
+            if ($searchRes === false) {
+                $this->set_next_page($page_id, -1);
+            } else {
+                $movies = $this->CollectSearchResult(self::API_ACTION_MOVIE, $searchRes, self::API_ACTION_SEARCH);
+            }
+        }
 
         $page_id = self::API_ACTION_SERIAL . "_" . self::API_ACTION_SEARCH;
         $page_idx = $this->get_next_page($page_id);
@@ -208,9 +211,22 @@ class vod_iptvonline extends vod_standard
 
         $params[CURLOPT_CUSTOMREQUEST] = sprintf(self::REQUEST_TEMPLATE, $page_idx, self::API_ACTION_SERIAL);
         $searchRes = $this->make_json_request($params);
-        $serials = ($searchRes === false) ? array() : $this->CollectSearchResult(self::API_ACTION_SERIAL, $searchRes, self::API_ACTION_SEARCH);
+        if ($searchRes === false) {
+            $this->set_next_page($page_id, -1);
+            return $movies;
+        }
+
+        $serials = $this->CollectSearchResult(self::API_ACTION_SERIAL, $searchRes, self::API_ACTION_SEARCH);
 
         return array_merge($movies, $serials);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function has_search_paging()
+    {
+        return true;
     }
 
     /**
@@ -225,10 +241,12 @@ class vod_iptvonline extends vod_standard
         hd_debug_print("query_id: $query_id");
 
         $movies = array();
-        if (!isset($json->data->items))
-            return $movies;
-
         $page_id = is_null($search) ? $query_id : "{$query_id}_$search";
+        if (!isset($json->data->items)) {
+            $this->set_next_page($page_id, -1);
+            return $movies;
+        }
+
         $current_idx = $this->get_current_page($page_id);
         if ($current_idx < 0)
             return $movies;
@@ -246,8 +264,9 @@ class vod_iptvonline extends vod_standard
             $movies[] = $movie;
         }
 
-        if ($data->pagination->pages === $current_idx) {
-            hd_debug_print("Last page: {$data->pagination->pages}");
+        // an empty page also stops the paging: a search without results has 0 pages
+        if (empty($movies) || (isset($data->pagination->pages) && (int)$data->pagination->pages <= $current_idx)) {
+            hd_debug_print("Last page: $current_idx");
             $this->set_next_page($page_id, -1);
         }
 

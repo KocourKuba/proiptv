@@ -182,13 +182,36 @@ class vod_cbilling extends vod_standard
      */
     public function getSearchList($keyword)
     {
-        $page_idx = $this->get_next_page($keyword);
+        $page_id = Vod_Category::FLAG_SEARCH . $keyword;
+        $page_idx = $this->get_next_page($page_id);
         if ($page_idx < 0)
             return array();
 
         $params[CURLOPT_CUSTOMREQUEST] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx";
         $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
-        return $response === false ? array() : $this->CollectSearchResult($response);
+        if ($response === false) {
+            $this->set_next_page($page_id, -1);
+            return array();
+        }
+
+        $movies = $this->CollectSearchResult($response);
+
+        // the search stops at the last page of the meta info (one page if there is no meta info)
+        $cur_page = isset($response->meta->current_page) ? (int)$response->meta->current_page : 1;
+        $last_page = isset($response->meta->last_page) ? (int)$response->meta->last_page : 1;
+        if (empty($movies) || $cur_page >= $last_page) {
+            $this->set_next_page($page_id, -1);
+        }
+
+        return $movies;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function has_search_paging()
+    {
+        return true;
     }
 
     /**

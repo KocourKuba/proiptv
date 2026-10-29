@@ -87,9 +87,7 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
 
                 return Action_Factory::invalidate_folders(
                     array(Starnet_Vod_Search_Screen::get_media_url_string(SEARCH_MOVIES_GROUP_ID)),
-                    Action_Factory::open_folder(
-                        static::get_media_url_string(Vod_Category::FLAG_SEARCH, $search_string),
-                        TR::t('search') . ": $search_string"));
+                    static::make_search_action($this->plugin, $search_string, TR::t('search__1', $search_string)));
 
             case ACTION_ADD_FAV:
                 $opt_type = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID)->in_items_order($movie_id)
@@ -122,6 +120,31 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
     }
 
     /**
+     * Opens the search result, or the movie itself if only one movie is found
+     *
+     * @param Default_Dune_Plugin $plugin
+     * @param string $search_string
+     * @param string $caption
+     * @return array
+     */
+    public static function make_search_action($plugin, $search_string, $caption)
+    {
+        $movies = $plugin->vod->prefetchSearchList($search_string);
+        if (count($movies) === 1) {
+            $plugin->vod->takePrefetchedSearchList($search_string);
+            $movie = $movies[0];
+            hd_debug_print("Only one movie found, open it: $movie->id");
+            $plugin->vod->set_cached_short_movie($movie);
+            return Action_Factory::open_folder(
+                Starnet_Vod_Movie_Screen::get_media_url_string($movie->id, $movie->name, $movie->poster_url, $movie->info),
+                $movie->name
+            );
+        }
+
+        return Action_Factory::open_folder(static::get_media_url_string(Vod_Category::FLAG_SEARCH, $search_string), $caption);
+    }
+
+    /**
      * @param MediaURL $media_url
      * @param int $from_ndx
      * @param Object $plugin_cookies
@@ -144,8 +167,10 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
         $movies = array();
 
         if ($media_url->category_id === Vod_Category::FLAG_SEARCH) {
-            if ($from_ndx === 0) {
-                $movies = $this->plugin->vod->getSearchList($media_url->genre_id);
+            // the first page was already fetched by make_search_action()
+            $movies = $from_ndx === 0 ? $this->plugin->vod->takePrefetchedSearchList($media_url->genre_id) : null;
+            if (is_null($movies)) {
+                $movies = $this->plugin->vod->getSearchPage($media_url->genre_id);
             }
         } else if ($media_url->category_id === Vod_Category::FLAG_FILTER) {
             $movies = $this->plugin->vod->getFilterList($media_url->genre_id);
@@ -226,7 +251,9 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
      */
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
-        $this->plugin->vod->reset_movie_counter();
+        // the page indexes of a prefetched search must be kept for its next pages
+        $this->plugin->vod->reset_movie_counter($media_url->category_id === Vod_Category::FLAG_SEARCH
+            && $this->plugin->vod->hasPrefetchedSearchList($media_url->genre_id));
         $this->plugin->vod->clear_movie_cache();
 
         return parent::get_folder_view($media_url, $plugin_cookies);

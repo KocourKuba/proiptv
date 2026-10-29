@@ -214,9 +214,29 @@ class vod_edem extends vod_standard
     public function getSearchList($keyword)
     {
         hd_debug_print("getSearchList $keyword");
-        $searchRes = $this->make_json_request(array('cmd' => "search", 'query' => $keyword));
 
-        return $searchRes === false ? array() : $this->CollectSearchResult($keyword, $searchRes);
+        // the page index is the offset of the next page, CollectSearchResult() moves it
+        // to the offset of the 'next' item and stops it if there is none
+        $page_id = Vod_Category::FLAG_SEARCH . $keyword;
+        $offset = $this->get_current_page($page_id);
+        if ($offset < 0)
+            return array();
+
+        $searchRes = $this->make_json_request(array('cmd' => "search", 'query' => $keyword, 'offset' => $offset, 'limit' => 50));
+        if ($searchRes === false || !isset($searchRes->items)) {
+            $this->set_next_page($page_id, -1);
+            return array();
+        }
+
+        return $this->CollectSearchResult($page_id, $searchRes);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function has_search_paging()
+    {
+        return true;
     }
 
     /**

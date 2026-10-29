@@ -1,4 +1,11 @@
-﻿### Version 5.1.1050
+﻿### Version 5.1.1054
+- Media library search: when only one movie is found, its movie screen opens at once instead of a list with one movie.
+- Media library search: the found movies are shown page by page (TorrentTV, Antifriz, Cbilling, iEdem/iLook, IPTV Online, TVIZI Net). Before, only the first page of the result was shown.
+- TorrentTV: the media library search now uses the same search as the TorrentTV app. The best matches are shown first, and a query of several words finds the films with the whole phrase instead of films with any of the words.
+- TorrentTV: a genre category, 'All movies' and a filter by genre only no longer show films that cannot be played (films without video files).
+- TorrentTV: the category list of the media library can also be switched to collections. The collections of films, serials and animation are marked with the section name.
+
+### Version 5.1.1050
 - The plugin runs on firmware r17 or higher again. At start it shows a warning that the version 5.1 supports only firmware r11 - r16: on firmware r17 - r21 it suggests to use the plugin version 6.2 or to update the firmware, on firmware r22 or higher to install a newer plugin version.
 - Changing the login or password of a provider in the playlists list now takes effect at once. The provider kept using the session of the old account until it expired, and a new account of the same provider could be accepted with wrong credentials.
 - Edem: editing the provider in the playlists list no longer resets its other settings.

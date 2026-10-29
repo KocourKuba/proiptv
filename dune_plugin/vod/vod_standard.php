@@ -124,6 +124,11 @@ class vod_standard extends Abstract_Vod
     protected $perf;
 
     /**
+     * @var array|null array(keyword, Short_Movie[]) fetched by prefetchSearchList()
+     */
+    protected $prefetched_search;
+
+    /**
      * @param Default_Dune_Plugin $plugin
      */
     public function __construct(Default_Dune_Plugin $plugin)
@@ -276,9 +281,13 @@ class vod_standard extends Abstract_Vod
         }
     }
 
-    public function reset_movie_counter()
+    /**
+     * @param bool $keep_pages keep the page indexes, the first page was already fetched
+     * @return void
+     */
+    public function reset_movie_counter($keep_pages = false)
     {
-        $this->is_entered = true;
+        $this->is_entered = !$keep_pages;
         $this->movie_counter = array();
     }
 
@@ -575,6 +584,83 @@ class vod_standard extends Abstract_Vod
         hd_debug_print("Movies found: " . count($movies));
         hd_debug_print("Search time: {$report[Perf_Collector::TIME]} secs");
 
+        return $movies;
+    }
+
+    /**
+     * The provider's getSearchList() returns the search result page by page
+     * and stops its page index after the last page
+     *
+     * @return bool
+     */
+    public function has_search_paging()
+    {
+        return false;
+    }
+
+    /**
+     * Next page of the search result. A provider without the search paging returns
+     * the whole result at once, so it is asked only once per opened search folder,
+     * otherwise every next range of the folder would repeat the same movies.
+     *
+     * @param string $keyword
+     * @return Short_Movie[]
+     */
+    public function getSearchPage($keyword)
+    {
+        if (!$this->has_search_paging()) {
+            $page_id = Vod_Category::FLAG_SEARCH . "_once_$keyword";
+            if (array_key_exists($page_id, $this->pages)) {
+                return array();
+            }
+
+            $this->pages[$page_id] = -1;
+        }
+
+        return $this->getSearchList($keyword);
+    }
+
+    /**
+     * Runs the search from the first page before its folder is opened, to know
+     * whether there is only one movie to show. The result is kept for the movie
+     * list so the provider is not asked twice.
+     *
+     * @param string $keyword
+     * @return Short_Movie[]
+     */
+    public function prefetchSearchList($keyword)
+    {
+        $this->reset_movie_counter();
+        $this->try_reset_pages();
+        $movies = $this->getSearchPage($keyword);
+        $this->prefetched_search = array($keyword, $movies);
+
+        return $movies;
+    }
+
+    /**
+     * @param string $keyword
+     * @return bool
+     */
+    public function hasPrefetchedSearchList($keyword)
+    {
+        return !is_null($this->prefetched_search) && $this->prefetched_search[0] === $keyword;
+    }
+
+    /**
+     * Returns the prefetched search result once
+     *
+     * @param string $keyword
+     * @return Short_Movie[]|null
+     */
+    public function takePrefetchedSearchList($keyword)
+    {
+        if (!$this->hasPrefetchedSearchList($keyword)) {
+            return null;
+        }
+
+        $movies = $this->prefetched_search[1];
+        $this->prefetched_search = null;
         return $movies;
     }
 
