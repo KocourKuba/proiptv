@@ -350,12 +350,21 @@ class vod_standard extends Abstract_Vod
             $title_orig = '';
             $country = '';
             $year = '';
+            $imdb = '';
+            $age = '';
 
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
-                $title = isset($match['title']) ? $match['title'] : $title;
-                $title_orig = isset($match['title_orig']) ? $match['title_orig'] : $title_orig;
-                $country = isset($match['country']) ? $match['country'] : $country;
+                $title = isset($match['title']) && $match['title'] !== '' ? self::trim_title($match['title']) : $title;
+                $title_orig = isset($match['title_orig']) ? self::trim_title($match['title_orig']) : $title_orig;
+                $country = isset($match['country']) ? self::trim_title($match['country']) : $country;
                 $year = isset($match['year']) ? $match['year'] : $year;
+                // the imdb rating group can be named 'imdb' or 'rating'
+                if (isset($match['imdb']) && $match['imdb'] !== '') {
+                    $imdb = self::trim_title($match['imdb']);
+                } else if (isset($match['rating']) && $match['rating'] !== '') {
+                    $imdb = self::trim_title($match['rating']);
+                }
+                $age = isset($match['age']) ? self::trim_title($match['age']) : $age;
             }
 
             $category = '';
@@ -379,9 +388,9 @@ class vod_standard extends Abstract_Vod
                 '',     // scenario,
                 '',       // actors,
                 $category,         // genres,
-                '',       // rate_imdb,
+                $imdb,             // rate_imdb,
                 '',    // rate_kinopoisk,
-                '',       // rate_mpaa,
+                $age,              // rate_mpaa,
                 $country           // country,
             );
 
@@ -389,6 +398,17 @@ class vod_standard extends Abstract_Vod
         }
 
         return $movie;
+    }
+
+    /**
+     * Trims a title parsed by the vod pattern, playlists can have non-breaking spaces around the separators
+     *
+     * @param string $title
+     * @return string
+     */
+    protected static function trim_title($title)
+    {
+        return trim(str_replace("\xC2\xA0", ' ', $title));
     }
 
     /**
@@ -567,7 +587,7 @@ class vod_standard extends Abstract_Vod
             if (strpos($search_in, $keyword) === false) continue;
 
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
-                $title = isset($match['title']) ? $match['title'] : $title;
+                $title = isset($match['title']) ? self::trim_title($match['title']) : $title;
             }
 
             $entry = $this->m3u_parser->getEntryByIdx($index);
@@ -708,7 +728,7 @@ class vod_standard extends Abstract_Vod
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
                 $title = isset($match['title']) ? $match['title'] : $title;
             }
-            $title = trim($title);
+            $title = self::trim_title($title);
 
             $movies[] = new Short_Movie($index, $title, $entry->getEntryAttribute('tvg-logo'));
         }

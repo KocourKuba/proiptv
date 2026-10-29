@@ -143,8 +143,13 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
         if (preg_match("/^(#[^: ]+)[:\s]?(.*)/", $line, $m)) {
             $this->setTagName($m[1]);
             if ($this->isTag(Entry::TAG_EXTINF)) {
-                $pos = strrpos($m[2], ',');
-                if ($pos !== false) {
+                // the title is after the first comma outside the quoted attribute values,
+                // the title itself can have commas
+                /** @var array $t */
+                if (preg_match('/^[^,"]*(?:"[^"]*"[^,"]*)*,(.*)$/', $m[2], $t)) {
+                    $name = trim($t[1]);
+                } else if (($pos = strrpos($m[2], ',')) !== false) {
+                    // unbalanced quotes
                     $name = trim(substr($m[2], $pos + 1));
                 } else {
                     $name = "noname";
