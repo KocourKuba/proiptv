@@ -1,9 +1,12 @@
-﻿### Version 5.1.1054
+﻿### Version 5.1.1056
 - Media library search: when only one movie is found, its movie screen opens at once instead of a list with one movie.
 - Media library search: the found movies are shown page by page (TorrentTV, Antifriz, Cbilling, iEdem/iLook, IPTV Online, TVIZI Net). Before, only the first page of the result was shown.
 - TorrentTV: the media library search now uses the same search as the TorrentTV app. The best matches are shown first, and a query of several words finds the films with the whole phrase instead of films with any of the words.
 - TorrentTV: a genre category, 'All movies' and a filter by genre only no longer show films that cannot be played (films without video files).
 - TorrentTV: the category list of the media library can also be switched to collections. The collections of films, serials and animation are marked with the section name.
+- Fixed parsing of the media library movie titles: a title with '/' or brackets is no longer cut, movies without a country (101film, Smile TV, OnlineOTT TV, RU TV) and without an original title (Fox TV, Ping TV) are parsed, a country with brackets for RU TV, movies with dots or an age after the year for VipLime, titles with brackets before the year for Yosso. 2TV: titles without a space before '|' are parsed.
+- M3U media library: non-breaking spaces are trimmed from the movie titles. The movie page shows the rating (2TV, OttPub) and the age (VipLime).
+- Channel and movie titles with a comma are no longer cut to the last comma (e.g. 'Title, part 2' was shown as 'part 2').
 
 ### Version 5.1.1050
 - The plugin runs on firmware r17 or higher again. At start it shows a warning that the version 5.1 supports only firmware r11 - r16: on firmware r17 - r21 it suggests to use the plugin version 6.2 or to update the firmware, on firmware r22 or higher to install a newer plugin version.
