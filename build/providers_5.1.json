@@ -1472,6 +1472,8 @@
         "film_alt_http": "{API}/film_alt_http.php?session={SESSION_ID}",
         "film_alt_search": "{API}/film_alt_search.php?session={SESSION_ID}",
         "film_list": "{API}/film_list.php?session={SESSION_ID}",
+        "film_alt_list": "{API}/film_alt_list.php?session={SESSION_ID}",
+        "film_alt_list_types": "{API}/film_alt_list_types.php?session={SESSION_ID}",
         "pay": "{API}/payment_qr.php?session={SESSION_ID}&typeresult=json"
       },
       "config": {
