@@ -328,14 +328,21 @@ class vod_standard extends Abstract_Vod
             $country = '';
             $year = '';
             $rating = '';
+            $age = '';
 
             /** @var array $m */
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $m)) {
-                $title = safe_get_value($m, 'title', $title);
-                $title_orig = safe_get_value($m, 'title_orig', '');
-                $country = safe_get_value($m, 'country', '');
+                $title = isset($m['title']) && $m['title'] !== '' ? self::trim_title($m['title']) : $title;
+                $title_orig = self::trim_title(safe_get_value($m, 'title_orig', ''));
+                $country = self::trim_title(safe_get_value($m, 'country', ''));
                 $year = safe_get_value($m, 'year', '');
-                $rating = safe_get_value($m, 'rating', '');
+                // the imdb rating group can be named 'imdb' or 'rating'
+                if (isset($m['imdb']) && $m['imdb'] !== '') {
+                    $rating = self::trim_title($m['imdb']);
+                } else if (isset($m['rating']) && $m['rating'] !== '') {
+                    $rating = self::trim_title($m['rating']);
+                }
+                $age = self::trim_title(safe_get_value($m, 'age', ''));
             }
 
             $movie = new Movie($movie_id, $this->plugin);
@@ -352,7 +359,7 @@ class vod_standard extends Abstract_Vod
                 $category,      // genres,
                 $rating,        // rate_imdb,
                 '',             // rate_kinopoisk,
-                '',             // rate_mpaa,
+                $age,           // rate_mpaa,
                 $country        // country,
             );
 
@@ -360,6 +367,17 @@ class vod_standard extends Abstract_Vod
         }
 
         return $movie;
+    }
+
+    /**
+     * Trims a title parsed by the vod pattern, playlists can have non-breaking spaces around the separators
+     *
+     * @param string $title
+     * @return string
+     */
+    protected static function trim_title($title)
+    {
+        return trim(str_replace("\xC2\xA0", ' ', $title));
     }
 
     /**
@@ -483,14 +501,15 @@ class vod_standard extends Abstract_Vod
             $title = $entry[COLUMN_TITLE];
             /** @var array $m */
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $m)) {
-                $title = safe_get_value($m, 'title', $title);
-                $title_orig = safe_get_value($m, 'title_orig', '');
+                $title = self::trim_title(safe_get_value($m, 'title', $title));
+                $title_orig = self::trim_title(safe_get_value($m, 'title_orig', ''));
                 if (!empty($title_orig)) {
                     $title = "$title ($title_orig)";
                 }
             }
+            $title = self::trim_title($title);
 
-            $movies[] = new Short_Movie($entry[COLUMN_HASH], trim($title), $entry[COLUMN_ICON], $title);
+            $movies[] = new Short_Movie($entry[COLUMN_HASH], $title, $entry[COLUMN_ICON], $title);
         }
 
         $this->shift_next_page_index($query_id, $pos - $page_idx);
@@ -522,8 +541,8 @@ class vod_standard extends Abstract_Vod
 
             /** @var array $m */
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $m)) {
-                $title = safe_get_value($m, 'title', $title);
-                $title_orig = safe_get_value($m, 'title_orig', '');
+                $title = self::trim_title(safe_get_value($m, 'title', $title));
+                $title_orig = self::trim_title(safe_get_value($m, 'title_orig', ''));
                 if (!empty($title_orig)) {
                     $title = "$title ($title_orig)";
                 }

@@ -233,7 +233,7 @@
             "url": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
           }
         },
-        "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/",
+        "vod_parser": "/^(?<title>.+) \\((?:(?<country>(?:[^()]|\\([^()]*\\))+) )?(?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -361,7 +361,7 @@
           "ru.seetv.cc": "Russia",
           "ua.online24.pm": "Ukraine"
         },
-        "vod_parser": "/^(?<title>[^|]+)\\s\\|(?<year>\\d+)\\|\\s?IMDB\\:(?<rating>.+)$/",
+        "vod_parser": "/^(?<title>[^|]+)\\|(?<year>\\d+)\\|\\s?IMDB:(?<rating>.+)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -659,7 +659,7 @@
             "url": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
           }
         },
-        "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/",
+        "vod_parser": "/^(?<title>.+?)(?:\\/ (?<title_orig>.+))? (?<year>\\d{4})$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1154,7 +1154,7 @@
           }
         },
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8?\\?(?<token>.+)$/",
-        "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<year>\\d+)\\)$/",
+        "vod_parser": "/^(?<title>.+) \\((?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1179,7 +1179,7 @@
             "url": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
           }
         },
-        "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<country>.+)\\s(?<year>\\d+)\\)$/",
+        "vod_parser": "/^(?<title>.+) \\((?:(?<country>(?:[^()]|\\([^()]*\\))+) )?(?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1358,7 +1358,7 @@
             "url": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
           }
         },
-        "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/",
+        "vod_parser": "/^(?<title>.+?)(?:\\/ (?<title_orig>.+))? (?<year>\\d{4})$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1424,7 +1424,7 @@
             "url": "http://pl.{DOMAIN_ID}/{LOGIN}/{PASSWORD}/series.m3u"
           }
         },
-        "vod_parser": "/^(?<title>[^\\/]+)\\s\\((?:(?<country>.+)\\s)?(?<year>\\d+)\\)$/",
+        "vod_parser": "/^(?<title>.+) \\((?:(?<country>(?:[^()]|\\([^()]*\\))+) )?(?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1784,7 +1784,7 @@
           "3": "Server NL",
           "4": "Server RU"
         },
-        "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/",
+        "vod_parser": "/^(?<title>.+) \\((?:(?<country>(?:[^()]|\\([^()]*\\))+) )?(?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -2141,7 +2141,7 @@
             "url": "{VOD_API}/{PASSWORD}/playlist.m3u8"
           }
         },
-        "vod_parser": "/^(?<title>[^\\(]*)\\s\\((?<year>\\d+)\\)$/",
+        "vod_parser": "/^(?<title>.+) \\((?<year>\\d{4})\\)\\.*(?: (?<age>\\d+\\+))?$/",
         "url_subst": {
           "regex": "/^(.+\\.).+$/",
           "replace": "$1{STREAM_ID}"
@@ -2227,7 +2227,7 @@
             "url": "{API}/vod/{LOGIN}/{PASSWORD}/a/p.m3u8"
           }
         },
-        "vod_parser": "/^(?<title>[^\\(]+)\\s\\((?<year>\\d+)\\)(?:\\s*(?<title_orig>.*)?)$/",
+        "vod_parser": "/^(?<title>.+?(?: \\((?<year>\\d{4})\\).*)?)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     }
