@@ -1,3 +1,11 @@
+### Version 9.1.1944
+- Media library search: when only one movie is found, its movie screen opens at once instead of a list with one movie. When nothing is found, a 'Nothing found' message is shown instead of an empty list.
+- TorrentTV: the media library search now uses the same search as the TorrentTV app. The best matches are shown first, and a query of several words finds the films with the whole phrase instead of films with any of the words. The found films are shown page by page.
+- TorrentTV: a genre category of the media library and a filter by genre only no longer show films that cannot be played (films without video files).
+- TorrentTV: the category list of the media library can also be switched to collections ("Best foreign", "Made in the USSR", "Marvel Cinematic Universe" and others, as in the TorrentTV app). The collections of films, serials and animation are marked with the section name.
+- Media library (M3U): fixed parsing of the movie titles. A title with '/' or brackets is no longer cut, movies without a country (101film, Smile TV, OnlineOTT TV, RU TV) and without an original title (Fox TV, Ping TV) are parsed, a country with brackets for RU TV, movies with dots or an age after the year for VipLime, titles with brackets before the year for Yosso. 2TV: titles without a space before '|' are parsed. Non-breaking spaces are trimmed from the titles, the movie page shows the age (VipLime).
+- Integration with the Play in apps plugin: a movie can be searched in the media library of the plugin from Play in apps. The results of the search by the title and by the original title are merged.
+
 ### Version 9.1.1938
 - Adding or editing a provider that is not the active playlist no longer breaks the active one. The new provider's login token was saved to the active playlist, which then failed to load (for example, adding TorrentTV while TV Team was active), and adding a provider no longer reloads the active playlist needlessly.
 - Updated playlist mirror (EU) for Uspeh
@@ -19,7 +27,7 @@
 - TorrentTV: a session rejected by the server is now renewed when the account info is requested. Before, the balance and tariff stayed empty until the session expired.
 - XMLTV EPG: a failed check of a source with the ETag cache mode no longer deletes the downloaded EPG. Before, a network error or a server that rejects the check caused a full download and, if that failed too, the cached EPG was removed.
 - XMLTV EPG: the day schedule of a channel is now collected from all parts of the EPG file. With sources written day by day a part of the day was missing.
-- EPG cache: at plugin start the cached files of an XMLTV source that was not downloaded or indexed for 14 days and the JSON EPG cache files older than 14 days are deleted. The cache of removed sources no longer stays in the cache folder forever, a source that is still used is simply downloaded again.- Auto detection of the channel ID column: a column with exactly one duplicate is no longer counted as having no duplicates, so two channels with the same ID are not merged.
+- EPG cache: at plugin start the cached files of an XMLTV source that was not downloaded or indexed for 14 days and the JSON EPG cache files older than 14 days are deleted. The cache of removed sources no longer stays in the cache folder forever, a source that is still used is simply downloaded again.
 - Auto detection of the channel ID column: a column with exactly one duplicate is no longer counted as having no duplicates, so two channels with the same ID are not merged.
 - Requests to servers on a non-standard port now send the port in the Host header. Such servers could answer with an error or a wrong redirect.
 - The extended settings have a new option 'Disable plugin update' (off by default, firmware r24 and newer).
