@@ -107,6 +107,11 @@ class vod_standard extends Abstract_Vod
     protected $prefetched_search;
 
     /**
+     * @var array movie id => true, movies already returned by getSearchResults() for several keywords
+     */
+    protected $search_movie_ids = array();
+
+    /**
      * @param Default_Dune_Plugin $plugin
      */
     public function __construct(Default_Dune_Plugin $plugin)
@@ -567,17 +572,85 @@ class vod_standard extends Abstract_Vod
      * whether there is only one movie to show. The result is kept for the movie
      * list so the provider is not asked twice.
      *
-     * @param string $keyword
+     * @param string $keyword plain string or json encoded array, see getSearchResults()
      * @return Short_Movie[]
      */
     public function prefetchSearchList($keyword)
     {
         $this->reset_movie_counter();
         $this->try_reset_pages();
-        $movies = $this->getSearchList($keyword);
+        $movies = $this->getSearchResults($keyword);
         $this->prefetched_search = array($keyword, $movies);
 
         return $movies;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function try_reset_pages()
+    {
+        if ($this->is_entered) {
+            $this->search_movie_ids = array();
+        }
+
+        parent::try_reset_pages();
+    }
+
+    /**
+     * Next part of the search. The keyword can be a json encoded array (external search from
+     * the Play in apps plugin): the results of the search by 'title' and by 'original_title' are merged,
+     * movies already returned since the search start are skipped. A plain keyword is searched as is.
+     *
+     * @param string $keyword
+     * @return Short_Movie[]
+     */
+    public function getSearchResults($keyword)
+    {
+        $keywords = self::decode_search_keywords($keyword);
+        if (count($keywords) < 2) {
+            return empty($keywords) ? array() : $this->getSearchList($keywords[0]);
+        }
+
+        // a part of duplicates only ends the list: a provider without the search paging
+        // returns the whole result on every call, a repeat would never end
+        $movies = array();
+        foreach ($keywords as $search) {
+            foreach ($this->getSearchList($search) as $movie) {
+                if (isset($this->search_movie_ids[$movie->id])) continue;
+
+                $this->search_movie_ids[$movie->id] = true;
+                $movies[] = $movie;
+            }
+        }
+
+        return $movies;
+    }
+
+    /**
+     * Search strings: a plain string as is, or 'title' and 'original_title' of a json encoded array
+     *
+     * @param string $keyword
+     * @return string[]
+     */
+    public static function decode_search_keywords($keyword)
+    {
+        $data = json_decode($keyword, true);
+        if (!is_array($data)) {
+            return array($keyword);
+        }
+
+        $keywords = array();
+        foreach (array('title', 'original_title') as $key) {
+            if (isset($data[$key]) && is_scalar($data[$key])) {
+                $value = trim((string)$data[$key]);
+                if ($value !== '' && !in_array($value, $keywords, true)) {
+                    $keywords[] = $value;
+                }
+            }
+        }
+
+        return $keywords;
     }
 
     /**

@@ -48,6 +48,15 @@
             </params>
         </confirm_update>
     </global_actions>
+    <public_actions>
+        <action id="vod_search">
+            <type>plugin_handle_user_input</type>
+            <params>
+                <handler_id>entry_handler</handler_id>
+                <control_id>external_search</control_id>
+            </params>
+        </action>
+    </public_actions>
     <params>
         <program>starnet.php</program>
     </params>

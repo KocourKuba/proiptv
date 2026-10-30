@@ -47,6 +47,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_CALL_REBOOT = 'call_reboot'; // this action coded in manifest
     const ACTION_CALL_SEND_LOG = 'call_send_log'; // this action coded in manifest
     const ACTION_CONFIRM_BACKUP_DLG = 'create_backup';
+    const ACTION_EXTERNAL_SEARCH = 'external_search'; // this action coded in manifest (public_actions/vod_search)
     const OLD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0dg==";
 
     private $plugin;
@@ -239,6 +240,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 hd_debug_print('Palette restored');
                 return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), TR::t('setup_patch_success'));
 
+            case self::ACTION_EXTERNAL_SEARCH:
+                return $this->do_external_search($user_input, $plugin_cookies);
+
             case self::ACTION_PLUGIN_ENTRY:
                 if (!isset($user_input->action_id)) {
                     break;
@@ -339,6 +343,55 @@ class Starnet_Entry_Handler implements User_Input_Handler
         }
 
         return null;
+    }
+
+    /**
+     * Search in VOD called by other plugins (Play in apps) through public_actions/vod_search.
+     * Param: search - plain string or json encoded array with title and original_title (results of both are merged)
+     *
+     * @param object $user_input
+     * @param object $plugin_cookies
+     * @return array
+     */
+    private function do_external_search($user_input, &$plugin_cookies)
+    {
+        hd_print_separator();
+        hd_debug_print('EXTERNAL VOD SEARCH');
+        hd_print_separator();
+
+        $search_string = trim((string)safe_get_value($user_input, 'search', ''));
+        $keywords = $search_string === '' ? array() : vod_standard::decode_search_keywords($search_string);
+        if (empty($keywords)) {
+            hd_debug_print('Nothing to search');
+            return Action_Factory::show_title_dialog(TR::t('search'), TR::t('err_search_empty'));
+        }
+
+        hd_debug_print("search: $search_string");
+
+        $this->plugin->init_plugin(true);
+        if ($this->plugin->get_all_playlists_count() === 0) {
+            hd_debug_print('No playlists');
+            return Action_Factory::show_title_dialog(TR::t('search'), TR::t('err_no_playlists'));
+        }
+
+        if (!$this->plugin->load_channels($plugin_cookies)) {
+            hd_debug_print('Failed to load channels!');
+            return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
+        }
+
+        if (!$this->plugin->is_vod_enabled()) {
+            hd_debug_print('VOD not supported or disabled');
+            return Action_Factory::show_title_dialog(TR::t('search'), TR::t('err_vod_not_available'));
+        }
+
+        // as on entering the VOD: M3U VOD playlist is loaded to the search database, providers init their data
+        if (!$this->plugin->vod->fetchVodCategories()) {
+            hd_debug_print('Error: Fetch categories');
+            return Action_Factory::show_title_dialog(TR::t('err_load_vod'), Dune_Last_Error::get_last_error(LAST_ERROR_VOD_LIST));
+        }
+
+        return Starnet_Vod_Movie_List_Screen::make_search_action($this->plugin, $search_string,
+            TR::t('search__1', implode(' / ', $keywords)));
     }
 
     /**

@@ -155,7 +155,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
      * Nothing found is reported by a dialog instead of an empty list
      *
      * @param Default_Dune_Plugin $plugin
-     * @param string $search_string
+     * @param string $search_string plain string or json encoded array with title and original_title
      * @param string $caption
      * @return array
      */
@@ -204,7 +204,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
         if ($media_url->category_id === Vod_Category::FLAG_SEARCH) {
             $movies = $from_ndx === 0 ? $this->plugin->vod->takePrefetchedSearchList($media_url->genre_id) : null;
             if (is_null($movies)) {
-                $movies = $this->plugin->vod->getSearchList($media_url->genre_id);
+                $movies = $this->plugin->vod->getSearchResults($media_url->genre_id);
             }
         } else if ($media_url->category_id === Vod_Category::FLAG_FILTER) {
             $movies = $this->plugin->vod->getFilterList($media_url->genre_id);
