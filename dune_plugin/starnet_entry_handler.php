@@ -241,7 +241,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), TR::t('setup_patch_success'));
 
             case self::ACTION_EXTERNAL_SEARCH:
-                return $this->do_external_search($user_input, $plugin_cookies);
+                return $this->do_external_search($user_input);
 
             case self::ACTION_PLUGIN_ENTRY:
                 if (!isset($user_input->action_id)) {
@@ -270,10 +270,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             return $this->open_playlist_screen();
                         }
 
-                        // the cookie is set by load_channels(), it has to be read after it
-                        if ($this->plugin->load_channels($plugin_cookies)
-                            && $this->plugin->is_vod_enabled()
-                            && SwitchOnOff::to_bool(safe_get_value($plugin_cookies, PARAM_COOKIE_SHOW_VOD_ICON))) {
+                        // only VOD is loaded, the TV playlist is loaded when TV is opened
+                        if ($this->plugin->init_vod_context()
+                            && $this->plugin->get_bool_parameter(PARAM_SHOW_VOD_ICON, false)) {
                             $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
                             $actions[] = Action_Factory::open_folder(Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID));
                             return Action_Factory::composite($actions);
@@ -350,10 +349,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
      * Param: search - plain string or json encoded array with title and original_title (results of both are merged)
      *
      * @param object $user_input
-     * @param object $plugin_cookies
      * @return array
      */
-    private function do_external_search($user_input, &$plugin_cookies)
+    private function do_external_search($user_input)
     {
         hd_print_separator();
         hd_debug_print('EXTERNAL VOD SEARCH');
@@ -374,12 +372,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return Action_Factory::show_title_dialog(TR::t('search'), TR::t('err_no_playlists'));
         }
 
-        if (!$this->plugin->load_channels($plugin_cookies)) {
-            hd_debug_print('Failed to load channels!');
-            return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
-        }
-
-        if (!$this->plugin->is_vod_enabled()) {
+        // only VOD is loaded, the TV playlist is not needed for the search
+        if (!$this->plugin->init_vod_context()) {
             hd_debug_print('VOD not supported or disabled');
             return Action_Factory::show_title_dialog(TR::t('search'), TR::t('err_vod_not_available'));
         }
@@ -548,7 +542,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return Action_Factory::tv_play($media_url);
         }
 
-        if (!$is_playlist_changed && $is_owner && $mode === "PLUGIN_VOD_PLAYBACK") {
+        if (!$is_playlist_changed && $is_owner && $mode === "PLUGIN_VOD_PLAYBACK" && $this->plugin->init_vod_context()) {
             $vod_info = $this->plugin->vod->get_vod_info(MediaURL::decode(safe_get_value($user_input, 'resume_media_url')));
             if ($vod_info !== null) {
                 hd_debug_print('action: continue VOD playback', true);

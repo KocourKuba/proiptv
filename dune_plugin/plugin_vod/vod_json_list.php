@@ -58,6 +58,11 @@ abstract class vod_json_list extends vod_standard
             return null;
         }
 
+        // the movie list is loaded with the categories, a fresh php process (auto resume) has not loaded it yet
+        if (is_null($this->vod_items)) {
+            $this->fetchVodCategories();
+        }
+
         if (empty($this->vod_items)) {
             hd_debug_print("failed to load movie: $movie_id");
             return null;

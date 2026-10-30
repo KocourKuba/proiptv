@@ -319,6 +319,13 @@ class vod_standard extends Abstract_Vod
             return $movie;
         }
 
+        // the VOD playlist database is opened with the categories,
+        // a fresh php process (auto resume) has not opened it yet
+        if (!isset($this->category_index) && !$this->fetchVodCategories()) {
+            hd_debug_print("failed to load VOD playlist for movie: $movie_id");
+            return null;
+        }
+
         $entry = $this->getVod($movie_id);
         if (empty($entry)) {
             hd_debug_print('Movie not found');
@@ -383,6 +390,22 @@ class vod_standard extends Abstract_Vod
     protected static function trim_title($title)
     {
         return trim(str_replace("\xC2\xA0", ' ', $title));
+    }
+
+    /**
+     * The playlist of the movie is remembered as for TV playback:
+     * the auto resume continues the playback only if the active playlist is not changed
+     *
+     * @inheritDoc
+     */
+    public function get_vod_info(MediaURL $media_url)
+    {
+        $vod_info = parent::get_vod_info($media_url);
+        if (!empty($vod_info)) {
+            $this->plugin->set_parameter(PARAM_LAST_PLAYLIST, $this->plugin->get_active_playlist_id());
+        }
+
+        return $vod_info;
     }
 
     /**

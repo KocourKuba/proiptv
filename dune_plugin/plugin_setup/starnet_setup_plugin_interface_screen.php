@@ -131,7 +131,7 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
 
             case PARAM_SHOW_VOD_ICON:
                 $this->plugin->toggle_parameter($control_id, false);
-                $enable_vod_icon = SwitchOnOff::to_def($this->plugin->is_vod_enabled() && $this->plugin->get_bool_parameter($control_id));
+                $enable_vod_icon = SwitchOnOff::to_def($this->plugin->has_vod_support() && $this->plugin->get_bool_parameter($control_id));
                 $plugin_cookies->{$control_id} = $enable_vod_icon;
                 hd_debug_print("Update cookie values: $enable_vod_icon", true);
 

@@ -122,6 +122,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                         return Action_Factory::open_folder();
                     }
 
+                    // VOD is loaded on the first entering, not with the TV playlist
+                    if (!$this->plugin->init_vod_context()) {
+                        return Action_Factory::show_title_dialog(TR::t('err_load_any'), TR::t('err_vod_not_available'));
+                    }
+
                     if ($this->plugin->vod->fetchVodCategories()) {
                         return Action_Factory::open_folder();
                     }
@@ -423,7 +428,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     break;
 
                 case VOD_GROUP_ID:
-                    if ($this->plugin->is_vod_enabled() && $this->plugin->get_bool_setting(PARAM_SHOW_VOD)) {
+                    if ($this->plugin->has_vod_support() && $this->plugin->get_bool_setting(PARAM_SHOW_VOD)) {
                         $caption = TR::t(VOD_GROUP_CAPTION);
                         $special_items[] = $this->add_item($group_id, $group_icon, $caption, DEF_LABEL_TEXT_COLOR_LIGHTGREEN, $caption);
                     }
