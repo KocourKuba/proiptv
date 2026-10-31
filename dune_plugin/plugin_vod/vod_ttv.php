@@ -40,7 +40,8 @@ class vod_ttv extends vod_standard
     const CMD_FILM_LIST = 'film_list';
     const CMD_FILM_ALT_LIST = 'film_alt_list';
     const CMD_FILM_ALT_LIST_TYPES = 'film_alt_list_types';
-    const FILM_PAGE_SIZE = 30;
+    // films per request: film_filter page_size, film_alt_list limit and film_alt_search movies_page_size allow up to 100
+    const FILM_PAGE_SIZE = 50;
     const CATEGORY_MODE_GENRE = 'genre';
     const CATEGORY_MODE_TYPE = 'type';
     const CATEGORY_MODE_COLLECTION = 'collection';

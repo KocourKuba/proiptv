@@ -228,6 +228,49 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * Called by the firmware instead of get_folder_view() when it has a selection state
+     * of the folder to restore (a rows folder is reloaded). A screen without
+     * get_folder_view_v2() gets the plain get_folder_view()
+     *
+     * @param string $media_url_str
+     * @param string $sel_state
+     * @param object $plugin_cookies
+     * @return array|null
+     * @throws Exception
+     */
+    public function get_folder_view_v2($media_url_str, $sel_state, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        $media_url = MediaURL::decode($media_url_str);
+        $screen = $this->get_screen_by_url($media_url);
+        if (method_exists($screen, 'get_folder_view_v2')) {
+            return $screen->get_folder_view_v2($media_url, $sel_state, $plugin_cookies);
+        }
+
+        return $screen->get_folder_view($media_url, $plugin_cookies);
+    }
+
+    /**
+     * r25+: rows of a rows folder that were given as loading placeholders
+     *
+     * @param string $media_url_str
+     * @param array $row_ids
+     * @return array
+     * @throws Exception
+     */
+    public function get_folder_rows($media_url_str, $row_ids)
+    {
+        hd_debug_print(null, true);
+        $media_url = MediaURL::decode($media_url_str);
+        $screen = $this->get_screen_by_url($media_url);
+        if (method_exists($screen, 'get_folder_rows')) {
+            return $screen->get_folder_rows($media_url, $row_ids);
+        }
+
+        return array(PluginFolderRows::rows => array());
+    }
+
+    /**
      * @override DunePlugin
      * @param string $media_url_str
      * @param object $plugin_cookies

@@ -83,6 +83,9 @@ class GComps_Factory
         $line_spacing = isset($attrs['line_spacing']) ? $attrs['line_spacing'] : null;
         $base_font_size = isset($attrs['base_font_size']) ? $attrs['base_font_size'] : null;
         $halign = isset($attrs['halign']) ? $attrs['halign'] : null;
+        $valign = isset($attrs['valign']) ? $attrs['valign'] : null;
+        $min_font_size = isset($attrs['min_font_size']) ? $attrs['min_font_size'] : null;
+        $fit = isset($attrs['fit']) ? $attrs['fit'] : null;
 
         $arr2 = array(
             GCompTtfLabelDef::text => $text,
@@ -97,6 +100,12 @@ class GComps_Factory
             $arr2[GCompTtfLabelDef::base_font_size] = $base_font_size;
         if ($halign)
             $arr2[GCompTtfLabelDef::halign] = $halign;
+        if ($valign)
+            $arr2[GCompTtfLabelDef::valign] = $valign;
+        if ($min_font_size)
+            $arr2[GCompTtfLabelDef::min_font_size] = $min_font_size;
+        if ($fit)
+            $arr2[GCompTtfLabelDef::fit] = $fit;
         return $arr2;
     }
 

@@ -60,6 +60,18 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
     {
         hd_debug_print(null, true);
 
+        $this->switch_to_next_folder_view();
+
+        return $this->get_folder_view($media_url, $plugin_cookies);
+    }
+
+    /**
+     * Makes the next view of the screen the current one, the last view wraps to the first
+     *
+     * @return void
+     */
+    protected function switch_to_next_folder_view()
+    {
         $idx = $this->get_folder_view_index();
         $folder_views = $this->get_folder_views();
         if (++$idx >= count($folder_views)) {
@@ -71,8 +83,6 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
         } else {
             $this->plugin->set_parameter(static::ID . "_view_idx", $idx);
         }
-
-        return $this->get_folder_view($media_url, $plugin_cookies);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -81,7 +91,7 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
     /**
      * @return int
      */
-    private function get_folder_view_index()
+    protected function get_folder_view_index()
     {
         hd_debug_print(null, true);
 

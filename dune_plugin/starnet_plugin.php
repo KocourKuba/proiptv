@@ -50,6 +50,7 @@ require_once 'plugin_playlist_setup/starnet_setup_playback_screen.php';
 require_once 'plugin_playlist_setup/starnet_setup_provider_screen.php';
 require_once 'plugin_playlist_setup/starnet_setup_playlist_screen.php';
 require_once 'plugin_playlist_setup/starnet_setup_simple_iptv_screen.php';
+require_once 'plugin_playlist_setup/starnet_setup_interface_vod_screen.php';
 
 require_once 'screens_tv/starnet_tv_groups_screen.php';
 require_once 'screens_tv/starnet_tv_changed_channels_screen.php';
@@ -117,6 +118,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Setup_Playback_Screen($this));
         $this->create_screen(new Starnet_Setup_Provider_Screen($this));
         $this->create_screen(new Starnet_Setup_Simple_IPTV_Screen($this));
+        $this->create_screen(new Starnet_Setup_Interface_Vod_Screen($this));
 
         $this->create_screen(new Starnet_Folder_Screen($this));
         $this->create_screen(new Starnet_Edit_Playlists_Screen($this));

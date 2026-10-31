@@ -789,10 +789,12 @@ class Action_Factory
      * @param string|null $mask_url
      * @param array $playback_urls
      * @param array|null $post_action
+     * @param bool $bg_poster_mode
      * @return array
      */
     public static function update_rows_info($folder_key, $item_id, $info_defs,
-                                            $bg_url = null, $nl_bg_url = null, $mask_url = null, $playback_urls = array(), $post_action = null)
+                                            $bg_url = null, $nl_bg_url = null, $mask_url = null, $playback_urls = array(), $post_action = null,
+                                            $bg_poster_mode = false)
     {
         $info = array(
             PluginRowsInfo::folder_key => $folder_key,
@@ -803,6 +805,9 @@ class Action_Factory
             PluginRowsInfo::mask_url => $mask_url,
             PluginRowsInfo::playback_urls => $playback_urls
         );
+        if ($bg_poster_mode) {
+            $info[PluginRowsInfo::bg_poster_mode] = true;
+        }
 
         return array(
             GuiAction::handler_string_id => PLUGIN_UPDATE_ROWS_INFO_ACTION_ID,
