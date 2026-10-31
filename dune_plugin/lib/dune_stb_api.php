@@ -1398,6 +1398,51 @@ function is_r25_or_higher()
 }
 
 /**
+ * Firmware feature flags, same source as the firmware's ConfigUtils::load_firmware_features():
+ * one name per line in tmp/firmware_features.txt and tmp/ro_features.txt
+ * (e.g. newgui2021, sup_api_v8, light_stop, apk, fw_apk, drm_apps, downloads, whale_tv, dual_system).
+ * 'downloads' is dropped when the shell runs under a lite license (tmp/flm.txt exists).
+ *
+ * @return array feature name => true
+ */
+function get_firmware_features()
+{
+    static $features = null;
+
+    if (is_null($features)) {
+        $features = array();
+        $prefix = getenv('FS_PREFIX');
+        foreach (array('/tmp/firmware_features.txt', '/tmp/ro_features.txt') as $path) {
+            $lines = is_file($prefix . $path) ? file($prefix . $path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : false;
+            if ($lines === false) continue;
+
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if ($line !== '') {
+                    $features[$line] = true;
+                }
+            }
+        }
+
+        if (is_file($prefix . '/tmp/flm.txt')) {
+            unset($features['downloads']);
+        }
+    }
+
+    return $features;
+}
+
+/**
+ * @param string $name
+ * @return bool
+ */
+function has_firmware_feature($name)
+{
+    $features = get_firmware_features();
+    return isset($features[$name]);
+}
+
+/**
  * @return bool
  */
 function is_ext_epg_supported()
@@ -1749,6 +1794,7 @@ function print_sysinfo()
         'Dune Product' => get_product_id(),
         'Dune Model' => get_dune_model(),
         'Dune FW' => get_raw_firmware_version(),
+        'Dune FW features' => implode(' ', array_keys(get_firmware_features())),
         'Dune Serial' => get_serial_number(),
         'Dune Platform' => "{$platform['platform']} ({$platform['type']})",
         'Dune MAC Addr' => get_mac_address(),
