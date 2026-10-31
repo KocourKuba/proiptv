@@ -128,7 +128,7 @@ class vod_ipstream extends vod_json_list
             $this->get_item_id($item),
             $name,
             safe_get_value($movie_info, 'poster'),
-            TR::t('vod_screen_movie_info__5',
+            Short_Movie::make_info(
                 $name,
                 safe_get_value($movie_info, 'year'),
                 array_to_str(safe_get_value($movie_info, 'country', array())),

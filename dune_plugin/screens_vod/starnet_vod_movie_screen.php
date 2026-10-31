@@ -130,9 +130,10 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
      * @param string|false $name
      * @param string|false $poster_url
      * @param string|false $info
+     * @param string|null $playlist_id playlist of the movie, null - playlist of the selected VOD context
      * @return false|string
      */
-    public static function make_vod_media_url_str($movie_id, $name = false, $poster_url = false, $info = false)
+    public static function make_vod_media_url_str($movie_id, $name = false, $poster_url = false, $info = false, $playlist_id = null)
     {
         $arr = array(PARAM_SCREEN_ID => static::ID, PARAM_MOVIE_ID => $movie_id);
         if ($name !== false) {
@@ -147,7 +148,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
             $arr['info'] = $info;
         }
 
-        return MediaURL::encode(Vod_Context::add_playlist_id($arr));
+        return MediaURL::encode(Vod_Context::add_playlist_id($arr, $playlist_id));
     }
 
     /**

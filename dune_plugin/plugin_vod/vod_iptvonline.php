@@ -240,7 +240,7 @@ class vod_iptvonline extends vod_standard
         $page_idx = $this->get_current_page_index($page_id, 1);
         if ($page_idx >= 0) {
             $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, API_ACTION_MOVIE, self::PAGE_LIMIT);
-            $searchRes = $this->make_json_request($url, false, $payload);
+            $searchRes = $this->make_json_request($url, true, $payload);
             $movies = $this->CollectQueryResult(API_ACTION_MOVIE, $searchRes, API_ACTION_SEARCH);
         }
 
@@ -251,7 +251,7 @@ class vod_iptvonline extends vod_standard
         }
 
         $url = sprintf(self::REQUEST_TEMPLATE, $page_idx, API_ACTION_SERIAL, self::PAGE_LIMIT);
-        $searchRes = $this->make_json_request($url, false, $payload);
+        $searchRes = $this->make_json_request($url, true, $payload);
         $serials = $this->CollectQueryResult(API_ACTION_SERIAL, $searchRes, API_ACTION_SEARCH);
 
         return safe_merge_array($movies, $serials);
@@ -311,6 +311,10 @@ class vod_iptvonline extends vod_standard
         $data = $this->provider->execApiCommandResponse(API_COMMAND_GET_VOD, $curl_opt, Curl_Wrapper::RET_ARRAY, $cache);
         if (!isset($data['success'], $data['status']) || !$data['success'] || $data['status'] !== 200) {
             hd_debug_print('Wrong response: ' . json_format_unescaped($data));
+            if ($cache) {
+                // an error body is not kept in the response cache
+                Curl_Wrapper::drop_last_cached_response();
+            }
             return false;
         }
 
@@ -352,7 +356,7 @@ class vod_iptvonline extends vod_standard
                 "{$query_id}_{$entry['id']}",
                 $ru_title,
                 safe_get_value($posters, 'medium'),
-                TR::t('vod_screen_movie_info__4',
+                Short_Movie::make_info(
                     $ru_title,
                     $entry['year'],
                     implode(',', safe_get_value($entry, 'countries', array())),

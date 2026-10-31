@@ -25,6 +25,7 @@
 
 require_once 'lib/mediaurl.php';
 require_once 'lib/user_input_handler_registry.php';
+require_once 'lib/list_utils.php';
 
 class Starnet_Entry_Handler implements User_Input_Handler
 {
@@ -49,6 +50,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_CALL_SEND_LOG = 'call_send_log'; // this action coded in manifest
     const ACTION_CONFIRM_BACKUP_DLG = 'create_backup';
     const ACTION_EXTERNAL_SEARCH = 'external_search'; // this action coded in manifest (public_actions/vod_search)
+    const ACTION_EXTERNAL_SEARCH_APPLY = 'external_search_apply';
+    const ACTION_EXTERNAL_SEARCH_SELECT = 'external_search_select';
+    const ACTION_EXTERNAL_SEARCH_SELECTED = 'external_search_selected';
+    const VOD_SEARCH_CONFIG_ID = 'proiptv_vod_search';
     const OLD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0dg==";
 
     private $plugin;
@@ -244,6 +249,15 @@ class Starnet_Entry_Handler implements User_Input_Handler
             case self::ACTION_EXTERNAL_SEARCH:
                 return $this->do_external_search($user_input);
 
+            case self::ACTION_EXTERNAL_SEARCH_APPLY:
+                return $this->apply_external_search($user_input);
+
+            case self::ACTION_EXTERNAL_SEARCH_SELECT:
+                return $this->select_external_search_libraries($user_input);
+
+            case self::ACTION_EXTERNAL_SEARCH_SELECTED:
+                return $this->apply_external_search_libraries($user_input);
+
             case self::ACTION_PLUGIN_ENTRY:
                 if (!isset($user_input->action_id)) {
                     break;
@@ -378,6 +392,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
     /**
      * Search in VOD called by other plugins (Play in apps) through public_actions/vod_search.
      * Param: search - plain string or json encoded array with title and original_title (results of both are merged)
+     * The media libraries to search in are selected in a dialog, the selection is remembered.
+     * The TV playlist is not loaded and the active playlist is not changed.
      *
      * @param object $user_input
      * @return array
@@ -403,8 +419,178 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return Action_Factory::show_title_dialog(TR::t('search'), TR::t('err_no_playlists'));
         }
 
-        // only VOD is loaded, the TV playlist is not needed for the search
-        if (!$this->plugin->init_vod_context()) {
+        $vod_ids = Starnet_Vod_Libraries_Screen::get_vod_playlists_ids($this->plugin);
+        if (empty($vod_ids)) {
+            hd_debug_print('No playlists with VOD');
+            return Action_Factory::show_title_dialog(TR::t('search'), TR::t('err_no_vod_libraries'));
+        }
+
+        if (count($vod_ids) === 1) {
+            return $this->run_external_search($search_string, $vod_ids);
+        }
+
+        return $this->show_external_search_dialog($search_string, $vod_ids);
+    }
+
+    /**
+     * Dialog of the search in several media libraries: the remembered libraries, search, change the selection, cancel.
+     * The list of the libraries (edit_list_config) has no OK, it is closed only by RETURN and always applied,
+     * so the search is started and cancelled here.
+     *
+     * @param string $search_string
+     * @param string[] $vod_ids
+     * @return array
+     */
+    private function show_external_search_dialog($search_string, $vod_ids)
+    {
+        $names = array();
+        foreach ($this->get_external_search_libraries($vod_ids) as $playlist_id) {
+            $info = Starnet_Vod_Libraries_Screen::get_library_info($this->plugin, $playlist_id);
+            $names[] = $info[PARAM_NAME];
+        }
+
+        $params = array('search' => $search_string);
+        $keywords = vod_standard::decode_search_keywords($search_string);
+
+        $defs = array();
+        Control_Factory::add_label($defs, TR::t('search'), implode(' / ', $keywords));
+        Control_Factory::add_multiline_label($defs, TR::t('vod_libraries_selected'), implode(', ', $names), 8);
+        Control_Factory::add_vgap($defs, 50);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_EXTERNAL_SEARCH_APPLY, TR::t('search'), $params);
+        if (defined('EditListConfigActionData::config_id')) {
+            Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_EXTERNAL_SEARCH_SELECT,
+                TR::t('vod_select_libraries'), $params);
+        }
+        Control_Factory::add_cancel_button($defs);
+
+        return Action_Factory::show_dialog($defs, TR::t('vod_search_libraries'));
+    }
+
+    /**
+     * List of the media libraries to search in, the remembered ones checked first in their order
+     *
+     * @param object $user_input
+     * @return array|null
+     */
+    private function select_external_search_libraries($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $this->plugin->init_plugin();
+        $vod_ids = Starnet_Vod_Libraries_Screen::get_vod_playlists_ids($this->plugin);
+        $selected_ids = $this->get_external_search_libraries($vod_ids);
+        $cfg = array();
+        foreach ($selected_ids as $playlist_id) {
+            $cfg[$playlist_id] = 1;
+        }
+        foreach ($vod_ids as $playlist_id) {
+            if (!isset($cfg[$playlist_id])) {
+                $cfg[$playlist_id] = 0;
+            }
+        }
+
+        $all_items = array();
+        $all_ids = array();
+        foreach ($cfg as $playlist_id => $enabled) {
+            $info = Starnet_Vod_Libraries_Screen::get_library_info($this->plugin, (string)$playlist_id);
+            Action_Factory::add_gui_item($all_items, $all_ids, (string)$playlist_id, $info[PARAM_NAME], $info['icon']);
+        }
+
+        List_Utils::write_config_file(self::VOD_SEARCH_CONFIG_ID, $cfg);
+
+        return Action_Factory::edit_list_config(self::VOD_SEARCH_CONFIG_ID, TR::t('vod_select_libraries'),
+            $all_items, $selected_ids,
+            null, null, null, null,
+            User_Input_Handler_Registry::create_action($this, self::ACTION_EXTERNAL_SEARCH_SELECTED, null,
+                array('search' => (string)safe_get_value($user_input, 'search', ''))));
+    }
+
+    /**
+     * The list of the media libraries is closed: remember the selection and show the search dialog again
+     *
+     * @param object $user_input
+     * @return array|null
+     */
+    private function apply_external_search_libraries($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $cfg = List_Utils::read_config_file(self::VOD_SEARCH_CONFIG_ID);
+        safe_unlink(List_Utils::config_file_path(self::VOD_SEARCH_CONFIG_ID));
+
+        $this->plugin->init_plugin();
+        $vod_ids = Starnet_Vod_Libraries_Screen::get_vod_playlists_ids($this->plugin);
+        $selected_ids = array();
+        foreach ($cfg as $playlist_id => $enabled) {
+            if ($enabled && in_array((string)$playlist_id, $vod_ids, true)) {
+                $selected_ids[] = (string)$playlist_id;
+            }
+        }
+
+        if (!empty($selected_ids)) {
+            $this->plugin->set_parameter(PARAM_VOD_SEARCH_LIBRARIES, json_encode($selected_ids));
+        }
+
+        return $this->show_external_search_dialog((string)safe_get_value($user_input, 'search', ''), $vod_ids);
+    }
+
+    /**
+     * Search in the remembered media libraries
+     *
+     * @param object $user_input
+     * @return array|null
+     */
+    private function apply_external_search($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $this->plugin->init_plugin();
+        $vod_ids = Starnet_Vod_Libraries_Screen::get_vod_playlists_ids($this->plugin);
+        if (empty($vod_ids)) {
+            return Action_Factory::show_title_dialog(TR::t('search'), TR::t('err_no_vod_libraries'));
+        }
+
+        return $this->run_external_search((string)safe_get_value($user_input, 'search', ''),
+            $this->get_external_search_libraries($vod_ids));
+    }
+
+    /**
+     * Remembered media libraries of the external search that still have VOD, all of them if nothing is remembered
+     *
+     * @param string[] $vod_ids
+     * @return string[]
+     */
+    private function get_external_search_libraries($vod_ids)
+    {
+        $remembered = json_decode($this->plugin->get_parameter(PARAM_VOD_SEARCH_LIBRARIES, ''), true);
+        $selected_ids = array();
+        if (is_array($remembered)) {
+            foreach ($remembered as $playlist_id) {
+                if (in_array((string)$playlist_id, $vod_ids, true)) {
+                    $selected_ids[] = (string)$playlist_id;
+                }
+            }
+        }
+
+        return empty($selected_ids) ? $vod_ids : $selected_ids;
+    }
+
+    /**
+     * @param string $search_string
+     * @param string[] $playlist_ids
+     * @return array
+     */
+    private function run_external_search($search_string, $playlist_ids)
+    {
+        hd_debug_print("Search in media libraries: " . implode(', ', $playlist_ids));
+        $caption = TR::t('search__1', implode(' / ', vod_standard::decode_search_keywords($search_string)));
+
+        if (count($playlist_ids) > 1) {
+            return Starnet_Vod_Merged_Search_Screen::make_search_action($this->plugin, $search_string, $playlist_ids, $caption);
+        }
+
+        // one library: the search result of this library with all its actions
+        if (!$this->plugin->select_vod_playlist($playlist_ids[0])) {
             hd_debug_print('VOD not supported or disabled');
             return Action_Factory::show_title_dialog(TR::t('search'), TR::t('err_vod_not_available'));
         }
@@ -415,8 +601,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return Action_Factory::show_title_dialog(TR::t('err_load_vod'), Dune_Last_Error::get_last_error(LAST_ERROR_VOD_LIST));
         }
 
-        return Starnet_Vod_Movie_List_Screen::make_search_action($this->plugin, $search_string,
-            TR::t('search__1', implode(' / ', $keywords)));
+        return Starnet_Vod_Movie_List_Screen::make_search_action($this->plugin, $search_string, $caption);
     }
 
     /**

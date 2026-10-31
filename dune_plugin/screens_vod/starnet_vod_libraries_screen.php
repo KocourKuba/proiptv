@@ -82,6 +82,56 @@ class Starnet_Vod_Libraries_Screen extends Abstract_Preloaded_Regular_Screen
     }
 
     /**
+     * Playlists that have VOD, in the order of the playlists
+     *
+     * @param Default_Dune_Plugin $plugin
+     * @return string[]
+     */
+    public static function get_vod_playlists_ids($plugin)
+    {
+        $ids = array();
+        foreach ($plugin->get_all_playlists_ids() as $playlist_id) {
+            if ($plugin->has_playlist_vod($playlist_id)) {
+                $ids[] = $playlist_id;
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
+     * Title, icon and VOD type of the media library of the playlist
+     *
+     * @param Default_Dune_Plugin $plugin
+     * @param string $playlist_id
+     * @return array PARAM_NAME, 'icon', PARAM_TYPE
+     */
+    public static function get_library_info($plugin, $playlist_id)
+    {
+        $params = $plugin->get_playlist_parameters($playlist_id);
+        $title = safe_get_value($params, PARAM_NAME, '');
+        if (empty($title)) {
+            $title = $playlist_id;
+        }
+
+        $provider = $plugin->get_provider($playlist_id);
+        if (is_null($provider)) {
+            $icon_file = VOD_GROUP_ICON;
+            $vod_type = TR::load('plugin_vod_type_m3u');
+        } else {
+            if ($title !== $provider->getName()) {
+                $title .= " ({$provider->getName()})";
+            }
+            $icon_file = $provider->getLogo();
+            $vod_type = Default_Dune_Plugin::is_provider_m3u_vod($provider)
+                ? TR::load('plugin_vod_type_m3u')
+                : TR::load('plugin_vod_type_json');
+        }
+
+        return array(PARAM_NAME => $title, 'icon' => $icon_file, PARAM_TYPE => $vod_type);
+    }
+
+    /**
      * @inheritDoc
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
@@ -89,28 +139,11 @@ class Starnet_Vod_Libraries_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
 
         $items = array();
-        foreach ($this->plugin->get_all_playlists_ids() as $playlist_id) {
-            if (!$this->plugin->has_playlist_vod($playlist_id)) continue;
-
-            $params = $this->plugin->get_playlist_parameters($playlist_id);
-            $title = safe_get_value($params, PARAM_NAME, '');
-            if (empty($title)) {
-                $title = $playlist_id;
-            }
-
-            $provider = $this->plugin->get_provider($playlist_id);
-            if (is_null($provider)) {
-                $icon_file = VOD_GROUP_ICON;
-                $vod_type = TR::load('plugin_vod_type_m3u');
-            } else {
-                if ($title !== $provider->getName()) {
-                    $title .= " ({$provider->getName()})";
-                }
-                $icon_file = $provider->getLogo();
-                $vod_type = Default_Dune_Plugin::is_provider_m3u_vod($provider)
-                    ? TR::load('plugin_vod_type_m3u')
-                    : TR::load('plugin_vod_type_json');
-            }
+        foreach (self::get_vod_playlists_ids($this->plugin) as $playlist_id) {
+            $info = self::get_library_info($this->plugin, $playlist_id);
+            $title = $info[PARAM_NAME];
+            $icon_file = $info['icon'];
+            $vod_type = $info[PARAM_TYPE];
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(array(

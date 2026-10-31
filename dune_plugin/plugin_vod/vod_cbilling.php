@@ -258,7 +258,13 @@ class vod_cbilling extends vod_standard
         }
 
         $url = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx&per_page=" . self::PAGE_LIMIT;
-        return $this->CollectQueryResult($keyword, $this->make_json_request($url, false));
+        // the search is cached as the other lists, an error body is not kept
+        $json = $this->make_json_request($url);
+        if (!isset($json['data'])) {
+            Curl_Wrapper::drop_last_cached_response();
+        }
+
+        return $this->CollectQueryResult($keyword, $json);
     }
 
     /**

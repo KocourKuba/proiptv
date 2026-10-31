@@ -138,7 +138,7 @@ class vod_sharaclub extends vod_json_list
     {
         $name = safe_get_value($item, 'name');
         $info = safe_get_value($item, 'info');
-        $movie_info = TR::t('vod_screen_movie_info__5',
+        $movie_info = Short_Movie::make_info(
             $name,
             safe_get_value($info, 'year'),
             array_to_str(safe_get_value($info, 'country', array())),

@@ -114,9 +114,14 @@ class vod_standard extends Abstract_Vod
     protected $prefetched_search;
 
     /**
-     * @var array movie id => true, movies already returned by getSearchResults() for several keywords
+     * @var array movie id => true, movies already returned by getSearchResults() for a json encoded search
      */
     protected $search_movie_ids = array();
+
+    /**
+     * @var array json encoded search => the chosen search string, 'title' or 'original_title' if nothing is found by the title
+     */
+    protected $search_keywords = array();
 
     /**
      * @param Default_Dune_Plugin $plugin
@@ -643,6 +648,7 @@ class vod_standard extends Abstract_Vod
     {
         if ($this->is_entered) {
             $this->search_movie_ids = array();
+            $this->search_keywords = array();
         }
 
         parent::try_reset_pages();
@@ -650,8 +656,9 @@ class vod_standard extends Abstract_Vod
 
     /**
      * Next part of the search. The keyword can be a json encoded array (external search from
-     * the Play in apps plugin): the results of the search by 'title' and by 'original_title' are merged,
-     * movies already returned since the search start are skipped. A plain keyword is searched as is.
+     * the Play in apps plugin): the movies are searched by 'title', by 'original_title' only if nothing
+     * is found by the title. Movies already returned since the search start are skipped.
+     * A plain keyword is searched as is.
      *
      * @param string $keyword
      * @return Short_Movie[]
@@ -663,16 +670,27 @@ class vod_standard extends Abstract_Vod
             return empty($keywords) ? array() : $this->getSearchList($keywords[0]);
         }
 
+        if (isset($this->search_keywords[$keyword])) {
+            // next part of the chosen search
+            $found = $this->getSearchList($this->search_keywords[$keyword]);
+        } else {
+            $this->search_keywords[$keyword] = $keywords[0];
+            $found = $this->getSearchList($keywords[0]);
+            if (empty($found)) {
+                hd_debug_print("Nothing found by title, search by original title: $keywords[1]");
+                $this->search_keywords[$keyword] = $keywords[1];
+                $found = $this->getSearchList($keywords[1]);
+            }
+        }
+
         // a part of duplicates only ends the list: a provider without the search paging
         // returns the whole result on every call, a repeat would never end
         $movies = array();
-        foreach ($keywords as $search) {
-            foreach ($this->getSearchList($search) as $movie) {
-                if (isset($this->search_movie_ids[$movie->id])) continue;
+        foreach ($found as $movie) {
+            if (isset($this->search_movie_ids[$movie->id])) continue;
 
-                $this->search_movie_ids[$movie->id] = true;
-                $movies[] = $movie;
-            }
+            $this->search_movie_ids[$movie->id] = true;
+            $movies[] = $movie;
         }
 
         return $movies;
@@ -1010,7 +1028,7 @@ class vod_standard extends Abstract_Vod
                 safe_get_value($entry, 'id'),
                 $name,
                 safe_get_value($entry, 'poster'),
-                TR::t('vod_screen_movie_info__5',
+                Short_Movie::make_info(
                     $name,
                     safe_get_value($entry, 'year'),
                     safe_get_value($entry, 'country'),

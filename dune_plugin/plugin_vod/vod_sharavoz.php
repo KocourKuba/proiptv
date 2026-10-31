@@ -56,7 +56,7 @@ class vod_sharavoz extends vod_standard
         if (parent::init_vod($provider)) {
             $pass = $this->provider->GetProviderParameter(MACRO_PASSWORD);
             $vod_url = $this->provider->replace_macros($this->provider->getRawApiCommand(API_COMMAND_GET_VOD));
-            $this->xtream->init($this->plugin, $vod_url, $pass, $pass);
+            $this->xtream->init($this->plugin, $vod_url, $pass, $pass, $this->playlist_id);
             return true;
         }
 
@@ -382,7 +382,7 @@ class vod_sharavoz extends vod_standard
 
         $name = safe_get_value($movieData, 'name');
         $movie = new Short_Movie($id, $name, $icon,
-            TR::t('vod_screen_movie_info__2', $name, safe_get_value($movieData, 'rating'))
+            Short_Movie::make_info($name, '', '', '', safe_get_value($movieData, 'rating'))
         );
 
         $this->plugin->vod->set_cached_short_movie($movie);

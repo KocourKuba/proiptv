@@ -320,12 +320,12 @@ class vod_ttv extends vod_standard
                 $params['mdb_domain'] = $poster_host;
             }
 
-            $response = $this->make_json_request(self::CMD_FILM_ALT_SEARCH, $params, false);
+            $response = $this->make_json_request(self::CMD_FILM_ALT_SEARCH, $params);
             return $this->CollectSearchResult($keyword, $page, $response);
         }
 
         $response = $this->make_json_request(self::CMD_FILM_LIST,
-            array('search' => $keyword, 'page' => $page, 'page_size' => self::FILM_PAGE_SIZE), false);
+            array('search' => $keyword, 'page' => $page, 'page_size' => self::FILM_PAGE_SIZE));
         // film_list already has the common shape: data.films with the relative 'img' poster path
         // and data.total_pages
         return $this->CollectQueryResult($keyword, $page, $response);
@@ -809,7 +809,7 @@ class vod_ttv extends vod_standard
         }
 
         $poster = $this->get_image_url(safe_get_value($film, 'img'));
-        $info = TR::t('vod_screen_movie_info__5',
+        $info = Short_Movie::make_info(
             $name,
             safe_get_value($film, 'year'),
             safe_get_value($film, 'country'),

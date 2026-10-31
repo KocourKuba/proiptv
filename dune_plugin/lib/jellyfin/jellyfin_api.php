@@ -58,15 +58,16 @@ class jellyfin_api
      * @param Default_Dune_Plugin $plugin
      * @param string $baseUrl
      * @param string $appVersion
+     * @param string|null $playlist_id playlist of the requests (cache, user agent), null - the active one
      * @return void
      */
-    public function init($plugin, $baseUrl, $appVersion = '1.0.0')
+    public function init($plugin, $baseUrl, $appVersion = '1.0.0', $playlist_id = null)
     {
         $this->plugin = $plugin;
         $this->deviceId = get_serial_number();
         $this->baseUrl = rtrim($baseUrl, '/');
         $this->base_auth_string = sprintf('MediaBrowser Client="ProIPTV", Device="dunehd", DeviceId="%s", Version="%s"', $this->deviceId, $appVersion);
-        $this->curl_wrapper = $plugin->setup_curl();
+        $this->curl_wrapper = $plugin->setup_curl($playlist_id);
     }
 
     /**

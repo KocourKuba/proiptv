@@ -26,6 +26,9 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
     const VOD_SANDWICH_WIDTH = 190;
     const VOD_SANDWICH_HEIGHT = 290;
+    // the poster in the details is limited, a long movie info is not cut
+    const VOD_DETAILED_ICON_WIDTH = 260;
+    const VOD_DETAILED_ICON_HEIGHT = 390;
     const VOD_CHANNEL_ICON_WIDTH = 190;
     const VOD_CHANNEL_ICON_HEIGHT = 290;
 
@@ -1145,6 +1148,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 ),
 
                 PluginRegularFolderView::base_view_item_params => array(
+                    ViewItemParams::item_detailed_icon_width => self::VOD_DETAILED_ICON_WIDTH,
+                    ViewItemParams::item_detailed_icon_height => self::VOD_DETAILED_ICON_HEIGHT,
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::icon_sel_scale_factor => 1.2,
                     ViewItemParams::icon_path => self::VOD_ICON_PATH,
@@ -1191,6 +1196,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 ),
 
                 PluginRegularFolderView::base_view_item_params => array(
+                    ViewItemParams::item_detailed_icon_width => self::VOD_DETAILED_ICON_WIDTH,
+                    ViewItemParams::item_detailed_icon_height => self::VOD_DETAILED_ICON_HEIGHT,
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::icon_sel_scale_factor => 1.2,
                     ViewItemParams::icon_path => self::VOD_ICON_PATH,
@@ -1236,6 +1243,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 ),
 
                 PluginRegularFolderView::base_view_item_params => array(
+                    ViewItemParams::item_detailed_icon_width => self::VOD_DETAILED_ICON_WIDTH,
+                    ViewItemParams::item_detailed_icon_height => self::VOD_DETAILED_ICON_HEIGHT,
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::icon_sel_scale_factor => 1.1,
                     ViewItemParams::icon_path => self::VOD_ICON_PATH,
@@ -1282,6 +1291,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 ),
 
                 PluginRegularFolderView::base_view_item_params => array(
+                    ViewItemParams::item_detailed_icon_width => self::VOD_DETAILED_ICON_WIDTH,
+                    ViewItemParams::item_detailed_icon_height => self::VOD_DETAILED_ICON_HEIGHT,
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::icon_sel_scale_factor => 1.2,
                     ViewItemParams::icon_path => self::VOD_ICON_PATH,
@@ -1328,6 +1339,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                     ViewParams::sandwich_icon_keep_aspect_ratio => true,
                 ),
                 PluginRegularFolderView::base_view_item_params => array(
+                    ViewItemParams::item_detailed_icon_width => self::VOD_DETAILED_ICON_WIDTH,
+                    ViewItemParams::item_detailed_icon_height => self::VOD_DETAILED_ICON_HEIGHT,
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::icon_path => self::VOD_ICON_PATH,
                     ViewItemParams::item_layout => HALIGN_LEFT,

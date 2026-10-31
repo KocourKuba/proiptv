@@ -175,7 +175,13 @@ class vod_korona extends vod_standard
         hd_debug_print("getSearchList: $keyword");
 
         $enc_keyword = urlencode($keyword);
-        return $this->CollectQueryResult($keyword, $this->make_json_request("/filter/by_name?name=$enc_keyword&page=1&per_page=999999999", false));
+        // the search is cached as the other lists, an error body is not kept
+        $json = $this->make_json_request("/filter/by_name?name=$enc_keyword&page=1&per_page=999999999");
+        if (!isset($json['data'])) {
+            Curl_Wrapper::drop_last_cached_response();
+        }
+
+        return $this->CollectQueryResult($keyword, $json);
     }
 
     /**

@@ -113,7 +113,7 @@ class vod_glanz extends vod_json_list
             $this->get_item_id($item),
             $name,
             safe_get_value($item, 'cover'),
-            TR::t('vod_screen_movie_info__4',
+            Short_Movie::make_info(
                 $name,
                 safe_get_value($item, 'year'),
                 safe_get_value($item, 'country'),

@@ -63,9 +63,10 @@ class xtream_codes_api
      * @param string $base_url
      * @param string $username
      * @param string $password
+     * @param string|null $playlist_id playlist of the requests (cache, user agent), null - the active one
      * @return void
      */
-    public function init($plugin, $base_url, $username, $password)
+    public function init($plugin, $base_url, $username, $password, $playlist_id = null)
     {
         hd_debug_print(null, true);
         hd_debug_print("Base url: $base_url", true);
@@ -73,7 +74,7 @@ class xtream_codes_api
         $this->base_url = $base_url;
         $this->username = $username;
         $this->password = $password;
-        $this->curl_wrapper = $plugin->setup_curl();
+        $this->curl_wrapper = $plugin->setup_curl($playlist_id);
     }
 
     /**

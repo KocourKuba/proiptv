@@ -55,7 +55,7 @@ class vod_mirkino extends vod_standard
             $vod_url = $this->provider->replace_macros($this->provider->getRawApiCommand(API_COMMAND_GET_VOD));
 
             $this->jfc = new jellyfin_api();
-            $this->jfc->init($this->plugin, $vod_url, HD::get_manifest_info_value('app_version'));
+            $this->jfc->init($this->plugin, $vod_url, HD::get_manifest_info_value('app_version'), $this->playlist_id);
 
             $access_info = array(
                 MACRO_LOGIN => $this->provider->GetProviderParameter(MACRO_LOGIN),
@@ -493,7 +493,7 @@ class vod_mirkino extends vod_standard
         $type = safe_get_value($movie_info, 'Type', jellyfin_api::MOVIES);
         $rating = safe_get_value($movie_info, 'OfficialRating', 0);
         $icon = $this->jfc->getItemImageUrl($id);
-        $movie = new Short_Movie("{$id}_$type", $name, $icon, TR::t('vod_screen_movie_info__2', $name, $rating));
+        $movie = new Short_Movie("{$id}_$type", $name, $icon, Short_Movie::make_info($name, '', '', '', $rating));
 
         $this->plugin->vod->set_cached_short_movie($movie);
 

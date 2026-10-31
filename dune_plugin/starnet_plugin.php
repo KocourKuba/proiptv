@@ -67,6 +67,7 @@ require_once 'screens_common/starnet_edit_xmltv_list_screen.php';
 require_once 'screens_common/starnet_edit_json_list_screen.php';
 require_once 'screens_common/starnet_edit_providers_list_screen.php';
 require_once 'screens_vod/starnet_vod_libraries_screen.php';
+require_once 'screens_vod/starnet_vod_merged_search_screen.php';
 
 class Starnet_Plugin extends Default_Dune_Plugin
 {
@@ -123,6 +124,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Edit_Json_List_Screen($this));
         $this->create_screen(new Starnet_Edit_Providers_List_Screen($this));
         $this->create_screen(new Starnet_Vod_Libraries_Screen($this));
+        $this->create_screen(new Starnet_Vod_Merged_Search_Screen($this));
         $this->create_screen(new Starnet_Edit_Hidden_List_Screen($this));
         $this->create_screen(new Starnet_Edit_Group_List_Screen($this));
         $this->create_screen(new Starnet_Edit_Channel_List_Screen($this));

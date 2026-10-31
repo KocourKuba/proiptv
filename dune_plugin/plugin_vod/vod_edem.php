@@ -303,7 +303,7 @@ class vod_edem extends vod_standard
                     safe_get_value($request, 'fid'),
                     $title,
                     safe_get_value($entry, 'imglr'),
-                    TR::t('vod_screen_movie_info__3', $title, safe_get_value($entry, 'year'))
+                    Short_Movie::make_info($title, safe_get_value($entry, 'year'))
                 );
                 $movie->big_poster_url = safe_get_value($entry, 'img');
                 $this->plugin->vod->set_cached_short_movie($movie);

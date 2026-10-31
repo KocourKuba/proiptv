@@ -69,4 +69,35 @@ class Short_Movie
         $this->poster_url = (string)$poster_url;
         $this->info = $info;
     }
+
+    /**
+     * Movie info for the details: the name and the lines of the known values, an empty value has no line
+     *
+     * @param string $name
+     * @param string $year
+     * @param string $country
+     * @param string $genre
+     * @param string|float $rating 0 - no rating
+     * @return string
+     */
+    public static function make_info($name, $year = '', $country = '', $genre = '', $rating = '')
+    {
+        $lines = array($name);
+        $values = array(
+            'vod_screen_movie_year__1' => $year,
+            'vod_screen_movie_country__1' => $country,
+            'vod_screen_movie_genre__1' => $genre,
+            'vod_screen_movie_rating__1' => is_numeric($rating) && (float)$rating == 0 ? '' : $rating,
+        );
+
+        foreach ($values as $key => $value) {
+            $value = trim((string)$value);
+            if ($value !== '') {
+                // glued lines, translated by the plugin
+                $lines[] = TR::load($key, $value);
+            }
+        }
+
+        return implode('|', $lines);
+    }
 }
