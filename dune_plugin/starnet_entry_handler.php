@@ -33,7 +33,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
     const ACTION_PLUGIN_ENTRY = 'plugin_entry';
     const ACTION_LAUNCH = 'launch';
-    const ACTION_LAUNCH_VOD = 'launch_vod';
     const ACTION_LAUNCH_VOD_LIBRARIES = 'launch_vod_libraries';
     const ACTION_AUTO_RESUME = 'auto_resume';
     const ACTION_UPDATE_EPFS = 'update_epfs';
@@ -269,31 +268,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     case self::ACTION_LAUNCH:
                     case self::ACTION_AUTO_RESUME:
                         return $this->run_resume_state($user_input, $plugin_cookies);
-
-                    case self::ACTION_LAUNCH_VOD:
-                        $action = $this->check_upgrade($user_input);
-                        if ($action !== null) {
-                            return $action;
-                        }
-
-                        hd_print_separator();
-                        hd_debug_print('LANUCH PLUGIN VOD');
-                        hd_print_separator();
-
-                        $this->plugin->init_plugin(true);
-                        if ($this->plugin->get_all_playlists_count() === 0) {
-                            return $this->open_playlist_screen();
-                        }
-
-                        // only VOD is loaded, the TV playlist is loaded when TV is opened
-                        if ($this->plugin->init_vod_context()
-                            && $this->plugin->get_bool_parameter(PARAM_SHOW_VOD_ICON, false)) {
-                            $actions[] = Action_Factory::invalidate_all_folders($plugin_cookies);
-                            $actions[] = Action_Factory::open_folder(Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID));
-                            return Action_Factory::composite($actions);
-                        }
-
-                        return Action_Factory::show_error(false, TR::t('err_vod_not_available'));
 
                     case self::ACTION_LAUNCH_VOD_LIBRARIES:
                         $action = $this->check_upgrade($user_input);

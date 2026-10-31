@@ -90,13 +90,6 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
             TR::t('setup_support_newui'), SwitchOnOff::translate($show_newui), SwitchOnOff::to_image($show_newui));
 
         //////////////////////////////////////
-        // show separate VOD icon
-        $show_vod_icon = $this->plugin->get_parameter(PARAM_SHOW_VOD_ICON, SwitchOnOff::off);
-        hd_debug_print(PARAM_SHOW_VOD_ICON . ": $show_vod_icon", true);
-        Control_Factory::add_image_button($defs, $this, PARAM_SHOW_VOD_ICON,
-            TR::t('setup_show_vod_icon'), SwitchOnOff::translate($show_vod_icon), SwitchOnOff::to_image($show_vod_icon));
-
-        //////////////////////////////////////
         // show media libraries of all playlists as a separate icon
         $show_libraries_icon = $this->plugin->get_parameter(PARAM_SHOW_VOD_LIBRARIES_ICON, SwitchOnOff::off);
         hd_debug_print(PARAM_SHOW_VOD_LIBRARIES_ICON . ": $show_libraries_icon", true);
@@ -135,18 +128,6 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
                 $actions[] = Action_Factory::show_title_dialog(TR::t('warning'), TR::t('setup_reboot_required'));
                 $actions[] = Action_Factory::restart();
                 return Action_Factory::composite($actions);
-
-            case PARAM_SHOW_VOD_ICON:
-                $this->plugin->toggle_parameter($control_id, false);
-                $enable_vod_icon = SwitchOnOff::to_def($this->plugin->has_vod_support() && $this->plugin->get_bool_parameter($control_id));
-                $plugin_cookies->{$control_id} = $enable_vod_icon;
-                hd_debug_print("Update cookie values: $enable_vod_icon", true);
-
-                return Action_Factory::invalidate_all_folders(
-                    $plugin_cookies,
-                    null,
-                    Action_Factory::reset_controls($this->do_get_control_defs(null, $plugin_cookies))
-                );
 
             case PARAM_SHOW_VOD_LIBRARIES_ICON:
                 $this->plugin->toggle_parameter($control_id, false);

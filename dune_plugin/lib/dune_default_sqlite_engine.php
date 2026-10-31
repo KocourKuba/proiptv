@@ -3367,9 +3367,11 @@ class Dune_Default_Sqlite_Engine
      */
     private function upgrade_6x_version()
     {
-        // remove unused parameters
+        // remove unused parameters: 'show_vod_icon' - removed separate VOD application icon,
+        // replaced by the 'ProIPTV media libraries' icon
         $query = sprintf(Sql_Wrapper::DELETE_FROM_WHERE_COND,
-            self::PARAMETERS_TABLE, Sql_Wrapper::sql_make_where_clause(array(PARAM_COOKIE_ENABLE_DEBUG, 'xmltv_source_names'), COLUMN_NAME));
+            self::PARAMETERS_TABLE,
+            Sql_Wrapper::sql_make_where_clause(array(PARAM_COOKIE_ENABLE_DEBUG, 'xmltv_source_names', 'show_vod_icon'), COLUMN_NAME));
         $this->sql_plugin->exec($query);
 
         // transfer old 6.x playlist parameters to new table
@@ -3503,6 +3505,11 @@ class Dune_Default_Sqlite_Engine
 
         if (isset($this->plugin_cookies->toggle_move)) {
             unset($this->plugin_cookies->toggle_move);
+        }
+
+        // cookie of the removed separate VOD application icon
+        if (isset($this->plugin_cookies->show_vod_icon)) {
+            unset($this->plugin_cookies->show_vod_icon);
         }
 
         // move parameters from plugin_cookies to db

@@ -293,7 +293,6 @@ const VIEW_ICONS_5X3_MOVIE_NO_CAPTION = 'icons_5x3_movie_no_caption';
 const PARAM_COOKIE_ENABLE_DEBUG = 'enable_debug';
 const PARAM_COOKIE_MEMORY_LIMIT = 'memory_limit';
 const PARAM_COOKIE_ENABLE_NEWUI = 'enable_newui';
-const PARAM_COOKIE_SHOW_VOD_ICON = 'show_vod_icon';
 const PARAM_COOKIE_SHOW_VOD_LIBRARIES_ICON = 'show_vod_libraries_icon';
 const PARAM_COOKIE_DISABLE_UPDATE = 'disable_update';
 
@@ -326,8 +325,8 @@ const PARAM_EPG_JSON_SERVERS = 'epg_json_servers';
 const PARAM_SELECTED_XMLTV_FIRST = 'selected_xmltv_first';
 const PARAM_SETTINGS_PASSWORD = 'settings_password';
 const PARAM_SHOW_TV = 'show_tv';
-const PARAM_SHOW_VOD_ICON = 'show_vod_icon';
 const PARAM_SHOW_VOD_LIBRARIES_ICON = 'show_vod_libraries_icon';
+const PARAM_VOD_LIBRARIES_VIEW = 'vod_libraries_view';
 const PARAM_VOD_SEARCH_LIBRARIES = 'vod_search_libraries';
 const PARAM_SLEEP_TIMER_COUNTDOWN = 'sleep_timer_countdown';
 const PARAM_SLEEP_TIMER_ENABLED = 'sleep_timer_enabled';

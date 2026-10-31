@@ -1609,9 +1609,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         // VOD is not loaded here, init_vod_context() loads it when it is used
-        $enable_vod_icon = SwitchOnOff::to_def($this->has_vod_support() && $this->get_bool_parameter(PARAM_SHOW_VOD_ICON, false));
-        $plugin_cookies->{PARAM_COOKIE_SHOW_VOD_ICON} = $enable_vod_icon;
-        hd_debug_print("Show VOD icon: $enable_vod_icon", true);
         $plugin_cookies->{PARAM_COOKIE_SHOW_VOD_LIBRARIES_ICON} =
             SwitchOnOff::to_def($this->get_bool_parameter(PARAM_SHOW_VOD_LIBRARIES_ICON, false));
 

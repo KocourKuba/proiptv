@@ -25,14 +25,20 @@
 
 require_once 'lib/abstract_preloaded_regular_screen.php';
 require_once 'lib/user_input_handler_registry.php';
+require_once 'lib/list_utils.php';
 
 /**
  * Media libraries of all playlists that have VOD. The selected one is opened in its own VOD context,
  * the active TV playlist is not changed.
+ * The blue key sets which media libraries are shown and in what order (PARAM_VOD_LIBRARIES_VIEW).
  */
 class Starnet_Vod_Libraries_Screen extends Abstract_Preloaded_Regular_Screen
 {
     const ID = 'vod_libraries';
+
+    const ACTION_SHOW_SETUP = 'libraries_show_setup';
+    const ACTION_SHOW_SETUP_APPLY = 'libraries_show_setup_apply';
+    const SHOW_SETUP_CONFIG_ID = 'proiptv_vod_libraries';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -45,6 +51,8 @@ class Starnet_Vod_Libraries_Screen extends Abstract_Preloaded_Regular_Screen
 
         $actions[GUI_EVENT_KEY_ENTER] = $open;
         $actions[GUI_EVENT_KEY_PLAY] = $open;
+        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, self::ACTION_SHOW_SETUP,
+            TR::t('vod_libraries_setup'));
         $actions[GUI_EVENT_KEY_RETURN] = Action_Factory::close_and_run();
 
         return $actions;
@@ -56,6 +64,15 @@ class Starnet_Vod_Libraries_Screen extends Abstract_Preloaded_Regular_Screen
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
+
+        if ($user_input->control_id === self::ACTION_SHOW_SETUP) {
+            return $this->show_setup();
+        }
+
+        if ($user_input->control_id === self::ACTION_SHOW_SETUP_APPLY) {
+            $this->apply_setup();
+            return $this->invalidate_current_folder(MediaURL::decode(static::ID), $plugin_cookies, 0);
+        }
 
         if ($user_input->control_id !== ACTION_OPEN_FOLDER || !isset($user_input->selected_media_url)) {
             return null;
@@ -100,6 +117,104 @@ class Starnet_Vod_Libraries_Screen extends Abstract_Preloaded_Regular_Screen
     }
 
     /**
+     * Media libraries in the shown order: playlist id => 1 shown, 0 hidden.
+     * The saved order first, a media library that is not saved yet (a new playlist) is shown at the end;
+     * the saved ones that have no VOD anymore are dropped
+     *
+     * @return array
+     */
+    protected function get_view_config()
+    {
+        $vod_ids = self::get_vod_playlists_ids($this->plugin);
+        $has_vod = array_flip($vod_ids);
+
+        $cfg = array();
+        $saved = json_decode($this->plugin->get_parameter(PARAM_VOD_LIBRARIES_VIEW, ''), true);
+        if (is_array($saved)) {
+            foreach ($saved as $playlist_id => $shown) {
+                $playlist_id = (string)$playlist_id;
+                if (isset($has_vod[$playlist_id])) {
+                    $cfg[$playlist_id] = $shown ? 1 : 0;
+                }
+            }
+        }
+
+        foreach ($vod_ids as $playlist_id) {
+            if (!isset($cfg[$playlist_id])) {
+                $cfg[$playlist_id] = 1;
+            }
+        }
+
+        return $cfg;
+    }
+
+    /**
+     * List of all media libraries: the shown ones are checked, the order can be changed
+     *
+     * @return array|null
+     */
+    protected function show_setup()
+    {
+        $cfg = $this->get_view_config();
+        if (empty($cfg)) {
+            return null;
+        }
+
+        $all_items = array();
+        $all_ids = array();
+        $checked_ids = array();
+        foreach ($cfg as $playlist_id => $shown) {
+            $playlist_id = (string)$playlist_id;
+            $info = self::get_library_info($this->plugin, $playlist_id);
+            Action_Factory::add_gui_item($all_items, $all_ids, $playlist_id, $info[PARAM_NAME], $info['icon']);
+            if ($shown) {
+                $checked_ids[] = $playlist_id;
+            }
+        }
+
+        List_Utils::write_config_file(self::SHOW_SETUP_CONFIG_ID, $cfg);
+
+        return Action_Factory::edit_list_config(self::SHOW_SETUP_CONFIG_ID, TR::t('vod_libraries_setup'),
+            $all_items, $checked_ids,
+            null, null, null, null,
+            User_Input_Handler_Registry::create_action($this, self::ACTION_SHOW_SETUP_APPLY));
+    }
+
+    /**
+     * The list is closed: the order and the shown media libraries are saved as one plugin parameter
+     *
+     * @return void
+     */
+    protected function apply_setup()
+    {
+        $edited = List_Utils::read_config_file(self::SHOW_SETUP_CONFIG_ID);
+        safe_unlink(List_Utils::config_file_path(self::SHOW_SETUP_CONFIG_ID));
+        if (empty($edited)) {
+            // the list was not changed
+            return;
+        }
+
+        $cfg = array();
+        $current = $this->get_view_config();
+        foreach ($edited as $playlist_id => $shown) {
+            $playlist_id = (string)$playlist_id;
+            if (isset($current[$playlist_id])) {
+                $cfg[$playlist_id] = $shown ? 1 : 0;
+            }
+        }
+
+        // a media library missing in the edited list keeps its place at the end
+        foreach ($current as $playlist_id => $shown) {
+            if (!isset($cfg[(string)$playlist_id])) {
+                $cfg[(string)$playlist_id] = $shown;
+            }
+        }
+
+        hd_debug_print('Media libraries view: ' . json_encode($cfg));
+        $this->plugin->set_parameter(PARAM_VOD_LIBRARIES_VIEW, json_encode($cfg));
+    }
+
+    /**
      * Title, icon and VOD type of the media library of the playlist
      *
      * @param Default_Dune_Plugin $plugin
@@ -139,7 +254,10 @@ class Starnet_Vod_Libraries_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
 
         $items = array();
-        foreach (self::get_vod_playlists_ids($this->plugin) as $playlist_id) {
+        foreach ($this->get_view_config() as $playlist_id => $shown) {
+            if (!$shown) continue;
+
+            $playlist_id = (string)$playlist_id;
             $info = self::get_library_info($this->plugin, $playlist_id);
             $title = $info[PARAM_NAME];
             $icon_file = $info['icon'];
