@@ -654,6 +654,11 @@
         "get_playlist": "https://iptvcinema.ru/{LOGIN}/{PASSWORD}/playlist.{STREAM_ID}"
       },
       "config": {
+        "epg_presets": [
+          {
+            "name": "proiptv"
+          }
+        ],
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "streams": {
           "m3u8": "HLS",
@@ -702,8 +707,7 @@
       "config": {
         "epg_presets": [
           {
-            "name": "proiptv",
-            "alias": "iptvonline"
+            "name": "proiptv"
           }
         ],
         "ext_params": true,

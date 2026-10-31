@@ -801,6 +801,12 @@
       "logo": "https://iptv.proiptv.info/res/logo_iptvcinema.png",
       "provider_url": "https://iptvcinema.ru/",
       "config": {
+        "epg_presets": [
+          {
+            "name": "proiptv",
+            "alias": "iptvcinema"
+          }
+        ],
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "playlists": {
           "default": {
