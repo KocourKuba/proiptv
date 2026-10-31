@@ -55,7 +55,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
         $actions[GUI_EVENT_KEY_DUNE] = $add_to_favorite;
         $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SHOW_SEARCH_DLG, TR::t('search'));
 
-        $provider = $this->plugin->get_active_provider();
+        $provider = $this->plugin->vod->get_provider();
         if (!empty($provider) && Default_Dune_Plugin::is_provider_m3u_vod($provider)) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_TO_LIST, TR::t('add_to_list'));
         }
@@ -147,7 +147,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
      */
     public static function make_vod_media_url_str($category_id, $genre_id)
     {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'category_id' => $category_id, 'genre_id' => $genre_id));
+        return MediaURL::encode(Vod_Context::add_playlist_id(array(PARAM_SCREEN_ID => static::ID, 'category_id' => $category_id, 'genre_id' => $genre_id)));
     }
 
     /**
@@ -231,7 +231,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
         // of entries on a provider m3u
         $fav_ids = array_flip($this->plugin->get_channels_order(VOD_FAV_GROUP_ID));
 
-        $provider = $this->plugin->get_active_provider();
+        $provider = $this->plugin->vod->get_provider();
         $list_ids = array();
         if ($provider && Default_Dune_Plugin::is_provider_m3u_vod($provider)) {
             $list_ids = array_flip($this->plugin->get_channels_order(VOD_LIST_GROUP_ID));

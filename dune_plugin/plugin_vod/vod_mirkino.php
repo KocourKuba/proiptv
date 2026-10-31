@@ -116,7 +116,7 @@ class vod_mirkino extends vod_standard
         hd_debug_print("Stream url: " . $url, true);
 
         $vod_url = make_ts($url);
-        $dune_params = $this->plugin->collect_dune_params();
+        $dune_params = $this->plugin->collect_dune_params($this->playlist_id);
         if (!empty($dune_params)) {
             $magic = str_replace(array('=', '+'), array(':', '%20'), http_build_query($dune_params, null, ','));
             $vod_url .= DUNE_PARAMS_MAGIC . $magic;

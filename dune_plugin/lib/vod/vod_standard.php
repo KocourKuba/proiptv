@@ -61,6 +61,13 @@ class vod_standard extends Abstract_Vod
     protected $provider;
 
     /**
+     * Playlist of this VOD, see Vod_Context
+     *
+     * @var string
+     */
+    protected $playlist_id;
+
+    /**
      * @var array|false
      */
     protected $vod_items;
@@ -119,6 +126,31 @@ class vod_standard extends Abstract_Vod
         $this->plugin = $plugin;
         $this->special_groups = new Hashed_Array();
         $this->vod_m3u_parser = new M3uParser();
+    }
+
+    /**
+     * @param string $playlist_id
+     * @return void
+     */
+    public function set_playlist_id($playlist_id)
+    {
+        $this->playlist_id = $playlist_id;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_playlist_id()
+    {
+        return $this->playlist_id;
+    }
+
+    /**
+     * @return api_default|null null for a VOD playlist
+     */
+    public function get_provider()
+    {
+        return $this->provider;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -393,19 +425,14 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * The playlist of the movie is remembered as for TV playback:
-     * the auto resume continues the playback only if the active playlist is not changed
+     * The movie keeps the playlist of this VOD: its playback events write the history of this playlist
      *
      * @inheritDoc
      */
-    public function get_vod_info(MediaURL $media_url)
+    public function set_cached_movie(Movie $movie)
     {
-        $vod_info = parent::get_vod_info($media_url);
-        if (!empty($vod_info)) {
-            $this->plugin->set_parameter(PARAM_LAST_PLAYLIST, $this->plugin->get_active_playlist_id());
-        }
-
-        return $vod_info;
+        $movie->playlist_id = $this->playlist_id;
+        parent::set_cached_movie($movie);
     }
 
     /**
@@ -454,7 +481,8 @@ class vod_standard extends Abstract_Vod
 
         // another provider vod playlist selected - its categories come from another cache
         if (isset($this->category_index)
-            && ($this->vod_cache_base === null || $this->vod_cache_base === $this->plugin->get_playlist_cache_filepath(false))) {
+            && ($this->vod_cache_base === null
+                || $this->vod_cache_base === $this->plugin->get_vod_cache_filepath($this->playlist_id, $this->provider))) {
             return true;
         }
 
@@ -1040,7 +1068,7 @@ class vod_standard extends Abstract_Vod
     {
         hd_debug_print(null, true);
 
-        $playlist_id = $this->plugin->get_active_playlist_id();
+        $playlist_id = $this->playlist_id;
         if (!$this->plugin->is_playlist_entry_exist($playlist_id)) {
             hd_debug_print('Playlist not defined');
             return false;
@@ -1051,7 +1079,7 @@ class vod_standard extends Abstract_Vod
         $pl_type = safe_get_value($params, PARAM_PLAYLIST_TYPE);
 
         if ($type === PARAM_PROVIDER) {
-            $provider = $this->plugin->get_active_provider();
+            $provider = $this->provider;
             if (is_null($provider)) {
                 hd_debug_print('Unknown provider');
                 return false;
@@ -1066,7 +1094,7 @@ class vod_standard extends Abstract_Vod
             return false;
         }
 
-        $base_name = $this->plugin->get_playlist_cache_filepath(false);
+        $base_name = $this->plugin->get_vod_cache_filepath($playlist_id, $this->provider);
         $this->vod_cache_base = $base_name;
         $m3u_file = "$base_name.m3u8";
         $db_file = "$base_name.db";
@@ -1079,7 +1107,7 @@ class vod_standard extends Abstract_Vod
         $this->plugin->set_sql_vod($db);
 
         try {
-            if ($this->plugin->is_playlist_cache_expired(false)) {
+            if ($this->plugin->is_vod_cache_expired($base_name)) {
                 $uri = safe_get_value($params, PARAM_URI);
                 if ($type === PARAM_PROVIDER) {
                     hd_debug_print('download provider vod');
@@ -1107,7 +1135,7 @@ class vod_standard extends Abstract_Vod
                         throw new Exception('Empty playlist url');
                     }
 
-                    $curl_wrapper = $this->plugin->setup_curl();
+                    $curl_wrapper = $this->plugin->setup_curl($playlist_id);
                     $res = $curl_wrapper->download_file($uri, $m3u_file);
                     if ($res === false) {
                         $msg = sprintf("%s\nError code: %s\n%s",

@@ -83,6 +83,20 @@ class Curl_Wrapper
     private $file_cache_path;
 
     /**
+     * Playlist of the requests, its user agent is set by Default_Dune_Plugin::reset_curl()
+     *
+     * @var string|null
+     */
+    private $playlist_id;
+
+    /**
+     * User agent of the playlist, empty - the plugin user agent
+     *
+     * @var string
+     */
+    private $user_agent = '';
+
+    /**
      * @var int
      */
     private static $http_code;
@@ -141,6 +155,32 @@ class Curl_Wrapper
     {
         $this->file_cache_path = get_slash_trailed_path(get_data_path(CURL_CACHE_SUBDIR . '/' . $cache_subdir));
         create_path($this->file_cache_path);
+    }
+
+    /**
+     * @param string|null $playlist_id
+     * @return void
+     */
+    public function set_playlist_id($playlist_id)
+    {
+        $this->playlist_id = $playlist_id;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function get_playlist_id()
+    {
+        return $this->playlist_id;
+    }
+
+    /**
+     * @param string $user_agent empty - the plugin user agent
+     * @return void
+     */
+    public function set_user_agent($user_agent)
+    {
+        $this->user_agent = $user_agent;
     }
 
     /**
@@ -487,7 +527,7 @@ class Curl_Wrapper
         $opts[CURLOPT_FOLLOWLOCATION] = 1;
         $opts[CURLOPT_MAXREDIRS] = 5;
         $opts[CURLOPT_FILETIME] = 1;
-        $opts[CURLOPT_USERAGENT] = HD::get_dune_user_agent();
+        $opts[CURLOPT_USERAGENT] = empty($this->user_agent) ? HD::get_dune_user_agent() : $this->user_agent;
         $opts[CURLOPT_HEADERFUNCTION] = 'Curl_Wrapper::http_header_function';
         $opts[CURLOPT_ENCODING] = "";
 

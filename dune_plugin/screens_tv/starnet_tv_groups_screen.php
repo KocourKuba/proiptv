@@ -290,7 +290,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen
                     return null;
                 }
 
-                $this->plugin->vod = null;
                 $this->plugin->set_active_playlist_id($user_input->{COLUMN_PLAYLIST_ID});
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 

@@ -56,6 +56,13 @@ class Movie extends Json_Serializer implements User_Input_Handler
     public $series_list = array();
 
     /**
+     * Playlist of the VOD the movie belongs to, see vod_standard::set_cached_movie()
+     *
+     * @var string|null
+     */
+    public $playlist_id;
+
+    /**
      * @var Default_Dune_Plugin
      */
     private $plugin;
@@ -143,6 +150,9 @@ class Movie extends Json_Serializer implements User_Input_Handler
             hd_debug_print('user input control id not set', true);
             return null;
         }
+
+        // the history and the invalidated folders belong to the playlist of the movie
+        $this->plugin->select_vod_playlist($this->playlist_id);
 
         switch ($user_input->control_id) {
             case GUI_EVENT_PLAYBACK_STOP:
@@ -530,9 +540,9 @@ class Movie extends Json_Serializer implements User_Input_Handler
         $sel_id = safe_get_value($media_url, PARAM_EPISODE_ID);
         $series_array = array();
         $initial_series_ndx = 0;
-        $def_q_variant = $this->plugin->get_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
+        $def_q_variant = $this->plugin->get_vod_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
         hd_debug_print("default quality: $def_q_variant", true);
-        $def_a_variant = $this->plugin->get_setting(PARAM_VOD_SELECTED_AUDIO, 'auto');
+        $def_a_variant = $this->plugin->get_vod_setting(PARAM_VOD_SELECTED_AUDIO, 'auto');
         hd_debug_print("default audio: $def_a_variant", true);
         $counter = 0; // series index. Not the same as the key of series list
         $initial_start_array = array();
@@ -582,7 +592,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
 
             if ($playback_info->is_stream_url) {
                 $vod_url = make_ts($playback_info->url);
-                $dune_params = $this->plugin->collect_dune_params();
+                $dune_params = $this->plugin->collect_dune_params($this->playlist_id);
                 if (!empty($dune_params)) {
                     $magic = str_replace(array('=', '+'), array(':', '%20'), http_build_query($dune_params, null, ','));
                     $vod_url .= DUNE_PARAMS_MAGIC . $magic;
@@ -613,7 +623,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
             PluginVodInfo::poster_url => $this->movie_info[PluginMovie::poster_url],
             PluginVodInfo::series => $series_array,
             PluginVodInfo::initial_series_ndx => $initial_series_ndx,
-            PluginVodInfo::buffering_ms => (int)$this->plugin->get_setting(PARAM_BUFFERING_TIME, 1000),
+            PluginVodInfo::buffering_ms => (int)$this->plugin->get_vod_setting(PARAM_BUFFERING_TIME, 1000),
             PluginVodInfo::actions => $this->do_get_action_map(),
             PluginVodInfo::initial_position_ms => $initial_start,
         );

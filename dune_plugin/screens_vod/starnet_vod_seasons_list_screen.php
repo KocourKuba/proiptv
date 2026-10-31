@@ -121,7 +121,7 @@ class Starnet_Vod_Seasons_List_Screen extends Abstract_Preloaded_Regular_Screen
             $arr['season_id'] = $season_id;
         }
 
-        return MediaURL::encode($arr);
+        return MediaURL::encode(Vod_Context::add_playlist_id($arr));
     }
 
     /**

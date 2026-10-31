@@ -70,7 +70,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_PLAY] = $action_play;
 
         // movie_id is move id or season id, episode_id not available here, need to collect info from all series
-        $q_variant = $this->plugin->get_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
+        $q_variant = $this->plugin->get_vod_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
         hd_debug_print("Default Quality: $q_variant");
 
         $season_id = safe_get_value($media_url, 'season_id');
@@ -81,7 +81,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
             } else if (isset($qualities[$q_variant])) {
                 $cur_quality = $qualities[$q_variant];
             } else {
-                $this->plugin->set_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
+                $this->plugin->set_vod_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
                 $cur_quality = TR::load('by_default');
             }
             $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
@@ -127,7 +127,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $movie = $this->plugin->vod->get_loaded_movie($movie_id);
                 if (is_null($movie) || !$movie->has_qualities($episode_id)) break;
 
-                $cur_quality = $this->plugin->get_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
+                $cur_quality = $this->plugin->get_vod_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
                 hd_debug_print("Default Quality: $cur_quality");
                 $movie_quality = $movie->get_qualities($episode_id);
                 unset($movie_quality['auto']);
@@ -144,7 +144,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
 
             case self::ACTION_QUALITY_SELECTED:
-                $this->plugin->set_setting(PARAM_VOD_SELECTED_QUALITY, $user_input->quality);
+                $this->plugin->set_vod_setting(PARAM_VOD_SELECTED_QUALITY, $user_input->quality);
                 $parent_url = MediaURL::decode($user_input->parent_media_url);
                 return Action_Factory::invalidate_folders(
                     array($user_input->parent_media_url),
@@ -153,7 +153,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
 
             case self::ACTION_AUDIO_SELECTED:
                 hd_debug_print("Set Audio: $user_input->audio");
-                $this->plugin->set_setting(PARAM_VOD_SELECTED_AUDIO, $user_input->audio);
+                $this->plugin->set_vod_setting(PARAM_VOD_SELECTED_AUDIO, $user_input->audio);
                 break;
 
             case ACTION_WATCHED:
@@ -210,7 +210,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
             $arr[PARAM_EPISODE_ID] = $episode_id;
         }
 
-        return MediaURL::encode($arr);
+        return MediaURL::encode(Vod_Context::add_playlist_id($arr));
     }
     ///////////////////////////////////////////////////////////////////////
 
@@ -269,7 +269,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $description .= TR::load('vod_screen_qualities__1', $qualities_str);
             }
 
-            $q_variant = $this->plugin->get_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
+            $q_variant = $this->plugin->get_vod_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
             hd_debug_print("selected audio: $q_variant");
             $this->audios = array_diff_key($episode->get_audios($q_variant), $skip_variant);
             hd_debug_print('Audios: ' . json_format_unescaped($this->audios), true);
@@ -317,7 +317,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
         }
 
         hd_debug_print('Loaded movie ' . $movie);
-        $cur_quality = $this->plugin->get_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
+        $cur_quality = $this->plugin->get_vod_setting(PARAM_VOD_SELECTED_QUALITY, 'auto');
         hd_debug_print("Current quality: $cur_quality");
 
         $audios['auto'] = TR::t('by_default');
@@ -325,7 +325,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen
         unset($movie_audios['auto']);
         $audios = safe_merge_array($audios, $movie_audios);
         if (count($audios) > 1) {
-            $cur_audio = $this->plugin->get_setting(PARAM_VOD_SELECTED_AUDIO, 'auto');
+            $cur_audio = $this->plugin->get_vod_setting(PARAM_VOD_SELECTED_AUDIO, 'auto');
             foreach ($audios as $key => $audio_name) {
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                     self::ACTION_AUDIO_SELECTED,

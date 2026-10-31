@@ -33,6 +33,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_PLUGIN_ENTRY = 'plugin_entry';
     const ACTION_LAUNCH = 'launch';
     const ACTION_LAUNCH_VOD = 'launch_vod';
+    const ACTION_LAUNCH_VOD_LIBRARIES = 'launch_vod_libraries';
     const ACTION_AUTO_RESUME = 'auto_resume';
     const ACTION_UPDATE_EPFS = 'update_epfs';
     const ACTION_INSTALL = 'install';
@@ -279,6 +280,36 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         return Action_Factory::show_error(false, TR::t('err_vod_not_available'));
+
+                    case self::ACTION_LAUNCH_VOD_LIBRARIES:
+                        $action = $this->check_upgrade($user_input);
+                        if ($action !== null) {
+                            return $action;
+                        }
+
+                        hd_print_separator();
+                        hd_debug_print('LANUCH PLUGIN VOD LIBRARIES');
+                        hd_print_separator();
+
+                        $this->plugin->init_plugin(true);
+                        if ($this->plugin->get_all_playlists_count() === 0) {
+                            return Action_Factory::show_error(false, TR::t('err_no_playlists'));
+                        }
+
+                        $has_vod = false;
+                        foreach ($this->plugin->get_all_playlists_ids() as $playlist_id) {
+                            if ($this->plugin->has_playlist_vod($playlist_id)) {
+                                $has_vod = true;
+                                break;
+                            }
+                        }
+
+                        if (!$has_vod) {
+                            return Action_Factory::show_error(false, TR::t('err_no_vod_libraries'));
+                        }
+
+                        // every media library is loaded when it is opened, the TV playlist is not needed
+                        return Action_Factory::open_folder(Starnet_Vod_Libraries_Screen::ID, TR::t('plugin_vod_libraries'));
 
                     case self::ACTION_UPDATE_EPFS:
                         $first_run = isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep);
@@ -542,11 +573,17 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return Action_Factory::tv_play($media_url);
         }
 
-        if (!$is_playlist_changed && $is_owner && $mode === "PLUGIN_VOD_PLAYBACK" && $this->plugin->init_vod_context()) {
-            $vod_info = $this->plugin->vod->get_vod_info(MediaURL::decode(safe_get_value($user_input, 'resume_media_url')));
-            if ($vod_info !== null) {
-                hd_debug_print('action: continue VOD playback', true);
-                return Action_Factory::vod_play($vod_info);
+        if ($is_owner && $mode === "PLUGIN_VOD_PLAYBACK") {
+            // the url of a VOD screen keeps the playlist of the movie, an url without it belongs to the active playlist
+            $resume_url = MediaURL::decode(safe_get_value($user_input, 'resume_media_url'));
+            $vod_playlist_id = safe_get_value($resume_url, PARAM_PLAYLIST_ID);
+            hd_debug_print("VOD playlist: $vod_playlist_id");
+            if ((!empty($vod_playlist_id) || !$is_playlist_changed) && $this->plugin->select_vod_playlist($vod_playlist_id)) {
+                $vod_info = $this->plugin->vod->get_vod_info($resume_url);
+                if ($vod_info !== null) {
+                    hd_debug_print('action: continue VOD playback', true);
+                    return Action_Factory::vod_play($vod_info);
+                }
             }
         }
 

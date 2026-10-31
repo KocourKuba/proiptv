@@ -147,7 +147,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
             $arr['info'] = $info;
         }
 
-        return MediaURL::encode($arr);
+        return MediaURL::encode(Vod_Context::add_playlist_id($arr));
     }
 
     /**

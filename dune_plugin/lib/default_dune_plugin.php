@@ -37,6 +37,7 @@ require_once 'lib/dune_default_ui_parameters.php';
 require_once 'lib/epg/epg_manager_json.php';
 require_once 'lib/epg/epg_manager_xmltv.php';
 require_once 'lib/perf_collector.php';
+require_once 'lib/vod/vod_context.php';
 require_once 'lib/smb_tree.php';
 
 class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlugin
@@ -63,6 +64,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @var vod_standard
      */
     public $vod;
+
+    /**
+     * @var Vod_Context[] playlist id => VOD context, see get_vod_context()
+     */
+    protected $vod_contexts = array();
+
+    /**
+     * Selected VOD context, $vod is its VOD class
+     *
+     * @var Vod_Context|null
+     */
+    protected $vod_context;
 
     /**
      * Screens created by vod_standard::init_vod_screens()
@@ -184,14 +197,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        // a VOD screen handler is registered with the VOD context, see get_screen_by_id()
-        if ($this->vod === null && isset($user_input->handler_id)) {
+        // a VOD screen works with the VOD context of the playlist from its media url,
+        // the handler is registered with the VOD context, see get_screen_by_id()
+        if (isset($user_input->handler_id)) {
             foreach (self::$vod_screen_ids as $screen_id) {
-                if ($user_input->handler_id === $screen_id . '_handler') {
-                    hd_debug_print("VOD handler '$user_input->handler_id' called, load VOD");
-                    $this->init_vod_context();
-                    break;
-                }
+                if ($user_input->handler_id !== $screen_id . '_handler') continue;
+
+                $url_str = isset($user_input->parent_media_url) ? $user_input->parent_media_url
+                    : safe_get_value($user_input, 'selected_media_url');
+                $this->select_vod_playlist(empty($url_str) ? null : safe_get_value(MediaURL::decode($url_str), PARAM_PLAYLIST_ID));
+                break;
             }
         }
 
@@ -599,7 +614,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
 
-        if (!$this->init_vod_context()) {
+        if (!$this->ensure_vod_context()) {
             print_backtrace();
             throw new Exception('VOD is not supported');
         }
@@ -1554,6 +1569,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $enable_vod_icon = SwitchOnOff::to_def($this->has_vod_support() && $this->get_bool_parameter(PARAM_SHOW_VOD_ICON, false));
         $plugin_cookies->{PARAM_COOKIE_SHOW_VOD_ICON} = $enable_vod_icon;
         hd_debug_print("Show VOD icon: $enable_vod_icon", true);
+        $plugin_cookies->{PARAM_COOKIE_SHOW_VOD_LIBRARIES_ICON} =
+            SwitchOnOff::to_def($this->get_bool_parameter(PARAM_SHOW_VOD_LIBRARIES_ICON, false));
 
         if ($this->is_vod_playlist()) {
             // vod playlist loads later
@@ -1872,7 +1889,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function reset_channels()
     {
-        $this->vod = null;
+        $this->reset_vod_contexts();
         $this->reset_channels_loaded();
         $this->reset_playlist_db();
     }
@@ -1902,6 +1919,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $playlist_id = $this->get_active_playlist_id();
         }
         $curl_wrapper = Curl_Wrapper::getInstance($playlist_id);
+        $curl_wrapper->set_playlist_id($playlist_id);
         $this->reset_curl($curl_wrapper);
         return $curl_wrapper;
     }
@@ -1917,6 +1935,24 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $curl_wrapper->set_connect_timeout($this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
         $curl_wrapper->set_download_timeout($this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
         $curl_wrapper->set_file_cache_time($this->get_parameter(PARAM_CURL_FILE_CACHE_TIME, 4));
+
+        // the requests of a playlist use its user agent, also when it is not the active one (its VOD)
+        $playlist_id = $curl_wrapper->get_playlist_id();
+        if (!is_null($playlist_id)) {
+            $curl_wrapper->set_user_agent($this->get_playlist_user_agent($playlist_id));
+        }
+    }
+
+    /**
+     * User agent of the playlist: the custom one from the playlist playback settings or the plugin default
+     *
+     * @param string $playlist_id
+     * @return string
+     */
+    public function get_playlist_user_agent($playlist_id)
+    {
+        $user_agent = trim((string)$this->get_playlist_parameter($playlist_id, PARAM_USER_AGENT));
+        return empty($user_agent) ? HD::get_default_user_agent() : $user_agent;
     }
 
     /**
@@ -2405,6 +2441,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->set_active_playlist_id($id);
         }
 
+        Vod_Context::$active_playlist_id = $id;
         return $id;
     }
 
@@ -2417,10 +2454,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
 
         $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
+        Vod_Context::$active_playlist_id = $id;
         $this->active_provider = null;
-        // the VOD context belongs to the previous playlist, init_vod_context() loads the new one
-        $this->vod = null;
-        $this->vod_enabled = false;
+        // the VOD context of the active playlist shares its settings db, init_vod_context() loads the new one
+        $this->reset_vod_contexts();
         $this->reset_playlist_db();
     }
 
@@ -2672,24 +2709,33 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * Dune params of the playback: the playlist ones, the provider ones and the user agent of the playlist
+     *
+     * @param string|null $playlist_id null - the active playlist
      * @return array
      */
-    public function collect_dune_params()
+    public function collect_dune_params($playlist_id = null)
     {
-        $params = $this->get_playlist_parameters($this->get_active_playlist_id());
+        $active_id = $this->get_active_playlist_id();
+        if (is_null($playlist_id)) {
+            $playlist_id = $active_id;
+        }
+
+        $params = $this->get_playlist_parameters($playlist_id);
         if (safe_get_value($params, PARAM_USE_DUNE_PARAMS, SwitchOnOff::on) === SwitchOnOff::off) {
             return array();
         }
 
         $dune_params = dune_params_to_array(safe_get_value($params, PARAM_DUNE_PARAMS));
 
-        $provider = $this->get_active_provider();
+        $provider = $playlist_id === $active_id ? $this->get_active_provider() : $this->get_provider($playlist_id);
         if (!is_null($provider)) {
             $dune_params = array_unique(safe_merge_array($dune_params, dune_params_to_array($provider->getConfigValue(PARAM_DUNE_PARAMS))));
         }
 
-        if (HD::get_dune_user_agent() !== HD::get_default_user_agent()) {
-            $user_agent = "User-Agent: " . HD::get_dune_user_agent();
+        $playlist_user_agent = $this->get_playlist_user_agent($playlist_id);
+        if ($playlist_user_agent !== HD::get_default_user_agent()) {
+            $user_agent = "User-Agent: " . $playlist_user_agent;
             if (!empty($user_agent)) {
                 if (!isset($dune_params['http_headers'])) {
                     $dune_params['http_headers'] = $user_agent;
@@ -2949,9 +2995,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $vod = safe_get_value($params, PARAM_PLAYLIST_TYPE) === CONTROL_PLAYLIST_VOD;
         }
 
-        $provider = $this->get_active_provider();
-        if (!is_null($provider) && !$vod) {
-            $vod = $provider->getVodOnly();
+        if (!$vod) {
+            $provider = $this->get_provider($playlist_id);
+            $vod = !is_null($provider) && $provider->getVodOnly();
         }
 
         return $vod;
@@ -2973,17 +3019,28 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function get_playlist_cache_filepath($is_tv)
     {
         if ($is_tv) {
-            $base_name = self::get_playlist_cache_path() . $this->make_base_name(IPTV_PLAYLIST);
-        } else {
-            $base_name = self::get_playlist_cache_path() . $this->make_base_name(VOD_PLAYLIST, null, false);
-            // every provider vod playlist has its own cache, the default one keeps the plain name
-            $provider = $this->get_active_provider();
-            $vod_playlists = is_null($provider) ? null : $provider->GetPlaylistsVod();
-            if (!empty($vod_playlists)) {
-                $vod_idx = $provider->GetPlaylistVodId();
-                if (!empty($vod_idx) && $vod_idx !== PARAM_DEFAULT_CONFIG_PLAYLIST_ID) {
-                    $base_name .= "_$vod_idx";
-                }
+            return self::get_playlist_cache_path() . $this->make_base_name(IPTV_PLAYLIST);
+        }
+
+        return $this->get_vod_cache_filepath($this->get_active_playlist_id(), $this->get_active_provider());
+    }
+
+    /**
+     * Cache base name (without extension) of the VOD playlist
+     *
+     * @param string $playlist_id
+     * @param api_default|null $provider provider of the playlist
+     * @return string
+     */
+    public function get_vod_cache_filepath($playlist_id, $provider)
+    {
+        $base_name = self::get_playlist_cache_path() . $this->make_base_name(VOD_PLAYLIST, $playlist_id, false);
+        // every provider vod playlist has its own cache, the default one keeps the plain name
+        $vod_playlists = is_null($provider) ? null : $provider->GetPlaylistsVod();
+        if (!empty($vod_playlists)) {
+            $vod_idx = $provider->GetPlaylistVodId();
+            if (!empty($vod_idx) && $vod_idx !== PARAM_DEFAULT_CONFIG_PLAYLIST_ID) {
+                $base_name .= "_$vod_idx";
             }
         }
 
@@ -3639,7 +3696,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     protected function get_vod_series_stream($media_url, $plugin_cookies)
     {
-        if (!$this->init_vod_context()) {
+        if (!$this->ensure_vod_context()) {
             return null;
         }
 
@@ -3817,12 +3874,32 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        if ($this->get_setting($cache_time, 1) === PHP_INT_MAX) {
+        return $this->is_cache_expired($this->get_playlist_cache_filepath($is_tv), $this->get_setting($cache_time, 1));
+    }
+
+    /**
+     * VOD playlist cache of the selected VOD context is expired
+     *
+     * @param string $base_name cache base name of the VOD playlist
+     * @return bool
+     */
+    public function is_vod_cache_expired($base_name)
+    {
+        return $this->is_cache_expired($base_name, $this->get_vod_setting(PARAM_PLAYLIST_CACHE_TIME_VOD, 1));
+    }
+
+    /**
+     * @param string $base_name cache base name: the playlist .m3u8 and its .db
+     * @param int $cache_hours cache time, PHP_INT_MAX - the cache is always valid
+     * @return bool
+     */
+    protected function is_cache_expired($base_name, $cache_hours)
+    {
+        if ($cache_hours === PHP_INT_MAX) {
             hd_debug_print("Playlist cache always valid");
             return false;
         }
 
-        $base_name = $this->get_playlist_cache_filepath($is_tv);
         $m3u_file = $base_name . '.m3u8';
         $db_file = $base_name . '.db';
 
@@ -3838,7 +3915,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $now = time();
         $mtime = filemtime($m3u_file);
-        $cache_expired = $mtime + $this->get_setting($cache_time, 1) * 3600;
+        $cache_expired = $mtime + $cache_hours * 3600;
         if ($cache_expired > $now) {
             hd_debug_print("Playlist cache $m3u_file is not expired");
             return false;
@@ -4516,19 +4593,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * VOD class of the active playlist: provider VOD if it is not disabled in the playlist settings,
+     * VOD class of the playlist: provider VOD if it is not disabled in the playlist settings,
      * standard m3u VOD for a VOD playlist
      *
+     * @param string $playlist_id
+     * @param api_default|null $provider provider of the playlist
+     * @param bool $use_vod VOD is enabled in the playlist settings
      * @return string|null null if the playlist has no VOD
      */
-    protected function get_vod_class_name()
+    protected function get_vod_class_name($playlist_id, $provider, $use_vod)
     {
-        $provider = $this->get_active_provider();
         if (!is_null($provider)) {
-            return $this->get_bool_setting(PARAM_USE_VOD) ? $provider->get_vod_class() : null;
+            return $use_vod ? $provider->get_vod_class() : null;
         }
 
-        return $this->is_vod_playlist() ? 'vod_standard' : null;
+        return $this->is_vod_playlist($playlist_id) ? 'vod_standard' : null;
     }
 
     /**
@@ -4539,12 +4618,27 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function has_vod_support()
     {
-        $vod_class = $this->get_vod_class_name();
+        $vod_class = $this->get_vod_class_name($this->get_active_playlist_id(), $this->get_active_provider(),
+            $this->get_bool_setting(PARAM_USE_VOD));
         return !empty($vod_class);
     }
 
     /**
-     * Loads VOD of the active playlist if it is not loaded yet: the playlist settings, VOD history and VOD class.
+     * The playlist has VOD. Checked by the playlist settings only, VOD is not loaded and the provider is not asked
+     *
+     * @param string $playlist_id
+     * @return bool
+     */
+    public function has_playlist_vod($playlist_id)
+    {
+        $provider = $this->get_provider($playlist_id);
+        $use_vod = SwitchOnOff::to_bool($this->get_playlist_setting($playlist_id, PARAM_USE_VOD, SwitchOnOff::on));
+        $vod_class = $this->get_vod_class_name($playlist_id, $provider, $use_vod);
+        return !empty($vod_class);
+    }
+
+    /**
+     * Selects VOD of the active playlist, it is loaded if it is not loaded yet.
      * Independent of the TV playlist, load_channels() does not load VOD.
      *
      * @param bool $force reload VOD
@@ -4552,14 +4646,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function init_vod_context($force = false)
     {
-        if (!$force && $this->vod !== null) {
-            return $this->vod_enabled;
+        $playlist_id = $this->get_active_playlist_id();
+        if (!$force && $this->vod_context !== null && $this->vod_context->playlist_id === $playlist_id) {
+            return $this->vod_context->enabled;
         }
 
         hd_debug_print(null, true);
         $this->init_plugin();
 
-        // the settings db is shared with TV, it is already inited if TV is loaded
+        // the settings db of the active playlist is shared with TV, it is already inited if TV is loaded
         $playlist_id = $this->get_active_playlist_id();
         if (is_null($this->sql_playlist_settings)
             || $this->sql_playlist_settings->get_db_path() !== get_data_path("$playlist_id.db")) {
@@ -4568,12 +4663,221 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        if (!$this->init_vod_history_db()) {
-            hd_debug_print("Can't connect to vod history database!");
-            return false;
+        $context = $this->get_vod_context($playlist_id, $force);
+        return !is_null($context) && $context->enabled;
+    }
+
+    /**
+     * VOD context of the playlist, loaded on the first use. The context is selected: the VOD queries use its dbs.
+     *
+     * @param string $playlist_id
+     * @param bool $force reload VOD
+     * @return Vod_Context|null null if the dbs of the playlist can't be opened
+     */
+    public function get_vod_context($playlist_id, $force = false)
+    {
+        if (!$force && isset($this->vod_contexts[$playlist_id])) {
+            $this->select_vod_context($this->vod_contexts[$playlist_id]);
+            return $this->vod_contexts[$playlist_id];
         }
 
-        return $this->init_vod_class(true);
+        $this->drop_vod_context($playlist_id);
+        $context = $this->create_vod_context($playlist_id);
+        if (!is_null($context)) {
+            $this->vod_contexts[$playlist_id] = $context;
+        }
+
+        return $context;
+    }
+
+    /**
+     * Drops all VOD contexts, they are loaded again on the next use
+     *
+     * @return void
+     */
+    public function reset_vod_contexts()
+    {
+        foreach (array_keys($this->vod_contexts) as $playlist_id) {
+            $this->drop_vod_context($playlist_id);
+        }
+
+        $this->unselect_vod_context();
+    }
+
+    /**
+     * @override Dune_Default_Sqlite_Engine the VOD playlist db belongs to the selected VOD context
+     * @param Sql_Wrapper|null $sql_vod
+     * @return void
+     */
+    public function set_sql_vod($sql_vod)
+    {
+        parent::set_sql_vod($sql_vod);
+        if ($this->vod_context !== null) {
+            $this->vod_context->sql_vod = $sql_vod;
+        }
+    }
+
+    /**
+     * @param string $playlist_id
+     * @return Vod_Context|null
+     */
+    protected function create_vod_context($playlist_id)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("Create VOD context for playlist: $playlist_id");
+
+        if (!$this->is_playlist_entry_exist($playlist_id)) {
+            hd_debug_print("Playlist $playlist_id is not exist");
+            return null;
+        }
+
+        $context = new Vod_Context($playlist_id);
+        if ($playlist_id === $this->get_active_playlist_id()) {
+            $context->provider = $this->get_active_provider();
+        } else {
+            $context->provider = $this->get_provider($playlist_id);
+            if (!is_null($context->provider)) {
+                // the default domain, server, device and quality of a playlist that has never been active
+                // are set as by init_playlist_settings_db(), the token request and the VOD url can use them
+                $context->provider->check_config_values();
+                if (!$context->provider->request_provider_token()) {
+                    hd_debug_print("Can't get provider token");
+                }
+            }
+        }
+
+        // the active playlist settings db is shared with TV, another playlist uses its own
+        if (is_null($this->sql_playlist_settings)
+            || $this->sql_playlist_settings->get_db_path() !== get_data_path("$playlist_id.db")) {
+            $context->sql_settings = $this->create_playlist_settings_db($playlist_id);
+            if (!$context->sql_settings->is_valid()) {
+                $context->close();
+                return null;
+            }
+        }
+
+        $sql_history = $this->open_vod_history_db($playlist_id, $context->provider);
+        if ($sql_history === false) {
+            $context->close();
+            return null;
+        }
+        $context->sql_history = $sql_history;
+
+        // the dbs are selected before the VOD class is created, its init and the VOD screens use them
+        $this->select_vod_context($context);
+        if ($sql_history !== null) {
+            $this->upgrade_vod_history($playlist_id);
+        }
+
+        $use_vod = SwitchOnOff::to_bool($this->get_vod_setting(PARAM_USE_VOD, SwitchOnOff::on));
+        $vod_class = $this->get_vod_class_name($playlist_id, $context->provider, $use_vod);
+        if (!empty($vod_class)) {
+            hd_debug_print("Using VOD: $vod_class");
+            $context->vod = new $vod_class($this);
+            $context->vod->set_playlist_id($playlist_id);
+            $this->vod = $context->vod;
+            $context->enabled = $context->vod->init_vod($context->provider);
+            $this->vod_enabled = $context->enabled;
+            $context->vod->init_vod_screens();
+            hd_debug_print('VOD enabled: ' . SwitchOnOff::to_def($context->enabled));
+        }
+
+        return $context;
+    }
+
+    /**
+     * The VOD queries use the dbs of the context
+     *
+     * @param Vod_Context $context
+     * @return void
+     */
+    protected function select_vod_context($context)
+    {
+        $this->vod_context = $context;
+        $this->vod = $context->vod;
+        $this->vod_enabled = $context->enabled;
+        $this->set_vod_dbs($context->sql_vod, $context->sql_history, $context->sql_settings);
+        Vod_Context::$selected_playlist_id = $context->playlist_id;
+    }
+
+    /**
+     * @return void
+     */
+    protected function unselect_vod_context()
+    {
+        $this->vod_context = null;
+        $this->vod = null;
+        $this->vod_enabled = false;
+        $this->set_vod_dbs(null, null, null);
+        Vod_Context::$selected_playlist_id = null;
+    }
+
+    /**
+     * The selected VOD context is used (the playback of a movie of any playlist),
+     * the active playlist VOD is loaded if none is selected (a fresh php process)
+     *
+     * @return bool VOD is available
+     */
+    protected function ensure_vod_context()
+    {
+        if ($this->vod_context !== null) {
+            return $this->vod_context->enabled;
+        }
+
+        return $this->init_vod_context();
+    }
+
+    /**
+     * @param string $playlist_id
+     * @return void
+     */
+    protected function drop_vod_context($playlist_id)
+    {
+        if (!isset($this->vod_contexts[$playlist_id])) {
+            return;
+        }
+
+        $context = $this->vod_contexts[$playlist_id];
+        unset($this->vod_contexts[$playlist_id]);
+        if ($this->vod_context === $context) {
+            $this->unselect_vod_context();
+        }
+        $context->close();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function get_screen_by_url(MediaURL $media_url)
+    {
+        // the folders of a VOD screen belong to the playlist from the media url
+        if (in_array(safe_get_value($media_url, PARAM_SCREEN_ID), self::$vod_screen_ids, true)) {
+            $this->select_vod_playlist(safe_get_value($media_url, PARAM_PLAYLIST_ID));
+        }
+
+        return parent::get_screen_by_url($media_url);
+    }
+
+    /**
+     * Selects VOD of the playlist, it is loaded if it is not loaded yet
+     *
+     * @param string|null $playlist_id null - the active playlist (a media url made before the VOD contexts)
+     * @return bool VOD is available
+     */
+    public function select_vod_playlist($playlist_id)
+    {
+        if (empty($playlist_id) || $playlist_id === $this->get_active_playlist_id()) {
+            return $this->init_vod_context();
+        }
+
+        if ($this->vod_context !== null && $this->vod_context->playlist_id === $playlist_id) {
+            return $this->vod_context->enabled;
+        }
+
+        hd_debug_print("Select VOD of playlist: $playlist_id");
+        $this->init_plugin();
+        $context = $this->get_vod_context($playlist_id);
+        return !is_null($context) && $context->enabled;
     }
 
     /**
@@ -4589,30 +4893,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         return parent::get_screen_by_id($screen_id);
-    }
-
-    /**
-     * @param bool $force
-     * @return bool
-     */
-    protected function init_vod_class($force = false)
-    {
-        if (!$force && $this->vod !== null) {
-            return true;
-        }
-
-        $this->vod_enabled = false;
-        $provider = $this->get_active_provider();
-        $vod_class = $this->get_vod_class_name();
-        if (!empty($vod_class)) {
-            hd_debug_print("Using VOD: $vod_class");
-            $this->vod = new $vod_class($this);
-            $this->vod_enabled = $this->vod->init_vod($provider);
-            $this->vod->init_vod_screens();
-            hd_debug_print('VOD enabled: ' . SwitchOnOff::to_def($this->vod_enabled));
-        }
-
-        return $this->vod_enabled;
     }
 
     //////////////////////////////////////////////////////////////////
@@ -4926,12 +5206,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * Moves the old VOD history of the playlist to the dbs of the selected VOD context
+     *
+     * @param string $playlist_id
      * @return void
      */
-    protected function upgrade_vod_history()
+    protected function upgrade_vod_history($playlist_id)
     {
         // vod history is only one per playlist
-        $vod_history_filename = $this->get_history_path() . $this->make_base_name('history') . ".settings";
+        $vod_history_filename = $this->get_history_path() . $this->make_base_name('history', $playlist_id) . ".settings";
         if (!file_exists($vod_history_filename)) {
             return;
         }
@@ -4973,7 +5256,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             unset($history[$list]);
         }
 
-        $this->safe_sql_playlist(SQL_EXEC_TRANSACTION, $query);
+        // the VOD filter and search lists are in the playlist settings db
+        if (!empty($query)) {
+            $this->safe_sql_vod_settings(SQL_EXEC_TRANSACTION, $query);
+        }
     }
 
     /**
@@ -5008,38 +5294,34 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @return bool
+     * VOD history db of the playlist
+     *
+     * @param string $playlist_id
+     * @param api_default|null $provider provider of the playlist
+     * @return Sql_Wrapper|null|false null if the playlist has no VOD, false if the db is not valid
      */
-    protected function init_vod_history_db()
+    protected function open_vod_history_db($playlist_id, $provider)
     {
         hd_debug_print(null, true);
 
-        // the history of the previous playlist must not stay connected
-        if ($this->sql_vod_history !== null) {
-            $this->sql_vod_history->close();
-            $this->sql_vod_history = null;
-        }
-
-        $provider = $this->get_active_provider();
-        // create vod history table
-        if ($this->is_vod_playlist() || (!empty($provider) && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
-            $vod_history_db = $this->get_history_path() . $this->make_base_name(VOD_HISTORY, null, false) . ".db";
-            $this->sql_vod_history = new Sql_Wrapper($vod_history_db);
-            if (!$this->sql_vod_history->is_valid()) {
-                $err = "Database $vod_history_db is not valid!";
-                Dune_Last_Error::set_last_error(LAST_ERROR_PLAYLIST, $err);
-                hd_debug_print($err);
-                return false;
-            }
-
-            $query = sprintf(self::CREATE_VOD_HISTORY_TABLE, self::VOD_HISTORY_TABLE);
-            $this->sql_vod_history->exec($query);
-            $this->upgrade_vod_history();
-            hd_debug_print("VOD history db '$vod_history_db' inited!");
-        } else {
+        if (!$this->is_vod_playlist($playlist_id) && (empty($provider) || !$provider->hasApiCommand(API_COMMAND_GET_VOD))) {
             hd_debug_print('Playlist does not support VOD');
+            return null;
         }
-        return true;
+
+        $vod_history_db = $this->get_history_path() . $this->make_base_name(VOD_HISTORY, $playlist_id, false) . ".db";
+        $sql_vod_history = new Sql_Wrapper($vod_history_db);
+        if (!$sql_vod_history->is_valid()) {
+            $err = "Database $vod_history_db is not valid!";
+            Dune_Last_Error::set_last_error(LAST_ERROR_PLAYLIST, $err);
+            hd_debug_print($err);
+            return false;
+        }
+
+        $query = sprintf(self::CREATE_VOD_HISTORY_TABLE, self::VOD_HISTORY_TABLE);
+        $sql_vod_history->exec($query);
+        hd_debug_print("VOD history db '$vod_history_db' inited!");
+        return $sql_vod_history;
     }
 
     /**

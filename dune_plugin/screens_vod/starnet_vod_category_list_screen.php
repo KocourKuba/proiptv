@@ -76,7 +76,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         switch ($user_input->control_id) {
             case self::ACTION_VOD_PLAYLIST_SELECTED:
-                $provider = $this->plugin->get_active_provider();
+                $provider = $this->plugin->vod->get_provider();
                 if (is_null($provider) || !isset($user_input->{LIST_IDX})
                     || $user_input->{LIST_IDX} === $provider->GetPlaylistVodId()) {
                     break;
@@ -210,7 +210,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                             break;
 
                         case VOD_LIST_GROUP_ID:
-                            $provider = $this->plugin->get_active_provider();
+                            $provider = $this->plugin->vod->get_provider();
                             if (empty($provider) || !Default_Dune_Plugin::is_provider_m3u_vod($provider)) {
                                 $skip = true;
                                 break;
@@ -299,7 +299,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public static function make_group_media_url_str($category_id)
     {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => VOD_GROUP_ID, 'category_id' => $category_id,));
+        return MediaURL::encode(Vod_Context::add_playlist_id(array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => VOD_GROUP_ID, 'category_id' => $category_id,)));
     }
 
     /**
@@ -326,7 +326,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         $menu_items[] = Control_Factory::menu_separator();
 
         // provider m3u vod playlists to switch between, the current one is checked
-        $provider = $this->plugin->get_active_provider();
+        $provider = $this->plugin->vod->get_provider();
         $vod_playlists = is_null($provider) || !Default_Dune_Plugin::is_provider_m3u_vod($provider)
             ? null : $provider->GetPlaylistsVod();
         if (count($vod_playlists) > 1) {

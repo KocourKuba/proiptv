@@ -131,6 +131,14 @@ class Dune_Default_Sqlite_Engine
     protected $sql_vod_history;
 
     /**
+     * Settings db of the playlist of the selected VOD context (VOD favorites, lists and VOD settings),
+     * null if it is the active playlist settings db
+     *
+     * @var Sql_Wrapper|null
+     */
+    protected $sql_vod_settings;
+
+    /**
      * @var string
      */
     protected $channel_id_map = '';
@@ -160,6 +168,21 @@ class Dune_Default_Sqlite_Engine
     public function set_sql_vod($sql_vod)
     {
         $this->sql_vod = $sql_vod;
+    }
+
+    /**
+     * Dbs of the selected VOD context are used by the VOD queries
+     *
+     * @param Sql_Wrapper|null $sql_vod VOD playlist db (m3u VOD)
+     * @param Sql_Wrapper|null $sql_vod_history
+     * @param Sql_Wrapper|null $sql_vod_settings null if it is the active playlist settings db
+     * @return void
+     */
+    protected function set_vod_dbs($sql_vod, $sql_vod_history, $sql_vod_settings)
+    {
+        $this->sql_vod = $sql_vod;
+        $this->sql_vod_history = $sql_vod_history;
+        $this->sql_vod_settings = $sql_vod_settings;
     }
 
     /**
@@ -977,17 +1000,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_setting($name, $default)
     {
-        $type = gettype($default);
-        $query = sprintf('SELECT %s,%s FROM %s WHERE %s=%s;',
-            COLUMN_VALUE, COLUMN_TYPE, self::SETTINGS_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($name));
-        $row = $this->safe_sql_playlist_settings(SQL_QUERY_VALUE, $query, true);
-
-        if (empty($row)) {
-            return $default;
-        }
-
-        settype($row[COLUMN_VALUE], $type);
-        return $row[COLUMN_VALUE];
+        return $this->read_setting('safe_sql_playlist_settings', $name, $default);
     }
 
     /**
@@ -999,6 +1012,101 @@ class Dune_Default_Sqlite_Engine
      */
     public function set_setting($name, $value)
     {
+        $this->write_setting('safe_sql_playlist_settings', $name, $value);
+    }
+
+    /**
+     * Get setting of the playlist of the selected VOD context
+     *
+     * @param string $name
+     * @param mixed $default
+     * @return mixed
+     */
+    public function get_vod_setting($name, $default)
+    {
+        return $this->read_setting('safe_sql_vod_settings', $name, $default);
+    }
+
+    /**
+     * Set setting of the playlist of the selected VOD context
+     *
+     * @param string $name
+     * @param mixed $value
+     * @return void
+     */
+    public function set_vod_setting($name, $value)
+    {
+        $this->write_setting('safe_sql_vod_settings', $name, $value);
+    }
+
+    /**
+     * Get setting of any playlist, the settings db of another playlist is opened only for this query
+     * and is not created if it does not exist
+     *
+     * @param string $playlist_id
+     * @param string $name
+     * @param mixed $default
+     * @return mixed
+     */
+    public function get_playlist_setting($playlist_id, $name, $default)
+    {
+        $db_file = get_data_path("$playlist_id.db");
+        if ($this->sql_playlist_settings && $db_file === $this->sql_playlist_settings->get_db_path()) {
+            return $this->get_setting($name, $default);
+        }
+
+        if (!file_exists($db_file)) {
+            return $default;
+        }
+
+        $sql_settings = new Sql_Wrapper($db_file);
+        if (!$sql_settings->is_valid()) {
+            hd_debug_print("Database $db_file is not valid!");
+            return $default;
+        }
+
+        $query = sprintf('SELECT %s FROM %s WHERE %s=%s;',
+            COLUMN_VALUE, self::SETTINGS_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($name));
+        $value = $sql_settings->query_value($query);
+        $sql_settings->close();
+
+        if ($value === false || $value === null) {
+            return $default;
+        }
+
+        settype($value, gettype($default));
+        return $value;
+    }
+
+    /**
+     * @param string $sql_function safe_sql_* method of the settings db
+     * @param string $name
+     * @param mixed $default
+     * @return mixed
+     */
+    protected function read_setting($sql_function, $name, $default)
+    {
+        $type = gettype($default);
+        $query = sprintf('SELECT %s,%s FROM %s WHERE %s=%s;',
+            COLUMN_VALUE, COLUMN_TYPE, self::SETTINGS_TABLE, COLUMN_NAME, Sql_Wrapper::sql_quote($name));
+        $row = $this->$sql_function(SQL_QUERY_VALUE, $query, true);
+
+        if (empty($row)) {
+            return $default;
+        }
+
+        settype($row[COLUMN_VALUE], $type);
+        return $row[COLUMN_VALUE];
+    }
+
+    /**
+     * @param string $sql_function safe_sql_* method of the settings db
+     * @param string $name
+     * @param mixed $value
+     * @return void
+     */
+    protected function write_setting($sql_function, $name, $value)
+    {
         hd_debug_print(null, true);
 
         $type = gettype($value);
@@ -1007,7 +1115,7 @@ class Dune_Default_Sqlite_Engine
             self::SETTINGS_TABLE, COLUMN_NAME, COLUMN_VALUE, COLUMN_TYPE,
             Sql_Wrapper::sql_quote($name), Sql_Wrapper::sql_quote($value), Sql_Wrapper::sql_quote($type));
 
-        $this->safe_sql_playlist_settings(SQL_EXEC, $query);
+        $this->$sql_function(SQL_EXEC, $query);
     }
 
     /**
@@ -1167,7 +1275,7 @@ class Dune_Default_Sqlite_Engine
     {
         $table = self::get_table_name($name);
         $query = sprintf('SELECT * FROM %s ORDER BY ROWID;', $table);
-        return $this->safe_sql_playlist_settings(SQL_FETCH_ARRAY, $query);
+        return $this->safe_sql_vod_settings(SQL_FETCH_ARRAY, $query);
     }
 
     /**
@@ -1181,7 +1289,7 @@ class Dune_Default_Sqlite_Engine
     {
         $table = self::get_table_name($name);
         $query = sprintf('SELECT ROWID FROM %s WHERE %s=%s;', $table, COLUMN_ITEM, Sql_Wrapper::sql_quote($value));
-        return $this->safe_sql_playlist_settings(SQL_QUERY_VALUE, $query);
+        return $this->safe_sql_vod_settings(SQL_QUERY_VALUE, $query);
     }
 
     /**
@@ -1195,7 +1303,7 @@ class Dune_Default_Sqlite_Engine
     {
         $table = self::get_table_name($name);
         $query = sprintf('SELECT %s FROM %s WHERE ROWID = %s;', COLUMN_ITEM, $table, Sql_Wrapper::sql_quote($id));
-        return $this->safe_sql_playlist_settings(SQL_QUERY_VALUE, $query);
+        return $this->safe_sql_vod_settings(SQL_QUERY_VALUE, $query);
     }
 
     /**
@@ -1214,7 +1322,7 @@ class Dune_Default_Sqlite_Engine
         } else {
             $query = sprintf('UPDATE %s SET %s=%s WHERE ROWID=%s;', $table, COLUMN_ITEM, Sql_Wrapper::sql_quote($value), Sql_Wrapper::sql_quote($id));
         }
-        $this->safe_sql_playlist_settings(SQL_EXEC, $query);
+        $this->safe_sql_vod_settings(SQL_EXEC, $query);
     }
 
     /**
@@ -1228,7 +1336,7 @@ class Dune_Default_Sqlite_Engine
     {
         $table = self::get_table_name($name);
         $query = sprintf(Sql_Wrapper::DELETE_FROM_WHERE, $table, COLUMN_ITEM, Sql_Wrapper::sql_quote($value));
-        $this->safe_sql_playlist_settings(SQL_EXEC, $query);
+        $this->safe_sql_vod_settings(SQL_EXEC, $query);
     }
 
     /**
@@ -1855,11 +1963,8 @@ class Dune_Default_Sqlite_Engine
     public function get_channels_order($group_id)
     {
         $query = sprintf(Sql_Wrapper::SELECT_FROM_ORDERED, COLUMN_CHANNEL_ID, self::get_table_name($group_id));
-        if (self::is_playlist_settings_group($group_id)) {
-            return $this->safe_sql_playlist_settings(SQL_FETCH_ARRAY, $query, COLUMN_CHANNEL_ID);
-        }
-
-        return $this->safe_sql_playlist(SQL_FETCH_ARRAY, $query, COLUMN_CHANNEL_ID);
+        $target = $this->get_order_sql_function($group_id);
+        return $this->$target(SQL_FETCH_ARRAY, $query, COLUMN_CHANNEL_ID);
     }
 
     /**
@@ -1873,11 +1978,8 @@ class Dune_Default_Sqlite_Engine
         $query = sprintf(Sql_Wrapper::SELECT_COUNT_WHERE,
             self::get_table_name($group_id), COLUMN_CHANNEL_ID, Sql_Wrapper::sql_quote($channel_id));
 
-        if (self::is_playlist_settings_group($group_id)) {
-            return (int)$this->safe_sql_playlist_settings(SQL_QUERY_VALUE, $query);
-        }
-
-        return (int)$this->safe_sql_playlist(SQL_QUERY_VALUE, $query);
+        $target = $this->get_order_sql_function($group_id);
+        return (int)$this->$target(SQL_QUERY_VALUE, $query);
     }
 
     /**
@@ -1902,12 +2004,8 @@ class Dune_Default_Sqlite_Engine
         $query = sprintf(Sql_Wrapper::DROP_TABLE_IF_EXISTS, $table_name);
         $query .= sprintf(self::CREATE_ORDERED_TABLE, $table_name, COLUMN_CHANNEL_ID);
 
-        if (self::is_playlist_settings_group($group_id)) {
-            $this->safe_sql_playlist_settings(SQL_EXEC_TRANSACTION, $query);
-            return;
-        }
-
-        $this->safe_sql_playlist(SQL_EXEC_TRANSACTION, $query);
+        $target = $this->get_order_sql_function($group_id);
+        $this->$target(SQL_EXEC_TRANSACTION, $query);
     }
 
     /**
@@ -1927,11 +2025,8 @@ class Dune_Default_Sqlite_Engine
             $query = sprintf(Sql_Wrapper::INSERT_OR_IGNORE_INTO, $table_name, COLUMN_CHANNEL_ID, $q_channel_id);
         }
 
-        if (self::is_playlist_settings_group($group_id)) {
-            return $this->safe_sql_playlist_settings(SQL_EXEC, $query);
-        }
-
-        return $this->safe_sql_playlist(SQL_EXEC, $query);
+        $target = $this->get_order_sql_function($group_id);
+        return $this->$target(SQL_EXEC, $query);
     }
 
     /**
@@ -1943,7 +2038,7 @@ class Dune_Default_Sqlite_Engine
     public function bulk_change_channels_order($group_id, $channel_ids, $remove)
     {
         $table_name = self::get_table_name($group_id);
-        $target = self::is_playlist_settings_group($group_id) ? 'safe_sql_playlist_settings' : 'safe_sql_playlist';
+        $target = $this->get_order_sql_function($group_id);
 
         if ($remove) {
             $query = sprintf('DELETE FROM %s WHERE %s IN (%s);',
@@ -2001,10 +2096,8 @@ class Dune_Default_Sqlite_Engine
     public function get_order_count($group_id)
     {
         $query = sprintf(Sql_Wrapper::SELECT_COUNT, self::get_table_name($group_id));
-        if (self::is_playlist_settings_group($group_id)) {
-            return (int)$this->safe_sql_playlist_settings(SQL_QUERY_VALUE, $query);
-        }
-        return (int)$this->safe_sql_playlist(SQL_QUERY_VALUE, $query);
+        $target = $this->get_order_sql_function($group_id);
+        return (int)$this->$target(SQL_QUERY_VALUE, $query);
     }
 
     /**
@@ -2729,11 +2822,8 @@ class Dune_Default_Sqlite_Engine
     {
         $query = sprintf(Sql_Wrapper::SELECT_FROM_ORDERED, COLUMN_CHANNEL_ID, self::get_table_name($group_id));
 
-        if (self::is_playlist_settings_group($group_id)) {
-            return $this->safe_sql_playlist_settings(SQL_FETCH_ARRAY, $query, COLUMN_CHANNEL_ID);
-        }
-
-        return $this->safe_sql_playlist(SQL_FETCH_ARRAY, $query, COLUMN_CHANNEL_ID);
+        $target = $this->get_order_sql_function($group_id);
+        return $this->$target(SQL_FETCH_ARRAY, $query, COLUMN_CHANNEL_ID);
     }
 
     /**
@@ -2744,11 +2834,8 @@ class Dune_Default_Sqlite_Engine
     {
         $query = sprintf('SELECT COUNT(%s) FROM %s ORDER BY ROWID;', COLUMN_CHANNEL_ID, self::get_table_name($group_id));
 
-        if (self::is_playlist_settings_group($group_id)) {
-            return $this->safe_sql_playlist_settings(SQL_QUERY_VALUE, $query);
-        }
-
-        return $this->safe_sql_playlist(SQL_QUERY_VALUE, $query);
+        $target = $this->get_order_sql_function($group_id);
+        return $this->$target(SQL_QUERY_VALUE, $query);
     }
 
     /**
@@ -3013,7 +3100,7 @@ class Dune_Default_Sqlite_Engine
             $rename_to = self::PLAYLISTS_TABLE;
         } else if (self::is_playlist_settings_group($group)) {
             $script = self::CREATE_ORDERED_TABLE;
-            $sql_wrapper = $this->sql_playlist_settings;
+            $sql_wrapper = self::is_vod_settings_group($group) ? $this->get_vod_settings_db() : $this->sql_playlist_settings;
             $table_name = self::get_table_full_name($group);
             $rename_to = self::get_table_name($group);
         } else {
@@ -3197,6 +3284,36 @@ class Dune_Default_Sqlite_Engine
         }
 
         hd_debug_print("VOD db not set. '$function' is not executed!");
+        print_backtrace();
+        if ($function === SQL_FETCH_ARRAY) {
+            return array();
+        }
+        return false;
+    }
+
+    /**
+     * Settings db of the selected VOD context: its own db for another playlist, the active playlist settings db otherwise
+     *
+     * @return Sql_Wrapper|null
+     */
+    protected function get_vod_settings_db()
+    {
+        return is_null($this->sql_vod_settings) ? $this->sql_playlist_settings : $this->sql_vod_settings;
+    }
+
+    /**
+     * @param string $function
+     * @return string|array|int|false
+     */
+    protected function safe_sql_vod_settings($function)
+    {
+        $sql_wrapper = $this->get_vod_settings_db();
+        if ($sql_wrapper) {
+            $extra_args = array_slice(func_get_args(), 1);
+            return call_user_func_array(array($sql_wrapper, $function), $extra_args);
+        }
+
+        hd_debug_print("VOD settings db not set. '$function' is not executed!");
         print_backtrace();
         if ($function === SQL_FETCH_ARRAY) {
             return array();
@@ -3405,10 +3522,35 @@ class Dune_Default_Sqlite_Engine
      */
     protected static function is_playlist_settings_group($group_id)
     {
-        return $group_id === TV_FAV_COMMON_GROUP_ID
-            || $group_id === VOD_FAV_GROUP_ID
+        return $group_id === TV_FAV_COMMON_GROUP_ID || self::is_vod_settings_group($group_id);
+    }
+
+    /**
+     * Tables of the playlist settings db that belong to VOD, they are stored in the db of the selected VOD context
+     *
+     * @param string $group_id
+     * @return bool
+     */
+    protected static function is_vod_settings_group($group_id)
+    {
+        return $group_id === VOD_FAV_GROUP_ID
             || $group_id === VOD_LIST_GROUP_ID
             || $group_id === VOD_SEARCH_LIST
             || $group_id === VOD_FILTER_LIST;
+    }
+
+    /**
+     * safe_sql_* method of the db that stores the order table of the group
+     *
+     * @param string $group_id
+     * @return string
+     */
+    protected function get_order_sql_function($group_id)
+    {
+        if (self::is_vod_settings_group($group_id)) {
+            return 'safe_sql_vod_settings';
+        }
+
+        return self::is_playlist_settings_group($group_id) ? 'safe_sql_playlist_settings' : 'safe_sql_playlist';
     }
 }

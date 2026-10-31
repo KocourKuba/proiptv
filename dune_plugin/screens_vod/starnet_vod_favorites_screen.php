@@ -147,7 +147,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public static function make_group_media_url_str($group_id)
     {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => $group_id));
+        return MediaURL::encode(Vod_Context::add_playlist_id(array(PARAM_SCREEN_ID => static::ID, PARAM_GROUP_ID => $group_id)));
     }
 
     ///////////////////////////////////////////////////////////////////////
