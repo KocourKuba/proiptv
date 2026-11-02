@@ -92,10 +92,13 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         if ($user_input->control_id === self::ACTION_PLUGIN_ENTRY
             && safe_get_value($user_input, PARAM_ACTION_ID) === self::ACTION_CONFIRM_UPDATE) {
-            // TRUE - continue update, FALSE - skip update
+            // The firmware takes the exec status of the returned GUI action (a bare bool can not be
+            // deserialized and ends in an "application error" dialog). plugin_updater in libduneshell:
+            // 0 - enabled (update proposed as usual), 1 - skipped, 2 - updated by the plugin itself,
+            // anything else - logged and update proposed as usual.
             $disabled = SwitchOnOff::to_bool(safe_get_value($plugin_cookies, PARAM_COOKIE_DISABLE_UPDATE, SwitchOnOff::off));
             hd_debug_print('Confirm update, update disabled: ' . var_export($disabled, true));
-            return !$disabled;
+            return Action_Factory::status($disabled ? 1 : 0);
         }
 
         if (!is_r22_or_higher()) {
