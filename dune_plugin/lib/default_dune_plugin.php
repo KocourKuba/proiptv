@@ -205,6 +205,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                 $url_str = isset($user_input->parent_media_url) ? $user_input->parent_media_url
                     : safe_get_value($user_input, 'selected_media_url');
+                if (empty($url_str) && isset($user_input->folder_key)) {
+                    // plugin_rows_info_update has only folder_key: '<plugin name>:<media url of the folder>'
+                    $pos = strpos($user_input->folder_key, ':');
+                    if ($pos !== false) {
+                        $url_str = substr($user_input->folder_key, $pos + 1);
+                    }
+                }
                 $this->select_vod_playlist(empty($url_str) ? null : safe_get_value(MediaURL::decode($url_str), PARAM_PLAYLIST_ID));
                 break;
             }
