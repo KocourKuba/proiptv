@@ -34,7 +34,7 @@
       }
     },
     "proiptv": {
-      "json_source": "https://epg.proiptv.info/{PROVIDER}/epg/{EPG_ID}.json",
+      "json_source": "http://epg.proiptv.info/{PROVIDER}/epg/{EPG_ID}.json",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
