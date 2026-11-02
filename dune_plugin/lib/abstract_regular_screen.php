@@ -78,6 +78,29 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
             $idx = 0;
         }
 
+        $this->save_folder_view_index($idx);
+    }
+
+    /**
+     * Stored index of the current view: a playlist setting or a plugin parameter, see $view_idx_local
+     *
+     * @return int
+     */
+    protected function load_folder_view_index()
+    {
+        if ($this->view_idx_local) {
+            return $this->plugin->get_setting(static::ID . "_view_idx", 0);
+        }
+
+        return $this->plugin->get_parameter(static::ID . "_view_idx", 0);
+    }
+
+    /**
+     * @param int $idx
+     * @return void
+     */
+    protected function save_folder_view_index($idx)
+    {
         if ($this->view_idx_local) {
             $this->plugin->set_setting(static::ID . "_view_idx", $idx);
         } else {
@@ -95,11 +118,7 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
     {
         hd_debug_print(null, true);
 
-        if ($this->view_idx_local) {
-            $idx = $this->plugin->get_setting(static::ID . "_view_idx", 0);
-        } else {
-            $idx = $this->plugin->get_parameter(static::ID . "_view_idx", 0);
-        }
+        $idx = $this->load_folder_view_index();
 
         $folder_views = $this->get_folder_views();
         $cnt = count($folder_views);

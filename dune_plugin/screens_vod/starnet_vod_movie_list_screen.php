@@ -488,6 +488,24 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
     }
 
     /**
+     * The view belongs to the playlist of the media library (the selected VOD context), not to the active one
+     *
+     * @inheritDoc
+     */
+    protected function load_folder_view_index()
+    {
+        return $this->plugin->get_vod_setting(static::ID . '_view_idx', 0);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function save_folder_view_index($idx)
+    {
+        $this->plugin->set_vod_setting(static::ID . '_view_idx', $idx);
+    }
+
+    /**
      * @return bool
      */
     protected function is_rows_view()
