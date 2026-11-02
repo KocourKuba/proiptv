@@ -1,3 +1,6 @@
+### Version 9.1.1958
+- Plugin update (firmware r24 and newer): fixed the 'Application error' message shown before the update dialog when a new plugin version is found. The 'Disable plugin update' option works again: when it is on, the found new version is skipped.
+
 ### Version 9.1.1956
 - Media library search: when only one movie is found, its movie screen opens at once instead of a list with one movie. When nothing is found, a 'Nothing found' message is shown instead of an empty list.
 - TorrentTV: the media library search now uses the same search as the TorrentTV app. The best matches are shown first, and a query of several words finds the films with the whole phrase instead of films with any of the words. The found films are shown page by page.
