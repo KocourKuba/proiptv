@@ -1,3 +1,7 @@
+### Version 9.1.1962
+- Media library, firmware r25 and newer: the new view of the movie list in a media library opened from the 'ProIPTV media libraries' icon showed a wrong title (for example 'Серия 19') instead of the movie info. The info of the selected movie was requested from the media library of the active playlist instead of its own.
+- Media library: the view of the movie list chosen by the red key is remembered for the playlist of the media library, not for the active TV playlist. The new view of a media library opened from the 'ProIPTV media libraries' icon depends only on its own settings.
+
 ### Version 9.1.1958
 - Plugin update (firmware r24 and newer): fixed the 'Application error' message shown before the update dialog when a new plugin version is found. The 'Disable plugin update' option works again: when it is on, the found new version is skipped.
 
