@@ -647,28 +647,43 @@ class Action_Factory
      * @param bool $check_writeable
      * @param bool $with_fav
      * @param array|null $post_action
+     * @param bool $with_network_folders r25+: show saved network folders
+     * @param bool $with_network_browser r25+: allow browsing the network
+     * @param string|null $new_folder_default_name r25+: default name for a folder created from the dialog
      * @return array|null
      */
-    public static function choose_file($title, $ext, $is_dir = false, $check_writeable = false, $with_fav = false, $post_action = null)
+    public static function choose_file($title, $ext, $is_dir = false, $check_writeable = false, $with_fav = false, $post_action = null,
+                                       $with_network_folders = false, $with_network_browser = false, $new_folder_default_name = null)
     {
-        if (is_choose_file_supported()) {
-            return array(
-                GuiAction::handler_string_id => CHOOSE_FILE_ACTION_ID,
-                GuiAction::data => array(
-                    ChooseFileActionData::filter => array(
-                        FileChooserFilter::file_type_dir => $is_dir,
-                        FileChooserFilter::file_extensions => $ext,
-                        FileChooserFilter::check_writable => $check_writeable),
-                    ChooseFileActionData::ui_params => array(
-                        FileChooserUiParams::with_favorite_folders => $with_fav,
-                        FileChooserUiParams::details_width => 60,
-                        FileChooserUiParams::dialog_title => $title),
-                    ChooseFileActionData::post_action => $post_action,
-                )
-            );
+        if (!is_choose_file_supported()) {
+            return null;
         }
 
-        return null;
+        $ui_params = array(
+            FileChooserUiParams::with_favorite_folders => $with_fav,
+            FileChooserUiParams::details_width => 60,
+            FileChooserUiParams::dialog_title => $title);
+
+        // r25+ fields, absent in r24 dune_api.php
+        if (defined('FileChooserUiParams::with_network_folders')) {
+            $ui_params[FileChooserUiParams::with_network_folders] = $with_network_folders;
+            $ui_params[FileChooserUiParams::with_network_browser] = $with_network_browser;
+            if ($new_folder_default_name !== null) {
+                $ui_params[FileChooserUiParams::new_folder_default_name] = $new_folder_default_name;
+            }
+        }
+
+        return array(
+            GuiAction::handler_string_id => CHOOSE_FILE_ACTION_ID,
+            GuiAction::data => array(
+                ChooseFileActionData::filter => array(
+                    FileChooserFilter::file_type_dir => $is_dir,
+                    FileChooserFilter::file_extensions => $ext,
+                    FileChooserFilter::check_writable => $check_writeable),
+                ChooseFileActionData::ui_params => $ui_params,
+                ChooseFileActionData::post_action => $post_action,
+            )
+        );
     }
 
     /**
