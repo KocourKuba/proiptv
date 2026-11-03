@@ -120,7 +120,8 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
     }
 
     /**
-     * Opens the search result, or the movie itself if only one movie is found
+     * Opens the search result, or the movie itself if only one movie is found.
+     * Nothing found is reported by a dialog instead of an empty list
      *
      * @param Default_Dune_Plugin $plugin
      * @param string $search_string
@@ -130,6 +131,12 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
     public static function make_search_action($plugin, $search_string, $caption)
     {
         $movies = $plugin->vod->prefetchSearchList($search_string);
+        if (empty($movies)) {
+            $plugin->vod->takePrefetchedSearchList($search_string);
+            hd_debug_print("Nothing found: $search_string");
+            return Action_Factory::show_title_dialog($caption, null, TR::t('tv_screen_not_found'));
+        }
+
         if (count($movies) === 1) {
             $plugin->vod->takePrefetchedSearchList($search_string);
             $movie = $movies[0];
