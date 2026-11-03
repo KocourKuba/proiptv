@@ -282,7 +282,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         hd_debug_print('LANUCH PLUGIN VOD LIBRARIES');
                         hd_print_separator();
 
-                        $this->plugin->init_plugin(true);
+                        $this->plugin->init_plugin();
                         if ($this->plugin->get_all_playlists_count() === 0) {
                             return Action_Factory::show_error(false, TR::t('err_no_playlists'));
                         }
@@ -390,7 +390,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         hd_debug_print("search: $search_string");
 
-        $this->plugin->init_plugin(true);
+        $this->plugin->init_plugin();
         if ($this->plugin->get_all_playlists_count() === 0) {
             hd_debug_print('No playlists');
             return Action_Factory::show_title_dialog(TR::t('search'), TR::t('err_no_playlists'));
