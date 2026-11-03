@@ -1,4 +1,7 @@
-﻿### Version 5.1.1056
+﻿### Version 5.1.1058
+- TorrentTV: login no longer fails when the login or password contains + ? / & = or a space. They are now percent-encoded in the auth request, a '+' was read by the server as a space and '&' cut the password.
+
+### Version 5.1.1056
 - Media library search: when only one movie is found, its movie screen opens at once instead of a list with one movie.
 - Media library search: the found movies are shown page by page (TorrentTV, Antifriz, Cbilling, iEdem/iLook, IPTV Online, TVIZI Net). Before, only the first page of the result was shown.
 - TorrentTV: the media library search now uses the same search as the TorrentTV app. The best matches are shown first, and a query of several words finds the films with the whole phrase instead of films with any of the words.
