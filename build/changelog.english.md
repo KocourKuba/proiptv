@@ -1,3 +1,6 @@
+### Version 9.1.1970
+- NewUI: (Fix by author Melange) the TV tab no longer loses channel information after a search from Play in apps or after opening 'ProIPTV media libraries'. These launches closed the TV playlist database, while the plugin still considered the channels loaded, so the channel rows and the channel info came out empty.
+
 ### Version 9.1.1966
 - Torrent TV: login no longer fails when the login or password contains + ? / & = or a space. They are now percent-encoded in the auth request, a '+' was read by the server as a space and '&' cut the password.
 
