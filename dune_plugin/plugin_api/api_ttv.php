@@ -49,6 +49,14 @@ class api_ttv extends api_default
      */
     public function replace_macros($string)
     {
+        // login and password are query parameters of the auth request: characters like + & = ? / must be
+        // percent-encoded, otherwise the server reads '+' as a space or cuts the value at '&'
+        foreach (array(MACRO_LOGIN, MACRO_PASSWORD) as $macro) {
+            if (strpos($string, $macro) !== false) {
+                $string = str_replace($macro, rawurlencode(trim($this->GetProviderParameter($macro, ''))), $string);
+            }
+        }
+
         $string = parent::replace_macros($string);
 
         return str_replace(MACRO_GUID, $this->getGuid(), $string);

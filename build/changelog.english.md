@@ -1,3 +1,6 @@
+### Version 9.1.1966
+- Torrent TV: login no longer fails when the login or password contains + ? / & = or a space. They are now percent-encoded in the auth request, a '+' was read by the server as a space and '&' cut the password.
+
 ### Version 9.1.1962
 - Media library, firmware r25 and newer: the new view of the movie list in a media library opened from the 'ProIPTV media libraries' icon showed a wrong title (for example 'Серия 19') instead of the movie info. The info of the selected movie was requested from the media library of the active playlist instead of its own.
 - Media library: the view of the movie list chosen by the red key is remembered for the playlist of the media library, not for the active TV playlist. The new view of a media library opened from the 'ProIPTV media libraries' icon depends only on its own settings.
