@@ -291,7 +291,7 @@ class Starnet_Edit_Group_List_Screen extends Abstract_Edit_Order_Screen
             )
         );
         $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
-            Action_Factory::open_folder($media_url, TR::t('select_file')),
+            Starnet_Folder_Screen::make_chooser_action($media_url, TR::t('select_file')),
             TR::t('change_group_icon'), 'image.png');
         $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
             ACTION_RESET_DEFAULT, TR::t('reset_default'), 'image.png');

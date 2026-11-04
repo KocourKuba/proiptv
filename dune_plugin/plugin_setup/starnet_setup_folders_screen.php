@@ -121,7 +121,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
-                return Action_Factory::open_folder($media_url, TR::t('setup_history_folder_path'));
+                return Starnet_Folder_Screen::make_chooser_action($media_url, TR::t('setup_history_folder_path'));
 
             case self::ACTION_HISTORY_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
@@ -188,7 +188,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => false,
                     )
                 );
-                return Action_Factory::open_folder($media_url, TR::t('setup_epg_xmltv_cache_caption'));
+                return Starnet_Folder_Screen::make_chooser_action($media_url, TR::t('setup_epg_xmltv_cache_caption'));
 
             case self::ACTION_EPG_RESET_DEFAULT:
                 hd_debug_print(self::ACTION_EPG_RESET_DEFAULT);
@@ -238,7 +238,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => false,
                     )
                 );
-                return Action_Factory::open_folder($media_url, TR::t('setup_epg_json_cache_caption'));
+                return Starnet_Folder_Screen::make_chooser_action($media_url, TR::t('setup_epg_json_cache_caption'));
 
             case self::ACTION_JSON_RESET_DEFAULT:
                 hd_debug_print(self::ACTION_JSON_RESET_DEFAULT);

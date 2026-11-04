@@ -389,6 +389,7 @@ const PARAM_KNOWN_CHANNELS = 'known_channels';
 const PARAM_LINK = 'link';
 const PARAM_MOVIE_ID = 'movie_id';
 const PARAM_NAME = 'name';
+const PARAM_NETWORK_SHARE = 'network_share'; // json: network share of a file playlist, see smb_tree::make_network_share()
 const PARAM_NEWUI_CHANNEL_POSITION = 'channel_position';
 const PARAM_NEWUI_ICONS_IN_ROW = 'icons_in_row';
 const PARAM_NEWUI_SEARCH_BY_GROUPS = 'search_by_groups';

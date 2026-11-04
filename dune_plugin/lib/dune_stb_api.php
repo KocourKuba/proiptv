@@ -1476,6 +1476,87 @@ function is_choose_file_supported()
 }
 
 /**
+ * fs_ctl action (resolve_url, stat, scandir, get_file), r25+
+ *
+ * @return bool
+ */
+function is_fs_ctl_supported()
+{
+    return defined('FS_CTL_ACTION_ID');
+}
+
+/**
+ * Url chosen in the choose_file dialog, read from the user_input of its post_action.
+ *
+ * @param object $user_input
+ * @param int $index
+ * @return string|null null if the dialog was canceled
+ */
+function get_choose_file_url($user_input, $index = 0)
+{
+    if (safe_get_value($user_input, 'file_chooser_result_status') !== '0') {
+        return null;
+    }
+
+    $url = safe_get_value($user_input, "file_chooser_result_url_$index");
+    return empty($url) ? null : $url;
+}
+
+/**
+ * Converts an url returned by choose_file to a file system path without asking the firmware.
+ * Only local storages can be converted: storage_name://<name>/<path> (Dune) and sdcard:///<path> (Android).
+ * Network urls (network_folder_id://, smb://, nfs-tcp://, ...) return null - resolve them with
+ * Action_Factory::fs_ctl_resolve_url() on r25+.
+ *
+ * @param string $url
+ * @return string|null
+ */
+function choose_file_url_to_path($url)
+{
+    if (!is_string($url) || $url === '') {
+        return null;
+    }
+
+    if ($url[0] === '/') {
+        return $url;
+    }
+
+    if (preg_match('|^storage_name://([^/]+)(/.*)?$|', $url, $m)) {
+        return '/tmp/mnt/storage/' . $m[1] . (isset($m[2]) ? $m[2] : '');
+    }
+
+    if (strncmp($url, 'sdcard://', 9) === 0) {
+        return '/sdcard/' . ltrim(substr($url, 9), '/');
+    }
+
+    return null;
+}
+
+/**
+ * File system path from the user_input of the fs_ctl resolve_url post_action.
+ * On Android TV the firmware can not mount network shares and "resolves" them to an internal
+ * url like /$smb://user:password@server/share/file - such a result is rejected and must not be logged.
+ *
+ * @param object $user_input
+ * @return string|null
+ */
+function get_fs_ctl_resolved_path($user_input)
+{
+    if (safe_get_value($user_input, 'action_status') !== '1') {
+        hd_debug_print("fs_ctl resolve_url failed: " . safe_get_value($user_input, 'fs_ctl_error', 'unknown error'));
+        return null;
+    }
+
+    $path = safe_get_value($user_input, 'fs_ctl_resolved_path');
+    if (!is_string($path) || !isset($path[1]) || $path[0] !== '/' || $path[1] === '$') {
+        hd_debug_print("fs_ctl resolve_url returned no local path");
+        return null;
+    }
+
+    return $path;
+}
+
+/**
  * NewUI rows folders
  *
  * @return bool

@@ -127,8 +127,15 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                 $params = $this->plugin->get_playlist_parameters($selected_id);
                 $type = safe_get_value($params, PARAM_TYPE);
                 $uri = safe_get_value($params, PARAM_URI);
-                if ($type === PARAM_FILE && !file_exists($uri)) {
-                    return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_error_file_not_found'));
+                if ($type === PARAM_FILE) {
+                    // a file on a network share is mounted again if needed
+                    $file_path = Default_Dune_Plugin::get_playlist_file_path($params);
+                    if ($file_path === false) {
+                        return Action_Factory::show_title_dialog(TR::t('err_mount'), $uri);
+                    }
+                    if (!file_exists($file_path)) {
+                        return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_error_file_not_found'));
+                    }
                 }
 
                 $this->plugin->set_active_playlist_id($selected_id);
@@ -258,7 +265,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
-                return Action_Factory::open_folder($media_url, TR::t('select_folder'));
+                return Starnet_Folder_Screen::make_chooser_action($media_url, TR::t('select_folder'));
 
             case ACTION_EXPORT_FOLDER_SELECTED:
                 return $this->do_export_playlist($user_input);
@@ -500,7 +507,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             )
         );
         $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
-            Action_Factory::open_folder($media_url, TR::t('select_file')),
+            Starnet_Folder_Screen::make_popup_chooser_action($media_url, TR::t('select_file')),
             TR::t('select_file'),
             'm3u_file.png'
         );
@@ -515,7 +522,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             )
         );
         $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
-            Action_Factory::open_folder($media_url, TR::t('edit_list_src_folder')),
+            Starnet_Folder_Screen::make_popup_chooser_action($media_url, TR::t('edit_list_src_folder')),
             TR::t('edit_list_folder_path'), 'folder.png');
 
         // Add list file
@@ -528,7 +535,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
             )
         );
         $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
-            Action_Factory::open_folder($media_url, TR::t('select_file')),
+            Starnet_Folder_Screen::make_popup_chooser_action($media_url, TR::t('select_file')),
             TR::t('edit_list_import_list'),
             'text_file.png'
         );
@@ -822,8 +829,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
     {
         $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
 
-        $hash = Hashed_Array::hash($selected_media_url->{PARAM_FILEPATH});
-        if ($this->plugin->is_playlist_entry_exist($hash)) {
+        $file_params = Default_Dune_Plugin::make_file_playlist_params($selected_media_url->{PARAM_FILEPATH});
+        if ($this->plugin->is_playlist_entry_exist(Hashed_Array::hash($file_params[PARAM_URI]))) {
             return Action_Factory::show_title_dialog(TR::t('error'), TR::t('err_file_exist'));
         }
 
@@ -847,7 +854,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
 
         $old_count = $this->plugin->get_all_playlists_count();
         foreach ($files as $file) {
-            if ($this->plugin->is_playlist_entry_exist(Hashed_Array::hash($file))) continue;
+            $file_params = Default_Dune_Plugin::make_file_playlist_params($file);
+            if ($this->plugin->is_playlist_entry_exist(Hashed_Array::hash($file_params[PARAM_URI]))) continue;
             try {
                 $this->add_playlist($file, PARAM_FILE, '', CONTROL_DETECT_ID, CONTROL_PLAYLIST_IPTV);
             } catch (Exception $ex) {
@@ -937,6 +945,14 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
      */
     protected function add_playlist($uri, $type, $name, $detect_id, $pl_type)
     {
+        $file_path = $uri;
+        $params = array();
+        if ($type === PARAM_FILE) {
+            // a file on a network share is stored with its share and a smb:// or nfs:// uri
+            $params = Default_Dune_Plugin::make_file_playlist_params($file_path);
+            $uri = $params[PARAM_URI];
+        }
+
         $playlist_id = Hashed_Array::hash($uri);
         if ($this->plugin->is_playlist_entry_exist($playlist_id)) {
             hd_debug_print("already exist: $playlist_id", true);
@@ -950,7 +966,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
         $params[PARAM_PLAYLIST_TYPE] = $pl_type;
 
         $tmp_file = get_temp_path($playlist_id);
-        HD::fetch_playlist($uri, $tmp_file, $type === PARAM_FILE);
+        HD::fetch_playlist($type === PARAM_FILE ? $file_path : $uri, $tmp_file, $type === PARAM_FILE);
         HD::check_m3u_file($tmp_file, $uri, true);
 
         $post_action = User_Input_Handler_Registry::create_action($this, ACTION_INVALIDATE, null, array(PARAM_PLAYLIST_ID => $playlist_id));
@@ -1072,7 +1088,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen
                         safe_get_value($params, PARAM_PLAYLIST_TYPE),
                         $mapper_ops[$id_map]
                     );
-                    $missed = ($type === PARAM_FILE && !file_exists($uri));
+                    // a network share is not mounted only to draw the list, it is checked when the playlist is selected
+                    $missed = ($type === PARAM_FILE && !Default_Dune_Plugin::is_network_file_playlist($params) && !file_exists($uri));
                 } else {
                     $detailed_info = $title;
                 }

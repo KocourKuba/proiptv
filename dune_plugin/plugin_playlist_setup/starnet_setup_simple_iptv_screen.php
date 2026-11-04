@@ -171,11 +171,14 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                     )
                 );
 
-                return Action_Factory::open_folder($media_url, TR::t('select_file'));
+                return Starnet_Folder_Screen::make_chooser_action($media_url, TR::t('select_file'));
 
             case ACTION_FILE_SELECTED:
                 $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
-                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $selected_media_url->{PARAM_FILEPATH});
+                // a file on a network share is stored with its share, it is mounted again on load
+                $file_params = Default_Dune_Plugin::make_file_playlist_params($selected_media_url->{PARAM_FILEPATH});
+                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $file_params[PARAM_URI]);
+                $this->plugin->set_playlist_parameter($playlist_id, PARAM_NETWORK_SHARE, $file_params[PARAM_NETWORK_SHARE]);
                 $this->force_parent_reload = true;
                 break;
 
@@ -187,6 +190,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
             case CONTROL_DETECT_ID:
                 $uri = safe_get_value($params, PARAM_URI);
                 $tmp_file = $uri;
+                $is_temp = false;
                 try {
                     if (empty($uri)) {
                         break;
@@ -198,7 +202,14 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                         }
 
                         $tmp_file = get_temp_path(Hashed_Array::hash($uri));
+                        $is_temp = true;
                         HD::fetch_playlist($uri, $tmp_file, false);
+                    } else if ($type === PARAM_FILE) {
+                        // a file on a network share is mounted again if needed
+                        $tmp_file = Default_Dune_Plugin::get_playlist_file_path($params);
+                        if ($tmp_file === false) {
+                            throw new Exception(TR::load('err_mount') . " $uri");
+                        }
                     }
 
                     HD::check_m3u_file($tmp_file, $uri);
@@ -219,7 +230,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $ex->getMessage());
                 }
 
-                if ($tmp_file !== $uri) {
+                if ($is_temp) {
                     safe_unlink($tmp_file);
                 }
                 break;

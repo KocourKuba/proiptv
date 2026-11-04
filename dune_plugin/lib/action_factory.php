@@ -650,10 +650,13 @@ class Action_Factory
      * @param bool $with_network_folders r25+: show saved network folders
      * @param bool $with_network_browser r25+: allow browsing the network
      * @param string|null $new_folder_default_name r25+: default name for a folder created from the dialog
+     * @param int $details_width width in pixels of the details pane (icon and name of the selected item) on the right,
+     *                           0 hides it: the pane always shows the firmware folder icon and cuts long names
      * @return array|null
      */
     public static function choose_file($title, $ext, $is_dir = false, $check_writeable = false, $with_fav = false, $post_action = null,
-                                       $with_network_folders = false, $with_network_browser = false, $new_folder_default_name = null)
+                                       $with_network_folders = false, $with_network_browser = false, $new_folder_default_name = null,
+                                       $details_width = 0)
     {
         if (!is_choose_file_supported()) {
             return null;
@@ -661,11 +664,17 @@ class Action_Factory
 
         $ui_params = array(
             FileChooserUiParams::with_favorite_folders => $with_fav,
-            FileChooserUiParams::details_width => 60,
+            FileChooserUiParams::details_width => $details_width,
             FileChooserUiParams::dialog_title => $title);
 
         // r25+ fields, absent in r24 dune_api.php
         if (defined('FileChooserUiParams::with_network_folders')) {
+            // the app on Android TV can not mount network shares: the chooser returns them, but they
+            // resolve to an internal /$smb://... url, and NFS exports can not even be entered
+            if (is_limited_apk()) {
+                $with_network_folders = false;
+                $with_network_browser = false;
+            }
             $ui_params[FileChooserUiParams::with_network_folders] = $with_network_folders;
             $ui_params[FileChooserUiParams::with_network_browser] = $with_network_browser;
             if ($new_folder_default_name !== null) {
@@ -684,6 +693,55 @@ class Action_Factory
                 ChooseFileActionData::post_action => $post_action,
             )
         );
+    }
+
+    // available from r25
+    /**
+     * Ask the firmware to turn an url returned by choose_file (network_folder_id://, smb://, nfs-tcp://, ...)
+     * into a file system path, mounting the share when needed.
+     * The post_action gets the result in user_input, read it with get_fs_ctl_resolved_path().
+     *
+     * @param string $url
+     * @param array $post_action
+     * @param bool $try_mount
+     * @return array|null null if the firmware has no fs_ctl action
+     */
+    public static function fs_ctl_resolve_url($url, $post_action, $try_mount = true)
+    {
+        if (!is_fs_ctl_supported()) {
+            return null;
+        }
+
+        return array(
+            GuiAction::handler_string_id => FS_CTL_ACTION_ID,
+            GuiAction::data => array(
+                FsCtlActionData::cmd => array(
+                    FsCmdDef::kind => FS_CMD_RESOLVE_URL,
+                    FsCmdDef::specific_def => array(
+                        FsResolveUrlDef::url => $url,
+                        FsResolveUrlDef::try_mount_if_needed => $try_mount)),
+                FsCtlActionData::post_action => $post_action,
+            )
+        );
+    }
+
+    /**
+     * Second step after choose_file: returns the action resolving the chosen url when the firmware
+     * has to do it (network locations, r25+). When the url is local or nothing was chosen returns null;
+     * then take the path from choose_file_url_to_path().
+     *
+     * @param object $user_input user_input of the choose_file post_action
+     * @param array $post_action called with the fs_ctl result, read it with get_fs_ctl_resolved_path()
+     * @return array|null
+     */
+    public static function resolve_chosen_file($user_input, $post_action)
+    {
+        $url = get_choose_file_url($user_input);
+        if ($url === null || choose_file_url_to_path($url) !== null) {
+            return null;
+        }
+
+        return self::fs_ctl_resolve_url($url, $post_action);
     }
 
     /**

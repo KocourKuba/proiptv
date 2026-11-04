@@ -254,7 +254,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
-                return Action_Factory::open_folder($media_url, TR::t('select_folder'));
+                return Starnet_Folder_Screen::make_chooser_action($media_url, TR::t('select_folder'));
 
             case ACTION_EXPORT_FOLDER_SELECTED:
                 return $this->do_export_xmltv_sources($user_input);
@@ -344,7 +344,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen
             )
         );
         $menu_items[] = User_Input_Handler_Registry::create_popup_item_ext(
-            Action_Factory::open_folder($media_url, TR::t('select_file')),
+            Starnet_Folder_Screen::make_popup_chooser_action($media_url, TR::t('select_file')),
             TR::t('edit_list_import_list'), 'text_file.png'
         );
 

@@ -43,6 +43,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
     const ACTION_NEW_SMB_DATA = 'new_smb_data';
     const ACTION_SAVE_SMB_SETUP = 'save_smb_setup';
     const ACTION_RELOAD_IMAGE_FOLDER = 'reload_image_folder';
+    const ACTION_CHOOSER_RESULT = 'chooser_result';
+    const ACTION_CHOOSER_RESOLVED = 'chooser_resolved';
+    const ACTION_OPEN_CHOOSER = 'open_chooser';
 
     const SELECTED_TYPE_NFS = 'nfs';
     const SELECTED_TYPE_SMB = 'smb';
@@ -76,6 +79,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
     const PARAM_NEW_USER = 'new_user';
     const PARAM_NEW_PASSWORD = 'new_password';
     const PARAM_SIZE = 'size';
+    const PARAM_CHOOSER_DATA = 'chooser_data';
+    const PARAM_CHOOSER_TITLE = 'chooser_title';
 
     protected $imagelib_cache_path;
 
@@ -86,6 +91,140 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
     {
         parent::__construct($plugin);
         $this->imagelib_cache_path = get_slash_trailed_path(get_data_path(self::IMAGELIB_PATH));
+    }
+
+    /**
+     * Opens a file or folder chooser for a media url made by make_callback_media_url_str().
+     * On r25+ the firmware choose_file dialog is used, the chosen url is resolved to a path by fs_ctl and
+     * the source screen gets the same callback (PARAM_SELECTED_DATA with PARAM_FILEPATH/PARAM_CAPTION) as
+     * from this screen. Older firmware and features the dialog does not have (reset to default, image library)
+     * still open this screen.
+     *
+     * @param string $media_url_str
+     * @param string $title
+     * @return array
+     */
+    public static function make_chooser_action($media_url_str, $title)
+    {
+        $media_url = MediaURL::decode($media_url_str);
+        if (!is_choose_file_supported() || !is_fs_ctl_supported()
+            || !empty($media_url->{self::PARAM_RESET_ACTION})
+            || !empty($media_url->{self::PARAM_ALLOW_IMAGE_LIB})) {
+            return Action_Factory::open_folder($media_url_str, $title);
+        }
+
+        $choose_folder = !empty($media_url->{self::PARAM_CHOOSE_FOLDER});
+        $extensions = (!$choose_folder && !empty($media_url->{PARAM_EXTENSION}))
+            ? explode('|', $media_url->{PARAM_EXTENSION})
+            : array();
+        $allow_network = (bool)$media_url->{self::PARAM_ALLOW_NETWORK};
+
+        $post_action = User_Input_Handler_Registry::create_screen_action(self::ID, self::ACTION_CHOOSER_RESULT, null,
+            array(self::PARAM_CHOOSER_DATA => $media_url_str));
+
+        hd_debug_print("Use firmware file chooser: $media_url_str", true);
+        return Action_Factory::choose_file($title, $extensions, $choose_folder,
+            $choose_folder && empty($media_url->{self::PARAM_READ_ONLY}), true, $post_action,
+            $allow_network, $allow_network);
+    }
+
+    /**
+     * Same as make_chooser_action() for a popup menu item: the chooser is opened by this screen handler after
+     * the menu is closed. The firmware file chooser started directly from a popup menu shows no network folders.
+     *
+     * @param string $media_url_str
+     * @param string $title
+     * @return array|null
+     */
+    public static function make_popup_chooser_action($media_url_str, $title)
+    {
+        return User_Input_Handler_Registry::create_screen_action(self::ID, self::ACTION_OPEN_CHOOSER, null,
+            array(self::PARAM_CHOOSER_DATA => $media_url_str, self::PARAM_CHOOSER_TITLE => $title));
+    }
+
+    /**
+     * @param object $user_input post_action input of the firmware file chooser
+     * @return array|null
+     */
+    protected function do_chooser_result($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $data = MediaURL::decode($user_input->{self::PARAM_CHOOSER_DATA});
+        $url = get_choose_file_url($user_input);
+        if ($url === null) {
+            hd_debug_print("File chooser canceled", true);
+            return self::make_chooser_end_action($data);
+        }
+
+        hd_debug_print("File chooser result: $url", true);
+        $resolve = Action_Factory::resolve_chosen_file($user_input,
+            User_Input_Handler_Registry::create_action($this, self::ACTION_CHOOSER_RESOLVED, null,
+                array(self::PARAM_CHOOSER_DATA => $user_input->{self::PARAM_CHOOSER_DATA})));
+        if ($resolve !== null) {
+            return $resolve;
+        }
+
+        return self::make_chooser_selected_action($data, choose_file_url_to_path($url), '');
+    }
+
+    /**
+     * @param object $user_input post_action input of fs_ctl resolve_url
+     * @return array|null
+     */
+    protected function do_chooser_resolved($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $data = MediaURL::decode($user_input->{self::PARAM_CHOOSER_DATA});
+        return self::make_chooser_selected_action($data, get_fs_ctl_resolved_path($user_input),
+            safe_get_value($user_input, 'fs_ctl_error', ''));
+    }
+
+    /**
+     * @param MediaURL $data
+     * @param string|null $path
+     * @param string $error
+     * @return array|null
+     */
+    protected static function make_chooser_selected_action($data, $path, $error)
+    {
+        if (empty($path)) {
+            hd_debug_print("Chosen location has no usable path: $error");
+            return Action_Factory::show_title_dialog(TR::t('err_mount'), empty($error) ? TR::t('err_error_file_not_found') : $error);
+        }
+
+        hd_debug_print("Chosen path: $path", true);
+        $choose_folder = !empty($data->{self::PARAM_CHOOSE_FOLDER});
+        $path = rtrim($path, '/');
+        $data->{PARAM_FILEPATH} = $path;
+        $data->{PARAM_CAPTION} = basename($path);
+        if ($choose_folder) {
+            $data->{PARAM_TYPE} = self::SELECTED_TYPE_FOLDER;
+        } else {
+            $data->{PARAM_TYPE} = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        }
+
+        return User_Input_Handler_Registry::create_screen_action($data->{PARAM_SOURCE_WINDOW_ID},
+            $choose_folder ? $data->{self::PARAM_CHOOSE_FOLDER} : $data->{self::PARAM_CHOOSE_FILE},
+            '',
+            array(self::PARAM_SELECTED_DATA => $data->get_media_url_string()));
+    }
+
+    /**
+     * Same as leaving this screen with RETURN
+     *
+     * @param MediaURL $data
+     * @return array|null
+     */
+    protected static function make_chooser_end_action($data)
+    {
+        if (!isset($data->{PARAM_SOURCE_WINDOW_ID}, $data->{PARAM_END_ACTION})) {
+            return null;
+        }
+
+        return User_Input_Handler_Registry::create_screen_action($data->{PARAM_SOURCE_WINDOW_ID},
+            $data->{PARAM_END_ACTION}, null, array(PARAM_ACTION_ID => $data->{PARAM_ACTION_ID}));
     }
 
     /**
@@ -227,6 +366,15 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen
 
             case self::ACTION_SAVE_SMB_SETUP:
                 return $this->do_save_smb_setup($user_input);
+
+            case self::ACTION_OPEN_CHOOSER:
+                return self::make_chooser_action($user_input->{self::PARAM_CHOOSER_DATA}, $user_input->{self::PARAM_CHOOSER_TITLE});
+
+            case self::ACTION_CHOOSER_RESULT:
+                return $this->do_chooser_result($user_input);
+
+            case self::ACTION_CHOOSER_RESOLVED:
+                return $this->do_chooser_resolved($user_input);
         }
 
         return null;

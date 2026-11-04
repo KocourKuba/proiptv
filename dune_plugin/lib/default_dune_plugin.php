@@ -1145,8 +1145,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 }
 
                 if ($type === PARAM_FILE) {
-                    hd_debug_print("m3u copy local file: $uri to $m3u_file");
-                    $res = copy($uri, $m3u_file);
+                    $file_path = self::get_playlist_file_path($playlist_params);
+                    if ($file_path === false) {
+                        throw new Exception(TR::load('err_mount') . " $uri");
+                    }
+                    hd_debug_print("m3u copy local file: $file_path to $m3u_file");
+                    $res = copy($file_path, $m3u_file);
                     if ($res === false) {
                         $errors = error_get_last();
                         $logfile = "Copy error: " . $errors['type'] . "\n" .$errors['message'];
@@ -3058,6 +3062,53 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $path = get_slash_trailed_path(get_data_path('playlist_cache'));
         create_path($path);
         return $path;
+    }
+
+    /**
+     * Playlist parameters of a file playlist chosen at $path. A file on a network share keeps the share
+     * (PARAM_NETWORK_SHARE) and gets a stable smb:// or nfs:// uri, the share is mounted again on load.
+     *
+     * @param string $path
+     * @return array PARAM_URI, PARAM_NETWORK_SHARE
+     */
+    public static function make_file_playlist_params($path)
+    {
+        $share = smb_tree::make_network_share($path);
+        if ($share === null) {
+            return array(PARAM_URI => $path, PARAM_NETWORK_SHARE => '');
+        }
+
+        $uri = smb_tree::get_network_share_uri($share);
+        hd_debug_print("Network playlist file: $uri");
+        return array(PARAM_URI => $uri, PARAM_NETWORK_SHARE => json_encode($share));
+    }
+
+    /**
+     * Current path of a file playlist, its network share is mounted if needed.
+     *
+     * @param array $params playlist parameters
+     * @return string|false false if the network share can not be mounted
+     */
+    public static function get_playlist_file_path($params)
+    {
+        $share = safe_get_value($params, PARAM_NETWORK_SHARE);
+        if (!empty($share)) {
+            $share = json_decode($share, true);
+            if (is_array($share)) {
+                return smb_tree::get_network_share_path($share);
+            }
+        }
+
+        return safe_get_value($params, PARAM_URI);
+    }
+
+    /**
+     * @param array $params playlist parameters
+     * @return bool
+     */
+    public static function is_network_file_playlist($params)
+    {
+        return safe_get_value($params, PARAM_TYPE) === PARAM_FILE && safe_get_value($params, PARAM_NETWORK_SHARE, '') !== '';
     }
 
     /**

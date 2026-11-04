@@ -40,6 +40,16 @@ class smb_tree
     const PROTOCOL_TCP = 'tcp';
     const PROTOCOL_UDP = 'udp';
     const NETWORK_CONFIG = '/config/network_folders.properties';
+    const SMB_AUTH_CONFIG = '/config/smb_auth.properties';
+    const NETWORK_MOUNT_LIST = '/tmp/run/network_mount_list.xml';
+
+    // keys of a network share description (smb_tree::make_network_share())
+    const SHARE_TYPE = 'type';
+    const SHARE_SERVER = 'server';
+    const SHARE_DIR = 'dir';
+    const SHARE_USER = 'user';
+    const SHARE_PROTO = 'proto';
+    const SHARE_PATH = 'path';
 
     private $descriptor_spec;
     private $smb_tree_output = '';
@@ -58,6 +68,188 @@ class smb_tree
             1 => array('pipe', 'w'),
             2 => array('pipe', 'w')
         );
+    }
+
+    /**
+     * Network shares mounted by the firmware network manager (it mounts the network folders, the shares opened
+     * in the file chooser and the ones requested with write_request()).
+     *
+     * @return array mount path => attributes (type smb|nfs, server, dir, user_name, password, proto, status)
+     */
+    public static function get_network_mounts()
+    {
+        $mounts = array();
+        if (!file_exists(self::NETWORK_MOUNT_LIST)) {
+            return $mounts;
+        }
+
+        $xml = @simplexml_load_string(file_get_contents(self::NETWORK_MOUNT_LIST));
+        if ($xml === false) {
+            hd_debug_print("Error parsing " . self::NETWORK_MOUNT_LIST);
+            return $mounts;
+        }
+
+        foreach ($xml->children() as $elt) {
+            if ($elt->getName() !== 'mount') {
+                continue;
+            }
+
+            $attrs = array();
+            foreach ($elt->attributes() as $key => $value) {
+                $attrs[$key] = (string)$value;
+            }
+
+            if (!empty($attrs['path'])) {
+                $mounts[rtrim($attrs['path'], '/')] = $attrs;
+            }
+        }
+
+        return $mounts;
+    }
+
+    /**
+     * Describes the network share holding a file, so the file can be found again after the share is unmounted
+     * (reboot). The password is not kept, it is looked up when mounting (get_network_share_path()).
+     *
+     * @param string $path file path under a share mounted by the firmware (/tmp/mnt/smb/N/..., /tmp/mnt/network/N/...)
+     * @return array|null null for a local file or a share not mounted by the firmware
+     */
+    public static function make_network_share($path)
+    {
+        if (!preg_match('#^/tmp/mnt/(?:smb|network)/[^/]+#', $path, $m)) {
+            return null;
+        }
+
+        $mounts = self::get_network_mounts();
+        if (!isset($mounts[$m[0]])) {
+            hd_debug_print("Share $m[0] is not mounted by the network manager");
+            return null;
+        }
+
+        $mount = $mounts[$m[0]];
+        if (empty($mount['type']) || empty($mount['server']) || !isset($mount['dir'])) {
+            return null;
+        }
+
+        return array(
+            self::SHARE_TYPE => $mount['type'],
+            self::SHARE_SERVER => $mount['server'],
+            self::SHARE_DIR => $mount['dir'],
+            self::SHARE_USER => safe_get_value($mount, 'user_name', ''),
+            self::SHARE_PROTO => safe_get_value($mount, 'proto', ''),
+            self::SHARE_PATH => ltrim(substr($path, strlen($m[0])), '/'),
+        );
+    }
+
+    /**
+     * Readable location of a share file: smb://server/share/path or nfs://server:/export/path
+     *
+     * @param array $share
+     * @return string
+     */
+    public static function get_network_share_uri($share)
+    {
+        $path = $share[self::SHARE_PATH];
+        if ($share[self::SHARE_TYPE] === 'nfs') {
+            return "nfs://{$share[self::SHARE_SERVER]}:" . rtrim($share[self::SHARE_DIR], '/') . "/$path";
+        }
+
+        return "smb://{$share[self::SHARE_SERVER]}/" . trim($share[self::SHARE_DIR], '/') . "/$path";
+    }
+
+    /**
+     * Current path of a share file, the share is mounted by the firmware network manager if needed.
+     *
+     * @param array $share made by make_network_share()
+     * @return string|false
+     */
+    public static function get_network_share_path($share)
+    {
+        $type = $share[self::SHARE_TYPE];
+        $server = $share[self::SHARE_SERVER];
+        $dir = $share[self::SHARE_DIR];
+        $path = $share[self::SHARE_PATH];
+
+        $mounts = self::get_network_mounts();
+        foreach ($mounts as $mount_path => $mount) {
+            if (safe_get_value($mount, 'type') === $type
+                && strcasecmp(safe_get_value($mount, 'server', ''), $server) === 0
+                && strcasecmp(trim(safe_get_value($mount, 'dir', ''), '/'), trim($dir, '/')) === 0
+                && safe_get_value($mount, 'status', 'mounted') === 'mounted'
+                && is_dir($mount_path)) {
+                return "$mount_path/$path";
+            }
+        }
+
+        $params = array(
+            'type' => $type,
+            'server' => $server,
+            'dir' => $dir,
+        );
+
+        if ($type === 'smb') {
+            $credentials = self::find_smb_credentials($server, $dir, $share[self::SHARE_USER]);
+            $params['user_name'] = $credentials[0];
+            $params['password'] = $credentials[1];
+            $params['proto'] = '';
+        } else {
+            $params['proto'] = empty($share[self::SHARE_PROTO]) ? self::PROTOCOL_TCP : $share[self::SHARE_PROTO];
+        }
+
+        hd_debug_print("Mount $type share $server $dir");
+        $mount_path = self::write_request('network_manager', 'mount', count($mounts) + 200, $params, 15);
+        if ($mount_path === false) {
+            hd_debug_print("Failed to mount $type share $server $dir");
+            return false;
+        }
+
+        return rtrim($mount_path, '/') . "/$path";
+    }
+
+    /**
+     * Login of a smb share: from the network folders, then from the logins saved by the firmware file browser.
+     *
+     * @param string $server
+     * @param string $dir
+     * @param string $user user the share was mounted with
+     * @return array (user, password)
+     */
+    protected static function find_smb_credentials($server, $dir, $user)
+    {
+        foreach (self::parse_network_config() as $folder) {
+            if ((int)safe_get_value($folder, PARAM_TYPE, -1) === 0
+                && strcasecmp(safe_get_value($folder, self::PARAM_SERVER, ''), $server) === 0
+                && strcasecmp(trim(safe_get_value($folder, self::PARAM_DIRECTORY, ''), '/'), trim($dir, '/')) === 0) {
+                return array(safe_get_value($folder, self::PARAM_USER, 'guest'), safe_get_value($folder, self::PARAM_PASSWORD, ''));
+            }
+        }
+
+        // smb.auth.N.key = //server, smb.auth.N.value = <kind>:<user>:<password>
+        $keys = array();
+        $values = array();
+        $lines = file_exists(self::SMB_AUTH_CONFIG) ? file(self::SMB_AUTH_CONFIG, FILE_IGNORE_NEW_LINES) : array();
+        foreach ($lines as $line) {
+            if (preg_match('/^smb\.auth\.(\d+)\.(key|value)\s*=\s*(.*)$/', $line, $m)) {
+                if ($m[2] === 'key') {
+                    $keys[$m[1]] = trim($m[3]);
+                } else {
+                    $values[$m[1]] = $m[3];
+                }
+            }
+        }
+
+        foreach ($keys as $n => $key) {
+            if (strcasecmp(trim($key, '/'), $server) !== 0 || !isset($values[$n])) {
+                continue;
+            }
+
+            $auth = explode(':', $values[$n], 3);
+            if (count($auth) === 3) {
+                return array($auth[1], $auth[2]);
+            }
+        }
+
+        return array(empty($user) ? 'guest' : $user, '');
     }
 
     /**
@@ -200,9 +392,10 @@ class smb_tree
      * @param string $cmd_name
      * @param int $cmd_id
      * @param array $params
+     * @param int $timeout seconds to wait for the reply
      * @return false|string
      */
-    public static function write_request($server_id, $cmd_name, $cmd_id, $params)
+    public static function write_request($server_id, $cmd_name, $cmd_id, $params, $timeout = 1)
     {
         $dir_path = "/tmp/run/ipc__$server_id";
         if (!is_dir($dir_path)) {
@@ -230,7 +423,12 @@ class smb_tree
         }
 
         $path = "$dir_path/$cmd_name.$pid-$cmd_id.res";
-        sleep(1);
+        $wait_until = microtime(true) + max(1, $timeout);
+        do {
+            usleep(250000);
+            clearstatcache();
+        } while (!file_exists($path) && microtime(true) < $wait_until);
+
         if (!file_exists($path)) {
             return false;
         }

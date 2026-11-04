@@ -205,7 +205,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
-                return Action_Factory::open_folder($media_url, TR::t('setup_backup_folder_path'));
+                return Starnet_Folder_Screen::make_chooser_action($media_url, TR::t('setup_backup_folder_path'));
 
             case Starnet_Setup_Backup_Screen::ACTION_BACKUP_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});

@@ -1135,12 +1135,17 @@ class vod_standard extends Abstract_Vod
                         throw new Exception($msg);
                     }
                 } else if ($type === PARAM_FILE) {
-                    hd_debug_print("m3u copy local file: $uri to $m3u_file");
                     if (empty($uri)) {
                         throw new Exception('Empty playlist path');
                     }
 
-                    $res = copy($uri, $m3u_file);
+                    $file_path = Default_Dune_Plugin::get_playlist_file_path($params);
+                    if ($file_path === false) {
+                        throw new Exception(TR::load('err_mount') . " $uri");
+                    }
+
+                    hd_debug_print("m3u copy local file: $file_path to $m3u_file");
+                    $res = copy($file_path, $m3u_file);
                     if ($res === false) {
                         $errors = error_get_last();
                         $msg = sprintf("%s\nm3u copy local file: %s to %s\nCopy error: %s\n%s",
