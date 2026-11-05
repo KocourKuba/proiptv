@@ -33,6 +33,9 @@ require_once 'lib/xtream/xtream_codes_api.php';
  */
 class vod_sharavoz extends vod_standard
 {
+    const CATEGORY_MODE_TYPE = 'type';
+    const CATEGORY_MODE_GENRE = 'genre';
+
     /**
      * @var xtream_codes_api
      */
@@ -61,6 +64,35 @@ class vod_sharavoz extends vod_standard
         }
 
         return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_category_modes()
+    {
+        return array(
+            self::CATEGORY_MODE_TYPE => TR::t('vod_filter_type'),
+            self::CATEGORY_MODE_GENRE => TR::t('genre')
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_category_mode()
+    {
+        $mode = $this->provider->GetProviderParameter(PARAM_VOD_CATEGORY_MODE, self::CATEGORY_MODE_TYPE);
+        return $mode === self::CATEGORY_MODE_GENRE ? $mode : self::CATEGORY_MODE_TYPE;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function set_category_mode($mode)
+    {
+        $this->provider->SetProviderParameter(PARAM_VOD_CATEGORY_MODE, $mode);
+        $this->category_index = null;
     }
 
     /**
@@ -231,28 +263,26 @@ class vod_sharavoz extends vod_standard
     {
         hd_debug_print(null, true);
 
-        $category_tree = array();
-        $this->parse_categories(xtream_codes_api::VOD, $category_tree);
-        $this->parse_categories(xtream_codes_api::SERIES, $category_tree);
+        $mode = $this->get_category_mode();
+        $groups = $this->get_catalog_groups($mode);
 
-        $category_count = 0;
-        $this->category_index = array();
-        foreach ($category_tree as $key => $value) {
-            $category = new Vod_Category($key, $key);
-            $gen_arr = array();
-            foreach ($value as $sub_cat_name) {
-                $sub_pair = explode('_', $sub_cat_name);
-                //hd_debug_print("Sub Category ($sub_pair[2]): $sub_pair[0] ($sub_pair[1])", true);
-                $gen_arr[] = new Vod_Category($sub_pair[1] . "_" . $sub_pair[2], $sub_pair[0], $category);
-            }
-
-            $category->set_sub_categories($gen_arr);
-            $category_count += count($gen_arr);
-
-            $this->category_index[$category->get_id()] = $category;
+        $total = 0;
+        foreach ($groups as $group) {
+            $total += count($group[xtream_codes_api::VOD]) + count($group[xtream_codes_api::SERIES]);
         }
 
-        hd_debug_print("Categories read: $category_count");
+        // without any movie the lists were not loaded: the count is unknown, the categories are still shown
+        $this->category_index = array();
+        foreach ($groups as $key => $group) {
+            $count = count($group[xtream_codes_api::VOD]) + count($group[xtream_codes_api::SERIES]);
+            if ($total !== 0 && $count === 0) continue;
+
+            $id = "$mode:$key";
+            $caption = $total === 0 ? $group['name'] : "{$group['name']} ($count)";
+            $this->category_index[$id] = new Vod_Category($id, $caption);
+        }
+
+        hd_debug_print('Categories read: ' . count($this->category_index));
 
         return true;
     }
@@ -265,11 +295,6 @@ class vod_sharavoz extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getMovieList: $query_id");
 
-        // Фильмы_1_vod
-        $arr = explode('_', $query_id);
-        $category_id = safe_get_value($arr, 1, $query_id);
-
-        $vod_items = $this->xtream->get_streams($arr[2], $category_id);
         $movies = array();
 
         // pagination is not used. This is a guard to process only one request
@@ -277,14 +302,26 @@ class vod_sharavoz extends vod_standard
             return $movies;
         }
 
-        foreach ($vod_items as $json_movie) {
-            $category = (string)safe_get_value($json_movie, 'category_id');
-            if (empty($category)) {
-                $category = TR::load('no_category');
+        // genre:драма or type:Русские фильмы
+        $arr = explode(':', $query_id, 2);
+        $groups = $this->get_catalog_groups($arr[0]);
+        if (count($arr) === 2 && isset($groups[$arr[1]])) {
+            $group = $groups[$arr[1]];
+
+            // the films from new to old. The series have no added time (last_modified
+            // is the same for all of them), they follow the films in the server order
+            $added = array();
+            foreach ($group[xtream_codes_api::VOD] as $id => $stream) {
+                $added[$id] = (float)safe_get_value($stream, 'added', 0);
             }
 
-            if ($category_id === Vod_Category::FLAG_ALL_MOVIES || $category_id === $category) {
-                $movies[] = $this->CreateShortMovie($json_movie);
+            arsort($added);
+            foreach ($added as $id => $time) {
+                $movies[] = $this->CreateShortMovie($group[xtream_codes_api::VOD][$id]);
+            }
+
+            foreach ($group[xtream_codes_api::SERIES] as $stream) {
+                $movies[] = $this->CreateShortMovie($stream);
             }
         }
 
@@ -346,22 +383,78 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
-     * @param string $stream_type
-     * @param array &$category_tree
-     * @return void
+     * The whole catalog grouped by the type or the genre of the 'Type | Genre' categories.
+     * The common film list has a row per category of a film, so one request gives the films
+     * of any group. A series has one category, the one of its first genre, so in the genre
+     * mode the series are grouped by the full genre list of the series.
+     *
+     * @param string $mode category mode
+     * @return array group key (type name or genre name in lower case) =>
+     *               array('name' => caption, 'vod' => array(id => stream), 'series' => array(id => stream)),
+     *               the types in the server order, the genres sorted by name
      */
-    protected function parse_categories($stream_type, &$category_tree)
+    protected function get_catalog_groups($mode)
     {
-        $categories = $this->xtream->get_categories($stream_type);
-        if ($categories !== false) {
+        $by_genre = $mode === self::CATEGORY_MODE_GENRE;
+        $vod_type = xtream_codes_api::VOD;
+        $series_type = xtream_codes_api::SERIES;
+
+        $groups = array();
+        $category_groups = array($vod_type => array(), $series_type => array());
+        foreach (array($vod_type, $series_type) as $stream_type) {
+            $categories = $this->xtream->get_categories($stream_type);
+            if ($categories === false) continue;
+
             foreach ($categories as $item) {
                 $pair = explode('|', $item['category_name']);
+                if (count($pair) < 2) continue;
 
-                $parent_id = trim($pair[0]);
-                $query_id = trim($pair[1]) . "_" . $item['category_id'] . "_" . $stream_type;
-                $category_tree[$parent_id][] = $query_id;
+                $name = trim($pair[$by_genre ? 1 : 0]);
+                $key = $by_genre ? mb_strtolower($name, 'UTF-8') : $name;
+                if (!isset($groups[$key])) {
+                    $groups[$key] = array('name' => $name, $vod_type => array(), $series_type => array());
+                }
+
+                $category_groups[$stream_type][$item['category_id']] = $key;
             }
         }
+
+        $streams = $this->xtream->get_streams($vod_type);
+        if ($streams !== false) {
+            $owners = $category_groups[$vod_type];
+            foreach ($streams as $stream) {
+                if (isset($stream['stream_id'], $stream['category_id'], $owners[$stream['category_id']])) {
+                    $groups[$owners[$stream['category_id']]][$vod_type][$stream['stream_id']] = $stream;
+                }
+            }
+        }
+
+        $streams = $this->xtream->get_streams($series_type);
+        if ($streams !== false) {
+            $owners = $category_groups[$series_type];
+            foreach ($streams as $stream) {
+                if (!isset($stream[COLUMN_SERIES_ID])) continue;
+
+                $id = $stream[COLUMN_SERIES_ID];
+                if ($by_genre) {
+                    $genres = explode(',', mb_strtolower((string)safe_get_value($stream, 'genre'), 'UTF-8'));
+                    foreach ($genres as $genre) {
+                        $genre = trim($genre);
+                        if (isset($groups[$genre])) {
+                            $groups[$genre][$series_type][$id] = $stream;
+                        }
+                    }
+                } else if (isset($stream['category_id'], $owners[$stream['category_id']])) {
+                    $groups[$owners[$stream['category_id']]][$series_type][$id] = $stream;
+                }
+            }
+        }
+
+        if ($by_genre) {
+            ksort($groups);
+        }
+
+        return $groups;
     }
 
     /**
