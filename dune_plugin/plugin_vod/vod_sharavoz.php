@@ -72,7 +72,7 @@ class vod_sharavoz extends vod_standard
     public function get_category_modes()
     {
         return array(
-            self::CATEGORY_MODE_TYPE => TR::t('vod_filter_type'),
+            self::CATEGORY_MODE_TYPE => TR::t('category'),
             self::CATEGORY_MODE_GENRE => TR::t('genre')
         );
     }

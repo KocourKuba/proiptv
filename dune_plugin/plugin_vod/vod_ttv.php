@@ -112,7 +112,7 @@ class vod_ttv extends vod_standard
     {
         $modes = array(
             self::CATEGORY_MODE_GENRE => TR::t('genre'),
-            self::CATEGORY_MODE_TYPE => TR::t('vod_filter_type')
+            self::CATEGORY_MODE_TYPE => TR::t('category')
         );
 
         if ($this->has_collections()) {
@@ -210,7 +210,7 @@ class vod_ttv extends vod_standard
         // filter types for the film_filter request
         $exist_filters = array(
             'type' => array(
-                'title' => TR::t('vod_filter_type'),
+                'title' => TR::t('category'),
                 'values' => array(
                     -1 => TR::t('no'),
                     'all' => TR::t('vod_filter_type_all'),

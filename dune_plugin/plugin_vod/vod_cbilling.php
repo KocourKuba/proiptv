@@ -33,6 +33,11 @@ require_once 'lib/vod/vod_standard.php';
  */
 class vod_cbilling extends vod_standard
 {
+    const CATEGORY_MODE_TYPE = 'type';
+    const CATEGORY_MODE_GENRE = 'genre';
+    // the category id of the genre mode: the prefix and the id=count list of the genre in each type
+    const GENRE_QUERY_PREFIX = 'genre:';
+
     /**
      * @var string
      */
@@ -75,6 +80,35 @@ class vod_cbilling extends vod_standard
 
         return false;
 
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_category_modes()
+    {
+        return array(
+            self::CATEGORY_MODE_TYPE => TR::t('category'),
+            self::CATEGORY_MODE_GENRE => TR::t('genre')
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_category_mode()
+    {
+        $mode = $this->provider->GetProviderParameter(PARAM_VOD_CATEGORY_MODE, self::CATEGORY_MODE_TYPE);
+        return $mode === self::CATEGORY_MODE_GENRE ? $mode : self::CATEGORY_MODE_TYPE;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function set_category_mode($mode)
+    {
+        $this->provider->SetProviderParameter(PARAM_VOD_CATEGORY_MODE, $mode);
+        $this->category_index = null;
     }
 
     /**
@@ -185,34 +219,25 @@ class vod_cbilling extends vod_standard
 
         $this->category_index = array();
 
-        $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, '');
-        $this->category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
+        $nodes = safe_get_value($jsonItems, 'data', array());
         $total = 0;
-        foreach (safe_get_value($jsonItems, 'data', array()) as $node) {
-            $id = (string)safe_get_value($node, 'id');
-            $count = safe_get_value($node, 'count');
-            $category = new Vod_Category($id, safe_get_value($node, 'name') . " ($count)");
-            $total += $count;
-
-            // fetch genres for category
-            $genreData = $this->make_json_request("/cat/$id/genres");
-            if ($genreData === false) {
-                continue;
-            }
-
-            $gen_arr = array();
-            foreach (safe_get_value($genreData, 'data', array()) as $genre) {
-                $genre_id = (string)safe_get_value($genre, 'id');
-                $gen_arr[] = new Vod_Category($genre_id, safe_get_value($genre, 'title'), $category);
-            }
-
-            $category->set_sub_categories($gen_arr);
-            $this->category_index[$id] = $category;
+        foreach ($nodes as $node) {
+            $total += safe_get_value($node, 'count', 0);
         }
 
         // all movies
         $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, TR::t('vod_screen_all_movies__1', " ($total)"));
         $this->category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
+
+        if ($this->get_category_mode() === self::CATEGORY_MODE_GENRE) {
+            $this->add_genre_categories($nodes);
+        } else {
+            foreach ($nodes as $node) {
+                $id = (string)safe_get_value($node, 'id');
+                $count = safe_get_value($node, 'count');
+                $this->category_index[$id] = new Vod_Category($id, safe_get_value($node, 'name') . " ($count)");
+            }
+        }
 
         hd_debug_print('Categories read: ' . count($this->category_index));
         return true;
@@ -232,12 +257,14 @@ class vod_cbilling extends vod_standard
             return array();
         }
 
+        if (strpos($query_id, self::GENRE_QUERY_PREFIX) === 0) {
+            return $this->get_genre_page($query_id, $page_idx);
+        }
+
         if ($query_id === Vod_Category::FLAG_ALL_MOVIES) {
             $url = "/filter/new?page=$page_idx&per_page=" .  self::PAGE_LIMIT;
         } else {
-            $arr = explode('_', $query_id);
-            $genre_id = safe_get_value($arr, 1, $query_id);
-            $url = "/genres/$genre_id?page=$page_idx&per_page=" . self::PAGE_LIMIT;
+            $url = "/cat/$query_id?page=$page_idx&per_page=" . self::PAGE_LIMIT;
         }
 
         return $this->CollectQueryResult($query_id, $this->make_json_request($url));
@@ -308,6 +335,95 @@ class vod_cbilling extends vod_standard
         return $this->CollectQueryResult($query_id, $this->make_json_request($url, false));
     }
     ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * Genre categories sorted by name. Each type has its own genres with their own ids
+     * and film counts, so the genres of the types are merged by name.
+     *
+     * @param array $nodes types
+     * @return void
+     */
+    protected function add_genre_categories($nodes)
+    {
+        $genres = array();
+        foreach ($nodes as $node) {
+            $id = (string)safe_get_value($node, 'id');
+            $genre_data = $this->make_json_request("/cat/$id/genres");
+            if ($genre_data === false) continue;
+
+            foreach (safe_get_value($genre_data, 'data', array()) as $genre) {
+                $count = (int)safe_get_value($genre, 'count', 0);
+                if ($count <= 0) continue;
+
+                // a title can end with a space
+                $name = trim(safe_get_value($genre, 'title'));
+                $key = mb_strtolower($name, 'UTF-8');
+                if (!isset($genres[$key])) {
+                    $genres[$key] = array('name' => $name, 'count' => 0, 'sources' => array());
+                }
+
+                $genres[$key]['count'] += $count;
+                $genres[$key]['sources'][] = safe_get_value($genre, 'id') . "=$count";
+            }
+        }
+
+        ksort($genres);
+        foreach ($genres as $genre) {
+            $id = self::GENRE_QUERY_PREFIX . implode(',', $genre['sources']);
+            $this->category_index[$id] = new Vod_Category($id, "{$genre['name']} ({$genre['count']})");
+        }
+    }
+
+    /**
+     * A page of the merged genre. The server pages each genre of each type separately, a big page is
+     * very slow and there is no request for several genres, so the page N of the merged genre
+     * is made of the pages N of its genres, sorted from new to old inside the page.
+     *
+     * @param string $query_id
+     * @param int $page_idx
+     * @return Short_Movie[]
+     */
+    protected function get_genre_page($query_id, $page_idx)
+    {
+        $rows = array();
+        $added = array();
+        $has_next = false;
+        foreach (explode(',', substr($query_id, strlen(self::GENRE_QUERY_PREFIX))) as $source) {
+            $pair = explode('=', $source);
+            if (count($pair) !== 2) continue;
+
+            // the genre of this type has no such page
+            if (($page_idx - 1) * self::PAGE_LIMIT >= (int)$pair[1]) continue;
+
+            // by the count: a failed request of one genre does not end the whole list
+            if ($page_idx * self::PAGE_LIMIT < (int)$pair[1]) {
+                $has_next = true;
+            }
+
+            $json = $this->make_json_request("/genres/$pair[0]?page=$page_idx&per_page=" . self::PAGE_LIMIT);
+            foreach (safe_get_value($json, 'data', array()) as $row) {
+                $idx = count($rows);
+                $rows[$idx] = $row;
+                $added[$idx] = (int)safe_get_value($row, 'added', 0);
+            }
+        }
+
+        arsort($added);
+        $sorted = array();
+        foreach ($added as $idx => $time) {
+            $sorted[] = $rows[$idx];
+        }
+
+        $movies = $this->make_data_short_movies(array('data' => $sorted));
+        if ($has_next && !empty($movies)) {
+            $this->shift_next_page_index($query_id);
+        } else {
+            $this->stop_page_index($query_id);
+        }
+
+        hd_debug_print('Movies found: ' . count($movies));
+        return $movies;
+    }
 
     /**
      * @param string $url
