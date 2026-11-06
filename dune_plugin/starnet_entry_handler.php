@@ -52,6 +52,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_EXTERNAL_SEARCH_APPLY = 'external_search_apply';
     const ACTION_EXTERNAL_SEARCH_SELECT = 'external_search_select';
     const ACTION_EXTERNAL_SEARCH_SELECTED = 'external_search_selected';
+    const ACTION_PLAY_RECENT = 'play_recent'; // an item of the watch history of the box, see Movie::get_movie_play_info()
     const VOD_SEARCH_CONFIG_ID = 'proiptv_vod_search';
     const OLD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0dg==";
 
@@ -247,6 +248,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                 hd_debug_print('Palette restored');
                 return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), TR::t('setup_patch_success'));
+
+            case self::ACTION_PLAY_RECENT:
+                return $this->play_recent($user_input, $plugin_cookies);
 
             case self::ACTION_EXTERNAL_SEARCH:
                 return $this->do_external_search($user_input);
@@ -550,6 +554,35 @@ class Starnet_Entry_Handler implements User_Input_Handler
         }
 
         return empty($selected_ids) ? $vod_ids : $selected_ids;
+    }
+
+    /**
+     * Continues a movie from the watch history of the box in the VOD of its playlist
+     *
+     * @param object $user_input
+     * @param object $plugin_cookies
+     * @return array|null
+     */
+    private function play_recent($user_input, &$plugin_cookies)
+    {
+        $playlist_id = safe_get_value($user_input, PARAM_PLAYLIST_ID);
+        $movie_id = safe_get_value($user_input, PARAM_MOVIE_ID);
+        hd_debug_print("Play from the box history, playlist: $playlist_id, movie: $movie_id");
+
+        // the plugin can be started by this action: the history item runs it without any screen of the plugin
+        $this->plugin->init_plugin();
+
+        if (empty($playlist_id) || empty($movie_id) || !$this->plugin->select_vod_playlist($playlist_id)) {
+            return Action_Factory::show_title_dialog(TR::t('err_load_vod'), TR::t('err_vod_not_available'));
+        }
+
+        // as on entering the VOD: M3U VOD playlist is loaded to its database, providers init their data
+        if (!$this->plugin->vod->fetchVodCategories()) {
+            return Action_Factory::show_title_dialog(TR::t('err_load_vod'), Dune_Last_Error::get_last_error(LAST_ERROR_VOD_LIST));
+        }
+
+        $action = Starnet_Vod_Movie_List_Screen::play_movie($this->plugin, $movie_id, $user_input, $plugin_cookies);
+        return $action === false ? Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'), TR::t('warn_msg5')) : $action;
     }
 
     /**

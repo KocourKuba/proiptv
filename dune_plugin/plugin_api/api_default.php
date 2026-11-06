@@ -1130,6 +1130,11 @@ class api_default
         $info[PARAM_PROVIDER] = $matches[1];
 
         $vars = explode(':', $matches[2]);
+        // the imported login and password are not in the parameters of a playlist yet
+        foreach ($vars as $var) {
+            Log_Mask::add($var);
+        }
+
         if (empty($vars)) {
             hd_debug_print("invalid provider_info: $matches[0]", true);
             return false;

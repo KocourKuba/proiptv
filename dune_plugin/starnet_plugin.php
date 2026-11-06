@@ -34,6 +34,7 @@ require_once 'starnet_epfs_handler.php';
 
 require_once 'plugin_setup/starnet_setup_plugin_screen.php';
 require_once 'plugin_setup/starnet_setup_plugin_interface_screen.php';
+require_once 'plugin_setup/starnet_setup_plugin_newui_screen.php';
 require_once 'plugin_setup/starnet_setup_epg_interface_screen.php';
 require_once 'plugin_setup/starnet_setup_download_screen.php';
 require_once 'plugin_setup/starnet_setup_sleep_timer_screen.php';
@@ -50,7 +51,6 @@ require_once 'plugin_playlist_setup/starnet_setup_playback_screen.php';
 require_once 'plugin_playlist_setup/starnet_setup_provider_screen.php';
 require_once 'plugin_playlist_setup/starnet_setup_playlist_screen.php';
 require_once 'plugin_playlist_setup/starnet_setup_simple_iptv_screen.php';
-require_once 'plugin_playlist_setup/starnet_setup_interface_vod_screen.php';
 
 require_once 'screens_tv/starnet_tv_groups_screen.php';
 require_once 'screens_tv/starnet_tv_changed_channels_screen.php';
@@ -100,6 +100,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         // plugin setup screens
         $this->create_screen(new Starnet_Setup_Plugin_Screen($this));
         $this->create_screen(new Starnet_Setup_Plugin_Interface_Screen($this));
+        $this->create_screen(new Starnet_Setup_Plugin_NewUI_Screen($this));
         $this->create_screen(new Starnet_Setup_Epg_Interface_Screen($this));
         $this->create_screen(new Starnet_Setup_Folders_Screen($this));
         $this->create_screen(new Starnet_Setup_Download_Screen($this));
@@ -118,7 +119,6 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Setup_Playback_Screen($this));
         $this->create_screen(new Starnet_Setup_Provider_Screen($this));
         $this->create_screen(new Starnet_Setup_Simple_IPTV_Screen($this));
-        $this->create_screen(new Starnet_Setup_Interface_Vod_Screen($this));
 
         $this->create_screen(new Starnet_Folder_Screen($this));
         $this->create_screen(new Starnet_Edit_Playlists_Screen($this));

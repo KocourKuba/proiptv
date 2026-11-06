@@ -367,17 +367,24 @@ class Action_Factory
      * @param array $change_defs # ChangeGCompDef list
      * @param array|null $post_action
      * @param int $num_steps # steps of the transition animation, 0 - default
+     * @param string|null $sel_state # selection state of the screen the firmware gives back when the screen is reloaded
      * @return array
      */
-    public static function change_gcomps($change_defs, $post_action = null, $num_steps = 0)
+    public static function change_gcomps($change_defs, $post_action = null, $num_steps = 0, $sel_state = null)
     {
+        $data = array(
+            ChangeGCompsActionData::change_defs => $change_defs,
+            ChangeGCompsActionData::num_steps => $num_steps,
+            ChangeGCompsActionData::post_action => $post_action,
+        );
+
+        if (!is_null($sel_state)) {
+            $data[ChangeGCompsActionData::sel_state] = $sel_state;
+        }
+
         return array(
             GuiAction::handler_string_id => CHANGE_GCOMPS_ACTION_ID,
-            GuiAction::data => array(
-                ChangeGCompsActionData::change_defs => $change_defs,
-                ChangeGCompsActionData::num_steps => $num_steps,
-                ChangeGCompsActionData::post_action => $post_action,
-            )
+            GuiAction::data => $data,
         );
     }
 

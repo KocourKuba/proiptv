@@ -48,11 +48,10 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
     {
         hd_debug_print(null, true);
 
-        $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
         $remove = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
 
-        $actions[GUI_EVENT_KEY_ENTER] = $action_play;
-        $actions[GUI_EVENT_KEY_PLAY] = $action_play;
+        $actions[GUI_EVENT_KEY_ENTER] = Action_Factory::open_folder();
+        $actions[GUI_EVENT_KEY_PLAY] = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
         $actions[GUI_EVENT_KEY_CLEAR] = $remove;
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
@@ -94,7 +93,9 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
                 );
 
             case ACTION_PLAY_ITEM:
-                return Action_Factory::open_folder();
+                // no series to play: the movie screen tells about it
+                $action = Starnet_Vod_Movie_List_Screen::play_movie($this->plugin, $movie_id, $user_input, $plugin_cookies);
+                return $action === false ? Action_Factory::open_folder() : $action;
 
             case ACTION_ITEM_UP:
                 $sel_ndx--;
@@ -166,7 +167,9 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen
 
             $movie_info = $movie->get_movie_info();
             $items[] = array(
-                PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::make_vod_media_url_str($movie_id),
+                PluginRegularFolderItem::media_url => $this->plugin->is_vod_rows_enabled()
+                    ? Starnet_Vod_Movie_Card_Screen::make_vod_media_url_str($movie_id)
+                    : Starnet_Vod_Movie_Screen::make_vod_media_url_str($movie_id),
                 PluginRegularFolderItem::caption => $movie->make_movie_caption(),
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $movie_info[PluginMovie::poster_url],

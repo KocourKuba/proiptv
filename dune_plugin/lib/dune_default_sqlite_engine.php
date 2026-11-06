@@ -355,6 +355,10 @@ class Dune_Default_Sqlite_Engine
     public function set_playlist_parameters($playlist_id, $stg)
     {
         hd_debug_print(null, true);
+        Log_Mask::add_params($stg);
+        if (isset($stg[PARAM_PARAMS])) {
+            Log_Mask::add_params($stg[PARAM_PARAMS]);
+        }
         hd_debug_print("Setting playlist $playlist_id to " . json_format_unescaped($stg), true);
 
         if (empty($stg)) {
@@ -425,6 +429,7 @@ class Dune_Default_Sqlite_Engine
         foreach ($rows as $row) {
             $params[$row[PARAM_NAME]] = $row[PARAM_VALUE];
         }
+        Log_Mask::add_params($params);
         return $params;
     }
 
@@ -437,6 +442,7 @@ class Dune_Default_Sqlite_Engine
     public function set_playlist_parameter($playlist_id, $name, $value)
     {
         hd_debug_print(null, true);
+        Log_Mask::add_param($name, $value);
         hd_debug_print("Playlist ID: $playlist_id, Name: $name, Value: $value", true);
         // save parameter
 
@@ -460,7 +466,12 @@ class Dune_Default_Sqlite_Engine
         $query = sprintf('SELECT %s FROM %s WHERE %s=%s AND %s=%s;', COLUMN_VALUE, self::PLAYLIST_PARAMETERS_TABLE,
             COLUMN_PLAYLIST_ID, Sql_Wrapper::sql_quote($playlist_id), COLUMN_NAME, Sql_Wrapper::sql_quote($name));
         $value = $this->safe_sql_plugin(SQL_QUERY_VALUE, $query);
-        return $value === false ? $default : $value;
+        if ($value === false) {
+            return $default;
+        }
+
+        Log_Mask::add_param($name, $value);
+        return $value;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -2563,6 +2574,23 @@ class Dune_Default_Sqlite_Engine
         $query = sprintf('SELECT *, MAX(%s) FROM %s GROUP BY %s ORDER BY %s DESC;',
             COLUMN_TIMESTAMP, self::VOD_HISTORY_TABLE, COLUMN_MOVIE_ID, COLUMN_TIMESTAMP);
         return $this->safe_sql_vod_history(SQL_FETCH_ARRAY, $query);
+    }
+
+    /**
+     * The last viewing of every movie of the VOD history. Not GROUP BY with MAX(): SQLite 3.7.4
+     * does not take the other columns from the row with the maximum
+     *
+     * @return array movie id => history row
+     */
+    public function get_vod_last_viewed()
+    {
+        $rows = array();
+        $query = sprintf('SELECT * FROM %s ORDER BY %s;', self::VOD_HISTORY_TABLE, COLUMN_TIMESTAMP);
+        foreach ($this->safe_sql_vod_history(SQL_FETCH_ARRAY, $query) as $row) {
+            $rows[$row[COLUMN_MOVIE_ID]] = $row;
+        }
+
+        return $rows;
     }
 
     /**

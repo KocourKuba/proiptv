@@ -375,6 +375,87 @@ class DuneIrControl
 ###############################################################################
 
 /**
+ * Logins and passwords of the providers do not get to the log: their values are replaced in what is logged.
+ * The values are collected when the parameters of a playlist are read or set.
+ */
+class Log_Mask
+{
+    const MASK = '***';
+    // a shorter value would spoil the log, it is a part of many other words
+    const MIN_LENGTH = 3;
+
+    /**
+     * @var string[] the longest first: a value can be a part of another one
+     */
+    protected static $values = array();
+
+    /**
+     * @param string $value
+     * @return void
+     */
+    public static function add($value)
+    {
+        $value = trim((string)$value);
+        if (strlen($value) < self::MIN_LENGTH || in_array($value, self::$values, true)) {
+            return;
+        }
+
+        // the values go to the urls encoded
+        foreach (array($value, urlencode($value), rawurlencode($value)) as $variant) {
+            if (!in_array($variant, self::$values, true)) {
+                self::$values[] = $variant;
+            }
+        }
+
+        usort(self::$values, array(__CLASS__, 'compare_length'));
+    }
+
+    /**
+     * @param array $params parameters of a playlist, the name of a parameter is the key
+     * @return void
+     */
+    public static function add_params($params)
+    {
+        foreach (array(MACRO_LOGIN, MACRO_PASSWORD) as $name) {
+            if (isset($params[$name])) {
+                self::add($params[$name]);
+            }
+        }
+    }
+
+    /**
+     * @param string $name name of a parameter of a playlist
+     * @param string $value
+     * @return void
+     */
+    public static function add_param($name, $value)
+    {
+        if ($name === MACRO_LOGIN || $name === MACRO_PASSWORD) {
+            self::add($value);
+        }
+    }
+
+    /**
+     * @param string $text
+     * @return string
+     */
+    public static function apply($text)
+    {
+        return empty(self::$values) ? $text : str_replace(self::$values, self::MASK, $text);
+    }
+
+    /**
+     * @param string $a
+     * @param string $b
+     * @return int
+     */
+    public static function compare_length($a, $b)
+    {
+        return strlen($b) - strlen($a);
+    }
+}
+
+/**
  * @return void
  */
 function print_backtrace()
@@ -522,7 +603,7 @@ function hd_debug_print($val = null, $is_debug = false)
         $val = var_export($val, true);
     }
 
-    hd_print($prefix . $val);
+    hd_print(Log_Mask::apply($prefix . $val));
 }
 
 /**
@@ -2013,9 +2094,17 @@ function dump_input_handler($user_input, $force = false)
 
     hd_debug_print();
 
+    // the fields of the login and password dialogs are not known to Log_Mask yet
+    static $secret_keys = array('login' => 1, 'password' => 1, 'pass' => 1, 'pass1' => 1, 'pass2' => 1);
+
     foreach ($user_input as $key => $value) {
+        if (isset($secret_keys[$key])) {
+            hd_print("  $key => " . Log_Mask::MASK);
+            continue;
+        }
+
         $decoded_value = html_entity_decode(preg_replace('/(\\\u([0-9A-Fa-f]{4}))/', '&#x\\2;', $value), ENT_NOQUOTES, 'UTF-8');
-        hd_print("  $key => $decoded_value");
+        hd_print(Log_Mask::apply("  $key => $decoded_value"));
     }
 }
 

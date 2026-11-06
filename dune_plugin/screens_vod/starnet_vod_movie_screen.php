@@ -113,6 +113,14 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
             )
         );
 
+        // the rows view opens the series by ENTER and plays by the Play key, the movie screen is only the info of the movie
+        if ($this->plugin->is_vod_rows_enabled()) {
+            $movie_folder_view[PluginMovieFolderView::left_button_caption] = TR::t('back');
+            $movie_folder_view[PluginMovieFolderView::left_button_action] = Action_Factory::close_and_run();
+            $movie_folder_view[PluginMovieFolderView::has_multiple_series] = false;
+            $movie_folder_view[PluginMovieFolderView::series_media_url] = null;
+        }
+
         return array(
             PluginFolderView::multiple_views_supported => false,
             PluginFolderView::archive => null,

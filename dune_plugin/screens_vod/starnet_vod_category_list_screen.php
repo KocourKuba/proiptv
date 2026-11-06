@@ -65,6 +65,11 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
+        // a screen closed over the catalog: it has the same media url and no regular folder to update
+        if ($user_input->control_id === ACTION_INVALIDATE && $this->plugin->is_vod_rows_enabled()) {
+            return Action_Factory::invalidate_folders(array(self::make_group_media_url_str(VOD_GROUP_ID)));
+        }
+
         if (!isset($user_input->selected_media_url)) {
             hd_debug_print('user input selected media url not set', true);
             return null;
@@ -265,16 +270,8 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
             $category_id = $category->get_id();
             if (!is_null($category->get_sub_categories())) {
                 $media_url_str = self::make_group_media_url_str($category_id);
-            } else if ($category_id === Vod_Category::FLAG_ALL_MOVIES
-                || $category_id === Vod_Category::FLAG_ALL_SERIALS
-                || $category_id === Vod_Category::FLAG_SEARCH
-                || $category_id === Vod_Category::FLAG_FILTER) {
-                // special category id's
-                $media_url_str = Starnet_Vod_Movie_List_Screen::make_vod_media_url_str($category_id, null);
-            } else if ($category->get_parent() !== null) {
-                $media_url_str = Starnet_Vod_Movie_List_Screen::make_vod_media_url_str($category->get_parent()->get_id(), $category_id);
             } else {
-                $media_url_str = Starnet_Vod_Movie_List_Screen::make_vod_media_url_str($category_id, null);
+                $media_url_str = self::make_movies_media_url_str($category);
             }
 
             $items[] = array(
@@ -303,6 +300,73 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
     }
 
     /**
+     * Movie list of a category without sub categories
+     *
+     * @param Vod_Category $category
+     * @return false|string
+     */
+    public static function make_movies_media_url_str($category)
+    {
+        $category_id = $category->get_id();
+        if ($category->get_parent() !== null
+            && $category_id !== Vod_Category::FLAG_ALL_MOVIES
+            && $category_id !== Vod_Category::FLAG_ALL_SERIALS
+            && $category_id !== Vod_Category::FLAG_SEARCH
+            && $category_id !== Vod_Category::FLAG_FILTER) {
+            return Starnet_Vod_Movie_List_Screen::make_vod_media_url_str($category->get_parent()->get_id(), $category_id);
+        }
+
+        return Starnet_Vod_Movie_List_Screen::make_vod_media_url_str($category_id, null);
+    }
+
+    /**
+     * Items of the popup menu to select the source of the categories: the provider m3u vod playlist and
+     * the category list mode. The handler gets ACTION_VOD_PLAYLIST_SELECTED and ACTION_VOD_CATEGORY_MODE_SELECTED
+     *
+     * @param array $menu_items
+     * @param Default_Dune_Plugin $plugin
+     * @param User_Input_Handler $handler
+     * @return void
+     */
+    public static function add_source_menu_items(&$menu_items, $plugin, $handler)
+    {
+        // provider m3u vod playlists to switch between, the current one is checked
+        $provider = $plugin->vod->get_provider();
+        $vod_playlists = is_null($provider) || !Default_Dune_Plugin::is_provider_m3u_vod($provider)
+            ? null : $provider->GetPlaylistsVod();
+        if (count($vod_playlists) > 1) {
+            $current = $provider->GetPlaylistVodId();
+            foreach ($vod_playlists as $key => $playlist) {
+                $name = $key === PARAM_DEFAULT_CONFIG_PLAYLIST_ID ? TR::t('by_default') : safe_get_value($playlist, COLUMN_NAME, $key);
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+                    self::ACTION_VOD_PLAYLIST_SELECTED,
+                    $name,
+                    (string)$key === $current ? 'check.png' : null,
+                    array(LIST_IDX => (string)$key)
+                );
+            }
+
+            $menu_items[] = Control_Factory::menu_separator();
+        }
+
+        // category list modes of the vod (genres, types, ...), the current one is checked
+        $category_modes = $plugin->vod->get_category_modes();
+        if (count($category_modes) > 1) {
+            $current = $plugin->vod->get_category_mode();
+            foreach ($category_modes as $mode => $caption) {
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
+                    self::ACTION_VOD_CATEGORY_MODE_SELECTED,
+                    TR::t('vod_categories_by__1', $caption),
+                    (string)$mode === $current ? 'check.png' : null,
+                    array(LIST_IDX => (string)$mode)
+                );
+            }
+
+            $menu_items[] = Control_Factory::menu_separator();
+        }
+    }
+
+    /**
      * @inheritDoc
      */
     protected $folder_view_ids = array(
@@ -325,42 +389,9 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $menu_items[] = Control_Factory::menu_separator();
 
-        // provider m3u vod playlists to switch between, the current one is checked
-        $provider = $this->plugin->vod->get_provider();
-        $vod_playlists = is_null($provider) || !Default_Dune_Plugin::is_provider_m3u_vod($provider)
-            ? null : $provider->GetPlaylistsVod();
-        if (count($vod_playlists) > 1) {
-            $current = $provider->GetPlaylistVodId();
-            foreach ($vod_playlists as $key => $playlist) {
-                $name = $key === PARAM_DEFAULT_CONFIG_PLAYLIST_ID ? TR::t('by_default') : safe_get_value($playlist, COLUMN_NAME, $key);
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    self::ACTION_VOD_PLAYLIST_SELECTED,
-                    $name,
-                    (string)$key === $current ? 'check.png' : null,
-                    array(LIST_IDX => (string)$key)
-                );
-            }
+        self::add_source_menu_items($menu_items, $this->plugin, $this);
 
-            $menu_items[] = Control_Factory::menu_separator();
-        }
-
-        // category list modes of the vod (genres, types, ...), the current one is checked
-        $category_modes = $this->plugin->vod->get_category_modes();
-        if (count($category_modes) > 1) {
-            $current = $this->plugin->vod->get_category_mode();
-            foreach ($category_modes as $mode => $caption) {
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    self::ACTION_VOD_CATEGORY_MODE_SELECTED,
-                    TR::t('vod_categories_by__1', $caption),
-                    (string)$mode === $current ? 'check.png' : null,
-                    array(LIST_IDX => (string)$mode)
-                );
-            }
-
-            $menu_items[] = Control_Factory::menu_separator();
-        }
-
-        $clear_action = Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+        $clear_action =Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
             $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
 
         if ($group_id === VOD_FAV_GROUP_ID && $this->plugin->get_order_count(VOD_FAV_GROUP_ID)) {

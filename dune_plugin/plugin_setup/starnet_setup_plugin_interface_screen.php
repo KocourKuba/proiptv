@@ -83,11 +83,10 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
             TR::t('setup_playlist_first'), SwitchOnOff::translate($playlist_first), SwitchOnOff::to_image($playlist_first));
 
         //////////////////////////////////////
-        // Enable NewUI
-        $show_newui = safe_get_value($plugin_cookies, PARAM_COOKIE_ENABLE_NEWUI, SwitchOnOff::on);
-        hd_debug_print(PARAM_COOKIE_ENABLE_NEWUI . ": $show_newui", true);
-        Control_Factory::add_image_button($defs, $this, PARAM_COOKIE_ENABLE_NEWUI,
-            TR::t('setup_support_newui'), SwitchOnOff::translate($show_newui), SwitchOnOff::to_image($show_newui));
+        // movies get to the watch history of the box ("Recent")
+        $save_recent = $this->plugin->get_parameter(PARAM_VOD_SAVE_RECENT, SwitchOnOff::off);
+        Control_Factory::add_image_button($defs, $this, PARAM_VOD_SAVE_RECENT,
+            TR::t('setup_vod_save_recent'), SwitchOnOff::translate($save_recent), SwitchOnOff::to_image($save_recent));
 
         //////////////////////////////////////
         // show media libraries of all playlists as a separate icon
@@ -119,15 +118,9 @@ class Starnet_Setup_Plugin_Interface_Screen extends Abstract_Controls_Screen
             case PARAM_AUTO_RESUME:
             case PARAM_PLAYLIST_FIRST:
             case PARAM_ASK_EXIT:
+            case PARAM_VOD_SAVE_RECENT:
                 $this->plugin->toggle_parameter($control_id, false);
                 break;
-
-            case PARAM_COOKIE_ENABLE_NEWUI:
-                toggle_cookie_param($plugin_cookies, $control_id, SwitchOnOff::on);
-                Starnet_Epfs_Handler::clear_epfs_file();
-                $actions[] = Action_Factory::show_title_dialog(TR::t('warning'), TR::t('setup_reboot_required'));
-                $actions[] = Action_Factory::restart();
-                return Action_Factory::composite($actions);
 
             case PARAM_SHOW_VOD_LIBRARIES_ICON:
                 $this->plugin->toggle_parameter($control_id, false);

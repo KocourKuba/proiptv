@@ -31,7 +31,6 @@ require_once 'lib/list_utils.php';
  * Media libraries of all playlists that have VOD. The selected one is opened in its own VOD context,
  * the active TV playlist is not changed.
  * The blue key sets which media libraries are shown and in what order (PARAM_VOD_LIBRARIES_VIEW).
- * The green key opens the VOD settings of the selected media library (r25+, not for M3U).
  */
 class Starnet_Vod_Libraries_Screen extends Abstract_Preloaded_Regular_Screen
 {
@@ -40,7 +39,6 @@ class Starnet_Vod_Libraries_Screen extends Abstract_Preloaded_Regular_Screen
     const ACTION_SHOW_SETUP = 'libraries_show_setup';
     const ACTION_SHOW_SETUP_APPLY = 'libraries_show_setup_apply';
     const SHOW_SETUP_CONFIG_ID = 'proiptv_vod_libraries';
-    const ACTION_VOD_SETTINGS = 'libraries_vod_settings';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -55,11 +53,6 @@ class Starnet_Vod_Libraries_Screen extends Abstract_Preloaded_Regular_Screen
         $actions[GUI_EVENT_KEY_PLAY] = $open;
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, self::ACTION_SHOW_SETUP,
             TR::t('vod_libraries_setup'));
-        if (is_r25_or_higher()) {
-            // VOD settings exist only on r25+
-            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, self::ACTION_VOD_SETTINGS,
-                TR::t('setup_vod_title'));
-        }
         $actions[GUI_EVENT_KEY_RETURN] = Action_Factory::close_and_run();
 
         return $actions;
@@ -91,10 +84,6 @@ class Starnet_Vod_Libraries_Screen extends Abstract_Preloaded_Regular_Screen
             return null;
         }
 
-        if ($user_input->control_id === self::ACTION_VOD_SETTINGS) {
-            return $this->open_vod_settings($playlist_id);
-        }
-
         if ($user_input->control_id !== ACTION_OPEN_FOLDER) {
             return null;
         }
@@ -111,29 +100,6 @@ class Starnet_Vod_Libraries_Screen extends Abstract_Preloaded_Regular_Screen
         // the category list url gets the playlist of the selected VOD context
         return Action_Factory::open_folder(Starnet_Vod_Category_List_Screen::make_group_media_url_str(VOD_GROUP_ID),
             safe_get_value($selected_media_url, PARAM_NAME));
-    }
-
-    /**
-     * VOD settings of the media library, M3U media libraries do not have them
-     *
-     * @param string $playlist_id
-     * @return array|null
-     */
-    protected function open_vod_settings($playlist_id)
-    {
-        $provider = $this->plugin->get_provider($playlist_id);
-        if (is_null($provider) || Default_Dune_Plugin::is_provider_m3u_vod($provider)) {
-            return null;
-        }
-
-        // the settings screen writes to the settings db of the selected VOD context
-        if (!$this->plugin->select_vod_playlist($playlist_id)) {
-            return Action_Factory::show_title_dialog(TR::t('err_load_vod'), TR::t('err_vod_not_available'));
-        }
-
-        return Action_Factory::open_folder(
-            Starnet_Setup_Interface_Vod_Screen::make_controls_media_url_str(static::ID, -1, $playlist_id),
-            TR::t('setup_vod_title'));
     }
 
     /**

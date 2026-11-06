@@ -162,12 +162,10 @@ abstract class vod_json_list extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getMovieList: $query_id");
 
-        $arr = explode('_', $query_id);
-        $category_id = isset($arr[1]) ? $arr[0] : $query_id;
-
-        $movies = $this->collect_movies($query_id, function ($vod, $item) use ($category_id) {
+        // the categories have no sub categories, the query is a category name that can have any characters
+        $movies = $this->collect_movies($query_id, function ($vod, $item) use ($query_id) {
             /** @var vod_json_list $vod */
-            return $category_id === Vod_Category::FLAG_ALL_MOVIES || $category_id === $vod->get_item_category($item);
+            return $query_id === Vod_Category::FLAG_ALL_MOVIES || $query_id === $vod->get_item_category($item);
         });
 
         hd_debug_print("Movies read for query: $query_id - " . count($movies));

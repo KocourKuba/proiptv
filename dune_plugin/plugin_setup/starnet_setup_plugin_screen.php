@@ -34,6 +34,7 @@ class Starnet_Setup_Plugin_Screen extends Abstract_Controls_Screen
     const ID = 'plugin_setup';
 
     const CONTROL_INTERFACE_SCREEN = 'interface_screen';
+    const CONTROL_NEWUI_SCREEN = 'newui_screen';
     const CONTROL_EPG_INTERFACE_SCREEN = 'epg_interface_screen';
     const CONTROL_SLEEP_TIMER_SCREEN = 'sleep_timer_screen';
     const CONTROL_FOLDERS_SCREEN = 'folders_screen';
@@ -66,6 +67,11 @@ class Starnet_Setup_Plugin_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // Interface settings
         Control_Factory::add_image_button($defs, $this, self::CONTROL_INTERFACE_SCREEN, TR::t('setup_interface_title'),
+            TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
+
+        //////////////////////////////////////
+        // NewUI settings
+        Control_Factory::add_image_button($defs, $this, self::CONTROL_NEWUI_SCREEN, TR::t('setup_interface_newui_title'),
             TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
 
         //////////////////////////////////////
@@ -122,6 +128,11 @@ class Starnet_Setup_Plugin_Screen extends Abstract_Controls_Screen
                 return Action_Factory::open_folder(
                     Starnet_Setup_Plugin_Interface_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
                     TR::t('setup_interface_title'));
+
+            case self::CONTROL_NEWUI_SCREEN: // show NewUI settings dialog
+                return Action_Factory::open_folder(
+                    Starnet_Setup_Plugin_NewUI_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
+                    TR::t('setup_interface_newui_title'));
 
             case self::CONTROL_EPG_INTERFACE_SCREEN: // show epg view settings dialog
                 return Action_Factory::open_folder(

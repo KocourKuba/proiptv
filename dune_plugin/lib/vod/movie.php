@@ -178,6 +178,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
                 } else {
                     $movie_id = $user_input->plugin_vod_id;
                     $invalidate[] = Starnet_Vod_Series_List_Screen::make_vod_media_url_str($user_input->plugin_vod_id, $episode->season_id);
+                    $invalidate[] = Starnet_Vod_Movie_Card_Screen::make_vod_media_url_str($user_input->plugin_vod_id);
                 }
 
                 $this->plugin->set_vod_history(
@@ -546,6 +547,10 @@ class Movie extends Json_Serializer implements User_Input_Handler
         hd_debug_print("default audio: $def_a_variant", true);
         $counter = 0; // series index. Not the same as the key of series list
         $initial_start_array = array();
+        // the firmware player keeps the watch history of the box by these fields, the play list of movies has no single movie to continue
+        $in_box_history = $media_url->screen_id !== Starnet_Vod_List_Screen::ID && !empty($this->playlist_id)
+            && $this->plugin->get_bool_parameter(PARAM_VOD_SAVE_RECENT, false);
+        $history_group = get_plugin_name() . ":$this->playlist_id:$this->id";
         foreach ($this->series_list as $series) {
             $q_variant = $series->get_variant($def_q_variant);
             if (is_null($q_variant)) {
@@ -601,11 +606,19 @@ class Movie extends Json_Serializer implements User_Input_Handler
                 $vod_url = $playback_info->url;
             }
 
-            $series_array[] = array(
+            $series_info = array(
                 PluginVodSeriesInfo::name => $name,
                 PluginVodSeriesInfo::playback_url => $vod_url,
                 PluginVodSeriesInfo::playback_url_is_stream_url => $playback_info->is_stream_url,
             );
+
+            if ($in_box_history) {
+                $series_info[PluginVodSeriesInfo::recent_uid] = "$history_group:$series->id";
+                // no mdb_info: FileMovieInfo::movie_id is required by the firmware, without it or with null the whole
+                // reply is rejected, it is an id of a Dune card and the movies of a provider have none
+            }
+
+            $series_array[] = $series_info;
 
             ++$counter;
         }
@@ -616,7 +629,7 @@ class Movie extends Json_Serializer implements User_Input_Handler
         }
         hd_debug_print("starting vod index $initial_series_ndx at position $initial_start", true);
 
-        return array(
+        $vod_info = array(
             PluginVodInfo::id => $this->id,
             PluginVodInfo::name => $this->make_movie_caption(),
             PluginVodInfo::description => $this->movie_info[PluginMovie::description],
@@ -627,6 +640,20 @@ class Movie extends Json_Serializer implements User_Input_Handler
             PluginVodInfo::actions => $this->do_get_action_map(),
             PluginVodInfo::initial_position_ms => $initial_start,
         );
+
+        if ($in_box_history) {
+            // an item of the history runs this action of the plugin, the episodes of a series are one item
+            $vod_info[PluginVodInfo::recent_plugin] = get_plugin_name();
+            $vod_info[PluginVodInfo::recent_action_params] = array(
+                'handler_id' => Starnet_Entry_Handler::ID . '_handler',
+                'control_id' => Starnet_Entry_Handler::ACTION_PLAY_RECENT,
+                PARAM_PLAYLIST_ID => $this->playlist_id,
+                PARAM_MOVIE_ID => $this->id,
+            );
+            $vod_info[PluginVodInfo::recent_group_by] = $history_group;
+        }
+
+        return $vod_info;
     }
 
     /**
@@ -635,8 +662,9 @@ class Movie extends Json_Serializer implements User_Input_Handler
     public function make_movie_caption()
     {
         $caption = $this->movie_info[PluginMovie::name];
-        if (!empty($this->movie_info[PluginMovie::name_original])) {
-            $caption = "$caption ({$this->movie_info[PluginMovie::name_original]})";
+        $original = trim($this->movie_info[PluginMovie::name_original]);
+        if ($original !== '' && $original !== trim($caption)) {
+            $caption = "$caption ($original)";
         }
         return $caption;
     }

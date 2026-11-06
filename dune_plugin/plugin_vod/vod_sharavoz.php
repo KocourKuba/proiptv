@@ -244,10 +244,11 @@ class vod_sharavoz extends vod_standard
                     $playback_url = new Movie_Playback_Url($this->xtream->get_stream_url($id));
                     hd_debug_print("episode playback_url: $playback_url->url", true);
 
-                    $episode_num = safe_get_value($episode, 'episode_num');
-                    $movie_serie = new Movie_Series($id, TR::t('vod_screen_series__1', $episode_num), $playback_url, $season_id );
+                    // the title of the episode is its name, the number only if the title is empty
+                    $title = trim((string)safe_get_value($episode, 'title', ''));
+                    $series_name = TR::load('vod_screen_series__1', $title === '' ? safe_get_value($episode, 'episode_num') : $title);
+                    $movie_serie = new Movie_Series($id, $series_name, $playback_url, $season_id);
                     $movie_serie->poster = safe_get_value($episode, 'movie_image');
-                    $movie_serie->description = safe_get_value($episode, 'title');
                     $movie->add_series_data($movie_serie);
                 }
             }

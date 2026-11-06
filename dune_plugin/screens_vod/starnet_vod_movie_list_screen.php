@@ -31,13 +31,14 @@ require_once 'lib/vod/short_movie_range.php';
 require_once 'lib/epfs/config.php';
 require_once 'lib/epfs/rows_factory.php';
 require_once 'lib/gcomps_factory.php';
+require_once 'lib/text_width.php';
 
 /**
  * Movies of a VOD category, search or filter.
  *
- * r25+ has one more view after the regular ones: rows of posters under the info of the
- * focused movie drawn over its art, as the firmware's own movie lists. The views are
- * switched by the red key there, the firmware can not switch to a rows view by itself.
+ * The regular views, or on r25+ with the rows view on in the NewUI settings of the plugin the
+ * only view is rows of posters under the info of the focused movie drawn over its art, as the
+ * firmware's own movie lists (opened from "show all" of the catalog, the search and the filter).
  * The rows view keeps the loaded movies of the list: the next page is loaded when the
  * focus reaches the last rows and the folder is reloaded with it, the rows out of
  * sight are given as placeholders and filled by get_folder_rows() (r25 only).
@@ -46,10 +47,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
 {
     const ID = 'vod_movies_list';
 
-    const ACTION_CHANGE_VIEW = 'change_view';
-
-    // marker of the rows view in get_folder_views()
-    const ROWS_VIEW = 'vod_rows_view';
+    const ACTION_OPEN_FILTER = 'movie_list_open_filter';
 
     const ROWS_COLS = 9;
     // rows around the focused one given at once, the others are placeholders
@@ -67,7 +65,8 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
     // info of the focused movie and its art (narrow art layout)
     const INFO_X = 100;
     const INFO_Y = 40;
-    const INFO_WIDTH = 1056;
+    // up to the art: the posters are portrait, they take only the right part of the art area
+    const INFO_WIDTH = 1270;
     const INFO_HEIGHT = 456;
     const ART_WIDTH = 1024;
     const ART_HEIGHT = 576;
@@ -76,8 +75,19 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
     const INFO_TITLE_COLOR = '#FFFFE0FF';
     const INFO_SUBTITLE_COLOR = '#808080FF';
     const INFO_TEXT_COLOR = '#AFAFA0FF';
-    const INFO_CAST_COLOR = '#FFFF40FF';
     const INFO_TEXT_SIZE = 30;
+    const INFO_MAX_LINE_ROWS = 2;
+
+    // size of the poster in a row and the watched part
+    const POSTER_WIDTH = 190;
+    const POSTER_HEIGHT = 285;
+    const POSTER_PROGRESS_HEIGHT = 6;
+    const PROGRESS_DONE_COLOR = '#FFFFFFFF';
+    const PROGRESS_REST_COLOR = '#404040FF';
+    // the watched part in the info
+    const INFO_PROGRESS_ROW_HEIGHT = 44;
+    const INFO_PROGRESS_WIDTH = 320;
+    const INFO_PROGRESS_HEIGHT = 6;
 
     const ROWS_LOADING_URL = 'plugin_file://%shell_ext%/icons/loading_movie_poster_noalpha.png';
     const ROWS_FAILED_URL = 'plugin_file://%shell_ext%/icons/no_movie_poster.png';
@@ -107,6 +117,13 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
     protected $rows_shown = 0;
 
     /**
+     * The last viewing of the movies for the rows being built, see get_movie_progress()
+     *
+     * @var array|null
+     */
+    protected $rows_last_viewed;
+
+    /**
      * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
@@ -130,23 +147,54 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
             $actions[GUI_EVENT_KEY_ENTER] = Action_Factory::open_folder();
         }
 
-        if ($this->is_rows_view_enabled()) {
-            $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this, self::ACTION_CHANGE_VIEW, TR::t('vod_change_view'));
-        }
-
+        $actions[GUI_EVENT_KEY_PLAY] = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
         $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
         $add_to_favorite = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
         $actions[GUI_EVENT_KEY_D_BLUE] = $add_to_favorite;
         $actions[GUI_EVENT_KEY_DUNE] = $add_to_favorite;
         $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SHOW_SEARCH_DLG, TR::t('search'));
 
-        $provider = $this->plugin->vod->get_provider();
-        if (!empty($provider) && Default_Dune_Plugin::is_provider_m3u_vod($provider)) {
+        // the rows view has the filter here, "add to list" is in the popup menu there
+        if ($is_rows_view) {
+            if ($this->is_filter_supported()) {
+                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, self::ACTION_OPEN_FILTER, TR::t(VOD_FILTER_GROUP_CAPTION));
+            }
+        } else if ($this->is_list_supported()) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_TO_LIST, TR::t('add_to_list'));
         }
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
 
         return $actions;
+    }
+
+    /**
+     * The provider has the filter of the movies
+     *
+     * @return bool
+     */
+    protected function is_filter_supported()
+    {
+        $group = $this->plugin->vod->get_special_groups()->get(VOD_FILTER_GROUP_ID);
+        return !empty($group) && !$group[ACTION_DISABLED];
+    }
+
+    /**
+     * The media library has the play list group
+     *
+     * @return bool
+     */
+    protected function is_list_supported()
+    {
+        $provider = $this->plugin->vod->get_provider();
+        return !empty($provider) && Default_Dune_Plugin::is_provider_m3u_vod($provider);
+    }
+
+    /**
+     * @return array
+     */
+    protected static function make_open_filter_action()
+    {
+        return Action_Factory::open_folder(Default_Dune_Plugin::get_group_media_url_str(VOD_FILTER_GROUP_ID), TR::t(VOD_FILTER_GROUP_CAPTION));
     }
 
     /**
@@ -160,14 +208,12 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
             return $this->update_rows_info($user_input);
         }
 
-        if ($control_id === GUI_EVENT_TIMER) {
-            return $this->on_rows_timer($user_input);
+        if ($control_id === self::ACTION_OPEN_FILTER) {
+            return self::make_open_filter_action();
         }
 
-        if ($control_id === self::ACTION_CHANGE_VIEW) {
-            $this->switch_to_next_folder_view();
-            $this->rows_list = null;
-            return Action_Factory::invalidate_folders(array($user_input->parent_media_url));
+        if ($control_id === GUI_EVENT_TIMER) {
+            return $this->on_rows_timer($user_input);
         }
 
         $movie = $this->get_selected_movie($user_input);
@@ -179,11 +225,13 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
         $movie_id = $movie->id;
 
         switch ($control_id) {
+            case ACTION_PLAY_ITEM:
+                $action = self::play_movie($this->plugin, $movie_id, $user_input, $plugin_cookies);
+                // no series to play: the movie screen tells about it
+                return $action === false ? self::make_open_movie_action($movie) : $action;
+
             case ACTION_OPEN_FOLDER:
-                return Action_Factory::open_folder(
-                    Starnet_Vod_Movie_Screen::make_vod_media_url_str($movie->id, $movie->name, $movie->poster_url, $movie->info),
-                    $movie->name
-                );
+                return $this->make_open_card_action($movie);
 
             case ACTION_SHOW_SEARCH_DLG:
                 $defs = array();
@@ -234,16 +282,126 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();
+                if ($this->is_rows_view() && $this->is_list_supported()) {
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ADD_TO_LIST, TR::t('add_to_list'));
+                }
                 $cnt = $this->plugin->get_order_count(VOD_LIST_GROUP_ID);
                 if ($cnt) {
                     $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                         ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_list_group'));
                 }
-                if ($this->is_rows_view_enabled()) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        self::ACTION_CHANGE_VIEW, TR::t('vod_change_view'));
-                }
                 return Action_Factory::show_popup_menu($menu_items);
+        }
+
+        return null;
+    }
+
+    /**
+     * The movie screen
+     *
+     * @param Short_Movie $movie
+     * @return array
+     */
+    protected static function make_open_movie_action($movie)
+    {
+        return Action_Factory::open_folder(
+            Starnet_Vod_Movie_Screen::make_vod_media_url_str($movie->id, $movie->name, $movie->poster_url, $movie->info),
+            $movie->name
+        );
+    }
+
+    /**
+     * ENTER in the rows view: the card of the movie.
+     * The old movie screen tells about a movie that has nothing to show
+     *
+     * @param Short_Movie $short_movie
+     * @return array
+     */
+    protected function make_open_card_action($short_movie)
+    {
+        $movie = $this->plugin->vod->get_loaded_movie($short_movie->id);
+        if (is_null($movie) || (!$movie->has_seasons() && !$movie->has_series())) {
+            return self::make_open_movie_action($short_movie);
+        }
+
+        return Action_Factory::open_folder(Starnet_Vod_Movie_Card_Screen::make_vod_media_url_str($short_movie->id), $short_movie->name);
+    }
+
+    /**
+     * Starts the movie without its screen, from the saved position
+     *
+     * @param Default_Dune_Plugin $plugin
+     * @param string $movie_id
+     * @param object $user_input
+     * @param object $plugin_cookies
+     * @return array|null|false false - the movie has nothing to play
+     */
+    public static function play_movie($plugin, $movie_id, $user_input, &$plugin_cookies)
+    {
+        $movie = $plugin->vod->get_loaded_movie($movie_id);
+        if (is_null($movie) || !$movie->has_series()) {
+            hd_debug_print("Movie $movie_id has no series to play");
+            return false;
+        }
+
+        return self::play_series($plugin, $movie_id, self::get_series_to_play($plugin, $movie), $user_input, $plugin_cookies);
+    }
+
+    /**
+     * Starts the series of the movie from its saved position, the next series follow in the player
+     *
+     * @param Default_Dune_Plugin $plugin
+     * @param string $movie_id
+     * @param string|null $series_id null - the first series
+     * @param object $user_input
+     * @param object $plugin_cookies
+     * @return array|null
+     */
+    public static function play_series($plugin, $movie_id, $series_id, $user_input, &$plugin_cookies)
+    {
+        // the playback takes the series and the position from this media url, as from the series list
+        $user_input->selected_media_url = Starnet_Vod_Series_List_Screen::make_vod_media_url_str($movie_id, null, $series_id);
+
+        try {
+            return $plugin->vod->vod_player_exec($user_input, $plugin_cookies);
+        } catch (Exception $ex) {
+            hd_debug_print("Movie can't played");
+            print_backtrace_exception($ex);
+            return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'), TR::t('warn_msg2__1', $ex->getMessage()));
+        }
+    }
+
+    /**
+     * The last watched series, the next one if it is watched to the end
+     *
+     * @param Default_Dune_Plugin $plugin
+     * @param Movie $movie
+     * @return string|null null - the first series
+     */
+    protected static function get_series_to_play($plugin, $movie)
+    {
+        $last = null;
+        foreach ($plugin->get_vod_history($movie->get_id()) as $row) {
+            if (is_null($last) || $row[COLUMN_TIMESTAMP] > $last[COLUMN_TIMESTAMP]) {
+                $last = $row;
+            }
+        }
+
+        if (is_null($last)) {
+            return null;
+        }
+
+        $last_id = (string)$last[COLUMN_SERIES_ID];
+        if (!$last[COLUMN_WATCHED]) {
+            return $last_id;
+        }
+
+        $is_next = false;
+        foreach (array_keys($movie->get_series_list()) as $series_id) {
+            if ($is_next) {
+                return (string)$series_id;
+            }
+            $is_next = (string)$series_id === $last_id;
         }
 
         return null;
@@ -464,30 +622,6 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
     }
 
     /**
-     * @inheritDoc
-     */
-    public function get_folder_views()
-    {
-        $views = parent::get_folder_views();
-        if ($this->is_rows_view_enabled()) {
-            $views[] = array(self::ROWS_VIEW => true);
-        }
-
-        return $views;
-    }
-
-    /**
-     * The rows view is on r25+ and only if it is enabled in the VOD settings of the playlist
-     *
-     * @return bool
-     */
-    protected function is_rows_view_enabled()
-    {
-        return is_r25_or_higher()
-            && SwitchOnOff::to_bool($this->plugin->get_vod_setting(PARAM_VOD_NEWUI_VIEW, SwitchOnOff::off));
-    }
-
-    /**
      * The view belongs to the playlist of the media library (the selected VOD context), not to the active one
      *
      * @inheritDoc
@@ -510,9 +644,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
      */
     protected function is_rows_view()
     {
-        $views = $this->get_folder_views();
-        $idx = $this->get_folder_view_index();
-        return isset($views[$idx][self::ROWS_VIEW]);
+        return $this->plugin->is_vod_rows_enabled();
     }
 
     /**
@@ -540,13 +672,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
         $this->rows_list = null;
         $this->reset_list($media_url);
 
-        $view = parent::get_folder_view($media_url, $plugin_cookies);
-        if ($this->is_rows_view_enabled()) {
-            // the views are switched by the red key, the firmware can not switch to the rows view
-            $view[PluginFolderView::multiple_views_supported] = 0;
-        }
-
-        return $view;
+        return parent::get_folder_view($media_url, $plugin_cookies);
     }
 
     /**
@@ -632,6 +758,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
      */
     protected function get_rows_pane()
     {
+        $this->rows_last_viewed = null;
         $count = count($this->rows_list['movies']);
         $this->rows_shown = $count;
         $num_rows = (int)ceil($count / self::ROWS_COLS);
@@ -735,6 +862,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
     {
         hd_debug_print(null, true);
 
+        $this->rows_last_viewed = null;
         $rows = array();
         if (!is_null($this->rows_list) && $this->rows_list['key'] === $media_url->get_raw_string()) {
             $num_rows = (int)ceil(count($this->rows_list['movies']) / self::ROWS_COLS);
@@ -772,16 +900,82 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
         $items = array();
         for ($i = $from; $i < $to; $i++) {
             $movie = $movies[$i];
-            $stickers = null;
-            if (isset($fav_ids[$movie->id])) {
-                $stickers = $this->get_rows_sticker('star.png');
-            } else if (isset($list_ids[$movie->id])) {
-                $stickers = $this->get_rows_sticker('play_small.png');
-            }
-            $items[] = Rows_Factory::add_regular_item(self::ITEM_ID_PREFIX . $i, $movie->poster_url, null, $stickers);
+            $stickers = $this->get_rows_movie_stickers($movie, $fav_ids, $list_ids);
+            $items[] = Rows_Factory::add_regular_item(self::ITEM_ID_PREFIX . $i, self::get_rows_poster($movie), null, $stickers);
         }
 
         return Rows_Factory::regular_row_from_template($template, self::ROW_ID_PREFIX . $row_ndx, $items);
+    }
+
+    /**
+     * Never empty: an item of a row without an icon url string kills the shell (seen by the author of Melange)
+     *
+     * @param Short_Movie $movie
+     * @return string
+     */
+    protected static function get_rows_poster($movie)
+    {
+        return is_string($movie->poster_url) && $movie->poster_url !== '' ? $movie->poster_url : self::ROWS_FAILED_URL;
+    }
+
+    /**
+     * Stickers of the movie in a row: favorite, otherwise in the play list
+     *
+     * @param Short_Movie $movie
+     * @param array $fav_ids favorite movie ids as keys
+     * @param array $list_ids movie ids of the play list group as keys
+     * @return array|null
+     */
+    protected function get_rows_movie_stickers($movie, $fav_ids, $list_ids)
+    {
+        $stickers = array();
+        if (isset($fav_ids[$movie->id])) {
+            $stickers = $this->get_rows_sticker('star.png');
+        } else if (isset($list_ids[$movie->id])) {
+            $stickers = $this->get_rows_sticker('play_small.png');
+        }
+
+        // the watched part at the bottom of the poster
+        $progress = $this->get_movie_progress($movie->id);
+        if (!is_null($progress)) {
+            $y = self::POSTER_HEIGHT - self::POSTER_PROGRESS_HEIGHT;
+            $stickers[] = Rows_Factory::add_regular_sticker_rect(self::PROGRESS_REST_COLOR,
+                Rows_Factory::r(0, $y, self::POSTER_WIDTH, self::POSTER_PROGRESS_HEIGHT));
+            $stickers[] = Rows_Factory::add_regular_sticker_rect(self::PROGRESS_DONE_COLOR,
+                Rows_Factory::r(0, $y, max(4, (int)(self::POSTER_WIDTH * $progress['part'])), self::POSTER_PROGRESS_HEIGHT));
+        }
+
+        return empty($stickers) ? null : $stickers;
+    }
+
+    /**
+     * The last viewing of the movie, the map is read once for the rows that are built together
+     *
+     * @param string $movie_id
+     * @return array|null 'part' watched from 0 to 1, 'left' seconds; null - never viewed, watched to the end or no duration is known
+     */
+    protected function get_movie_progress($movie_id)
+    {
+        if (is_null($this->rows_last_viewed)) {
+            $this->rows_last_viewed = $this->plugin->get_vod_last_viewed();
+        }
+
+        if (!isset($this->rows_last_viewed[$movie_id])) {
+            return null;
+        }
+
+        $row = $this->rows_last_viewed[$movie_id];
+        if ($row[COLUMN_WATCHED]) {
+            return null;
+        }
+
+        $duration = (int)$row[COLUMN_DURATION];
+        if ($duration <= 0) {
+            return null;
+        }
+
+        $position = max(0, min((int)$row[COLUMN_POSITION], $duration));
+        return array('part' => $position / $duration, 'left' => $duration - $position);
     }
 
     /**
@@ -850,19 +1044,73 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
         // the next page is loaded by the timer, the firmware does not run a post action of the info update
         $this->rows_focus = self::get_rows_movie_index($user_input->item_id);
 
-        $art_url = empty($movie->big_poster_url) ? $movie->poster_url : $movie->big_poster_url;
+        return $this->make_rows_info_action($user_input, $movie);
+    }
+
+    /**
+     * @param object $user_input
+     * @param Short_Movie $movie
+     * @return array
+     */
+    protected function make_rows_info_action($user_input, $movie)
+    {
+        $bg_url = null;
+        $nl_bg_url = null;
+        $mask_url = null;
+        if ($this->is_rows_art_shown()) {
+            $art_url = empty($movie->big_poster_url) ? $movie->poster_url : $movie->big_poster_url;
+            $bg_url = empty($art_url) ? self::ROWS_ART_LOADING_URL : $art_url;
+            $nl_bg_url = self::ROWS_ART_LOADING_URL;
+            $mask_url = $this->get_rows_art_mask();
+        }
 
         return Action_Factory::update_rows_info(
             $user_input->folder_key,
             $user_input->item_id,
             $this->get_rows_info_defs($movie),
-            empty($art_url) ? self::ROWS_ART_LOADING_URL : $art_url,
-            self::ROWS_ART_LOADING_URL,
-            get_image_path(self::ROWS_ART_MASK),
+            $bg_url,
+            $nl_bg_url,
+            $mask_url,
             array(),
             null,
             true
         );
+    }
+
+    /**
+     * @return string
+     */
+    protected function get_rows_art_mask()
+    {
+        return get_image_path(self::ROWS_ART_MASK);
+    }
+
+    /**
+     * The compact view of the catalog has no art
+     *
+     * @return bool
+     */
+    protected function is_rows_art_shown()
+    {
+        return true;
+    }
+
+    /**
+     * @return int
+     */
+    protected function get_rows_info_width()
+    {
+        return self::INFO_WIDTH;
+    }
+
+    /**
+     * Top of the rows on the screen
+     *
+     * @return int
+     */
+    protected function get_rows_info_height()
+    {
+        return self::INFO_HEIGHT;
     }
 
     /**
@@ -898,7 +1146,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
     }
 
     /**
-     * Title, original title, year | country | genres | age | length | rating, cast and description
+     * Title, original title, year | country | genres | age | length | rating and description
      *
      * @param Short_Movie $short_movie
      * @return array
@@ -908,15 +1156,14 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
         $title = $short_movie->name;
         $subtitle = '';
         $lines = array();
-        $cast = '';
         $description = '';
 
-        // the full info can be a provider request per movie, it is loaded only if enabled in the VOD settings;
+        // the full info can be a provider request per movie, it is loaded only if enabled in the NewUI settings;
         // a movie that is already loaded (its screen was opened) is shown in full anyway.
-        // M3U VOD has no more info than its movie list, the setting is not shown for it
+        // M3U VOD has no more info than its movie list, the setting does not apply to it
         $provider = $this->plugin->vod->get_provider();
         if (!empty($provider) && !Default_Dune_Plugin::is_provider_m3u_vod($provider)
-            && SwitchOnOff::to_bool($this->plugin->get_vod_setting(PARAM_VOD_NEWUI_FULL_INFO, SwitchOnOff::off))) {
+            && $this->plugin->get_bool_parameter(PARAM_VOD_NEWUI_FULL_INFO, false)) {
             $movie = $this->plugin->vod->get_loaded_movie($short_movie->id);
         } else {
             $movie = $this->plugin->vod->get_cached_movie($short_movie->id);
@@ -934,7 +1181,6 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
             $info = $movie->get_movie_info();
             $title = $info[PluginMovie::name];
             $subtitle = $info[PluginMovie::name_original];
-            $cast = $info[PluginMovie::actors_str];
             $description = $info[PluginMovie::description];
 
             $values = array();
@@ -966,8 +1212,8 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
             $title = $short_movie->name;
         }
 
-        $width = self::INFO_WIDTH;
-        $height = self::INFO_HEIGHT - self::INFO_Y;
+        $width = $this->get_rows_info_width();
+        $height = $this->get_rows_info_height() - self::INFO_Y;
         $item_h = 40;
         $defs = array();
 
@@ -986,26 +1232,32 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
             $y += 10;
         }
 
-        if (!empty($cast)) {
-            $lines[] = array($cast, self::INFO_CAST_COLOR);
+        foreach ($lines as $line) {
+            // the font size stays: a long text takes two lines and ends with an ellipsis, the label cuts what the estimate missed
+            foreach (Text_Width::wrap($line, self::INFO_TEXT_SIZE, $width, self::INFO_MAX_LINE_ROWS) as $i => $row) {
+                if ($i > 0) {
+                    $y += self::INFO_TEXT_SIZE + 5;
+                }
+                $defs[] = GComps_Factory::label(GComp_Geom::place_top_left($width, $item_h + 6, 0, $y - 3), null,
+                    $row, 1, self::INFO_TEXT_COLOR, self::INFO_TEXT_SIZE, null,
+                    array('fit' => GCOMP_TEXT_FIT_APPEND_ELLIPSIS));
+            }
+            $y += $item_h + 10;
         }
 
-        foreach ($lines as $line) {
-            $color = self::INFO_TEXT_COLOR;
-            if (is_array($line)) {
-                $color = $line[1];
-                $line = $line[0];
-            }
-            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left($width, $item_h + 6, 0, $y - 3), null,
-                $line, 1, $color, self::INFO_TEXT_SIZE, null,
-                array('min_font_size' => (int)(self::INFO_TEXT_SIZE / 2)));
-            $y += $item_h + 10;
+        $bottom_y = $height - PaneParams::fav_btn_height;
+        $progress = $this->get_rows_info_progress($short_movie);
+        if (!is_null($progress)) {
+            $bottom_y -= self::INFO_PROGRESS_ROW_HEIGHT;
+            $this->add_info_progress($defs, $progress, $bottom_y);
         }
 
         $description = trim((string)$description);
         if ($description !== '') {
             $y -= 10;
-            $max_lines = (int)(($height - $y - self::INFO_TEXT_SIZE) / (self::INFO_TEXT_SIZE + 5));
+            // the room above the hints of the color keys and the watched part
+            $desc_height = $bottom_y - 10;
+            $max_lines = (int)(($desc_height - $y - self::INFO_TEXT_SIZE) / (self::INFO_TEXT_SIZE + 5));
             if ($max_lines > 0) {
                 $defs[] = GComps_Factory::label(GComp_Geom::place_top_left($width, -1, 0, $y), null,
                     $description, $max_lines, self::INFO_TEXT_COLOR, self::INFO_TEXT_SIZE, 'info_desc',
@@ -1013,7 +1265,96 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen
             }
         }
 
+        $this->add_key_hints($defs, $this->get_rows_key_hints($short_movie), $height - PaneParams::fav_btn_height);
+
         return $defs;
+    }
+
+    /**
+     * The watched part shown in the info
+     *
+     * @param Short_Movie $movie
+     * @return array|null see get_movie_progress()
+     */
+    protected function get_rows_info_progress($movie)
+    {
+        // the map is read anew: the movie could be played since the rows were built
+        $this->rows_last_viewed = null;
+        return $this->get_movie_progress($movie->id);
+    }
+
+    /**
+     * @param array $defs
+     * @param array $progress see get_movie_progress()
+     * @param int $y
+     * @return void
+     */
+    protected function add_info_progress(&$defs, $progress, $y)
+    {
+        $bar_y = $y + (int)((self::INFO_PROGRESS_ROW_HEIGHT - self::INFO_PROGRESS_HEIGHT) / 2);
+        $defs[] = GComps_Factory::get_rect_def(
+            GComp_Geom::place_top_left(self::INFO_PROGRESS_WIDTH, self::INFO_PROGRESS_HEIGHT, 0, $bar_y), null, self::PROGRESS_REST_COLOR);
+        $defs[] = GComps_Factory::get_rect_def(
+            GComp_Geom::place_top_left(max(4, (int)(self::INFO_PROGRESS_WIDTH * $progress['part'])), self::INFO_PROGRESS_HEIGHT, 0, $bar_y),
+            null, self::PROGRESS_DONE_COLOR);
+
+        if ($progress['left'] > 0) {
+            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(600, self::INFO_PROGRESS_ROW_HEIGHT, self::INFO_PROGRESS_WIDTH + 40, $y), null,
+                TR::load('vod_rows_left__1', format_duration_seconds($progress['left'])), 1,
+                self::INFO_TEXT_COLOR, PaneParams::fav_btn_font_size);
+        }
+    }
+
+    /**
+     * Color keys of the movie: key icon, translated caption
+     *
+     * @param Short_Movie $movie
+     * @return array
+     */
+    protected function get_rows_key_hints($movie)
+    {
+        $hints = array();
+        if ($this->is_filter_supported()) {
+            $hints[] = array(PaneParams::fav_button_green, TR::load(VOD_FILTER_GROUP_CAPTION));
+        }
+
+        $hints[] = array(PaneParams::fav_button_yellow, TR::load('search'));
+        $hints[] = $this->get_favorite_key_hint($movie);
+
+        return $hints;
+    }
+
+    /**
+     * @param Short_Movie $movie
+     * @return array
+     */
+    protected function get_favorite_key_hint($movie)
+    {
+        $in_favorites = $this->plugin->is_channel_in_order(VOD_FAV_GROUP_ID, $movie->id);
+        return array(PaneParams::fav_button_blue, TR::load($in_favorites ? 'delete_from_favorite' : 'add_to_favorite'));
+    }
+
+    /**
+     * Key icons with their captions in one line, as in the info of the TV rows screen
+     *
+     * @param array $defs
+     * @param array $hints from get_rows_key_hints()
+     * @param int $y
+     * @return void
+     */
+    protected function add_key_hints(&$defs, $hints, $y)
+    {
+        $x = 0;
+        foreach ($hints as $hint) {
+            $defs[] = GComps_Factory::get_image_def(
+                GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $x, $y), null, $hint[0]);
+            $x += PaneParams::fav_btn_width + 1;
+
+            $text_width = Text_Width::get($hint[1], PaneParams::fav_btn_font_size);
+            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left($text_width, -1, $x, $y - 4), null,
+                $hint[1], 1, PaneParams::fav_btn_font_color, PaneParams::fav_btn_font_size);
+            $x += $text_width + 30;
+        }
     }
 
     /**

@@ -36,7 +36,6 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
     const CONTROL_EDIT_CATEGORY_ICONS_SCREEN = 'edit_category_icons_screen';
     const CONTROL_EDIT_CATEGORY_VIEW_SCREEN = 'edit_category_view_screen';
     const CONTROL_EDIT_NEWUI_SETTINGS = 'edit_newui_settings';
-    const CONTROL_EDIT_VOD_SETTINGS = 'edit_vod_settings';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -97,13 +96,6 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
             }
         }
 
-        if (is_r25_or_higher()) {
-            //////////////////////////////////////
-            // VOD settings
-            Control_Factory::add_image_button($defs, $this, self::CONTROL_EDIT_VOD_SETTINGS, TR::t('setup_vod_title'),
-                TR::t('setup_change_settings'), $setting_icon, Control_Factory::SCR_CONTROLS_WIDTH, $params);
-        }
-
         //////////////////////////////////////
         // change background
         if ($this->plugin->is_background_image_default()) {
@@ -149,11 +141,6 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
                 return Action_Factory::open_folder(
                     Starnet_Setup_Interface_NewUI_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
                     TR::t('setup_interface_newui_title'));
-
-            case self::CONTROL_EDIT_VOD_SETTINGS: // show VOD settings screen
-                return Action_Factory::open_folder(
-                    Starnet_Setup_Interface_Vod_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
-                    TR::t('setup_vod_title'));
 
             case ACTION_CHANGE_BACKGROUND:
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,

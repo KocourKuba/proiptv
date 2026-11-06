@@ -41,6 +41,8 @@ require_once 'screens_vod/starnet_vod_series_list_screen.php';
 require_once 'screens_vod/starnet_vod_favorites_screen.php';
 require_once 'screens_vod/starnet_vod_history_screen.php';
 require_once 'screens_vod/starnet_vod_movie_list_screen.php';
+require_once 'screens_vod/starnet_vod_catalog_screen.php';
+require_once 'screens_vod/starnet_vod_movie_card_screen.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -187,9 +189,11 @@ class vod_standard extends Abstract_Vod
         $this->plugin->destroy_screen(Starnet_Vod_Favorites_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_History_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_Category_List_Screen::ID);
+        $this->plugin->destroy_screen(Starnet_Vod_Catalog_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_Movie_List_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_List_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_Movie_Screen::ID);
+        $this->plugin->destroy_screen(Starnet_Vod_Movie_Card_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_Seasons_List_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_Series_List_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_Search_Screen::ID);
@@ -201,9 +205,11 @@ class vod_standard extends Abstract_Vod
             $this->plugin->create_screen(new Starnet_Vod_Favorites_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_History_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_Category_List_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Catalog_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_Movie_List_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_List_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_Movie_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Movie_Card_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_Seasons_List_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_Series_List_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_Search_Screen($this->plugin));
@@ -537,15 +543,14 @@ class vod_standard extends Abstract_Vod
         hd_debug_print("getMovieList: $query_id");
 
         $movies = array();
-        $arr = explode('_', $query_id);
-        $category_id = ($arr === false) ? $query_id : $arr[0];
 
         $page_idx = $this->get_current_page_index($query_id);
         if ($page_idx < 0) {
             return $movies;
         }
 
-        $group_id = $category_id === Vod_Category::FLAG_ALL_MOVIES ? '' : $category_id;
+        // the categories have no sub categories, the query is a playlist group that can have any characters
+        $group_id = $query_id === Vod_Category::FLAG_ALL_MOVIES ? '' : $query_id;
         $max = $this->getVodCount($group_id);
         $ubound = min($max, $page_idx + 50);
         if ($ubound <= $page_idx) {

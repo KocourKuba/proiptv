@@ -72,6 +72,17 @@ class vod_pagination
     }
 
     /**
+     * The next request of this list starts from its first page, the other lists are kept
+     *
+     * @param string $page_id
+     * @return void
+     */
+    public function reset_page_index($page_id)
+    {
+        unset($this->pages[$page_id]);
+    }
+
+    /**
      * @param string $page_id
      * @return bool
      */

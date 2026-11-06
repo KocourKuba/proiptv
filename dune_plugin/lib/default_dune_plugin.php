@@ -86,9 +86,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         Starnet_Vod_Favorites_Screen::ID,
         Starnet_Vod_History_Screen::ID,
         Starnet_Vod_Category_List_Screen::ID,
+        Starnet_Vod_Catalog_Screen::ID,
         Starnet_Vod_Movie_List_Screen::ID,
         Starnet_Vod_List_Screen::ID,
         Starnet_Vod_Movie_Screen::ID,
+        Starnet_Vod_Movie_Card_Screen::ID,
         Starnet_Vod_Seasons_List_Screen::ID,
         Starnet_Vod_Series_List_Screen::ID,
         Starnet_Vod_Search_Screen::ID,
@@ -212,7 +214,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         $url_str = substr($user_input->folder_key, $pos + 1);
                     }
                 }
-                $this->select_vod_playlist(empty($url_str) ? null : safe_get_value(MediaURL::decode($url_str), PARAM_PLAYLIST_ID));
+                // an action of a gcomps screen can bring the playlist itself
+                $playlist_id = safe_get_value($user_input, PARAM_PLAYLIST_ID);
+                if (empty($playlist_id) && !empty($url_str)) {
+                    $playlist_id = safe_get_value(MediaURL::decode($url_str), PARAM_PLAYLIST_ID);
+                }
+                $this->select_vod_playlist($playlist_id);
                 break;
             }
         }
@@ -4949,11 +4956,31 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     protected function get_screen_by_url(MediaURL $media_url)
     {
         // the folders of a VOD screen belong to the playlist from the media url
-        if (in_array(safe_get_value($media_url, PARAM_SCREEN_ID), self::$vod_screen_ids, true)) {
+        $screen_id = safe_get_value($media_url, PARAM_SCREEN_ID);
+        if (in_array($screen_id, self::$vod_screen_ids, true)) {
             $this->select_vod_playlist(safe_get_value($media_url, PARAM_PLAYLIST_ID));
+
+            // the media library opens as the catalog instead of the category list, the url stays the same
+            if ($screen_id === Starnet_Vod_Category_List_Screen::ID
+                && $this->vod !== null
+                && safe_get_value($media_url, 'category_id') === VOD_GROUP_ID
+                && $this->is_vod_rows_enabled()) {
+                return $this->get_screen_by_id(Starnet_Vod_Catalog_Screen::ID);
+            }
         }
 
         return parent::get_screen_by_url($media_url);
+    }
+
+    /**
+     * The rows view (catalog, rows of movies) instead of the classic VOD screens:
+     * r25+ and enabled in the NewUI settings of the plugin
+     *
+     * @return bool
+     */
+    public function is_vod_rows_enabled()
+    {
+        return is_r25_or_higher() && $this->get_bool_parameter(PARAM_VOD_NEWUI_VIEW, false);
     }
 
     /**
